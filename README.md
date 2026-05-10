@@ -1,55 +1,45 @@
 # ILSA Literature Extraction Pipeline
 
-Yıldız Teknik Üniversitesi - Veri Bilimi ve Büyük Veri programı kapsamında, ~1.800 ILSA-AI akademik makalesinin GPT-4o Structured Outputs API'si ile yapılandırılmış metadata'ya dönüştürülmesi için tasarlanmış pipeline.
+A pipeline designed to process ILSA academic literature and extract structured metadata utilizing the GPT-5.4-nano Structured Outputs API.
 
-## Kurulum
-
-```bash
-# Conda ortamı aktif
+## Setup
+```Bash
 conda activate ilsa-literature-review
-
-# Bağımlılıkları kur
 pip install -r requirements.txt
 
-# API anahtarı
 cp .env.example .env
-# .env dosyasını düzenleyip OPENAI_API_KEY'i girin
+# Add your OPENAI_API_KEY to the newly created .env file
 ```
 
-## Kullanım
+## Usage
+Test Run (20 documents)
 
-### Test koşumu (20 makale)
-
-```bash
+```Bash
 python scripts/run_pipeline.py \
     --pdf-dir ../data/pdfs \
     --output-dir ./output_test \
     --limit 20 \
     --workers 3
+Full Execution (1,800 documents)
 ```
 
-### Tam koşum (1800 makale)
-
-```bash
+Full Execution (1,800 documents)
+```Bash
 python scripts/run_pipeline.py \
     --pdf-dir ../data/pdfs \
     --output-dir ./output \
     --workers 5 \
     --resume
+Knowledge Base Queries
 ```
 
-### Bilgi tabanı sorguları
-
-```bash
+Knowledge Base Queries
+```Bash
 python scripts/example_queries.py --db ./output/ilsa_knowledge_base.db
+Outputs
+output/json/*.json: Individual structured JSON files for each processed document.
 ```
 
-## Maliyet
+`output/ilsa_master.parquet`: Aggregated dataset optimized for machine learning and downstream analysis.
 
-**1.800 makale ≈ $80-90** (akıllı bölüm seçimi sayesinde)
-
-## Çıktılar
-
-- `output/json/*.json` - Her makale için ayrı JSON
-- `output/ilsa_master.parquet` - Tek dosya, ML/analiz için
-- `output/ilsa_knowledge_base.db` - SQLite, SQL sorguları için
+`output/ilsa_knowledge_base.db`: SQLite database for structured SQL queries.
