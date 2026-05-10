@@ -1,0 +1,346 @@
+import json
+import logging
+import os
+import time
+from dataclasses import dataclass
+from typing import TYPE_CHECKING
+
+from openai import OpenAI, APIError, RateLimitError, APITimeoutError
+from pydantic import ValidationError
+
+from src.schemas import ILSAArticleMetadata
+
+if TYPE_CHECKING:
+    from src.extractors.pdf_processor import ProcessedPDF
+
+logger = logging.getLogger(__name__)
+
+MODEL_NAME = "gpt-5.4-nano"
+PRICE_INPUT_PER_1M = 2.50
+PRICE_OUTPUT_PER_1M = 10.00
+
+SYSTEM_PROMPT = """You are a specialist metadata extraction assistant for International Large-Scale Assessment (ILSA) research literature. Your task is to extract structured metadata from academic articles with maximum precision and zero hallucination.
+
+CRITICAL RULES — VIOLATIONS WILL CORRUPT THE DATASET:
+1. NEVER fabricate data. If information is not explicitly stated in the article, use null or the appropriate "not_reported" enum value.
+2. NEVER infer or guess values. Only extract what is directly written in the text.
+3. For enum fields, use ONLY the exact values defined in the schema. Do not create new categories.
+4. For list fields (confounders_identified, countries, all_techniques), extract ALL items mentioned in the paper. Do not summarize or truncate.
+5. If a field is ambiguous, prefer null over a guess.
+
+FIELD-SPECIFIC EXTRACTION RULES:
+
+source_category:
+- "peer_reviewed_research" = published in a peer-reviewed journal with empirical analysis
+- "technical_report" = institutional reports (OECD, IEA, NCES, World Bank)
+- "review_article" = systematic reviews, meta-analyses, literature reviews with no original empirical analysis
+- "methodology_paper" = papers developing or evaluating a method, scale, or framework (no primary empirical outcome)
+- "book_chapter" = chapter in an edited book volume
+- "conference_paper" = published conference proceedings
+
+research_design_type:
+- "exploratory" = descriptive statistics, EDA, unsupervised methods, pattern description without hypothesis testing
+- "explanatory" = tests hypotheses about relationships using regression, SEM, HLM, ANOVA with theoretical model
+- "predictive" = builds models to predict outcomes on unseen data (train/test split, cross-validation, ML classifiers/regressors)
+- "causal_inference" = estimates causal effects using IV, DiD, RDD, propensity score, Heckman, BART for causal inference
+- "quasi_experimental" = uses natural experiments or policy changes as treatment assignment
+- "methodological" = develops or evaluates a statistical method, psychometric model, or measurement tool itself
+
+plausible_values_handling:
+- ONLY applies when the study uses ILSA cognitive test scores (e.g., PISA math score, TIMSS science score, PIRLS reading score)
+- "rubin_rules" = analysis run separately on each PV, then estimates and SEs combined using Rubin's pooling formulas
+- "single_pv" = only one PV used (PV1) instead of all five/ten
+- "average_pv" = PVs averaged into a single score before analysis
+- "not_applicable" = study does not use cognitive test scores as outcome (e.g., uses only questionnaire data, or is a methods paper)
+- "not_reported" = study uses PVs but does not describe how they were handled
+
+missing_data_handling:
+- "multiple_imputation" = MI, MICE, chained equations, or any explicit imputation method
+- "listwise_deletion" = complete case analysis, cases with missing values removed
+- "pairwise_deletion" = available case analysis
+- "expectation_maximization" = EM algorithm for missing data
+- "model_based" = FIML, Bayesian estimation, or model handles missingness internally
+- "not_reported" = missing data handling not described in the paper
+
+survey_design.student_weights_used:
+- true ONLY if the paper explicitly mentions using sampling weights, survey weights, or student weights
+- false if weights are not mentioned or explicitly stated as not used
+- null if unclear
+
+survey_design.replicate_weights_used:
+- true ONLY if BRR, jackknife, or replicate weights are explicitly mentioned for standard error estimation
+- false if not mentioned
+- null if unclear
+
+survey_design.weight_variable_name:
+- Extract the exact variable name if mentioned (e.g., "TOTWGT", "W_FSTUWT", "WGTFAC2S")
+- null if not mentioned
+
+sample_details.total_students:
+- Extract the exact N reported for the analytic sample
+- Use the FINAL analytic sample size, not the initial or population size
+- null if not clearly reported as a single number
+
+sample_details.countries:
+- List ALL countries/economies in the analytic sample using ISO 3166-1 alpha-3 codes
+- Include n_students per country if reported; otherwise set n_students to null
+- Empty list [] if no specific countries are analyzed (e.g., cross-country aggregate only)
+
+ml_techniques.primary:
+- The MAIN analytical method used for the primary research question
+- Use standard names: "Random Forest", "XGBoost", "LASSO regression", "SEM", "HLM", "OLS regression", "Logistic Regression", "BART", "LSTM", "ANFIS", etc.
+- null if no ML/statistical technique is the clear primary method
+
+ml_techniques.all_techniques:
+- List ALL statistical and ML methods used in the paper, including preprocessing, validation, and robustness checks
+- Do NOT include: general concepts like "descriptive statistics" unless it is the only method used
+
+ml_techniques.feature_selection:
+- The specific feature selection method used (e.g., "LASSO", "Boruta", "Recursive Feature Elimination", "correlation-based")
+- null if no explicit feature selection is performed
+
+ml_techniques.baseline_model:
+- The comparison/baseline model against which the primary model is evaluated
+- null if no baseline comparison is made
+
+ml_techniques.xai_method:
+- The explainability/interpretability method used (e.g., "SHAP", "LIME", "feature importance", "partial dependence plots")
+- null if no XAI method is used
+
+confounders_identified:
+- List ALL control variables, covariates, and confounders mentioned in the analytic models
+- Use the EXACT variable names from the paper when available (e.g., "ESCS", "ST004D01T", "gender")
+- If only descriptive names are given, use those (e.g., "socioeconomic status", "gender", "immigrant background")
+- Include variables from ALL models reported in the paper, not just the final model
+- Empty list [] ONLY if no control variables are used in any model
+
+outcome_summary:
+- Write 3-5 sentences summarizing the key empirical findings
+- Include: sample size context, main effects found, effect sizes if reported, key methodological choices
+- Do NOT include: background literature, policy recommendations, or future research suggestions
+- Be factual and precise — no interpretation beyond what the authors report
+"""
+
+
+@dataclass
+class ExtractionResult:
+    file_name: str
+    success: bool
+    extraction: ILSAArticleMetadata | None
+    input_tokens: int
+    output_tokens: int
+    cost_usd: float
+    duration_seconds: float
+    error: str | None = None
+
+
+class GPTExtractor:
+    def __init__(
+        self,
+        api_key: str = None,
+        model: str = MODEL_NAME,
+        max_retries: int = 4,
+        base_delay: float = 2.0,
+    ):
+        api_key = api_key or os.getenv("OPENAI_API_KEY")
+        self.client = OpenAI(api_key=api_key)
+        self.model = model
+        self.max_retries = max_retries
+        self.base_delay = base_delay
+
+    def _build_user_message(self, processed: "ProcessedPDF") -> list[dict]:
+        sections_label = ", ".join(processed.sections.keys()) or "none"
+        title_hint = ""
+        if processed.metadata.get("extracted_title"):
+            title_hint = f"\nEXTRACTED_TITLE: {processed.metadata['extracted_title']}\n"
+        return [
+            {
+                "type": "text",
+                "text": (
+                    f"FILE: {processed.file_name}\n"
+                    f"SOURCE: {processed.source_database}\n"
+                    f"SECTIONS DETECTED: {sections_label}\n"
+                    f"{title_hint}"
+                    f"--- BEGIN ARTICLE TEXT ---\n\n"
+                    f"{processed.extraction_text}\n\n"
+                    f"--- END ARTICLE TEXT ---\n\n"
+                    "Follow the five steps in the system prompt. "
+                    "Return valid JSON only — no markdown fences, no preamble."
+                ),
+            }
+        ]
+
+    def _calculate_cost(self, input_tokens: int, output_tokens: int) -> float:
+        return (
+            input_tokens * PRICE_INPUT_PER_1M / 1_000_000
+            + output_tokens * PRICE_OUTPUT_PER_1M / 1_000_000
+        )
+
+    @staticmethod
+    def _sanitize(parsed_data: dict) -> dict:
+        """
+        Post-process model output to fix known failure modes before Pydantic validation.
+        Modifies parsed_data in place and returns it.
+        """
+        INVALID_STR = {"not_reported", "not_applicable", "N/A", "n/a", "unknown", ""}
+
+        # ml_techniques cleanup
+        ml = parsed_data.get("ml_techniques")
+        if isinstance(ml, dict):
+            # primary must be a real string or null
+            if ml.get("primary") in INVALID_STR or ml.get("primary") is None:
+                ml["primary"] = None
+            # all_techniques: remove sentinel strings
+            if isinstance(ml.get("all_techniques"), list):
+                ml["all_techniques"] = [
+                    t for t in ml["all_techniques"]
+                    if isinstance(t, str) and t not in INVALID_STR
+                ]
+            # optional string fields
+            for field in ("feature_selection", "baseline_model", "xai_method"):
+                if ml.get(field) in INVALID_STR:
+                    ml[field] = None
+
+        # sample_details.countries cleanup
+        sd = parsed_data.get("sample_details")
+        if isinstance(sd, dict):
+            countries = sd.get("countries")
+            if isinstance(countries, list):
+                cleaned = []
+                for c in countries:
+                    if not isinstance(c, dict):
+                        continue
+                    code = c.get("country_code")
+                    if not code or not isinstance(code, str):
+                        continue
+                    # n_students must be int or null
+                    n = c.get("n_students")
+                    if not isinstance(n, int):
+                        c["n_students"] = None
+                    cleaned.append(c)
+                sd["countries"] = cleaned
+
+        # metadata optional string fields
+        meta = parsed_data.get("metadata")
+        if isinstance(meta, dict):
+            for field in ("doi", "venue", "title"):
+                if meta.get(field) in INVALID_STR:
+                    meta[field] = None
+            # authors must be a list
+            if not isinstance(meta.get("authors"), list):
+                meta["authors"] = []
+
+        # confounders must be a list of strings
+        conf = parsed_data.get("confounders_identified")
+        if not isinstance(conf, list):
+            parsed_data["confounders_identified"] = []
+        else:
+            parsed_data["confounders_identified"] = [
+                c for c in conf if isinstance(c, str) and c not in INVALID_STR
+            ]
+
+        return parsed_data
+
+    def extract(self, processed: "ProcessedPDF") -> ExtractionResult:
+        first_error = processed.parse_errors[0] if processed.parse_errors else None
+        if not processed.extraction_text:
+            return ExtractionResult(
+                file_name=processed.file_name,
+                success=False,
+                extraction=None,
+                input_tokens=0,
+                output_tokens=0,
+                cost_usd=0.0,
+                duration_seconds=0.0,
+                error=first_error or "Empty extracted text",
+            )
+
+        messages = [
+            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "user", "content": self._build_user_message(processed)},
+        ]
+
+        last_error = None
+        for attempt in range(self.max_retries):
+            start = time.perf_counter()
+            try:
+                response = self.client.chat.completions.create(
+                    model=self.model,
+                    messages=messages,
+                    temperature=0.0,
+                    response_format={"type": "json_object"},
+                )
+                duration = time.perf_counter() - start
+                content = response.choices[0].message.content
+                parsed_data = json.loads(content) if content else None
+
+                if parsed_data is None:
+                    last_error = "Model returned empty response"
+                    break
+
+                # Always inject correct file_name
+                if isinstance(parsed_data.get("metadata"), dict):
+                    parsed_data["metadata"]["file_name"] = processed.file_name
+
+                # Sanitize before Pydantic validation
+                parsed_data = self._sanitize(parsed_data)
+
+                try:
+                    extraction = ILSAArticleMetadata.model_validate(parsed_data)
+                except ValidationError as e:
+                    last_error = f"Schema validation failed: {e}"
+                    logger.warning(
+                        f"Validation error on {processed.file_name} "
+                        f"attempt {attempt + 1}: {e}"
+                    )
+                    continue
+
+                usage = response.usage
+                cost = self._calculate_cost(usage.prompt_tokens, usage.completion_tokens)
+                return ExtractionResult(
+                    file_name=processed.file_name,
+                    success=True,
+                    extraction=extraction,
+                    input_tokens=usage.prompt_tokens,
+                    output_tokens=usage.completion_tokens,
+                    cost_usd=cost,
+                    duration_seconds=duration,
+                )
+
+            except RateLimitError as e:
+                wait = self.base_delay * (2 ** attempt)
+                logger.warning(
+                    f"Rate limit on {processed.file_name}, "
+                    f"retry {attempt + 1}/{self.max_retries} in {wait:.1f}s"
+                )
+                time.sleep(wait)
+                last_error = f"Rate limit: {e}"
+
+            except APITimeoutError as e:
+                wait = self.base_delay * (2 ** attempt)
+                logger.warning(
+                    f"Timeout on {processed.file_name}, retry {attempt + 1} in {wait:.1f}s"
+                )
+                time.sleep(wait)
+                last_error = f"Timeout: {e}"
+
+            except APIError as e:
+                last_error = f"API error: {e}"
+                logger.error(f"API error on {processed.file_name}: {e}")
+                break
+
+            except Exception as e:
+                last_error = f"Unexpected: {e}"
+                logger.exception(f"Unexpected error on {processed.file_name}")
+                break
+
+        return ExtractionResult(
+            file_name=processed.file_name,
+            success=False,
+            extraction=None,
+            input_tokens=0,
+            output_tokens=0,
+            cost_usd=0.0,
+            duration_seconds=0.0,
+            error=last_error,
+        )
