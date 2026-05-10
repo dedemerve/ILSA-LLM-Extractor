@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import html
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -55,6 +56,7 @@ class ProcessedPDF:
     extraction_text: str = ""
     estimated_tokens: int = 0
     parse_errors: list[str] = field(default_factory=list)
+    metadata: dict[str, Optional[str]] = field(default_factory=dict)
 
     def to_dict(self) -> dict:
         """Serialize processed PDF metadata for logging or persistence."""
@@ -130,6 +132,9 @@ def detect_sections(raw_text: str) -> dict[str, tuple[int, int]]:
     return boundaries
 
 
+MAX_CHARS = 400_000  # ~100k tokens; keeps total under gpt-4o's 128k context limit
+
+
 def build_extraction_text(
     raw_text: str,
     sections: dict[str, tuple[int, int]],
@@ -143,6 +148,7 @@ def build_extraction_text(
     detectable.
 
     Returns (extraction_text, used_smart_sections).
+    Text is hard-capped at MAX_CHARS to stay within the model context limit.
     """
     informative_keys = ("abstract", "introduction", "methods", "results", "discussion", "conclusion")
 
@@ -153,12 +159,12 @@ def build_extraction_text(
                 start, end = sections[key]
                 parts.append(raw_text[start:end].strip())
         if parts:
-            return "\n\n".join(parts), True
+            return "\n\n".join(parts)[:MAX_CHARS], True
 
     references_match = SECTION_PATTERNS["references"].search(raw_text)
     if references_match:
-        return raw_text[: references_match.start()].strip(), False
-    return raw_text.strip(), False
+        return raw_text[: references_match.start()].strip()[:MAX_CHARS], False
+    return raw_text.strip()[:MAX_CHARS], False
 
 
 def estimate_token_count(text: str) -> int:
@@ -169,6 +175,53 @@ def estimate_token_count(text: str) -> int:
     accounting once a model is fixed.
     """
     return max(1, len(text) // 4)
+
+
+def extract_title(doc: fitz.Document) -> Optional[str]:
+    """
+    Multi-layer title extraction with fallback chain.
+    Priority: PDF metadata (decoded) > First page heuristic > None
+    """
+    # Layer 1: PDF metadata (fastest, but often missing or HTML-encoded)
+    metadata_title = doc.metadata.get('title', '').strip()
+    if metadata_title:
+        # Decode HTML entities (e.g., &amp; → &)
+        metadata_title = html.unescape(metadata_title)
+        if len(metadata_title) > 10:
+            return metadata_title
+
+    # Layer 2: First page heuristic
+    first_page = doc[0].get_text()
+
+    # Pattern 1: Look for title before "Abstract"
+    if "Abstract" in first_page or "ABSTRACT" in first_page:
+        before_abstract = first_page.split("Abstract")[0].split("ABSTRACT")[0]
+        lines = [l.strip() for l in before_abstract.split('\n') if l.strip()]
+        candidates = [
+            l for l in lines
+            if 20 <= len(l) <= 200
+            and l[0].isupper()
+            and not l.startswith('http')
+            and not l.startswith('DOI')
+            and not l.startswith('Available')
+        ]
+        if candidates:
+            title = max(candidates, key=len)
+            return title
+
+    # Pattern 2: Look for title before author names
+    author_markers = ['@', 'University', 'Department', 'School of', 'Institute']
+    lines = [l.strip() for l in first_page.split('\n')[:40] if l.strip()]
+
+    for i, line in enumerate(lines):
+        if any(marker in line for marker in author_markers):
+            candidates = lines[max(0, i-5):i]
+            valid = [c for c in candidates if 20 <= len(c) <= 200 and c[0].isupper()]
+            if valid:
+                return max(valid, key=len)
+
+    # Layer 3: No title found
+    return None
 
 
 def process_pdf(pdf_path: Path, source_database: str) -> ProcessedPDF:
@@ -188,6 +241,15 @@ def process_pdf(pdf_path: Path, source_database: str) -> ProcessedPDF:
     for name, (start, end) in sections_with_bounds.items():
         sections_text[name] = raw_text[start:end].strip()
 
+    # Extract title with multi-layer fallback
+    extracted_title = None
+    try:
+        doc = fitz.open(pdf_path)
+        extracted_title = extract_title(doc)
+        doc.close()
+    except Exception as e:
+        errors.append(f"Failed to extract title: {e}")
+
     return ProcessedPDF(
         file_path=pdf_path,
         file_name=pdf_path.name,
@@ -199,6 +261,7 @@ def process_pdf(pdf_path: Path, source_database: str) -> ProcessedPDF:
         extraction_text=extraction_text,
         estimated_tokens=estimate_token_count(extraction_text),
         parse_errors=errors,
+        metadata={"extracted_title": extracted_title},
     )
 
 
