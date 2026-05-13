@@ -1,46 +1,36 @@
 # ILSA Literature Extraction Pipeline
 
-A pipeline designed to process ILSA academic literature and extract structured metadata utilizing the GPT-5.4-nano Structured Outputs API.
+Academic PDF’lerden (PISA, TIMSS, vb. ILSA + makine öğrenmesi) yapılandırılmış metadata çıkaran hat. Çekirdek: **PyMuPDF** ile metin, **OpenAI** ile JSON extraction, **Pydantic** şema (`src/schemas/models.py`).
 
-Setup
+## Kurulum
 
-```Bash
-conda activate ilsa-literature-review
-pip install -r requirements.txt
-
-cp .env.example .env
-# Add your OPENAI_API_KEY to the newly created .env file
+```bash
+conda activate ilsa-literature-review   # veya kendi ortamınız
+pip install -r ilsa_pipeline/requirements.txt
+cp ilsa_pipeline/.env.example ilsa_pipeline/.env
+# OPENAI_API_KEY ekleyin
 ```
 
-## Usage
-Test Run (20 documents)
+Proje kökündeki `requirements.txt` tam conda çözümlemesidir; sadece extraction için `ilsa_pipeline/requirements.txt` yeterlidir.
 
-```Bash
-python scripts/run_pipeline.py \
-    --pdf-dir ../data/pdfs \
-    --output-dir ./output_test \
-    --limit 20 \
-    --workers 3
-Full Execution (1,800 documents)
+## Çalıştırma
+
+Ana orkestrasyon (çoklu PDF, JSON + isteğe bağlı SQLite):
+
+```bash
+cd /path/to/ILSA_LLMs
+python ilsa_pipeline/scripts/run_pipeline.py \
+  --pdf-dir ./data/pdfs \
+  --output-dir ./output \
+  --workers 3 \
+  --resume
 ```
 
-Full Execution (1,800 documents)
-```Bash
-python scripts/run_pipeline.py \
-    --pdf-dir ../data/pdfs \
-    --output-dir ./output \
-    --workers 5 \
-    --resume
-Knowledge Base Queries
-```
+Belirli makale seti için: `ilsa_pipeline/scripts/extract_targeted.py`
 
-Knowledge Base Queries
-```Bash
-python scripts/example_queries.py --db ./output/ilsa_knowledge_base.db
-Outputs
-output/json/*.json: Individual structured JSON files for each processed document.
-```
+## Çıktılar
 
-`output/ilsa_master.parquet`: Aggregated dataset optimized for machine learning and downstream analysis.
+- `output/json/*.json`: Her PDF için `file_name`, `success`, token/maliyet süreleri ve `extraction` (şemaya uygun nesne).
+- Parquet / SQLite üretimi: `ilsa_pipeline/utils/storage.py` içindeki `build_master_parquet`, `build_sqlite_database`, `StorageManager`.
 
-`output/ilsa_knowledge_base.db`: SQLite database for structured SQL queries.
+Eski yedekler ve alternatif şemalar `cop_kutusu/` altında tutulur.
