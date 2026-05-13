@@ -19,39 +19,133 @@ MODEL_NAME = "gpt-5.4-nano"
 PRICE_INPUT_PER_1M = 2.50
 PRICE_OUTPUT_PER_1M = 10.00
 
-SYSTEM_PROMPT = """You are an expert research analyst specializing in International Large-Scale Assessments (ILSA: PISA, TIMSS, PIRLS, TALIS, ICILS, ICCS, PIAAC) and the use of machine learning on educational survey data.
+SYSTEM_PROMPT = """You are an expert research analyst specializing in International \
+Large-Scale Assessments (ILSA: PISA, TIMSS, PIRLS, TALIS, ICILS, ICCS, PIAAC) \
+and the intersection of Machine Learning in educational data mining.
 
-Your task is to produce one JSON object that matches the ILSAArticleMetadata schema exactly.
+Your task is to extract a highly detailed, structured metadata and methodological \
+sheet from an academic article. You must rigorously map academic jargon to the \
+strict schema provided, and MINIMIZE null values through deep semantic search \
+and expert domain inference.
 
-COVERAGE (use the article text plus the user-message interpretation guidance):
-1) metadata: bibliographic fields (title, authors, year, doi, venue, publication_type, open_access, source_category, file_name).
-2) data.survey_design: whether student/replicate weights are used and any named weight variable.
-3) data.plausible_values_handling and data.missing_data_handling: map the manuscript to the allowed enum literals.
-4) data.sample_details: total_students and per-country counts when reported.
-5) data.ml_techniques: primary model if clear, and all named ML / statistical-learning algorithms used for modeling (not mere preprocessing).
-6) data.confounders_identified: covariates explicitly mentioned as controls or predictors in the model.
-7) data.outcome_summary: 2-4 sentences on findings and model performance, grounded in the text.
-8) data.research_design_type: predictive, causal_observational, causal_experimental, or exploratory when the paper supports it.
+═══════════════════════════════════════════════════════════════
+CRITICAL EXTRACTION & INFERENCE RULES
+═══════════════════════════════════════════════════════════════
 
-CORE RULES:
-- Ground every filled value in the supplied article text (or in a clearly labeled EXTRACTED_TITLE_HINT in the user message). Do not invent DOIs, author lists, sample sizes, country codes, or weight variable names that never appear.
-- Prefer the closest allowed enum or a concise string when the paper gives partial but directional evidence. Reserve null for fields where the manuscript truly offers no usable signal.
-- Use canonical algorithm names when the paper uses synonyms (e.g. "random forests" -> Random Forest).
-- Empty list [] is allowed for data.confounders_identified and data.sample_details.countries when nothing is stated.
+1) STRICT ENUMERATIONS & CATEGORIES:
+   - publication_type MUST be exactly one of:
+     ['journal', 'conference', 'book_chapter', 'preprint', 'report', 'thesis'].
+   - source_category MUST be exactly one of:
+     ['technical_report', 'review_article', 'methodology_paper', 'peer_reviewed_research'].
+   - research_design_type MUST be exactly one of:
+     ['predictive', 'causal_observational', 'causal_experimental', 'exploratory'].
+     Mapping: prediction/classification/regression → "predictive";
+     causal forests, propensity scores, diff-in-diff, IV → "causal_observational";
+     randomized experiment → "causal_experimental";
+     clustering, topic modeling, EDA, data description → "exploratory".
+   - plausible_values_handling MUST be exactly one of:
+     ['rubin_rules', 'single_pv', 'average_pv', 'mitml', 'not_applicable', 'not_reported'].
+     Synonym table:
+       "Rubin's rules" / "Rubin combining rules" / "combined PV estimates" /
+       "pooled across PVs"                                        → rubin_rules
+       "first plausible value" / "PV1 only" / "single PV draw" /
+       "one PV per student" / "separate analyses per PV"          → single_pv
+       "averaged plausible values" / "mean of PVs" / "PV average" /
+       "all five PVs averaged"                                    → average_pv
+       "mitml" / "Mplus complex survey" / "multilevel MI"         → mitml
+       TALIS/PIAAC without PVs, or DV is Likert/direct measure   → not_applicable
+     ILSA domain default: PISA/TIMSS/PIRLS always ship PVs for achievement scores.
+     If the paper models achievement and never mentions PV handling → average_pv.
+   - missing_data_handling MUST be exactly one of:
+     ['listwise_deletion', 'pairwise_deletion', 'mean_imputation',
+      'multiple_imputation', 'not_reported'].
+     Synonym table:
+       "listwise deletion" / "complete case" / "excluded incomplete" → listwise_deletion
+       "pairwise deletion" / "available case analysis"              → pairwise_deletion
+       "mean substitution" / "mean replacement" / "imputed with mean" → mean_imputation
+       "MICE" / "MI" / "missForest" / "FIML" / "EM algorithm" /
+       "chained equations" / "hot-deck" / any ML-based imputation   → multiple_imputation
 
-OUTPUT: Return a single JSON object with exactly these top-level keys: metadata, data.
+2) COUNTRY CODES (ISO 3166-1 alpha-3):
+   - country_code MUST always be a 3-letter UPPERCASE ISO code (e.g. 'TUR', 'USA', \
+     'DEU', 'GBR', 'FRA', 'JPN', 'KOR', 'CHN', 'BRA', 'FIN', 'SGP', 'AUS').
+   - NEVER write full country names, 2-letter codes, or non-standard abbreviations.
 
-metadata fields only: file_name, title, authors, year, doi, venue, publication_type, open_access, source_category.
+3) ML vs. TRADITIONAL STATISTICS (critical for ml_techniques):
+   - For 'all_techniques' and 'primary', extract ONLY Machine Learning / \
+     predictive-modeling algorithms: XGBoost, Random Forest, SVM, Neural Network, \
+     Decision Tree, LASSO, Ridge, Elastic Net, k-NN, Gradient Boosting, \
+     Logistic Regression (when used for classification), Naive Bayes, LightGBM, \
+     CatBoost, AdaBoost, Bagging, ANFIS, etc.
+   - DO NOT include: PCA, factor analysis, t-tests, ANOVA, chi-square, basic \
+     correlations, descriptive statistics, EFA/CFA, SEM, HLM/mixed-effects \
+     (unless explicitly used as an ML baseline), or ESCS index computations.
+   - Algorithm name mapping (use canonical short names):
+     "gradient boosted trees" / "GBT" / "GBM"        → Gradient Boosting
+     "random forests" / "RF"                          → Random Forest
+     "ANN" / "MLP" / "deep learning"                  → Neural Network
+     "SVM" / "SVC" / "SVR"                            → SVM
+     "lasso" / "L1 regression"                        → LASSO
+     "ridge" / "L2 regression"                        → Ridge Regression
+     "elastic net" / "L1+L2"                          → Elastic Net
+     "ANFIS" / "neuro-fuzzy"                          → ANFIS
+     "bagging" / "bootstrap aggregation"              → Bagging
 
-data fields only: survey_design, plausible_values_handling, missing_data_handling, sample_details, ml_techniques, confounders_identified, outcome_summary, research_design_type.
+4) WEIGHTING & REPLICATE DESIGN LOGIC:
+   - student_weights_used: set true if "student weights", "sampling weights", \
+     "W_FSTUWT", "TOTWGT", "SCHWGT", "HOUWGT", "final weight", "senate weight", \
+     "analysis weight", "probability weight", "design weight", or "weighted \
+     estimation" appear anywhere.
+   - replicate_weights_used: set true if "BRR", "balanced repeated replication", \
+     "Fay's method", "jackknife", "replicate weights", "JK2", or "JRR" appear.
+   - weight_variable_name: exact variable name string if mentioned (e.g. 'W_FSTUWT').
+   - ILSA domain default: if a study uses ILSA micro-data and never discusses \
+     weights → student_weights_used = false (omission = likely unweighted).
+   - weight_fields_interpretation: FILL ONLY IF student_weights_used, \
+     replicate_weights_used, AND weight_variable_name are ALL null. Write 3-4 \
+     analytical sentences: what the manuscript says about sample design, why \
+     weights might be missing (e.g. small convenience sample, secondary analysis \
+     without original weights), and what exact wording would be needed to extract them. \
+     IF ANY weight field is non-null, this field MUST BE null.
 
-data.survey_design fields only: student_weights_used, replicate_weights_used, weight_variable_name.
+5) NULL FIELDS INTERPRETATION (THE FALLBACK):
+   - null_fields_interpretation: trigger ONLY if the overall extraction is \
+     extremely sparse — e.g. missing sample sizes, missing ML algorithms, missing \
+     PV handling, multiple metadata fields null. Write a structured diagnostic note \
+     (plain text) explaining WHY the paper lacks data (e.g. "This is a theoretical \
+     review paper, hence no sample size or ML models are evaluated." or "The \
+     manuscript is a meta-analysis without original ILSA micro-data analysis.").
+   - If the record is reasonably dense (most fields filled), this MUST BE null.
 
-data.sample_details fields only: total_students, countries (each country: country_code, n_students).
+6) ANTI-HALLUCINATION:
+   - Never INVENT: DOIs, exact N, country codes, author names, weight variable \
+     names, or algorithm names not present in the text.
+   - Inference is allowed ONLY for categorical/boolean/enum fields where ILSA \
+     domain knowledge provides a clear default (rules 1 and 4 above).
+   - Numeric fields (total_students, n_students, year) MUST come from the text.
 
-data.ml_techniques fields only: primary, all_techniques.
+═══════════════════════════════════════════════════════════════
+OUTPUT SCHEMA
+═══════════════════════════════════════════════════════════════
+
+Return a single JSON with exactly two top-level keys: metadata, data.
+
+metadata fields: file_name, title, authors, year, doi, venue, publication_type,
+  open_access, source_category.
+
+data fields: survey_design, plausible_values_handling, missing_data_handling,
+  sample_details, ml_techniques, confounders_identified, outcome_summary,
+  research_design_type, null_fields_interpretation.
+
+data.survey_design: student_weights_used, replicate_weights_used,
+  weight_variable_name, weight_fields_interpretation.
+
+data.sample_details: total_students, countries (each: country_code, n_students).
+
+data.ml_techniques: primary, all_techniques.
 
 Do not emit any other top-level or nested keys.
+No markdown fences, no preamble — valid JSON only.
 
 """
 
@@ -87,8 +181,8 @@ class GPTExtractor:
         title_hint = ""
         if processed.metadata.get("extracted_title"):
             title_hint = (
-                f"\nEXTRACTED_TITLE_HINT (use only if the body never states a title; "
-                f"still do not contradict the PDF): "
+                f"\nEXTRACTED_TITLE_HINT (use only if the body never states "
+                f"a title; still do not contradict the PDF): "
                 f"{processed.metadata['extracted_title']}\n"
             )
 
@@ -100,42 +194,51 @@ class GPTExtractor:
             f"--- BEGIN ARTICLE TEXT ---\n\n"
             f"{processed.extraction_text}\n\n"
             f"--- END ARTICLE TEXT ---\n\n"
-            "Apply the system prompt schema to the article above. "
-            "Return valid JSON only — no markdown fences, no preamble."
+            "Extract the structured JSON from the article above using the "
+            "system prompt rules. Return valid JSON only."
         )
 
         interpretation_text = (
-            "ADDITIONAL INTERPRETATION (same article as previous block; "
-            "reduces over-use of null without allowing fabrication):\n\n"
-            "1) Evidence ladder — prefer filling fields in this order:\n"
-            "   (A) Explicit statements in the manuscript.\n"
-            "   (B) Single reasonable reading: the paper describes a procedure, "
-            "estimator, or data product so concretely that only one schema value fits "
-            "(map to the closest allowed enum or string).\n"
-            "   (C) If the paper is silent on a dimension, use null for that field, "
-            "or not_reported / not_applicable for the PV and missing-data enums only "
-            "when the silence is genuine (no methods clue at all).\n\n"
-            "2) Methodology enums (data.plausible_values_handling, "
-            "data.missing_data_handling): do not default to null or not_reported "
-            "out of caution when the abstract, methods, or results clearly mentions "
-            "deletion, imputation, complete cases, MICE, Rubin's rules, PV averaging, "
-            "or a single PV draw — map to the closest literal.\n\n"
-            "3) Anti-hallucination — never invent: exact N, country list entries, "
-            "DOIs, author strings, weight variable names, or algorithm names that "
-            "never appear. Booleans (e.g. student_weights_used) require at least a "
-            "clear discussion of sampling weights, representativeness, or a named "
-            "weight column; otherwise null.\n\n"
-            "4) data.ml_techniques.all_techniques: include every modeling algorithm "
-            "named in the study (including baselines). data.ml_techniques.primary: "
-            "the main or best-performing model if stated; else the model emphasized "
-            "in the abstract; else null with a non-empty all_techniques when possible."
-            "\n\n"
-            "5) data.outcome_summary: 2-4 sentences summarizing reported findings "
-            "and performance metrics only from the text — no external facts or "
-            "speculative policy.\n\n"
-            "6) data.confounders_identified: list variable names or short phrases "
-            "the paper says were controlled or entered as predictors; [] if none named."
-            "\n"
+            "EXPERT INFERENCE CHECKLIST (same article; apply BEFORE finalising JSON):\n\n"
+
+            "A) STRICT ENUMS — publication_type, source_category, research_design_type, "
+            "plausible_values_handling, missing_data_handling must each be EXACTLY one "
+            "of the allowed values listed in the system prompt. Use the synonym tables "
+            "to map academic jargon. Never write free-text descriptions or new slugs. "
+            "Examples: 'FIML' → multiple_imputation; 'complete cases' → listwise_deletion; "
+            "'averaged across five PVs' → average_pv; 'PV1' → single_pv.\n\n"
+
+            "B) COUNTRY CODES — every country_code must be ISO 3166-1 alpha-3 "
+            "(3 uppercase letters). Never write full names or 2-letter codes.\n\n"
+
+            "C) ML TECHNIQUES ONLY — all_techniques and primary must contain ONLY "
+            "Machine Learning / predictive-modeling algorithms. DO NOT include: "
+            "PCA, factor analysis, t-tests, ANOVA, chi-square, correlations, "
+            "descriptive statistics, EFA/CFA, SEM, HLM (unless ML baseline), "
+            "or ESCS computations. Set primary to the best-performing model; "
+            "if ambiguous pick the one highlighted in the abstract.\n\n"
+
+            "D) SURVEY WEIGHTS — apply domain inference per system rule 4. "
+            "If ILSA micro-data is used and weights are never mentioned, set "
+            "student_weights_used=false. When ALL THREE weight fields are null, "
+            "FILL weight_fields_interpretation (3-4 analytical sentences). "
+            "If ANY weight field is non-null, weight_fields_interpretation MUST be null.\n\n"
+
+            "E) CONFOUNDERS — list variable names or short phrases controlled for "
+            "as predictors (SES, gender, parental education, etc.). [] only if "
+            "the paper truly names none.\n\n"
+
+            "F) outcome_summary — 4-5 sentences of findings and performance metrics "
+            "ONLY from the text. Do NOT put null-field commentary here.\n\n"
+
+            "G) null_fields_interpretation — trigger ONLY if extraction is extremely "
+            "sparse (missing sample sizes, missing ML algorithms, many metadata nulls). "
+            "Write a diagnostic note explaining WHY (e.g. theoretical paper, meta-analysis, "
+            "poor OCR). If the record is reasonably dense, this MUST be null.\n\n"
+
+            "H) ANTI-HALLUCINATION — never invent DOIs, exact N, country codes, "
+            "weight variable names, or algorithm names absent from the text. "
+            "Inference applies ONLY to categorical/boolean/enum fields.\n"
         )
 
         return [
@@ -148,6 +251,92 @@ class GPTExtractor:
             input_tokens * PRICE_INPUT_PER_1M / 1_000_000
             + output_tokens * PRICE_OUTPUT_PER_1M / 1_000_000
         )
+
+    @staticmethod
+    def _coerce_pv_literal(value) -> str:
+        """Map free-text / invalid PV labels to schema literals."""
+        allowed = frozenset({
+            "rubin_rules", "single_pv", "average_pv", "mitml",
+            "not_applicable", "not_reported",
+        })
+        if value in allowed:
+            return value
+        if not isinstance(value, str):
+            return "not_reported"
+        t = value.lower().replace("-", "_").replace(" ", "_")
+        if "rubin" in t or "combined_estimates" in t:
+            return "rubin_rules"
+        if "mitml" in t or "mplus" in t:
+            return "mitml"
+        if "not_applicable" in t or "no_pv" in t or "no_pvs" in t:
+            return "not_applicable"
+        if (
+            "first_plausible" in t
+            or "single_pv" in t
+            or "pv1_only" in t
+            or "pv1" == t
+            or "separate" in t and "plausible" in t
+            or "per_pv" in t
+            or "per_plausible" in t
+            or "one_pv" in t
+            or ("target" in t and "indicator" in t)
+            or ("binary" in t and ("pv" in t or "plausible" in t))
+        ):
+            return "single_pv"
+        if (
+            "average" in t and "pv" in t
+            or "all_plausible" in t
+            or "across_pv" in t
+            or "across_pvs" in t
+            or "mean_pv" in t
+        ):
+            return "average_pv"
+        if "plausible" in t or "_pv" in t or "pv_" in t:
+            return "not_reported"
+        return "not_reported"
+
+    @staticmethod
+    def _coerce_md_literal(value) -> str:
+        """Map free-text / invalid missing-data labels to schema literals."""
+        allowed = frozenset({
+            "listwise_deletion", "pairwise_deletion", "mean_imputation",
+            "multiple_imputation", "not_reported",
+        })
+        if value in allowed:
+            return value
+        if not isinstance(value, str):
+            return "not_reported"
+        t = value.lower().replace("-", "_").replace(" ", "_")
+        if len(t) > 120 or "the_manuscript" in t or "the_paper" in t or "the_dataset" in t:
+            return "not_reported"
+        if "no_missing" in t or "without_missing" in t or "no_missing_data" in t:
+            return "not_reported"
+        if "pairwise" in t:
+            return "pairwise_deletion"
+        if "listwise" in t or "complete_case" in t or "complete case" in t:
+            return "listwise_deletion"
+        if "listwise" in t or "exclusion" in t and "missing" in t:
+            return "listwise_deletion"
+        if ("mean" in t and "imput" in t) or ("mean" in t and "substitut" in t) or ("mean" in t and "replac" in t):
+            return "mean_imputation"
+        if (
+            "imput" in t
+            or "mice" in t
+            or "missforest" in t
+            or "miss_forest" in t
+            or "rf_based" in t
+            or "fiml" in t
+            or "full_information" in t
+            or "maximum_likelihood" in t
+            or "em_algorithm" in t
+            or "hot_deck" in t
+            or "hot deck" in t
+            or "chained_equations" in t
+            or "machine_learning" in t and "missing" in t
+            or t == "imputation"
+        ):
+            return "multiple_imputation"
+        return "not_reported"
 
     @staticmethod
     def _sanitize(parsed_data: dict) -> dict:
@@ -186,6 +375,7 @@ class GPTExtractor:
             "confounders_identified",
             "outcome_summary",
             "research_design_type",
+            "null_fields_interpretation",
         )
 
         if not isinstance(parsed_data.get("data"), dict):
@@ -227,6 +417,36 @@ class GPTExtractor:
             elif ml.get("all_techniques") is None:
                 ml["all_techniques"] = []
 
+        COUNTRY_NAME_TO_ISO = {
+            "turkey": "TUR", "usa": "USA", "united states": "USA",
+            "germany": "DEU", "deutschland": "DEU", "france": "FRA",
+            "japan": "JPN", "korea": "KOR", "south korea": "KOR",
+            "china": "CHN", "brazil": "BRA", "finland": "FIN",
+            "singapore": "SGP", "australia": "AUS", "canada": "CAN",
+            "uk": "GBR", "united kingdom": "GBR", "england": "GBR",
+            "spain": "ESP", "italy": "ITA", "netherlands": "NLD",
+            "sweden": "SWE", "norway": "NOR", "denmark": "DNK",
+            "israel": "ISR", "new zealand": "NZL", "ireland": "IRL",
+            "austria": "AUT", "belgium": "BEL", "switzerland": "CHE",
+            "portugal": "PRT", "poland": "POL", "czech republic": "CZE",
+            "hungary": "HUN", "greece": "GRC", "romania": "ROU",
+            "russia": "RUS", "thailand": "THA", "indonesia": "IDN",
+            "malaysia": "MYS", "chile": "CHL", "mexico": "MEX",
+            "colombia": "COL", "argentina": "ARG", "india": "IND",
+            "south africa": "ZAF", "taiwan": "TWN", "hong kong": "HKG",
+            "macao": "MAC", "macau": "MAC", "estonia": "EST",
+            "latvia": "LVA", "lithuania": "LTU", "slovakia": "SVK",
+            "slovenia": "SVN", "croatia": "HRV", "serbia": "SRB",
+            "bulgaria": "BGR", "cyprus": "CYP", "malta": "MLT",
+            "luxembourg": "LUX", "iceland": "ISL", "qatar": "QAT",
+            "uae": "ARE", "saudi arabia": "SAU", "jordan": "JOR",
+            "iran": "IRN", "egypt": "EGY", "morocco": "MAR",
+            "tunisia": "TUN", "ghana": "GHA", "kenya": "KEN",
+            "nigeria": "NGA", "pakistan": "PAK", "vietnam": "VNM",
+            "philippines": "PHL", "peru": "PER", "uruguay": "URY",
+            "costa rica": "CRI", "panama": "PAN",
+        }
+
         sd = data.get("sample_details")
         if isinstance(sd, dict):
             countries = sd.get("countries")
@@ -238,11 +458,50 @@ class GPTExtractor:
                     code = c.get("country_code")
                     if not code or not isinstance(code, str):
                         continue
+                    code = code.strip()
+                    if len(code) != 3 or not code.isalpha():
+                        mapped = COUNTRY_NAME_TO_ISO.get(code.lower())
+                        if mapped:
+                            code = mapped
+                        else:
+                            continue
+                    c["country_code"] = code.upper()
                     n = c.get("n_students")
                     if not isinstance(n, int):
                         c["n_students"] = None
                     cleaned.append(c)
                 sd["countries"] = cleaned
+
+        sdw = data.get("survey_design")
+        if isinstance(sdw, dict):
+            wfi = sdw.get("weight_fields_interpretation")
+            if isinstance(wfi, str) and wfi.strip() in INVALID_STR:
+                sdw["weight_fields_interpretation"] = None
+            wn = sdw.get("weight_variable_name")
+            all_w_null = (
+                sdw.get("student_weights_used") is None
+                and sdw.get("replicate_weights_used") is None
+                and (wn is None or (isinstance(wn, str) and not wn.strip()))
+            )
+            if not all_w_null and sdw.get("weight_fields_interpretation"):
+                sdw["weight_fields_interpretation"] = None
+            if isinstance(wn, str) and wn in INVALID_STR:
+                sdw["weight_variable_name"] = None
+
+        nfi = data.get("null_fields_interpretation")
+        if isinstance(nfi, str) and nfi.strip() in INVALID_STR:
+            data["null_fields_interpretation"] = None
+
+        VALID_PUB_TYPES = frozenset({
+            "journal", "conference", "book_chapter", "preprint", "report", "thesis",
+        })
+        VALID_SOURCE_CATS = frozenset({
+            "technical_report", "review_article", "methodology_paper",
+            "peer_reviewed_research",
+        })
+        VALID_DESIGN_TYPES = frozenset({
+            "predictive", "causal_observational", "causal_experimental", "exploratory",
+        })
 
         meta = parsed_data.get("metadata")
         if isinstance(meta, dict):
@@ -258,6 +517,44 @@ class GPTExtractor:
                     meta[field] = None
             if not isinstance(meta.get("authors"), list):
                 meta["authors"] = []
+            pt = meta.get("publication_type")
+            if isinstance(pt, str) and pt not in VALID_PUB_TYPES:
+                normed = pt.lower().replace("-", "_").replace(" ", "_")
+                if normed in VALID_PUB_TYPES:
+                    meta["publication_type"] = normed
+                else:
+                    matched = None
+                    for v in VALID_PUB_TYPES:
+                        if v in normed or normed.startswith(v):
+                            matched = v
+                            break
+                    meta["publication_type"] = matched
+
+            sc = meta.get("source_category")
+            if isinstance(sc, str) and sc not in VALID_SOURCE_CATS:
+                normed = sc.lower().replace("-", "_").replace(" ", "_")
+                if normed in VALID_SOURCE_CATS:
+                    meta["source_category"] = normed
+                else:
+                    matched = None
+                    for v in VALID_SOURCE_CATS:
+                        if v in normed or normed.startswith(v):
+                            matched = v
+                            break
+                    meta["source_category"] = matched
+
+        rdt = data.get("research_design_type")
+        if isinstance(rdt, str) and rdt not in VALID_DESIGN_TYPES:
+            normed = rdt.lower().replace("-", "_").replace(" ", "_")
+            if normed in VALID_DESIGN_TYPES:
+                data["research_design_type"] = normed
+            else:
+                matched = None
+                for v in VALID_DESIGN_TYPES:
+                    if v in normed or normed.startswith(v):
+                        matched = v
+                        break
+                data["research_design_type"] = matched
 
         data["plausible_values_handling"] = _normalize_literal(
             data.get("plausible_values_handling"),
@@ -277,6 +574,23 @@ class GPTExtractor:
             },
             "not_reported",
         )
+
+        pv_allowed = frozenset({
+            "rubin_rules", "single_pv", "average_pv", "mitml",
+            "not_applicable", "not_reported",
+        })
+        md_allowed = frozenset({
+            "listwise_deletion", "pairwise_deletion", "mean_imputation",
+            "multiple_imputation", "not_reported",
+        })
+
+        pv_raw = data.get("plausible_values_handling")
+        if pv_raw not in pv_allowed:
+            data["plausible_values_handling"] = GPTExtractor._coerce_pv_literal(pv_raw)
+
+        md_raw = data.get("missing_data_handling")
+        if md_raw not in md_allowed:
+            data["missing_data_handling"] = GPTExtractor._coerce_md_literal(md_raw)
 
         outcome = data.get("outcome_summary")
         if isinstance(outcome, dict):
