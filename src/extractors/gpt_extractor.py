@@ -15,6 +15,36 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
+COUNTRY_NAME_TO_ISO = {
+    "turkey": "TUR", "usa": "USA", "united states": "USA",
+    "germany": "DEU", "deutschland": "DEU", "france": "FRA",
+    "japan": "JPN", "korea": "KOR", "south korea": "KOR",
+    "china": "CHN", "brazil": "BRA", "finland": "FIN",
+    "singapore": "SGP", "australia": "AUS", "canada": "CAN",
+    "uk": "GBR", "united kingdom": "GBR", "england": "GBR",
+    "spain": "ESP", "italy": "ITA", "netherlands": "NLD",
+    "sweden": "SWE", "norway": "NOR", "denmark": "DNK",
+    "israel": "ISR", "new zealand": "NZL", "ireland": "IRL",
+    "austria": "AUT", "belgium": "BEL", "switzerland": "CHE",
+    "portugal": "PRT", "poland": "POL", "czech republic": "CZE",
+    "hungary": "HUN", "greece": "GRC", "romania": "ROU",
+    "russia": "RUS", "thailand": "THA", "indonesia": "IDN",
+    "malaysia": "MYS", "chile": "CHL", "mexico": "MEX",
+    "colombia": "COL", "argentina": "ARG", "india": "IND",
+    "south africa": "ZAF", "taiwan": "TWN", "hong kong": "HKG",
+    "macao": "MAC", "macau": "MAC", "estonia": "EST",
+    "latvia": "LVA", "lithuania": "LTU", "slovakia": "SVK",
+    "slovenia": "SVN", "croatia": "HRV", "serbia": "SRB",
+    "bulgaria": "BGR", "cyprus": "CYP", "malta": "MLT",
+    "luxembourg": "LUX", "iceland": "ISL", "qatar": "QAT",
+    "uae": "ARE", "saudi arabia": "SAU", "jordan": "JOR",
+    "iran": "IRN", "egypt": "EGY", "morocco": "MAR",
+    "tunisia": "TUN", "ghana": "GHA", "kenya": "KEN",
+    "nigeria": "NGA", "pakistan": "PAK", "vietnam": "VNM",
+    "philippines": "PHL", "peru": "PER", "uruguay": "URY",
+    "costa rica": "CRI", "panama": "PAN",
+}
+
 MODEL_NAME = "gpt-5.4-nano"
 PRICE_INPUT_PER_1M = 2.50
 PRICE_OUTPUT_PER_1M = 10.00
@@ -219,6 +249,8 @@ class ExtractionResult:
 
 
 class GPTExtractor:
+    _use_structured: bool | None = None
+
     def __init__(
         self,
         api_key: str = None,
@@ -231,6 +263,30 @@ class GPTExtractor:
         self.model = model
         self.max_retries = max_retries
         self.base_delay = base_delay
+
+    @staticmethod
+    def _post_process_model(extraction: ILSAArticleMetadata) -> None:
+        """Post-process a structured-output extraction in place."""
+        for c in extraction.data.sample_details.countries:
+            code = c.country_code.strip()
+            if len(code) != 3 or not code.isalpha():
+                mapped = COUNTRY_NAME_TO_ISO.get(code.lower())
+                if mapped:
+                    c.country_code = mapped
+            c.country_code = c.country_code.upper()
+
+        ml = extraction.data.ml_techniques
+        if ml.primary is None and len(ml.all_techniques) == 1:
+            ml.primary = ml.all_techniques[0]
+
+        sd = extraction.data.survey_design
+        has_positive = (
+            sd.student_weights_used is True
+            or sd.replicate_weights_used is True
+            or (sd.weight_variable_name and sd.weight_variable_name.strip())
+        )
+        if has_positive:
+            sd.weight_fields_interpretation = None
 
     def _build_user_message(self, processed: "ProcessedPDF") -> list[dict]:
         sections_label = ", ".join(processed.sections.keys()) or "none"
@@ -497,36 +553,6 @@ class GPTExtractor:
             if ml["primary"] is None and len(ml["all_techniques"]) == 1:
                 ml["primary"] = ml["all_techniques"][0]
 
-        COUNTRY_NAME_TO_ISO = {
-            "turkey": "TUR", "usa": "USA", "united states": "USA",
-            "germany": "DEU", "deutschland": "DEU", "france": "FRA",
-            "japan": "JPN", "korea": "KOR", "south korea": "KOR",
-            "china": "CHN", "brazil": "BRA", "finland": "FIN",
-            "singapore": "SGP", "australia": "AUS", "canada": "CAN",
-            "uk": "GBR", "united kingdom": "GBR", "england": "GBR",
-            "spain": "ESP", "italy": "ITA", "netherlands": "NLD",
-            "sweden": "SWE", "norway": "NOR", "denmark": "DNK",
-            "israel": "ISR", "new zealand": "NZL", "ireland": "IRL",
-            "austria": "AUT", "belgium": "BEL", "switzerland": "CHE",
-            "portugal": "PRT", "poland": "POL", "czech republic": "CZE",
-            "hungary": "HUN", "greece": "GRC", "romania": "ROU",
-            "russia": "RUS", "thailand": "THA", "indonesia": "IDN",
-            "malaysia": "MYS", "chile": "CHL", "mexico": "MEX",
-            "colombia": "COL", "argentina": "ARG", "india": "IND",
-            "south africa": "ZAF", "taiwan": "TWN", "hong kong": "HKG",
-            "macao": "MAC", "macau": "MAC", "estonia": "EST",
-            "latvia": "LVA", "lithuania": "LTU", "slovakia": "SVK",
-            "slovenia": "SVN", "croatia": "HRV", "serbia": "SRB",
-            "bulgaria": "BGR", "cyprus": "CYP", "malta": "MLT",
-            "luxembourg": "LUX", "iceland": "ISL", "qatar": "QAT",
-            "uae": "ARE", "saudi arabia": "SAU", "jordan": "JOR",
-            "iran": "IRN", "egypt": "EGY", "morocco": "MAR",
-            "tunisia": "TUN", "ghana": "GHA", "kenya": "KEN",
-            "nigeria": "NGA", "pakistan": "PAK", "vietnam": "VNM",
-            "philippines": "PHL", "peru": "PER", "uruguay": "URY",
-            "costa rica": "CRI", "panama": "PAN",
-        }
-
         sd = data.get("sample_details")
         if isinstance(sd, dict):
             countries = sd.get("countries")
@@ -716,6 +742,53 @@ class GPTExtractor:
         for attempt in range(self.max_retries):
             start = time.perf_counter()
             try:
+                # ── Path A: Structured Outputs (token-level schema enforcement) ──
+                if GPTExtractor._use_structured is not False:
+                    try:
+                        response = self.client.beta.chat.completions.parse(
+                            model=self.model,
+                            messages=messages,
+                            temperature=0.0,
+                            response_format=ILSAArticleMetadata,
+                        )
+                        duration = time.perf_counter() - start
+                        extraction = response.choices[0].message.parsed
+                        if extraction is not None:
+                            GPTExtractor._use_structured = True
+                            extraction.metadata.file_name = processed.file_name
+                            self._post_process_model(extraction)
+                            usage = response.usage
+                            cost = self._calculate_cost(
+                                usage.prompt_tokens, usage.completion_tokens
+                            )
+                            return ExtractionResult(
+                                file_name=processed.file_name,
+                                success=True,
+                                extraction=extraction,
+                                input_tokens=usage.prompt_tokens,
+                                output_tokens=usage.completion_tokens,
+                                cost_usd=cost,
+                                duration_seconds=duration,
+                            )
+                        last_error = "Model refused structured output"
+                        continue
+                    except (AttributeError, TypeError):
+                        GPTExtractor._use_structured = False
+                        logger.info(
+                            "Structured outputs unavailable in SDK, "
+                            "falling back to JSON mode"
+                        )
+                    except APIError as struct_err:
+                        if GPTExtractor._use_structured is None:
+                            GPTExtractor._use_structured = False
+                            logger.info(
+                                "Model does not support structured outputs "
+                                f"({struct_err}), falling back to JSON mode"
+                            )
+                        else:
+                            raise
+
+                # ── Path B: JSON mode with _sanitize + manual validation ──
                 response = self.client.chat.completions.create(
                     model=self.model,
                     messages=messages,
@@ -730,11 +803,9 @@ class GPTExtractor:
                     last_error = "Model returned empty response"
                     break
 
-                # Always inject correct file_name
                 if isinstance(parsed_data.get("metadata"), dict):
                     parsed_data["metadata"]["file_name"] = processed.file_name
 
-                # Sanitize before Pydantic validation
                 parsed_data = self._sanitize(parsed_data)
 
                 try:
@@ -748,7 +819,9 @@ class GPTExtractor:
                     continue
 
                 usage = response.usage
-                cost = self._calculate_cost(usage.prompt_tokens, usage.completion_tokens)
+                cost = self._calculate_cost(
+                    usage.prompt_tokens, usage.completion_tokens
+                )
                 return ExtractionResult(
                     file_name=processed.file_name,
                     success=True,
@@ -771,7 +844,8 @@ class GPTExtractor:
             except APITimeoutError as e:
                 wait = self.base_delay * (2 ** attempt)
                 logger.warning(
-                    f"Timeout on {processed.file_name}, retry {attempt + 1} in {wait:.1f}s"
+                    f"Timeout on {processed.file_name}, "
+                    f"retry {attempt + 1} in {wait:.1f}s"
                 )
                 time.sleep(wait)
                 last_error = f"Timeout: {e}"
