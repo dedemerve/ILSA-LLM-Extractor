@@ -23,7 +23,7 @@ _here = Path(__file__).resolve().parent
 sys.path.insert(0, str(_here.parent))        # ilsa_pipeline/
 sys.path.insert(0, str(_here.parent.parent)) # ILSA_LLMs/
 
-from extractors.gpt_extractor import GPTExtractor, ExtractionResult
+from extractors.gpt_extractor import GPTExtractor, ExtractionResult, MODEL_NAME
 from extractors.pdf_processor import process_pdf
 from utils.storage import (
     save_json,
@@ -32,11 +32,11 @@ from utils.storage import (
     should_skip_resume_for_json,
 )
 
-MODEL = "gpt-4o-2024-08-06"
-OUTPUT_DIR = _here.parent.parent / "outputs" / "batch_deneme"
+MODEL = MODEL_NAME
+OUTPUT_DIR = _here.parent.parent / "outputs" / "deneme2"
 
-# Build PDF_TARGETS from every *.pdf under ~/Desktop/deneme/
-PDF_TARGETS = [Path(p) for p in glob.glob(str(Path.home() / "Desktop" / "deneme" / "*.pdf"))]
+# Build PDF_TARGETS from every *.pdf under ~/Desktop/deneme2/
+PDF_TARGETS = [Path(p) for p in glob.glob(str(Path.home() / "Desktop" / "deneme2" / "*.pdf"))]
 
 # (doc_root, subdir, filename) — resolved at runtime via os.listdir so that
 # special characters in the WoS folder names never need to be hardcoded.
