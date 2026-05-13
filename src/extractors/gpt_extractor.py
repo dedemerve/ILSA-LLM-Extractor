@@ -117,7 +117,63 @@ CRITICAL EXTRACTION & INFERENCE RULES
      manuscript is a meta-analysis without original ILSA micro-data analysis.").
    - If the record is reasonably dense (most fields filled), this MUST BE null.
 
-6) ANTI-HALLUCINATION:
+6) EXHAUSTIVE DATA & METHODOLOGY SEARCH (NO LAZY EXTRACTIONS):
+   - DataBlock and SurveyDesign are the MOST CRITICAL sections. You must \
+     aggressively scan "Methodology", "Data", "Measures", "Analytical Strategy", \
+     "Sample", "Participants", AND footnotes, table notes, and appendices.
+   - EXTENDED WEIGHT SYNONYMS — also look for: "senate weights", "house weights", \
+     "overall weights", "SENWGT", "MATWGT", "SCIWGT", "REAWGT", variables starting \
+     with "W_" or ending in "WGT". For replicate weights also: "JRR", "jackknife \
+     repeated replication", "Taylor series linearization".
+   - INFERRING COMPLEX DESIGN — if the authors mention adjusting for "complex \
+     survey design", "stratification", "clustering", or "multilevel weighting", \
+     you MUST infer student_weights_used = true.
+   - STRICT FAIL-SAFE ENFORCEMENT — if BOTH student_weights_used and \
+     replicate_weights_used end up as false or null, AND weight_variable_name \
+     is null, you ABSOLUTELY MUST fill weight_fields_interpretation with 3-4 \
+     sentences explaining: (a) what the methodology section says about the data, \
+     (b) why weight information is missing (e.g. "The authors focused solely on \
+     the ML architecture without detailing data preparation or ILSA weighting"), \
+     (c) what explicit wording or variable names would be needed to confirm \
+     weights were used.
+   - *** FATAL ERROR ***: returning false/null for all weight fields AND leaving \
+     weight_fields_interpretation as null is a schema violation. You must always \
+     provide either evidence of weighting OR an explanation of its absence.
+
+7) AGGRESSIVE SAMPLE & COUNTRY EXTRACTION (sample_details):
+   - total_students: NEVER default to null without an exhaustive search. Scan \
+     "Method", "Participants", "Data", "Data Cleaning", and "Results" sections \
+     for keywords: "N =", "n =", "final sample", "consisted of", "analytic \
+     sample", "valid responses", "after removing", "after exclusion", \
+     "remaining students", "total of". Check tables and figure captions too.
+   - countries: identify ALL countries or economies analyzed. If the abstract \
+     says "using PISA data from the USA", extract country_code = "USA". If a \
+     table lists multiple countries, extract ALL of them with ISO 3166-1 alpha-3 \
+     codes. Do not leave the list empty if the data source inherently implies \
+     a country (e.g. "TIMSS 2019 data from Morocco" → [{"country_code":"MAR"}]).
+
+8) LOGICAL DEDUCTION FOR ML TECHNIQUES (ml_techniques):
+   - primary: DO NOT leave primary null if all_techniques is populated!
+     a) If ONLY ONE algorithm is in all_techniques (e.g. ["LASSO"]), that \
+        algorithm IS inherently the primary model — copy it to primary.
+     b) If MULTIPLE algorithms are listed, scan "Results", "Abstract", or \
+        "Conclusion" for: "performed best", "achieved the highest accuracy", \
+        "outperformed", "best-performing model", "highest R²/AUC/F1". Assign \
+        that winning model to primary.
+     c) If the paper genuinely compares models without declaring a winner, \
+        pick the one highlighted in the abstract or conclusion.
+   - *** FATAL ERROR ***: primary left null while all_techniques has values \
+     is a schema violation.
+
+9) ENFORCING THE NULL INTERPRETATION FALLBACK:
+   - If after exhaustive search total_students is still null, OR primary is \
+     null while all_techniques is empty, you MUST trigger null_fields_interpretation. \
+     Write 2-3 sentences diagnosing the omission (e.g. "The study is a scoping \
+     review without an empirical sample" or "The authors listed LASSO and Random \
+     Forest but did not report which model achieved the best metric.").
+   - This rule complements Rule 5 — both may apply simultaneously.
+
+10) ANTI-HALLUCINATION:
    - Never INVENT: DOIs, exact N, country codes, author names, weight variable \
      names, or algorithm names not present in the text.
    - Inference is allowed ONLY for categorical/boolean/enum fields where ILSA \
@@ -218,25 +274,46 @@ class GPTExtractor:
             "or ESCS computations. Set primary to the best-performing model; "
             "if ambiguous pick the one highlighted in the abstract.\n\n"
 
-            "D) SURVEY WEIGHTS — apply domain inference per system rule 4. "
-            "If ILSA micro-data is used and weights are never mentioned, set "
-            "student_weights_used=false. When ALL THREE weight fields are null, "
-            "FILL weight_fields_interpretation (3-4 analytical sentences). "
-            "If ANY weight field is non-null, weight_fields_interpretation MUST be null.\n\n"
+            "D) SURVEY WEIGHTS (CRITICAL — system rules 4 + 6): "
+            "Aggressively scan methodology, data, footnotes, and table notes for "
+            "weight terms (W_FSTUWT, TOTWGT, senate/house weights, BRR, jackknife, "
+            "complex survey design, stratification, clustering). "
+            "If found → set student_weights_used/replicate_weights_used = true. "
+            "If ILSA micro-data is used but NO weight evidence exists → set false. "
+            "*** FAIL-SAFE ***: when both student_weights_used and replicate_weights_used "
+            "are false or null AND weight_variable_name is null, you MUST fill "
+            "weight_fields_interpretation with 3-4 sentences explaining WHY weighting "
+            "information is absent. Leaving all weight fields as false/null AND "
+            "weight_fields_interpretation as null is a FATAL ERROR. "
+            "ONLY set weight_fields_interpretation to null when student_weights_used=true "
+            "OR replicate_weights_used=true (i.e. positive evidence of weighting exists).\n\n"
 
-            "E) CONFOUNDERS — list variable names or short phrases controlled for "
+            "E) SAMPLE DETAILS (system rule 7) — exhaustively search Method, "
+            "Participants, Data, Data Cleaning, and Results for total N. Look for "
+            "'N =', 'final sample', 'analytic sample', 'valid responses', 'after "
+            "removing/exclusion'. Check tables and figure captions. For countries, "
+            "extract ALL ISO alpha-3 codes; never leave countries empty if the "
+            "data source implies a country.\n\n"
+
+            "F) ML PRIMARY (system rule 8) — *** FATAL ERROR *** to leave primary "
+            "null while all_techniques has values. If only ONE algorithm is listed, "
+            "it IS the primary. If multiple, scan Results/Abstract/Conclusion for "
+            "'performed best', 'highest accuracy/R²/AUC', 'outperformed'. If truly "
+            "ambiguous pick the one highlighted in the abstract.\n\n"
+
+            "G) CONFOUNDERS — list variable names or short phrases controlled for "
             "as predictors (SES, gender, parental education, etc.). [] only if "
             "the paper truly names none.\n\n"
 
-            "F) outcome_summary — 4-5 sentences of findings and performance metrics "
+            "H) outcome_summary — 4-5 sentences of findings and performance metrics "
             "ONLY from the text. Do NOT put null-field commentary here.\n\n"
 
-            "G) null_fields_interpretation — trigger ONLY if extraction is extremely "
-            "sparse (missing sample sizes, missing ML algorithms, many metadata nulls). "
-            "Write a diagnostic note explaining WHY (e.g. theoretical paper, meta-analysis, "
-            "poor OCR). If the record is reasonably dense, this MUST be null.\n\n"
+            "I) null_fields_interpretation — trigger if total_students is still "
+            "null, or primary is null while all_techniques is empty, or extraction "
+            "is extremely sparse. Write a diagnostic note explaining WHY. "
+            "If the record is reasonably dense, this MUST be null.\n\n"
 
-            "H) ANTI-HALLUCINATION — never invent DOIs, exact N, country codes, "
+            "J) ANTI-HALLUCINATION — never invent DOIs, exact N, country codes, "
             "weight variable names, or algorithm names absent from the text. "
             "Inference applies ONLY to categorical/boolean/enum fields.\n"
         )
@@ -417,6 +494,9 @@ class GPTExtractor:
             elif ml.get("all_techniques") is None:
                 ml["all_techniques"] = []
 
+            if ml["primary"] is None and len(ml["all_techniques"]) == 1:
+                ml["primary"] = ml["all_techniques"][0]
+
         COUNTRY_NAME_TO_ISO = {
             "turkey": "TUR", "usa": "USA", "united states": "USA",
             "germany": "DEU", "deutschland": "DEU", "france": "FRA",
@@ -478,15 +558,17 @@ class GPTExtractor:
             if isinstance(wfi, str) and wfi.strip() in INVALID_STR:
                 sdw["weight_fields_interpretation"] = None
             wn = sdw.get("weight_variable_name")
-            all_w_null = (
-                sdw.get("student_weights_used") is None
-                and sdw.get("replicate_weights_used") is None
-                and (wn is None or (isinstance(wn, str) and not wn.strip()))
-            )
-            if not all_w_null and sdw.get("weight_fields_interpretation"):
-                sdw["weight_fields_interpretation"] = None
             if isinstance(wn, str) and wn in INVALID_STR:
                 sdw["weight_variable_name"] = None
+                wn = None
+
+            has_positive_weight_evidence = (
+                sdw.get("student_weights_used") is True
+                or sdw.get("replicate_weights_used") is True
+                or (isinstance(wn, str) and wn.strip())
+            )
+            if has_positive_weight_evidence:
+                sdw["weight_fields_interpretation"] = None
 
         nfi = data.get("null_fields_interpretation")
         if isinstance(nfi, str) and nfi.strip() in INVALID_STR:
