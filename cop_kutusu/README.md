@@ -1,3 +1,3 @@
-# cop_kutusu (çöp kutusu)
+# cop_kutusu (archive / trash bin)
 
-Bu klasör, ILSA **literatür extraction** hattı için artık kullanılmayan yedekler, eski şemalar, alternatif extractor’lar ve boş paket iskeletlerini içerir. Gerekirse buradan geri alınabilir; ana çalışma yolu `src/extractors/`, `src/schemas/models.py` ve `ilsa_pipeline/scripts/` altındadır.
+This folder holds material that is **no longer part of the active ILSA literature extraction path**: backups, old schemas, alternate extractors, and empty package stubs. You can restore files from here if needed. The live pipeline lives under `src/extractors/`, `src/schemas/models.py`, and `ilsa_pipeline/scripts/`.
