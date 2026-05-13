@@ -30,17 +30,22 @@ class MetadataBlock(BaseModel):
         default=None,
         description="Journal, conference, or repository name."
     )
-    publication_type: Optional[str] = Field(
+    publication_type: Optional[Literal[
+        "journal", "conference", "book_chapter", "preprint", "report", "thesis"
+    ]] = Field(
         default=None,
-        description="One of: 'journal', 'conference', 'book_chapter', 'preprint', 'report', 'thesis'."
+        description="Strict publication type categorization."
     )
     open_access: Optional[bool] = Field(
         default=None,
         description="True if freely accessible without paywall; null if unknown."
     )
-    source_category: Optional[str] = Field(
+    source_category: Optional[Literal[
+        "technical_report", "review_article", "methodology_paper",
+        "peer_reviewed_research"
+    ]] = Field(
         default=None,
-        description="One of: 'technical_report', 'review_article', 'methodology_paper', 'peer_reviewed_research'."
+        description="Strict research type categorization."
     )
 
     @field_validator("doi", mode="before")
@@ -78,11 +83,12 @@ class SurveyDesign(BaseModel):
     weight_fields_interpretation: Optional[str] = Field(
         default=None,
         description=(
-            "When student_weights_used, replicate_weights_used, and weight_variable_name "
-            "are all null, REQUIRED: 3-4 sentences on what the manuscript does say about "
-            "design or data, what is missing for weighting, whether weights are plausibly "
-            "irrelevant, and what explicit wording or tables would be needed to set each "
-            "field. Omit or null when any weight field is non-null."
+            "REQUIRED when student_weights_used and replicate_weights_used are both "
+            "false or null AND weight_variable_name is null: 3-4 sentences diagnosing "
+            "why weight information is absent — what the methodology says about the "
+            "sample design, why weights might be missing, and what explicit wording "
+            "would be needed to confirm weighting. Must be null when positive evidence "
+            "of weighting exists (student_weights_used=true or replicate_weights_used=true)."
         ),
     )
 
@@ -123,7 +129,11 @@ class MLTechniques(BaseModel):
 
     primary: Optional[str] = Field(
         default=None,
-        description="Primary/best-performing ML algorithm (e.g. 'XGBoost', 'Random Forest')."
+        description=(
+            "Primary/best-performing ML algorithm (e.g. 'XGBoost', 'Random Forest'). "
+            "MUST NOT be null if all_techniques has values — deduce the best model "
+            "from results, or copy the only technique if just one is listed."
+        ),
     )
     all_techniques: List[str] = Field(
         description="All ML algorithms evaluated (NOT preprocessing/stats methods)."
@@ -162,22 +172,25 @@ class DataBlock(BaseModel):
     )
     outcome_summary: str = Field(
         description=(
-            "4-5 sentence summary of key findings and model performance, grounded only "
-            "in the article text (metrics, comparisons, limitations as reported)."
+            "4-5 sentence summary (max ~120 words) of key findings and model "
+            "performance, grounded only in the article text. Focus on empirical "
+            "metrics, model comparisons, and policy-relevant conclusions."
         )
     )
-    research_design_type: Optional[str] = Field(
+    research_design_type: Optional[Literal[
+        "predictive", "causal_observational", "causal_experimental", "exploratory"
+    ]] = Field(
         default=None,
-        description="One of: 'predictive', 'causal_observational', 'causal_experimental', 'exploratory'."
+        description="Strict research design categorization."
     )
     null_fields_interpretation: Optional[str] = Field(
         default=None,
         description=(
-            "When several important fields are still null after careful reading (e.g. "
-            "sparse metadata, no sample size, no ML primary, or many nulls across blocks), "
-            "REQUIRED: a short structured note (plain text, optional bullet lines) listing "
-            "which groups remain sparse and what concrete evidence in a full text would "
-            "be needed to populate them. Omit or null when the record is already dense."
+            "REQUIRED when total_students is null, or primary ML model is null while "
+            "all_techniques is empty, or the extraction is extremely sparse. 2-3 "
+            "sentences diagnosing the omission (e.g. theoretical review with no "
+            "empirical data, or authors listed models but never reported which "
+            "performed best). Must be null when the record is reasonably dense."
         ),
     )
 
