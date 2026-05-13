@@ -22,9 +22,84 @@ from pathlib import Path
 
 import pandas as pd
 
-from src.schemas.models import ILSAArticleMetadata
+from src.schemas.models import (
+    ILSAArticleMetadata,
+    MetadataBlock,
+    SurveyDesign,
+    SampleDetails,
+    MLTechniques,
+    DataBlock,
+)
 from src.extractors.gpt_extractor import ExtractionResult
+
 logger = logging.getLogger(__name__)
+
+# Written into data.outcome_summary only when the pipeline could not produce a model output.
+# Lets --resume retry failed runs while skipping successful flat JSON files.
+EXTRACTION_FAILED_PREFIX = "__EXTRACTION_FAILED__: "
+
+
+def json_looks_like_public_extraction(data: dict) -> bool:
+    """True if JSON is the public shape: top-level metadata + data only."""
+    return isinstance(data, dict) and "metadata" in data and "data" in data
+
+
+def is_pipeline_failure_payload(data: dict) -> bool:
+    if not json_looks_like_public_extraction(data):
+        return False
+    summary = (data.get("data") or {}).get("outcome_summary")
+    return isinstance(summary, str) and summary.startswith(EXTRACTION_FAILED_PREFIX)
+
+
+def should_skip_resume_for_json(data: dict) -> bool:
+    """Whether an existing JSON file means the PDF can be skipped on --resume."""
+    if not isinstance(data, dict):
+        return False
+    if "success" in data:
+        return bool(data.get("success"))
+    if json_looks_like_public_extraction(data):
+        return not is_pipeline_failure_payload(data)
+    return False
+
+
+def extraction_payload_for_disk(extraction: ILSAArticleMetadata) -> dict:
+    """Serialize extraction for on-disk JSON (matches public metadata + data shape)."""
+    out = extraction.model_dump(mode="json")
+    meta = out.setdefault("metadata", {})
+    if meta.get("authors") is None:
+        meta["authors"] = []
+    return out
+
+
+def failed_extraction_payload_for_disk(result: ExtractionResult) -> dict:
+    """Same top-level keys as a successful file; error text in data.outcome_summary."""
+    msg = result.error or "Extraction failed."
+    if not msg.startswith(EXTRACTION_FAILED_PREFIX):
+        msg = EXTRACTION_FAILED_PREFIX + msg
+    model = ILSAArticleMetadata(
+        metadata=MetadataBlock(
+            file_name=result.file_name,
+            title=None,
+            authors=[],
+            year=None,
+            doi=None,
+            venue=None,
+            publication_type=None,
+            open_access=None,
+            source_category=None,
+        ),
+        data=DataBlock(
+            survey_design=SurveyDesign(),
+            plausible_values_handling="not_reported",
+            missing_data_handling="not_reported",
+            sample_details=SampleDetails(countries=[]),
+            ml_techniques=MLTechniques(primary=None, all_techniques=[]),
+            confounders_identified=[],
+            outcome_summary=msg,
+            research_design_type=None,
+        ),
+    )
+    return extraction_payload_for_disk(model)
 
 
 # ---------------------------------------------------------------------------
@@ -32,20 +107,19 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 
 def save_json(result: ExtractionResult, output_dir: Path) -> Path:
+    """
+    Write one JSON file with only `metadata` and `data` top-level keys
+    (same public shape as a hand-edited extraction file).
+    """
     output_dir.mkdir(parents=True, exist_ok=True)
     stem = Path(result.file_name).stem
     json_path = output_dir / f"{stem}.json"
 
-    payload = {
-        "file_name": result.file_name,
-        "success": result.success,
-        "input_tokens": result.input_tokens,
-        "output_tokens": result.output_tokens,
-        "cost_usd": result.cost_usd,
-        "duration_seconds": result.duration_seconds,
-        "error": result.error,
-        "extraction": result.extraction.model_dump() if result.extraction else None,
-    }
+    if result.success and result.extraction is not None:
+        payload = extraction_payload_for_disk(result.extraction)
+    else:
+        payload = failed_extraction_payload_for_disk(result)
+
     json_path.write_text(json.dumps(payload, indent=2, ensure_ascii=False))
     return json_path
 
@@ -73,6 +147,35 @@ def build_master_parquet(json_dir: Path, parquet_path: Path) -> pd.DataFrame:
             data = json.loads(json_file.read_text())
         except json.JSONDecodeError:
             logger.warning(f"Skipping malformed JSON: {json_file}")
+            continue
+
+        # Public on-disk shape: { "metadata": {...}, "data": {...} }
+        if json_looks_like_public_extraction(data) and "success" not in data:
+            file_name = (data.get("metadata") or {}).get("file_name") or json_file.stem
+            if is_pipeline_failure_payload(data):
+                summary = (data.get("data") or {}).get("outcome_summary") or ""
+                err = (
+                    summary[len(EXTRACTION_FAILED_PREFIX):]
+                    if summary.startswith(EXTRACTION_FAILED_PREFIX)
+                    else summary
+                )
+                rows.append({
+                    "file_name": file_name,
+                    "extraction_success": False,
+                    "error": err,
+                    "input_tokens": 0,
+                    "output_tokens": 0,
+                    "cost_usd": 0.0,
+                })
+                continue
+            extraction = ILSAArticleMetadata.model_validate(data)
+            flat = flatten_extraction(extraction, file_name)
+            flat["extraction_success"] = True
+            flat["error"] = None
+            flat["input_tokens"] = 0
+            flat["output_tokens"] = 0
+            flat["cost_usd"] = 0.0
+            rows.append(flat)
             continue
 
         if not data.get("success") or data.get("extraction") is None:
@@ -121,22 +224,51 @@ def build_sqlite_database(parquet_path: Path, db_path: Path) -> None:
             skipped += 1
             continue
 
-        if not data.get("success") or data.get("extraction") is None:
+        extraction_model: ILSAArticleMetadata | None = None
+        legacy_file_name: str | None = None
+        legacy_tokens: tuple[int, int, float, float] = (0, 0, 0.0, 0.0)
+
+        if json_looks_like_public_extraction(data) and "success" not in data:
+            if is_pipeline_failure_payload(data):
+                skipped += 1
+                continue
+            try:
+                extraction_model = ILSAArticleMetadata.model_validate(data)
+                legacy_file_name = extraction_model.metadata.file_name
+            except Exception as e:
+                logger.warning(f"Skipping {json_file.name}: {e}")
+                skipped += 1
+                continue
+        elif not data.get("success") or data.get("extraction") is None:
             skipped += 1
             continue
+        else:
+            try:
+                extraction_model = ILSAArticleMetadata(**data["extraction"])
+                legacy_file_name = data.get("file_name")
+                legacy_tokens = (
+                    data.get("input_tokens", 0),
+                    data.get("output_tokens", 0),
+                    data.get("cost_usd", 0.0),
+                    data.get("duration_seconds", 0.0),
+                )
+            except Exception as e:
+                logger.warning(f"Skipping {json_file.name}: {e}")
+                skipped += 1
+                continue
 
         try:
             from src.extractors.gpt_extractor import ExtractionResult as _ER
 
-            extraction = ILSAArticleMetadata(**data["extraction"])
+            in_t, out_t, cost, dur = legacy_tokens
             result = _ER(
-                file_name=data["file_name"],
+                file_name=legacy_file_name or extraction_model.metadata.file_name,
                 success=True,
-                extraction=extraction,
-                input_tokens=data.get("input_tokens", 0),
-                output_tokens=data.get("output_tokens", 0),
-                cost_usd=data.get("cost_usd", 0.0),
-                duration_seconds=data.get("duration_seconds", 0.0),
+                extraction=extraction_model,
+                input_tokens=in_t,
+                output_tokens=out_t,
+                cost_usd=cost,
+                duration_seconds=dur,
             )
             storage.insert_article(result)
             inserted += 1
