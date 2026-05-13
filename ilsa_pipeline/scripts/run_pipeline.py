@@ -19,7 +19,13 @@ sys.path.insert(0, str(_here.parent.parent.parent))   # ILSA_LLMs/    — for sr
 
 from extractors.gpt_extractor import GPTExtractor, ExtractionResult, MODEL_NAME
 from extractors.pdf_processor import process_pdf
-from utils.storage import save_json, build_master_parquet, build_sqlite_database, StorageManager
+from utils.storage import (
+    save_json,
+    build_master_parquet,
+    build_sqlite_database,
+    StorageManager,
+    should_skip_resume_for_json,
+)
 
 KNOWN_SOURCES = {"wos", "scopus", "oecd", "iea"}
 
@@ -53,7 +59,7 @@ def already_processed(pdf_path: Path, json_dir: Path) -> bool:
         return False
     try:
         data = json.loads(json_file.read_text())
-        return data.get("success", False)
+        return should_skip_resume_for_json(data)
     except Exception:
         return False
 

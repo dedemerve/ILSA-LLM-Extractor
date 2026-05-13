@@ -30,7 +30,7 @@ Targeted batch: `ilsa_pipeline/scripts/extract_targeted.py`
 
 ## Outputs
 
-- `output/json/*.json`: Per PDF: `file_name`, `success`, token/cost/duration fields, and `extraction` (object matching the schema).
+- `output/json/*.json`: Per PDF, a single object with **only** top-level keys `metadata` and `data` (same shape as the Pydantic `ILSAArticleMetadata` public schema). Pipeline-only failures use a sentinel prefix inside `data.outcome_summary` so `--resume` can retry those files.
 - Parquet / SQLite helpers: `build_master_parquet`, `build_sqlite_database`, and `StorageManager` in `ilsa_pipeline/utils/storage.py`.
 
 Legacy backups and alternate schemas live under `cop_kutusu/`.
