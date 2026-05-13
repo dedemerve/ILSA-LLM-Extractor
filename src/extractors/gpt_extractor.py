@@ -43,6 +43,62 @@ COUNTRY_NAME_TO_ISO = {
     "nigeria": "NGA", "pakistan": "PAK", "vietnam": "VNM",
     "philippines": "PHL", "peru": "PER", "uruguay": "URY",
     "costa rica": "CRI", "panama": "PAN",
+    "lebanon": "LBN", "dominican republic": "DOM",
+    "chinese taipei": "TWN", "beijing-shanghai-jiangsu-zhejiang": "CHN",
+    "b-s-j-z": "CHN", "bsjz": "CHN", "b-s-j-g": "CHN",
+    "northern ireland": "GBR", "türkiye": "TUR",
+    "republic of korea": "KOR", "czechia": "CZE",
+    "macao sar": "MAC", "hong kong sar": "HKG",
+    "chinese mainland": "CHN", "united arab emirates": "ARE",
+    "scotland": "GBR", "wales": "GBR", "great britain": "GBR",
+    "flemish": "BEL", "flemish community": "BEL",
+    "philippine": "PHL", "filipino": "PHL",
+    "korean": "KOR", "moroccan": "MAR",
+    "tunisian": "TUN", "b-s-j-z (china)": "CHN",
+    "beijing, shanghai, jiangsu, and zhejiang": "CHN",
+    "beijing, shanghai, jiangsu, and guangdong": "CHN",
+    "b-s-j-g (china)": "CHN",
+    "lebanese": "LBN", "lebanese republic": "LBN",
+    "brazilian": "BRA", "spanish": "ESP",
+    "german": "DEU", "french": "FRA",
+    "japanese": "JPN", "finnish": "FIN",
+    "australian": "AUS", "canadian": "CAN",
+    "irish": "IRL", "swedish": "SWE",
+    "norwegian": "NOR", "danish": "DNK",
+    "estonian": "EST", "latvian": "LVA",
+    "hungarian": "HUN", "peruvian": "PER",
+    "mexican": "MEX", "chilean": "CHL",
+    "colombian": "COL", "uruguayan": "URY",
+    "singaporean": "SGP", "dutch": "NLD",
+    "swiss": "CHE", "belgian": "BEL",
+    "polish": "POL", "austrian": "AUT",
+    "greek": "GRC", "slovenian": "SVN",
+    "italian": "ITA", "portuguese": "PRT",
+    "luxembourgish": "LUX", "icelandic": "ISL",
+    "qatari": "QAT", "emirati": "ARE",
+    "saudi": "SAU", "jordanian": "JOR",
+    "iranian": "IRN", "egyptian": "EGY",
+    "ghanaian": "GHA", "kenyan": "KEN",
+    "nigerian": "NGA", "pakistani": "PAK",
+    "vietnamese": "VNM", "thai": "THA",
+    "indonesian": "IDN", "indian": "IND",
+    "taiwanese": "TWN", "macanese": "MAC",
+    "new zealander": "NZL", "british": "GBR",
+    "american": "USA", "chinese": "CHN",
+    "turkish": "TUR", "czech": "CZE",
+    "slovak": "SVK", "croatian": "HRV",
+    "serbian": "SRB", "bulgarian": "BGR",
+    "cypriot": "CYP", "maltese": "MLT",
+    "romanian": "ROU", "russian": "RUS",
+    "south african": "ZAF", "panamanian": "PAN",
+    "dominican": "DOM", "israeli": "ISR",
+    "scandinavian": "NOR",
+    "malaysian": "MYS", "lithuanian": "LTU",
+    "argentinian": "ARG", "argentine": "ARG",
+    "costa rican": "CRI",
+    "the netherlands": "NLD",
+    "republic of china": "TWN",
+    "korea, republic of": "KOR",
 }
 
 MODEL_NAME = "gpt-5.4-nano"
@@ -51,6 +107,7 @@ PRICE_OUTPUT_PER_1M = 10.00
 
 SYSTEM_PROMPT = """You are an expert research analyst specializing in International \
 Large-Scale Assessments (ILSA: PISA, TIMSS, PIRLS, TALIS, ICILS, ICCS, PIAAC) \
+and related national/regional large-scale assessments (NAEP, CEDRE, INVALSI) \
 and the intersection of Machine Learning in educational data mining.
 
 Your task is to extract a highly detailed, structured metadata and methodological \
@@ -77,66 +134,250 @@ CRITICAL EXTRACTION & INFERENCE RULES
      ['rubin_rules', 'single_pv', 'average_pv', 'mitml', 'not_applicable', 'not_reported'].
      Synonym table:
        "Rubin's rules" / "Rubin combining rules" / "combined PV estimates" /
-       "pooled across PVs"                                        → rubin_rules
-       "first plausible value" / "PV1 only" / "single PV draw" /
-       "one PV per student" / "separate analyses per PV"          → single_pv
+       "pooled across PVs" / "PV estimates combined"               → rubin_rules
+       "first plausible value" / "PV1 only" / "PV1MATH" / "PV1READ" /
+       "PV1SCIE" / "PV2SCIE" / "single PV draw" /
+       "one PV per student" / "separate analyses per PV" /
+       "PV1 as outcome" / "used PV2SCIE" / "used PV1READ" /
+       "target indicator from one PV" /
+       "binary variable from PV benchmarks (single draw)"         → single_pv
        "averaged plausible values" / "mean of PVs" / "PV average" /
-       "all five PVs averaged"                                    → average_pv
-       "mitml" / "Mplus complex survey" / "multilevel MI"         → mitml
-       TALIS/PIAAC without PVs, or DV is Likert/direct measure   → not_applicable
-     ILSA domain default: PISA/TIMSS/PIRLS always ship PVs for achievement scores.
-     If the paper models achievement and never mentions PV handling → average_pv.
+       "all five PVs averaged" / "all ten PVs averaged" /
+       "PV1MATH–PV10MATH averaged" / "BSSSCI01–BSSSCI05 averaged" /
+       "mean of 10 plausible values" / "average of plausible values" /
+       "average of PV1MATH through PV10MATH" /
+       "averaged across all plausible values"                      → average_pv
+       "mitml" / "Mplus complex survey" / "multilevel MI"          → mitml
+       TALIS/PIAAC without PVs, or DV is Likert/direct measure    → not_applicable
+       "WLE" / "Warm's WLE" / "weighted likelihood estimator" /
+       "IRT ability estimates" / "theta estimates" / "EAP estimates" /
+       "latent trait scores" / "CFA-based scores" /
+       "scale scores (not PVs)"                                    → not_applicable
+       DV is binary classification (correct/incorrect, high/low) /
+       DV is process data (actions, response times) /
+       DV is affective/attitudinal (life satisfaction, self-efficacy) /
+       DV is curriculum-based (not ILSA achievement)               → not_applicable
+    SOFTWARE-BASED PV INFERENCE — when the paper does not state PV handling
+    explicitly, infer from the software / R packages mentioned:
+      "bifiesurvey" / "repest" / "intsvy" / "EdSurvey" /
+      "IEA IDB Analyzer" / "RALSA" / "lavaan.survey" /
+      "WeMix" / "mitml"                                              → rubin_rules
+      These packages implement Rubin's combining rules internally;
+      their use is strong evidence that PVs were handled properly.
+      "five plausible values" / "5 PVs" / "all five PVs" /
+      "five_pv" / "5_pv" / "ten plausible values" / "10 PVs" /
+      "all ten PVs" / "PV1–PV5" / "PV1–PV10" /
+      "analyses repeated across PVs and pooled"                      → rubin_rules
+    ILSA domain default: PISA/TIMSS/PIRLS always ship PVs for achievement scores.
+    If the paper models achievement and never mentions PV handling → average_pv.
+    If the paper dichotomizes achievement into binary (e.g. "proficient
+    vs not") using PV benchmarks, it still used PVs → infer from context.
    - missing_data_handling MUST be exactly one of:
      ['listwise_deletion', 'pairwise_deletion', 'mean_imputation',
       'multiple_imputation', 'not_reported'].
      Synonym table:
-       "listwise deletion" / "complete case" / "excluded incomplete" → listwise_deletion
-       "pairwise deletion" / "available case analysis"              → pairwise_deletion
-       "mean substitution" / "mean replacement" / "imputed with mean" → mean_imputation
-       "MICE" / "MI" / "missForest" / "FIML" / "EM algorithm" /
-       "chained equations" / "hot-deck" / any ML-based imputation   → multiple_imputation
+       "listwise deletion" / "complete case" / "excluded incomplete" /
+       "removed cases with missing" / "cases with missing data were
+        removed" / "after exclusion of missing"                    → listwise_deletion
+       "pairwise deletion" / "available case analysis"             → pairwise_deletion
+       "mean substitution" / "mean replacement" / "imputed with mean" /
+       "series mean" / "mode imputation" / "median imputation" /
+       "SimpleImputer (mode)" / "SimpleImputer (median)" /
+       "substituted mode values" / "imputed with median"           → mean_imputation
+       "MICE" / "MI" / "missForest" / "missRanger" / "FIML" /
+       "EM algorithm" / "expectation maximization" /
+       "chained equations" / "hot-deck" /
+       "kNN imputation" / "k-nearest neighbor imputation" /
+       "predictive mean matching" / "PMM" /
+       "MCMC imputation" / "Markov Chain Monte Carlo" /
+       "two-level FCS" / "fully conditional specification" /
+       "multivariate imputation" / "RF-based imputation" /
+       "rblimp" / "blimp" / "Bayesian imputation" /
+       "stochastic regression imputation" /
+       any ML-based imputation method                              → multiple_imputation
+       "zero imputation" / "zero fill" / "replaced with zero" /
+       "filled with zero" / "imputed with zero"                    → mean_imputation
+     CAUTION: SMOTE / oversampling / undersampling / data augmentation /
+     SMOTETomek / ADASYN / CTGAN / VAE-augmentation are class-balancing
+     or synthetic-data techniques, NOT missing data handling.
+     Do NOT map them to any missing_data_handling value.
+     CAUTION: "winsorized" / "trimmed at percentile" are outlier-treatment
+     techniques, NOT missing data handling. Do NOT map them either.
 
 2) COUNTRY CODES (ISO 3166-1 alpha-3):
    - country_code MUST always be a 3-letter UPPERCASE ISO code (e.g. 'TUR', 'USA', \
      'DEU', 'GBR', 'FRA', 'JPN', 'KOR', 'CHN', 'BRA', 'FIN', 'SGP', 'AUS').
    - NEVER write full country names, 2-letter codes, or non-standard abbreviations.
+   - SPECIAL ECONOMIES & REGIONS — use these mappings:
+     "Beijing-Shanghai-Jiangsu-Zhejiang" / "B-S-J-Z" / "B-S-J-G"
+       / "BSJZ" / "Chinese mainland"                              → CHN
+     "Chinese Taipei" / "Taiwan"                                   → TWN
+     "Hong Kong" / "Hong Kong SAR"                                 → HKG
+     "Macao" / "Macau" / "Macao SAR"                               → MAC
+     "England" / "Northern Ireland"                                → GBR
+     "Republic of Korea" / "South Korea" / "Korea"                 → KOR
+     "Türkiye" / "Turkey"                                          → TUR
+     "United Arab Emirates" / "UAE"                                → ARE
+     "Dominican Republic"                                          → DOM
+     "Czech Republic" / "Czechia"                                  → CZE
+     "The Netherlands" / "Netherlands"                             → NLD
+   - If a study covers 37+ OECD countries or 44+ TIMSS countries or 79+ PISA \
+     countries, list ALL countries found in the text or tables. If only a \
+     count is given (e.g. "80 countries"), extract every country explicitly \
+     named in the manuscript and set n_students to null for unnamed ones. \
+     Do NOT leave the countries list empty when the paper clearly analyzed \
+     specific nations.
 
 3) ML vs. TRADITIONAL STATISTICS (critical for ml_techniques):
    - For 'all_techniques' and 'primary', extract ONLY Machine Learning / \
-     predictive-modeling algorithms: XGBoost, Random Forest, SVM, Neural Network, \
-     Decision Tree, LASSO, Ridge, Elastic Net, k-NN, Gradient Boosting, \
-     Logistic Regression (when used for classification), Naive Bayes, LightGBM, \
-     CatBoost, AdaBoost, Bagging, ANFIS, etc.
-   - DO NOT include: PCA, factor analysis, t-tests, ANOVA, chi-square, basic \
-     correlations, descriptive statistics, EFA/CFA, SEM, HLM/mixed-effects \
-     (unless explicitly used as an ML baseline), or ESCS index computations.
-   - Algorithm name mapping (use canonical short names):
-     "gradient boosted trees" / "GBT" / "GBM"        → Gradient Boosting
-     "random forests" / "RF"                          → Random Forest
-     "ANN" / "MLP" / "deep learning"                  → Neural Network
-     "SVM" / "SVC" / "SVR"                            → SVM
-     "lasso" / "L1 regression"                        → LASSO
-     "ridge" / "L2 regression"                        → Ridge Regression
-     "elastic net" / "L1+L2"                          → Elastic Net
-     "ANFIS" / "neuro-fuzzy"                          → ANFIS
-     "bagging" / "bootstrap aggregation"              → Bagging
+     predictive-modeling algorithms. See the COMPREHENSIVE mapping table below.
+   - DO NOT include traditional / descriptive / psychometric methods:
+     PCA, factor analysis, t-tests, ANOVA, ANCOVA, MANOVA, chi-square,
+     basic correlations, descriptive statistics, EFA/CFA, SEM, HLM/mixed-effects
+     (unless explicitly used as an ML baseline), ESCS index computations,
+     Latent Profile Analysis (LPA), Latent Class Analysis (LCA),
+     IRT models, Rasch models, Partial Credit Model, measurement invariance,
+     Interpretive Structural Modeling (ISM), bibliometric analysis,
+     Shapley value decomposition (standalone; report SHAP only under XAI),
+     DBSCAN / k-means / k-medoids / hierarchical clustering /
+     Gaussian Mixture Model (GMM) (ONLY if used purely for unsupervised
+     exploration without any predictive goal — if combined with a
+     prediction pipeline, include the supervised learner, not the
+     clustering step).
+     Process Mining (Disco, ProM, fuzzy miner) — visualization/discovery
+     tools, NOT ML algorithms.
+     Finite Mixture Models / Latent Transition Analysis — psychometric
+     mixture models, NOT ML.
+   - Latent Profile Analysis (LPA) and Latent Class Analysis (LCA) are
+     ALWAYS psychometric / mixture modeling methods and NEVER ml_techniques,
+     even when used in process-data papers to identify behavioral profiles.
+     The same applies to Confirmatory Factor Analysis (CFA), measurement
+     invariance testing, and Hierarchical Linear Modeling (HLM) — these
+     are statistical methods, not ML.
+   - DO NOT include psychometric Diagnostic Classification Models (DCMs):
+     HO-DINA, HO-GDINA, DINO, ACDM, LCDM, G-DINA — these are
+     psychometric measurement models, NOT machine learning. Only include
+     them if the paper explicitly frames them as ML classifiers.
+   - DO NOT include Structural Topic Modeling (STM) UNLESS the paper
+     uses STM output as features for a supervised prediction task.
+     When STM is used solely for exploratory text analysis on abstracts
+     or corpora (e.g., in review papers), it is NOT an ML technique.
+   - DATA AUGMENTATION methods (SMOTE, CTGAN, VAE-based augmentation)
+     are preprocessing steps, NOT ml_techniques. Mention them in
+     missing_data_handling or confounders_identified if relevant,
+     but never list them as primary or all_techniques entries.
+   - COMPREHENSIVE algorithm name mapping (use canonical short names):
+     ── TREE & ENSEMBLE ──
+     "gradient boosted trees" / "GBT" / "GBM" / "GBDT"    → Gradient Boosting
+     "XGBoost" / "extreme gradient boosting" / "XGB"       → XGBoost
+     "LightGBM" / "Light GBM" / "LGBM" / "light gradient
+      boosting"                                            → LightGBM
+     "CatBoost" / "category boosting"                      → CatBoost
+     "Histogram GBR" / "HGB" / "HistGradientBoosting"      → Histogram GBR
+     "random forests" / "RF"                               → Random Forest
+     "Extra Trees" / "ExtraTrees" / "extremely randomized
+      trees" / "ET"                                        → Extra Trees
+     "AdaBoost" / "adaptive boosting"                      → AdaBoost
+     "Decision Tree" / "CART" / "C5.0" / "J48" /
+      "classification tree" / "regression tree"            → Decision Tree
+     "stacking" / "stacked ensemble" / "meta-model" /
+      "stacked generalization"                             → Stacking
+     "blending" / "blend"                                  → Blending
+     "bagging" / "bootstrap aggregation"                   → Bagging
+     "Conditional Inference Trees" / "CIT" / "ctree"       → Conditional Inference Trees
+     "Conditional Inference Forests" / "CIF" / "cforest"   → Conditional Inference Forests
+     "Boruta" (wraps RF for feature selection)             → Random Forest
+     ── LINEAR / REGULARIZED ──
+     "LASSO" / "L1 regression" / "glmnet L1"               → LASSO
+     "Ridge Regression" / "L2 regression"                  → Ridge Regression
+     "Elastic Net" / "L1+L2" / "glmnet" / "Enet"          → Elastic Net
+     "Group Mnet" / "group MCP" / "group penalized"        → Group Mnet
+     "Logistic Regression" (classification only)           → Logistic Regression
+     "Linear Regression" / "MLR" (prediction/baseline)     → Linear Regression
+     ── SVM / INSTANCE-BASED ──
+     "SVM" / "SVC" / "SVR" / "support vector"              → SVM
+     "k-NN" / "KNN" / "k-nearest neighbor"                 → k-NN
+     ── PROBABILISTIC ──
+     "Naive Bayes" / "GNB" / "NB" / "Gaussian Naive Bayes" → Naive Bayes
+     "Bayesian Ridge" / "ARD"                              → Bayesian Ridge
+     ── NEURAL NETWORKS & DEEP LEARNING ──
+     "ANN" / "MLP" / "deep learning" / "feed-forward NN" /
+      "multilayer perceptron"                              → Neural Network
+     "LSTM" / "Long Short-Term Memory"                     → LSTM
+     "GRU" / "Gated Recurrent Units"                       → GRU
+     "CNN" / "Convolutional Neural Network"                → CNN
+     "Autoencoder" / "variational autoencoder" / "VAE"     → Autoencoder
+     "RNN" / "recurrent neural network"                    → RNN
+     "Elman neural network" / "Jordan neural network"      → Neural Network
+     ── CAUSAL ML ──
+     "BART" / "Bayesian Additive Regression Trees"         → BART
+     "BCF" / "Bayesian Causal Forests"                     → BCF
+    ── FUZZY / HYBRID ──
+    "ANFIS" / "neuro-fuzzy" / "adaptive neuro-fuzzy"      → ANFIS
+    ── BAYESIAN ML ──
+    "Bayesian Network" / "BN" / "Bayesian classifier" /
+     "Bayesian belief network" / "directed acyclic graph
+      classifier"                                         → Bayesian Network
+    ── PENALIZED MULTILEVEL ──
+    "glmmLasso" / "GLMM + LASSO" / "penalized GLMM" /
+     "penalized mixed model"                              → glmmLasso
+    "blackboost" / "conditional gradient boosting" /
+     "mboost" / "model-based boosting"                    → Gradient Boosting
+    ── NLP-BASED (when combined with supervised prediction) ──
+    "Word2Vec + classifier" / "TF-IDF + classifier" /
+     "Doc2Vec + classifier"                               → report the CLASSIFIER
+    "RoBERTa" / "BERT" (for scoring/classification)       → report the architecture
+    "Bag-of-Words + ANN" / "BoW + Neural Network"         → Neural Network
+    ── OTHER CLASSIFIERS ──
+    "Discriminant Analysis" / "LDA" / "QDA" /
+     "linear discriminant analysis"                       → Discriminant Analysis
+    "Gaussian Process" / "GP regression" / "GP classifier" → Gaussian Process
+    ── KNOWLEDGE TRACING ──
+    "DKT" / "Deep Knowledge Tracing"                       → Deep Knowledge Tracing
+    ── SEMI-SUPERVISED / ACTIVE ──
+    "active learning" / "semi-supervised learning" /
+     "self-training" / "co-training" (when combined with
+     a base classifier for label propagation)             → report the base classifier
 
 4) WEIGHTING & REPLICATE DESIGN LOGIC:
-   - student_weights_used: set true if "student weights", "sampling weights", \
-     "W_FSTUWT", "TOTWGT", "SCHWGT", "HOUWGT", "final weight", "senate weight", \
-     "analysis weight", "probability weight", "design weight", or "weighted \
-     estimation" appear anywhere.
+   - student_weights_used: set true if ANY of these appear:
+     "student weights", "sampling weights", "survey weights",
+     "W_FSTUWT", "TOTWGT", "SCHWGT", "HOUWGT", "SENWGT", "MATWGT",
+     "SCIWGT", "REAWGT", any variable starting with "W_" or ending in "WGT",
+     "final weight", "senate weight", "house weight", "overall weight",
+     "analysis weight", "probability weight", "design weight",
+     "weighted estimation", "weighted analysis", "weighted mean",
+     "adjusting for complex survey design", "adjusting for stratification",
+     "adjusting for clustering", "multilevel weighting",
+     "population-representative" + mention of weight application.
+   - SOFTWARE-BASED WEIGHT INFERENCE: If the paper mentions using any of \
+     these weight-aware tools, infer student_weights_used = true unless \
+     explicitly contradicted:
+     "IEA IDB Analyzer", "IDB Analyzer", "bifiesurvey", "BIFIEsurvey",
+     "WeMix", "lavaan.survey", "survey package" (in R), "svy:" (Stata),
+     "RALSA", "intsvy", "EdSurvey", "repest".
    - replicate_weights_used: set true if "BRR", "balanced repeated replication", \
-     "Fay's method", "jackknife", "replicate weights", "JK2", or "JRR" appear.
+     "Fay's method", "jackknife", "JK2", "JRR", "JK1", "replicate weights", \
+     "jackknife repeated replication", "Taylor series linearization" appear.
    - weight_variable_name: exact variable name string if mentioned (e.g. 'W_FSTUWT').
    - ILSA domain default: if a study uses ILSA micro-data and never discusses \
      weights → student_weights_used = false (omission = likely unweighted).
+   - EXPLICIT NON-USE PATTERN: Many ML-focused studies deliberately ignore \
+     survey weights because ML algorithms (RF, XGBoost, SVM, Neural Networks) \
+     do not natively support survey weights. If the paper uses ML models \
+     on ILSA data and never mentions weights, set student_weights_used = false \
+     and FILL weight_fields_interpretation explaining: "The study applied ML \
+     algorithms that do not natively incorporate survey weights. The manuscript \
+     does not discuss weighting, suggesting an unweighted analysis."
    - weight_fields_interpretation: FILL ONLY IF student_weights_used, \
-     replicate_weights_used, AND weight_variable_name are ALL null. Write 3-4 \
-     analytical sentences: what the manuscript says about sample design, why \
-     weights might be missing (e.g. small convenience sample, secondary analysis \
-     without original weights), and what exact wording would be needed to extract them. \
-     IF ANY weight field is non-null, this field MUST BE null.
+     replicate_weights_used, AND weight_variable_name are ALL null or false. \
+     Write 3-4 analytical sentences: what the manuscript says about sample design, \
+     why weights might be missing (e.g. ML study without weight support, small \
+     convenience sample, secondary analysis without original weights, process-data \
+     study focused on behavioral sequences rather than population estimation), \
+     and what exact wording would be needed to extract them. \
+     IF ANY weight field is non-null (true or has a variable name), \
+     this field MUST BE null.
 
 5) NULL FIELDS INTERPRETATION (THE FALLBACK):
    - null_fields_interpretation: trigger ONLY if the overall extraction is \
@@ -150,14 +391,28 @@ CRITICAL EXTRACTION & INFERENCE RULES
 6) EXHAUSTIVE DATA & METHODOLOGY SEARCH (NO LAZY EXTRACTIONS):
    - DataBlock and SurveyDesign are the MOST CRITICAL sections. You must \
      aggressively scan "Methodology", "Data", "Measures", "Analytical Strategy", \
-     "Sample", "Participants", AND footnotes, table notes, and appendices.
+     "Sample", "Participants", "Data Processing", "Data Preprocessing", \
+     "Data Cleaning", AND footnotes, table notes, and appendices.
    - EXTENDED WEIGHT SYNONYMS — also look for: "senate weights", "house weights", \
      "overall weights", "SENWGT", "MATWGT", "SCIWGT", "REAWGT", variables starting \
      with "W_" or ending in "WGT". For replicate weights also: "JRR", "jackknife \
      repeated replication", "Taylor series linearization".
+   - SOFTWARE-BASED INFERENCE — if the paper mentions using IEA IDB Analyzer, \
+     bifiesurvey, WeMix, lavaan.survey, EdSurvey, RALSA, intsvy, repest, or \
+     any ILSA-specific analysis tool, these tools inherently apply survey weights \
+     → infer student_weights_used = true.
    - INFERRING COMPLEX DESIGN — if the authors mention adjusting for "complex \
      survey design", "stratification", "clustering", or "multilevel weighting", \
      you MUST infer student_weights_used = true.
+   - ML-SPECIFIC PATTERN — Many ML studies (RF, XGBoost, SVM, NN) on ILSA data \
+     deliberately omit survey weights because these algorithms lack native weight \
+     support. If the paper uses ML without mentioning weights, set \
+     student_weights_used = false and weight_fields_interpretation must explain \
+     this ML-specific omission pattern.
+   - REVIEW / NON-EMPIRICAL PAPERS — If the paper is a systematic review, \
+     bibliometric analysis, or theoretical framework without original ILSA \
+     micro-data analysis, set student_weights_used = null, replicate_weights_used \
+     = null, weight_variable_name = null, and explain in weight_fields_interpretation.
    - STRICT FAIL-SAFE ENFORCEMENT — if BOTH student_weights_used and \
      replicate_weights_used end up as false or null, AND weight_variable_name \
      is null, you ABSOLUTELY MUST fill weight_fields_interpretation with 3-4 \
@@ -203,12 +458,150 @@ CRITICAL EXTRACTION & INFERENCE RULES
      Forest but did not report which model achieved the best metric.").
    - This rule complements Rule 5 — both may apply simultaneously.
 
-10) ANTI-HALLUCINATION:
+10) RESEARCH DESIGN CLASSIFICATION (research_design_type):
+   - Papers that predict/classify student outcomes using ML → "predictive"
+   - Papers using causal ML (BART, BCF, propensity score matching, \
+     diff-in-diff, instrumental variables, causal forests) → "causal_observational"
+   - Papers with randomized experiments / RCTs → "causal_experimental"
+   - Papers using unsupervised methods ONLY (clustering, LPA, topic modeling, \
+     bibliometric analysis, process mining) without a prediction target → "exploratory"
+   - Systematic reviews / meta-analyses / theoretical frameworks / \
+     methodological papers → "exploratory"
+   - Papers that combine prediction AND clustering (e.g. cluster then predict) \
+     → "predictive" (the supervised component dominates)
+   - Process-data papers that classify engagement or strategy profiles → "predictive"
+
+11) ANTI-HALLUCINATION:
    - Never INVENT: DOIs, exact N, country codes, author names, weight variable \
      names, or algorithm names not present in the text.
    - Inference is allowed ONLY for categorical/boolean/enum fields where ILSA \
      domain knowledge provides a clear default (rules 1 and 4 above).
    - Numeric fields (total_students, n_students, year) MUST come from the text.
+
+12) NATIONAL / REGIONAL LARGE-SCALE ASSESSMENTS AND OTHER ILSAs:
+   - Papers using NAEP (USA), CEDRE (France), INVALSI (Italy), or other
+     national LSAs should be treated with the SAME extraction rigor as
+     ILSA papers. They are valid data sources for this pipeline.
+   - NAEP uses plausible values → apply PV handling rules as for PISA/TIMSS.
+   - CEDRE and INVALSI may use IRT-based scores rather than PVs → check
+     methodology; if WLE or theta scores are used → plausible_values_handling
+     = "not_applicable"; if PVs are generated → apply standard PV rules.
+   - PIAAC (Programme for the International Assessment of Adult Competencies):
+     Uses plausible values for literacy, numeracy, and PS-TRE domains.
+     Apply the SAME PV handling inference rules as PISA/TIMSS.
+     Process data from PIAAC PS-TRE items (log files, action sequences)
+     → plausible_values_handling = "not_applicable" for the process
+     component; "rubin_rules" or "average_pv" for the achievement component.
+   - ICILS (International Computer and Information Literacy Study):
+     Uses plausible values for CIL and CT scores → apply standard PV rules.
+   - ICCS (International Civic and Citizenship Education Study):
+     Uses plausible values for civic knowledge → apply standard PV rules.
+     Engagement/attitude scales are IRT-scaled but NOT PVs →
+     plausible_values_handling = "not_applicable" when the study models
+     only attitudes/engagement without civic knowledge scores.
+   - PISA-VET (OECD's vocational assessment, in development):
+     Treat as framework/assessment-design paper unless it reports
+     empirical student data; typically non-empirical at this stage.
+   - For PSLC DataShop, LUCA simulations, licensure examinations,
+     professional certification tests, or other digital learning
+     platforms → treat as non-ILSA empirical data; PV handling is
+     typically "not_applicable".
+
+13) PROCESS DATA PAPERS (log files, clickstreams, response times, action sequences):
+   - These papers analyze HOW students interact with computer-based assessments \
+     rather than traditional achievement scores.
+   - Typical data: action sequences, response times, mouse clicks, keystrokes, \
+     navigation paths, time-on-task variables, VOTAT strategies, N-gram features, \
+     directed graph features, network statistics (centralization, density, \
+     flow hierarchy), time-to-first-action, number of visits / short visits, \
+     Differential Response Time (DRT), Response Time Effort (RTE), \
+     behavioral effort indicators, action sequence embeddings (Word2Vec, \
+     Doc2Vec on action logs), LCS-based sequence similarity measures.
+   - Process analysis tools (NOT ml_techniques): Process Mining (Disco, ProM), \
+     action sequence autoencoders (when used purely for representation learning \
+     without a downstream prediction task), and profiling via LPA/LCA.
+   - plausible_values_handling: usually "not_applicable" because process data \
+     studies typically use binary correctness (correct/incorrect), IRT-based \
+     ability estimates (EAP, WLE, theta), or behavioral indicators rather \
+     than PVs.
+     EXCEPTION: when a process data paper ALSO models achievement scores \
+     from PVs (e.g., predicting science PV-based performance from behavioral \
+     effort), extract PV handling for the achievement component normally \
+     (rubin_rules / average_pv / single_pv) and note "not_applicable" only \
+     if the DV is purely process-based.
+   - student_weights_used: usually false or null — process data studies focus \
+     on behavioral patterns, not population-representative estimation.
+   - ml_techniques: include ALL ML algorithms used for classification/prediction \
+     of process outcomes. Common ones: Random Forest, LSTM, GRU, CNN, SVM, \
+     Autoencoder, k-means (if combined with prediction), Neural Network, \
+     XGBoost, Gradient Boosting, Logistic Regression, HMM (when used for \
+     prediction, NOT when used purely as a psychometric measurement model).
+   - DO NOT exclude algorithms just because the DV is process-based rather \
+     than achievement-based. Any supervised/semi-supervised learner counts.
+   - DO NOT include as ml_techniques: Diagnostic Classification Models \
+     (HO-DINA, GDINA, DINO, ACDM), Partial Credit Models, IRT models, \
+     Latent Profile Analysis, Process Mining software, or cluster editing \
+     algorithms used purely for grouping.
+   - research_design_type: "predictive" if classifying engagement/performance \
+     from process features; "exploratory" if only clustering/profiling without \
+     a prediction target.
+   - Capture process-specific features (response time, action counts, \
+     time-to-first-action, number of visits, VOTAT score, preparation \
+     time, execution time) in independent variables or confounders_identified.
+
+14) REVIEW / META-ANALYSIS / BIBLIOMETRIC PAPERS:
+   - These papers synthesize existing literature rather than analyzing ILSA \
+     micro-data directly.
+   - source_category: "review_article" (systematic review, scoping review, \
+     meta-analysis, bibliometric analysis, literature survey).
+   - research_design_type: "exploratory".
+   - total_students: null (no original empirical sample) UNLESS the review \
+     reports a pooled sample size from included studies.
+   - ml_techniques.primary: null; ml_techniques.all_techniques: [] UNLESS \
+     the review itself applies ML (e.g., topic modeling on abstracts, \
+     automated text classification of papers).
+   - plausible_values_handling: "not_applicable".
+   - missing_data_handling: "not_reported" unless the review describes a \
+     specific protocol for handling missing studies/data.
+   - MUST trigger null_fields_interpretation explaining: "This is a \
+     systematic review / meta-analysis / bibliometric study without original \
+     ILSA micro-data analysis."
+   - student_weights_used: null; replicate_weights_used: null.
+
+15) NON-EMPIRICAL / FRAMEWORK / APP-DEVELOPMENT PAPERS:
+   - Papers that develop theoretical frameworks, assessment designs, mobile \
+     apps, or methodological proposals without analyzing ILSA student data.
+   - Examples: ISM-based cognitive model construction, CAT algorithm design, \
+     mobile learning app development, scaling methodology papers, simulation \
+     studies.
+   - total_students: null (or the expert panel / pilot sample if reported).
+   - ml_techniques: extract ONLY if the paper actually trains/evaluates ML \
+     models. Framework proposals citing ML concepts do NOT count.
+   - plausible_values_handling: "not_applicable".
+   - research_design_type: "exploratory" for theoretical/framework papers; \
+     "predictive" if simulations test predictive models.
+   - MUST trigger null_fields_interpretation explaining the non-empirical nature.
+
+16) ANTI-LAZINESS ENFORCEMENT — MANDATORY EXTRACTION RULES:
+   - *** ZERO-TOLERANCE FOR UNNECESSARY NULLS ***
+   - The following fields MUST NEVER be null without exhaustive justification:
+     a) total_students — scan EVERY section for sample size indicators. \
+        If the paper says "N=4,552 students" anywhere, extract 4552.
+     b) countries — if the paper names ANY country, economy, or region \
+        in connection with data analysis, extract its ISO code. NEVER \
+        return an empty countries list for an empirical paper.
+     c) ml_techniques.primary — if all_techniques has ≥1 entry, primary \
+        MUST be filled. This is a FATAL ERROR if violated.
+     d) outcome_summary — MUST always be 4-5 substantive sentences with \
+        specific metrics. Never write vague placeholders.
+     e) research_design_type — MUST be classified for every paper.
+     f) publication_type and source_category — MUST be classified.
+   - For EVERY null field in your output, ask yourself: "Did I truly search \
+     the abstract, methodology, results, tables, footnotes, and appendices?" \
+     If not, search again.
+   - PENALTY PATTERN: If you return more than 3 null fields in metadata or \
+     more than 2 null fields in data (excluding the interpretation fields), \
+     you are being LAZY. Re-read and extract harder.
 
 ═══════════════════════════════════════════════════════════════
 OUTPUT SCHEMA
@@ -316,53 +709,104 @@ class GPTExtractor:
             "A) STRICT ENUMS — publication_type, source_category, research_design_type, "
             "plausible_values_handling, missing_data_handling must each be EXACTLY one "
             "of the allowed values listed in the system prompt. Use the synonym tables "
-            "to map academic jargon. Never write free-text descriptions or new slugs. "
-            "Examples: 'FIML' → multiple_imputation; 'complete cases' → listwise_deletion; "
-            "'averaged across five PVs' → average_pv; 'PV1' → single_pv.\n\n"
+            "to map academic jargon. Never write free-text descriptions or new slugs.\n"
+            "  PV SYNONYM TABLE: 'FIML' → multiple_imputation; 'complete cases' → "
+            "listwise_deletion; 'averaged across five PVs' → average_pv; 'PV1' → "
+            "single_pv; 'WLE scores' → wle; 'IRT theta' → irt_theta; 'EAP' → "
+            "irt_theta; '10 PVs averaged' → all_pv.\n"
+            "  MISSING DATA TABLE (map ALL to schema literals):\n"
+            "    'kNN imputation' / 'missForest' / 'missRanger' / 'RF-based' / "
+            "'MCMC' / 'PMM' / 'MICE' / 'chained equations' / 'FIML' / "
+            "'EM algorithm' / 'expectation maximization' / 'hot-deck' / "
+            "'rblimp' / 'blimp' / 'Bayesian imputation' / "
+            "'stochastic regression imputation' / 'two-level FCS' / "
+            "'fully conditional specification' → multiple_imputation.\n"
+            "    'mean substitution' / 'series mean' / 'mode imputation' / "
+            "'median imputation' / 'SimpleImputer' / 'zero imputation' / "
+            "'replaced with zero' → mean_imputation.\n"
+            "    'listwise deletion' / 'complete case' / 'removed missing' / "
+            "'excluded incomplete' → listwise_deletion.\n"
+            "    'pairwise deletion' / 'available case' → pairwise_deletion.\n"
+            "  CAUTION: SMOTE / SMOTETomek / ADASYN / CTGAN / VAE-augmentation "
+            "are CLASS BALANCING / synthetic-data techniques, NOT missing data handling.\n"
+            "  CAUTION: 'winsorized' / 'trimmed at percentile' are OUTLIER TREATMENT, "
+            "NOT missing data handling.\n\n"
 
             "B) COUNTRY CODES — every country_code must be ISO 3166-1 alpha-3 "
-            "(3 uppercase letters). Never write full names or 2-letter codes.\n\n"
+            "(3 uppercase letters). Never write full names or 2-letter codes.\n"
+            "  SPECIAL MAPPINGS: B-S-J-Z / Beijing-Shanghai-Jiangsu-Zhejiang → CHN; "
+            "B-S-J-G / Beijing-Shanghai-Jiangsu-Guangdong → CHN; "
+            "Chinese Taipei / Taiwan → TWN; Hong Kong → HKG; Macao / Macau → MAC; "
+            "England / Northern Ireland / Scotland / Wales → GBR; "
+            "Türkiye / Turkey → TUR; "
+            "Republic of Korea / South Korea → KOR; UAE → ARE; "
+            "Czech Republic / Czechia → CZE; Dominican Republic → DOM; "
+            "Flemish Community → BEL; Costa Rica → CRI.\n"
+            "  NOTE: PIAAC, ICILS, and ICCS use the same ISO codes as PISA/TIMSS.\n\n"
 
             "C) ML TECHNIQUES ONLY — all_techniques and primary must contain ONLY "
             "Machine Learning / predictive-modeling algorithms. DO NOT include: "
             "PCA, factor analysis, t-tests, ANOVA, chi-square, correlations, "
             "descriptive statistics, EFA/CFA, SEM, HLM (unless ML baseline), "
-            "or ESCS computations. Set primary to the best-performing model; "
-            "if ambiguous pick the one highlighted in the abstract.\n\n"
+            "Mantel-Haenszel, IRT model fitting, or ESCS computations.\n"
+            "  INCLUDE: Random Forest, XGBoost, LightGBM, CatBoost, Gradient Boosting, "
+            "Histogram GBR, SVM/SVR, LASSO, Elastic Net, Ridge Regression, "
+            "Group Mnet, glmmLasso, KNN, Naive Bayes, Bayesian Ridge, "
+            "Decision Tree / CART / C5.0, Conditional Inference Trees/Forests, "
+            "Logistic Regression (when used as ML classifier), "
+            "Neural Networks (ANN/MLP/DNN), LSTM, GRU, CNN, RNN, "
+            "Autoencoder, BART/BCF (Bayesian causal ML), Bayesian Network, "
+            "AdaBoost, Extra Trees, Stacking / Blending / ensemble meta-models, "
+            "ANFIS, Discriminant Analysis, Gaussian Process, "
+            "Deep Knowledge Tracing, Word2Vec, Doc2Vec, TF-IDF + classifier.\n"
+            "  DO NOT INCLUDE: LPA, LCA, k-means/DBSCAN/k-medoids/hierarchical "
+            "clustering/GMM (when purely exploratory without a supervised prediction "
+            "goal), HLM, CFA/SEM, IRT, DCMs (HO-DINA/GDINA/DINO/ACDM), ISM, "
+            "Process Mining (Disco/ProM), finite mixture models, "
+            "bibliometric analysis.\n"
+            "  Set primary to the best-performing model; if ambiguous pick the one "
+            "highlighted in the abstract.\n\n"
 
-            "D) SURVEY WEIGHTS (CRITICAL — system rules 4 + 6): "
-            "Aggressively scan methodology, data, footnotes, and table notes for "
+            "D) SURVEY WEIGHTS (CRITICAL — system rules 4 + 6):\n"
+            "  Aggressively scan methodology, data, footnotes, and table notes for "
             "weight terms (W_FSTUWT, TOTWGT, senate/house weights, BRR, jackknife, "
-            "complex survey design, stratification, clustering). "
-            "If found → set student_weights_used/replicate_weights_used = true. "
-            "If ILSA micro-data is used but NO weight evidence exists → set false. "
-            "*** FAIL-SAFE ***: when both student_weights_used and replicate_weights_used "
-            "are false or null AND weight_variable_name is null, you MUST fill "
-            "weight_fields_interpretation with 3-4 sentences explaining WHY weighting "
-            "information is absent. Leaving all weight fields as false/null AND "
-            "weight_fields_interpretation as null is a FATAL ERROR. "
-            "ONLY set weight_fields_interpretation to null when student_weights_used=true "
-            "OR replicate_weights_used=true (i.e. positive evidence of weighting exists).\n\n"
+            "complex survey design, stratification, clustering).\n"
+            "  SOFTWARE-BASED INFERENCE: If paper uses IEA IDB Analyzer, bifiesurvey, "
+            "WeMix, lavaan.survey, EdSurvey, RALSA, intsvy, or repest → infer "
+            "student_weights_used = true (these tools inherently apply weights).\n"
+            "  ML-SPECIFIC PATTERN: Many ML studies (RF, XGBoost, SVM, NN) on ILSA "
+            "data deliberately omit survey weights. If ML is used without weight "
+            "mention → set student_weights_used = false and FILL "
+            "weight_fields_interpretation explaining the ML omission pattern.\n"
+            "  *** FAIL-SAFE ***: when both student_weights_used and "
+            "replicate_weights_used are false or null AND weight_variable_name is null, "
+            "you MUST fill weight_fields_interpretation with 3-4 sentences. "
+            "Leaving all weight fields as false/null AND weight_fields_interpretation "
+            "as null is a FATAL ERROR.\n\n"
 
             "E) SAMPLE DETAILS (system rule 7) — exhaustively search Method, "
-            "Participants, Data, Data Cleaning, and Results for total N. Look for "
-            "'N =', 'final sample', 'analytic sample', 'valid responses', 'after "
-            "removing/exclusion'. Check tables and figure captions. For countries, "
-            "extract ALL ISO alpha-3 codes; never leave countries empty if the "
-            "data source implies a country.\n\n"
+            "Participants, Data, Data Cleaning, Data Preprocessing, and Results for "
+            "total N. Look for 'N =', 'final sample', 'analytic sample', 'valid "
+            "responses', 'after removing/exclusion', 'remained for analysis'. "
+            "Check tables and figure captions. For countries, extract ALL ISO "
+            "alpha-3 codes; never leave countries empty if the data source implies "
+            "a country. If the paper says '80 countries' but lists specific ones, "
+            "extract EVERY named country.\n\n"
 
             "F) ML PRIMARY (system rule 8) — *** FATAL ERROR *** to leave primary "
             "null while all_techniques has values. If only ONE algorithm is listed, "
             "it IS the primary. If multiple, scan Results/Abstract/Conclusion for "
-            "'performed best', 'highest accuracy/R²/AUC', 'outperformed'. If truly "
-            "ambiguous pick the one highlighted in the abstract.\n\n"
+            "'performed best', 'highest accuracy/R²/AUC', 'outperformed', 'lowest "
+            "RMSE/MAE/MAPE'. If truly ambiguous pick the one highlighted in the "
+            "abstract or conclusion.\n\n"
 
             "G) CONFOUNDERS — list variable names or short phrases controlled for "
-            "as predictors (SES, gender, parental education, etc.). [] only if "
-            "the paper truly names none.\n\n"
+            "as predictors (SES, gender, parental education, ESCS, immigration "
+            "status, school type, etc.). [] only if the paper truly names none.\n\n"
 
             "H) outcome_summary — 4-5 sentences of findings and performance metrics "
-            "ONLY from the text. Do NOT put null-field commentary here.\n\n"
+            "ONLY from the text. Include specific numbers (accuracy, R², RMSE, AUC, "
+            "F1) when available. Do NOT put null-field commentary here.\n\n"
 
             "I) null_fields_interpretation — trigger if total_students is still "
             "null, or primary is null while all_techniques is empty, or extraction "
@@ -371,7 +815,60 @@ class GPTExtractor:
 
             "J) ANTI-HALLUCINATION — never invent DOIs, exact N, country codes, "
             "weight variable names, or algorithm names absent from the text. "
-            "Inference applies ONLY to categorical/boolean/enum fields.\n"
+            "Inference applies ONLY to categorical/boolean/enum fields.\n\n"
+
+            "K) RESEARCH DESIGN — classify using system rule 10: predictive (ML "
+            "prediction/classification), causal_observational (BART, BCF, PSM, "
+            "diff-in-diff), causal_experimental (RCT), exploratory (clustering-only, "
+            "LPA-only, reviews, theoretical). If paper combines prediction AND "
+            "clustering → 'predictive'.\n\n"
+
+            "L) PROCESS DATA PAPERS (system rule 13) — if paper analyzes log files, "
+            "clickstreams, response times, action sequences, VOTAT strategies, "
+            "N-grams, or mouse/keyboard traces:\n"
+            "  - plausible_values_handling → 'not_applicable' (process data uses "
+            "binary correctness or IRT ability, not PVs).\n"
+            "  - student_weights_used → usually false (process data studies focus "
+            "on behavioral patterns, not population estimation).\n"
+            "  - ml_techniques: include ALL ML algorithms used for classification "
+            "or prediction of process outcomes (RF, LSTM, GRU, CNN, SVM, "
+            "Autoencoder, k-means if part of a prediction pipeline, etc.).\n"
+            "  - research_design_type → 'predictive' if classifying engagement/"
+            "performance; 'exploratory' if only profiling/clustering.\n"
+            "  - Capture process-specific features (response time, action counts, "
+            "time-to-first-action, number of visits) in independent variables.\n\n"
+
+            "M) REVIEW / META-ANALYSIS / BIBLIOMETRIC PAPERS (system rule 14):\n"
+            "  - source_category → 'review_article'.\n"
+            "  - research_design_type → 'exploratory'.\n"
+            "  - total_students → null (no original sample).\n"
+            "  - ml_techniques.primary → null; all_techniques → [] UNLESS the "
+            "review itself applies ML (e.g., topic modeling on abstracts).\n"
+            "  - plausible_values_handling → 'not_applicable'.\n"
+            "  - missing_data_handling → 'not_reported'.\n"
+            "  - MUST trigger null_fields_interpretation explaining it is a review.\n\n"
+
+            "N) NON-EMPIRICAL / FRAMEWORK / APP-DEVELOPMENT / DATA PAPERS (system rule 15):\n"
+            "  - Papers designing theoretical frameworks, mobile apps, CAT "
+            "algorithms, scaling methodologies, or DATA PAPERS that construct/"
+            "harmonize datasets without ILSA micro-data analysis.\n"
+            "  - publication_type: 'journal' for data papers published in journals "
+            "(e.g., 'Data' journal); 'report' for technical data documentation.\n"
+            "  - source_category: 'methodology_paper' for data papers and frameworks.\n"
+            "  - total_students → null (or expert panel size if applicable).\n"
+            "  - plausible_values_handling → 'not_applicable'.\n"
+            "  - research_design_type → 'exploratory' for data description / "
+            "dataset construction papers.\n"
+            "  - MUST trigger null_fields_interpretation explaining the study type.\n\n"
+
+            "O) FINAL ANTI-LAZINESS CHECK (system rule 16):\n"
+            "  Before submitting your JSON, count your null fields:\n"
+            "  - total_students null for an empirical paper? → Re-read Method section.\n"
+            "  - countries list empty for a paper that names countries? → FATAL ERROR.\n"
+            "  - primary null but all_techniques has entries? → FATAL ERROR.\n"
+            "  - outcome_summary vague or <3 sentences? → Add specific metrics.\n"
+            "  - More than 3 null metadata fields? → You are being LAZY. Extract more.\n"
+            "  - More than 2 null data fields (excluding interpretations)? → Re-scan.\n"
         )
 
         return [
@@ -391,6 +888,7 @@ class GPTExtractor:
         allowed = frozenset({
             "rubin_rules", "single_pv", "average_pv", "mitml",
             "not_applicable", "not_reported",
+            "wle", "irt_theta", "all_pv",
         })
         if value in allowed:
             return value
@@ -401,27 +899,78 @@ class GPTExtractor:
             return "rubin_rules"
         if "mitml" in t or "mplus" in t:
             return "mitml"
-        if "not_applicable" in t or "no_pv" in t or "no_pvs" in t:
+        sw_rubin = (
+            "bifiesurvey", "repest", "intsvy", "edsurvey",
+            "idb_analyzer", "idb analyzer", "ralsa",
+            "lavaan.survey", "wemix",
+        )
+        if any(pkg in t for pkg in sw_rubin):
+            return "rubin_rules"
+        if (
+            "five_pv" in t or "5_pv" in t
+            or "five_plausible" in t
+            or "ten_plausible" in t or "10_pv" in t and "pool" in t
+            or "pv1_pv5" in t or "pv1_pv10" in t
+            or "analyses_repeated_across" in t and "pv" in t
+            or "repeated_across_pvs" in t
+        ):
+            return "rubin_rules"
+        if (
+            "not_applicable" in t
+            or "no_pv" in t
+            or "no_pvs" in t
+            or "no_plausible" in t
+            or "does_not_use" in t
+            or "process_data" in t
+            or "log_file" in t
+            or "review_paper" in t
+            or "non_empirical" in t
+            or "no_assessment_score" in t
+        ):
             return "not_applicable"
+        if "wle" in t or "weighted_likelihood" in t or "warm" in t and "estimat" in t:
+            return "wle"
+        if (
+            "irt_theta" in t
+            or "eap" in t and ("estimat" in t or "score" in t or "abilit" in t)
+            or "theta" in t and ("irt" in t or "estimat" in t or "latent" in t)
+            or "latent_trait" in t
+        ):
+            return "irt_theta"
         if (
             "first_plausible" in t
             or "single_pv" in t
             or "pv1_only" in t
-            or "pv1" == t
-            or "separate" in t and "plausible" in t
+            or t == "pv1"
+            or ("separate" in t and "plausible" in t)
             or "per_pv" in t
             or "per_plausible" in t
             or "one_pv" in t
             or ("target" in t and "indicator" in t)
             or ("binary" in t and ("pv" in t or "plausible" in t))
+            or "pv1math" in t or "pv1read" in t or "pv1scie" in t
+            or "pv2scie" in t or "pv2math" in t
         ):
             return "single_pv"
+        if (
+            "all_pv" in t
+            or "all_10" in t and "pv" in t
+            or "ten_pv" in t
+            or "10_pv" in t
+            or "each_pv" in t and "separate" in t
+            or "pv1_through" in t
+            or "pv1_to_pv10" in t
+            or "all_plausible_values_separately" in t
+        ):
+            return "all_pv"
         if (
             "average" in t and "pv" in t
             or "all_plausible" in t
             or "across_pv" in t
             or "across_pvs" in t
             or "mean_pv" in t
+            or "mean_of" in t and "plausible" in t
+            or "averaged" in t and "plausible" in t
         ):
             return "average_pv"
         if "plausible" in t or "_pv" in t or "pv_" in t:
@@ -444,19 +993,60 @@ class GPTExtractor:
             return "not_reported"
         if "no_missing" in t or "without_missing" in t or "no_missing_data" in t:
             return "not_reported"
+        if (
+            "winsoriz" in t
+            or "winsoris" in t
+            or "trimmed" in t and "percentile" in t
+        ):
+            return "not_reported"
+        if (
+            "smote" in t
+            or "smotetomek" in t
+            or "adasyn" in t
+            or "oversampl" in t
+            or "undersamp" in t
+            or "class_balanc" in t
+            or "resampl" in t and ("minority" in t or "imbalanc" in t)
+            or "ctgan" in t
+            or "vae_augment" in t
+            or "synthetic_data" in t and ("generat" in t or "augment" in t or "balanc" in t)
+        ):
+            return "not_reported"
         if "pairwise" in t:
             return "pairwise_deletion"
-        if "listwise" in t or "complete_case" in t or "complete case" in t:
+        if (
+            "listwise" in t
+            or "complete_case" in t
+            or ("exclusion" in t and "missing" in t)
+            or ("removed" in t and "missing" in t)
+            or ("deleted" in t and "missing" in t)
+            or ("cases_with_missing" in t and ("removed" in t or "excluded" in t or "dropped" in t))
+        ):
             return "listwise_deletion"
-        if "listwise" in t or "exclusion" in t and "missing" in t:
-            return "listwise_deletion"
-        if ("mean" in t and "imput" in t) or ("mean" in t and "substitut" in t) or ("mean" in t and "replac" in t):
+        if (
+            ("mean" in t and "imput" in t)
+            or ("mean" in t and "substitut" in t)
+            or ("mean" in t and "replac" in t)
+            or ("series_mean" in t)
+            or ("mode" in t and ("imput" in t or "substitut" in t or "replac" in t))
+            or ("median" in t and ("imput" in t or "substitut" in t or "replac" in t))
+            or ("simple_imputer" in t and ("mode" in t or "median" in t or "mean" in t))
+            or ("simpleimputer" in t)
+            or ("substituted_mode" in t)
+            or ("substituted_median" in t)
+            or ("zero_fill" in t)
+            or ("zero_imputation" in t)
+            or ("replaced_with_zero" in t)
+            or ("filled_with_zero" in t)
+        ):
             return "mean_imputation"
         if (
             "imput" in t
             or "mice" in t
             or "missforest" in t
             or "miss_forest" in t
+            or "missranger" in t
+            or "miss_ranger" in t
             or "rf_based" in t
             or "fiml" in t
             or "full_information" in t
@@ -465,10 +1055,38 @@ class GPTExtractor:
             or "hot_deck" in t
             or "hot deck" in t
             or "chained_equations" in t
-            or "machine_learning" in t and "missing" in t
+            or "fully_conditional" in t
+            or ("machine_learning" in t and "missing" in t)
             or t == "imputation"
+            or "knn" in t
+            or "k_nearest" in t
+            or "k_nn" in t
+            or "nearest_neighbor" in t
+            or "mcmc" in t
+            or "markov_chain" in t
+            or "pmm" in t
+            or "predictive_mean" in t
+            or "two_level_fcs" in t
+            or "multiple_imput" in t
+            or "multivariate_imput" in t
+            or "rblimp" in t
+            or "blimp" in t
+            or "expectation_maximiz" in t
+            or "bayesian_imput" in t
+            or "stochastic_regress" in t
         ):
             return "multiple_imputation"
+        if (
+            "dropped_missing" in t
+            or "excluded_missing" in t
+            or "removed_incomplete" in t
+            or "omitted_missing" in t
+            or "filtered_out" in t and "missing" in t
+            or "discarded" in t and "missing" in t
+            or "dropped" in t and "incomplete" in t
+            or "cases_removed" in t
+        ):
+            return "listwise_deletion"
         return "not_reported"
 
     @staticmethod
@@ -632,10 +1250,27 @@ class GPTExtractor:
                     meta["publication_type"] = normed
                 else:
                     matched = None
-                    for v in VALID_PUB_TYPES:
-                        if v in normed or normed.startswith(v):
-                            matched = v
-                            break
+                    if "conference" in normed or "proceeding" in normed or "symposium" in normed:
+                        matched = "conference"
+                    elif "review" in normed or "survey" in normed or "systematic" in normed:
+                        matched = "journal"
+                    elif "process_data" in normed or "paper" in normed:
+                        matched = "journal"
+                    elif "data_paper" in normed or "data_article" in normed:
+                        matched = "journal"
+                    elif "thesis" in normed or "dissertation" in normed:
+                        matched = "thesis"
+                    elif "preprint" in normed or "arxiv" in normed or "working_paper" in normed:
+                        matched = "preprint"
+                    elif "report" in normed or "technical" in normed:
+                        matched = "report"
+                    elif "book" in normed or "chapter" in normed:
+                        matched = "book_chapter"
+                    else:
+                        for v in VALID_PUB_TYPES:
+                            if v in normed or normed.startswith(v):
+                                matched = v
+                                break
                     meta["publication_type"] = matched
 
             sc = meta.get("source_category")
@@ -645,10 +1280,34 @@ class GPTExtractor:
                     meta["source_category"] = normed
                 else:
                     matched = None
-                    for v in VALID_SOURCE_CATS:
-                        if v in normed or normed.startswith(v):
-                            matched = v
-                            break
+                    if (
+                        "review" in normed or "systematic" in normed
+                        or "scoping" in normed or "bibliometric" in normed
+                        or "meta_analysis" in normed or "meta_analytic" in normed
+                        or "literature_survey" in normed
+                    ):
+                        matched = "review_article"
+                    elif (
+                        "method" in normed or "framework" in normed
+                        or "simulation" in normed or "scaling" in normed
+                        or "psychometric" in normed or "measurement" in normed
+                        or "data_paper" in normed or "dataset" in normed
+                    ):
+                        matched = "methodology_paper"
+                    elif "technical" in normed or "report" in normed:
+                        matched = "technical_report"
+                    elif (
+                        "peer" in normed or "research" in normed
+                        or "empirical" in normed or "original" in normed
+                    ):
+                        matched = "peer_reviewed_research"
+                    else:
+                        for v in VALID_SOURCE_CATS:
+                            if v in normed or normed.startswith(v):
+                                matched = v
+                                break
+                    if matched is None:
+                        matched = "peer_reviewed_research"
                     meta["source_category"] = matched
 
         rdt = data.get("research_design_type")
@@ -658,18 +1317,42 @@ class GPTExtractor:
                 data["research_design_type"] = normed
             else:
                 matched = None
-                for v in VALID_DESIGN_TYPES:
-                    if v in normed or normed.startswith(v):
-                        matched = v
-                        break
+                if (
+                    "predict" in normed or "classif" in normed
+                    or "regress" in normed or "supervis" in normed
+                ):
+                    matched = "predictive"
+                elif (
+                    "causal" in normed and ("experiment" in normed or "rct" in normed)
+                ):
+                    matched = "causal_experimental"
+                elif (
+                    "causal" in normed or "propensity" in normed
+                    or "diff_in_diff" in normed or "instrumental" in normed
+                    or "counterfactual" in normed
+                ):
+                    matched = "causal_observational"
+                elif (
+                    "explor" in normed or "descript" in normed
+                    or "cluster" in normed or "review" in normed
+                    or "bibliometric" in normed or "profil" in normed
+                    or "unsupervis" in normed or "framework" in normed
+                ):
+                    matched = "exploratory"
+                else:
+                    for v in VALID_DESIGN_TYPES:
+                        if v in normed or normed.startswith(v):
+                            matched = v
+                            break
                 data["research_design_type"] = matched
 
         data["plausible_values_handling"] = _normalize_literal(
             data.get("plausible_values_handling"),
             "plausible_values_handling",
             {
-                "rubin_rules", "single_pv", "average_pv", "mitml",
-                "not_applicable", "not_reported"
+                "rubin_rules", "single_pv", "average_pv", "all_pv",
+                "mitml", "wle", "irt_theta",
+                "not_applicable", "not_reported",
             },
             "not_reported",
         )
@@ -678,13 +1361,14 @@ class GPTExtractor:
             "missing_data_handling",
             {
                 "listwise_deletion", "pairwise_deletion", "mean_imputation",
-                "multiple_imputation", "not_reported"
+                "multiple_imputation", "not_reported",
             },
             "not_reported",
         )
 
         pv_allowed = frozenset({
-            "rubin_rules", "single_pv", "average_pv", "mitml",
+            "rubin_rules", "single_pv", "average_pv", "all_pv",
+            "mitml", "wle", "irt_theta",
             "not_applicable", "not_reported",
         })
         md_allowed = frozenset({
