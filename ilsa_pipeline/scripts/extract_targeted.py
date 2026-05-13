@@ -30,7 +30,7 @@ from utils.storage import save_json, build_master_parquet, build_sqlite_database
 MODEL = "gpt-4o-2024-08-06"
 OUTPUT_DIR = _here.parent.parent / "outputs" / "batch_deneme"
 
-# PDF_TARGETS listesini ~/Desktop/deneme/ içindeki tüm .pdf dosyalarından otomatik oluştur
+# Build PDF_TARGETS from every *.pdf under ~/Desktop/deneme/
 PDF_TARGETS = [Path(p) for p in glob.glob(str(Path.home() / "Desktop" / "deneme" / "*.pdf"))]
 
 # (doc_root, subdir, filename) — resolved at runtime via os.listdir so that

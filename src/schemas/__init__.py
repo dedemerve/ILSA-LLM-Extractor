@@ -1,17 +1,19 @@
 from src.schemas.models import (
-    Metadata,
+    MetadataBlock,
     SurveyDesign,
     CountrySample,
     SampleDetails,
     MLTechniques,
+    DataBlock,
     ILSAArticleMetadata,
 )
 
 __all__ = [
-    "Metadata",
+    "MetadataBlock",
     "SurveyDesign",
     "CountrySample",
     "SampleDetails",
     "MLTechniques",
+    "DataBlock",
     "ILSAArticleMetadata",
 ]

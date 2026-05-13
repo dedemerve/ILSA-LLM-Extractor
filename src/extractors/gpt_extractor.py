@@ -19,24 +19,41 @@ MODEL_NAME = "gpt-5.4-nano"
 PRICE_INPUT_PER_1M = 2.50
 PRICE_OUTPUT_PER_1M = 10.00
 
-SYSTEM_PROMPT = """You are an expert research analyst specializing in International Large-Scale Assessments (ILSA: PISA, TIMSS, PIRLS, TALIS, ICILS, ICCS, PIAAC) and the application of Artificial Intelligence and Machine Learning to educational data.
+SYSTEM_PROMPT = """You are an expert research analyst specializing in International Large-Scale Assessments (ILSA: PISA, TIMSS, PIRLS, TALIS, ICILS, ICCS, PIAAC) and the use of machine learning on educational survey data.
 
-Your task is to extract a structured information sheet from an academic article, focusing on:
-1. Bibliographic identification (title, authors, year, DOI/URL)
-2. Which ILSA dataset, cycle, countries, and target population were studied
-3. Methodological rigor: sampling weights, missing data handling, multilevel hierarchical structure
-4. ML algorithms used, performance metrics, and Explainable AI (XAI) methods
-5. Substantive findings about education dynamics
-6. Concrete policy recommendations for decision-makers, especially around equity
+Your task is to produce one JSON object that matches the ILSAArticleMetadata schema exactly.
 
-EXTRACTION RULES:
-- Extract ONLY information explicitly stated in the article. Use null for any field where the article is silent.
-- For 'is_genuine_ilsa_ai_study': set False if the article merely cites ILSA in passing or uses no ML/AI methods.
-- Use canonical algorithm names (Random Forest, XGBoost, Logistic Regression).
-- Policy recommendations must be CONCRETE and ACTIONABLE: specify WHO should do WHAT.
-- For 'extraction_confidence': use 'low' if the PDF text is OCR-noisy or critical methodological details are missing.
+COVERAGE (use the article text plus the user-message interpretation guidance):
+1) metadata: bibliographic fields (title, authors, year, doi, venue, publication_type, open_access, source_category, file_name).
+2) data.survey_design: whether student/replicate weights are used and any named weight variable.
+3) data.plausible_values_handling and data.missing_data_handling: map the manuscript to the allowed enum literals.
+4) data.sample_details: total_students and per-country counts when reported.
+5) data.ml_techniques: primary model if clear, and all named ML / statistical-learning algorithms used for modeling (not mere preprocessing).
+6) data.confounders_identified: covariates explicitly mentioned as controls or predictors in the model.
+7) data.outcome_summary: 2-4 sentences on findings and model performance, grounded in the text.
+8) data.research_design_type: predictive, causal_observational, causal_experimental, or exploratory when the paper supports it.
 
-OUTPUT: Return a single JSON object conforming exactly to the ILSAArticleMetadata schema."""
+CORE RULES:
+- Ground every filled value in the supplied article text (or in a clearly labeled EXTRACTED_TITLE_HINT in the user message). Do not invent DOIs, author lists, sample sizes, country codes, or weight variable names that never appear.
+- Prefer the closest allowed enum or a concise string when the paper gives partial but directional evidence. Reserve null for fields where the manuscript truly offers no usable signal.
+- Use canonical algorithm names when the paper uses synonyms (e.g. "random forests" -> Random Forest).
+- Empty list [] is allowed for data.confounders_identified and data.sample_details.countries when nothing is stated.
+
+OUTPUT: Return a single JSON object with exactly these top-level keys: metadata, data.
+
+metadata fields only: file_name, title, authors, year, doi, venue, publication_type, open_access, source_category.
+
+data fields only: survey_design, plausible_values_handling, missing_data_handling, sample_details, ml_techniques, confounders_identified, outcome_summary, research_design_type.
+
+data.survey_design fields only: student_weights_used, replicate_weights_used, weight_variable_name.
+
+data.sample_details fields only: total_students, countries (each country: country_code, n_students).
+
+data.ml_techniques fields only: primary, all_techniques.
+
+Do not emit any other top-level or nested keys.
+
+"""
 
 
 @dataclass
@@ -69,22 +86,61 @@ class GPTExtractor:
         sections_label = ", ".join(processed.sections.keys()) or "none"
         title_hint = ""
         if processed.metadata.get("extracted_title"):
-            title_hint = f"\nEXTRACTED_TITLE: {processed.metadata['extracted_title']}\n"
+            title_hint = (
+                f"\nEXTRACTED_TITLE_HINT (use only if the body never states a title; "
+                f"still do not contradict the PDF): "
+                f"{processed.metadata['extracted_title']}\n"
+            )
+
+        document_text = (
+            f"FILE: {processed.file_name}\n"
+            f"SOURCE: {processed.source_database}\n"
+            f"SECTIONS_DETECTED: {sections_label}\n"
+            f"{title_hint}"
+            f"--- BEGIN ARTICLE TEXT ---\n\n"
+            f"{processed.extraction_text}\n\n"
+            f"--- END ARTICLE TEXT ---\n\n"
+            "Apply the system prompt schema to the article above. "
+            "Return valid JSON only — no markdown fences, no preamble."
+        )
+
+        interpretation_text = (
+            "ADDITIONAL INTERPRETATION (same article as previous block; "
+            "reduces over-use of null without allowing fabrication):\n\n"
+            "1) Evidence ladder — prefer filling fields in this order:\n"
+            "   (A) Explicit statements in the manuscript.\n"
+            "   (B) Single reasonable reading: the paper describes a procedure, "
+            "estimator, or data product so concretely that only one schema value fits "
+            "(map to the closest allowed enum or string).\n"
+            "   (C) If the paper is silent on a dimension, use null for that field, "
+            "or not_reported / not_applicable for the PV and missing-data enums only "
+            "when the silence is genuine (no methods clue at all).\n\n"
+            "2) Methodology enums (data.plausible_values_handling, "
+            "data.missing_data_handling): do not default to null or not_reported "
+            "out of caution when the abstract, methods, or results clearly mentions "
+            "deletion, imputation, complete cases, MICE, Rubin's rules, PV averaging, "
+            "or a single PV draw — map to the closest literal.\n\n"
+            "3) Anti-hallucination — never invent: exact N, country list entries, "
+            "DOIs, author strings, weight variable names, or algorithm names that "
+            "never appear. Booleans (e.g. student_weights_used) require at least a "
+            "clear discussion of sampling weights, representativeness, or a named "
+            "weight column; otherwise null.\n\n"
+            "4) data.ml_techniques.all_techniques: include every modeling algorithm "
+            "named in the study (including baselines). data.ml_techniques.primary: "
+            "the main or best-performing model if stated; else the model emphasized "
+            "in the abstract; else null with a non-empty all_techniques when possible."
+            "\n\n"
+            "5) data.outcome_summary: 2-4 sentences summarizing reported findings "
+            "and performance metrics only from the text — no external facts or "
+            "speculative policy.\n\n"
+            "6) data.confounders_identified: list variable names or short phrases "
+            "the paper says were controlled or entered as predictors; [] if none named."
+            "\n"
+        )
+
         return [
-            {
-                "type": "text",
-                "text": (
-                    f"FILE: {processed.file_name}\n"
-                    f"SOURCE: {processed.source_database}\n"
-                    f"SECTIONS DETECTED: {sections_label}\n"
-                    f"{title_hint}"
-                    f"--- BEGIN ARTICLE TEXT ---\n\n"
-                    f"{processed.extraction_text}\n\n"
-                    f"--- END ARTICLE TEXT ---\n\n"
-                    "Follow the five steps in the system prompt. "
-                    "Return valid JSON only — no markdown fences, no preamble."
-                ),
-            }
+            {"type": "text", "text": document_text},
+            {"type": "text", "text": interpretation_text},
         ]
 
     def _calculate_cost(self, input_tokens: int, output_tokens: int) -> float:
@@ -101,25 +157,77 @@ class GPTExtractor:
         """
         INVALID_STR = {"not_reported", "not_applicable", "N/A", "n/a", "unknown", ""}
 
-        # ml_techniques cleanup
-        ml = parsed_data.get("ml_techniques")
+        def _normalize_literal(value, field_name, allowed, default):
+            if isinstance(value, str):
+                return value
+            if isinstance(value, dict):
+                text = " ".join(
+                    str(v) for v in value.values() if isinstance(v, str)
+                ).lower()
+                if field_name == "plausible_values_handling":
+                    if "plausible" in text or "pv" in text:
+                        return "not_reported"
+                    if "no" in text or "not" in text and "pv" not in text:
+                        return "not_applicable"
+                if field_name == "missing_data_handling":
+                    if "imput" in text or "mice" in text or "miss" in text:
+                        return "multiple_imputation"
+                    if "listwise" in text or "complete case" in text or "complete-case" in text:
+                        return "listwise_deletion"
+                    return "not_reported"
+            return default
+
+        DATA_KEYS = (
+            "survey_design",
+            "plausible_values_handling",
+            "missing_data_handling",
+            "sample_details",
+            "ml_techniques",
+            "confounders_identified",
+            "outcome_summary",
+            "research_design_type",
+        )
+
+        if not isinstance(parsed_data.get("data"), dict):
+            parsed_data["data"] = {}
+        data = parsed_data["data"]
+
+        # Legacy flat JSON → nest under data
+        for k in DATA_KEYS:
+            if k in parsed_data:
+                if k not in data:
+                    data[k] = parsed_data.pop(k)
+                else:
+                    parsed_data.pop(k, None)
+
+        for key in list(parsed_data.keys()):
+            if key not in ("metadata", "data"):
+                parsed_data.pop(key, None)
+
+        for key in list(data.keys()):
+            if key not in DATA_KEYS:
+                data.pop(key, None)
+
+        ml = data.get("ml_techniques")
         if isinstance(ml, dict):
-            # primary must be a real string or null
-            if ml.get("primary") in INVALID_STR or ml.get("primary") is None:
+            for legacy in ("feature_selection", "baseline_model", "xai_method"):
+                ml.pop(legacy, None)
+            primary = ml.get("primary")
+            if primary is None or (isinstance(primary, str) and primary in INVALID_STR):
                 ml["primary"] = None
-            # all_techniques: remove sentinel strings
+            elif isinstance(primary, list):
+                ml["primary"] = None
             if isinstance(ml.get("all_techniques"), list):
                 ml["all_techniques"] = [
                     t for t in ml["all_techniques"]
                     if isinstance(t, str) and t not in INVALID_STR
                 ]
-            # optional string fields
-            for field in ("feature_selection", "baseline_model", "xai_method"):
-                if ml.get(field) in INVALID_STR:
-                    ml[field] = None
+            elif isinstance(ml.get("all_techniques"), str):
+                ml["all_techniques"] = [ml["all_techniques"]]
+            elif ml.get("all_techniques") is None:
+                ml["all_techniques"] = []
 
-        # sample_details.countries cleanup
-        sd = parsed_data.get("sample_details")
+        sd = data.get("sample_details")
         if isinstance(sd, dict):
             countries = sd.get("countries")
             if isinstance(countries, list):
@@ -130,29 +238,60 @@ class GPTExtractor:
                     code = c.get("country_code")
                     if not code or not isinstance(code, str):
                         continue
-                    # n_students must be int or null
                     n = c.get("n_students")
                     if not isinstance(n, int):
                         c["n_students"] = None
                     cleaned.append(c)
                 sd["countries"] = cleaned
 
-        # metadata optional string fields
         meta = parsed_data.get("metadata")
         if isinstance(meta, dict):
+            for legacy in (
+                "extraction_timestamp",
+                "extraction_cost_usd",
+                "prompt_tokens",
+                "completion_tokens",
+            ):
+                meta.pop(legacy, None)
             for field in ("doi", "venue", "title"):
                 if meta.get(field) in INVALID_STR:
                     meta[field] = None
-            # authors must be a list
             if not isinstance(meta.get("authors"), list):
                 meta["authors"] = []
 
-        # confounders must be a list of strings
-        conf = parsed_data.get("confounders_identified")
+        data["plausible_values_handling"] = _normalize_literal(
+            data.get("plausible_values_handling"),
+            "plausible_values_handling",
+            {
+                "rubin_rules", "single_pv", "average_pv", "mitml",
+                "not_applicable", "not_reported"
+            },
+            "not_reported",
+        )
+        data["missing_data_handling"] = _normalize_literal(
+            data.get("missing_data_handling"),
+            "missing_data_handling",
+            {
+                "listwise_deletion", "pairwise_deletion", "mean_imputation",
+                "multiple_imputation", "not_reported"
+            },
+            "not_reported",
+        )
+
+        outcome = data.get("outcome_summary")
+        if isinstance(outcome, dict):
+            if isinstance(outcome.get("summary"), str):
+                data["outcome_summary"] = outcome["summary"]
+            else:
+                data["outcome_summary"] = " ".join(
+                    str(v) for v in outcome.values() if isinstance(v, str)
+                )
+
+        conf = data.get("confounders_identified")
         if not isinstance(conf, list):
-            parsed_data["confounders_identified"] = []
+            data["confounders_identified"] = []
         else:
-            parsed_data["confounders_identified"] = [
+            data["confounders_identified"] = [
                 c for c in conf if isinstance(c, str) and c not in INVALID_STR
             ]
 

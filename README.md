@@ -1,21 +1,21 @@
 # ILSA Literature Extraction Pipeline
 
-Academic PDF’lerden (PISA, TIMSS, vb. ILSA + makine öğrenmesi) yapılandırılmış metadata çıkaran hat. Çekirdek: **PyMuPDF** ile metin, **OpenAI** ile JSON extraction, **Pydantic** şema (`src/schemas/models.py`).
+Structured metadata extraction from academic PDFs on International Large-Scale Assessments (PISA, TIMSS, etc.) and machine learning. Core stack: **PyMuPDF** for text, **OpenAI** for JSON extraction, **Pydantic** schema in `src/schemas/models.py`.
 
-## Kurulum
+## Setup
 
 ```bash
-conda activate ilsa-literature-review   # veya kendi ortamınız
+conda activate ilsa-literature-review   # or your own environment
 pip install -r ilsa_pipeline/requirements.txt
 cp ilsa_pipeline/.env.example ilsa_pipeline/.env
-# OPENAI_API_KEY ekleyin
+# Add OPENAI_API_KEY
 ```
 
-Proje kökündeki `requirements.txt` tam conda çözümlemesidir; sadece extraction için `ilsa_pipeline/requirements.txt` yeterlidir.
+The root `requirements.txt` is a full conda-style lockfile. For extraction only, `ilsa_pipeline/requirements.txt` is sufficient.
 
-## Çalıştırma
+## Running
 
-Ana orkestrasyon (çoklu PDF, JSON + isteğe bağlı SQLite):
+Main orchestration (batch PDFs, JSON plus optional SQLite):
 
 ```bash
 cd /path/to/ILSA_LLMs
@@ -26,11 +26,11 @@ python ilsa_pipeline/scripts/run_pipeline.py \
   --resume
 ```
 
-Belirli makale seti için: `ilsa_pipeline/scripts/extract_targeted.py`
+Targeted batch: `ilsa_pipeline/scripts/extract_targeted.py`
 
-## Çıktılar
+## Outputs
 
-- `output/json/*.json`: Her PDF için `file_name`, `success`, token/maliyet süreleri ve `extraction` (şemaya uygun nesne).
-- Parquet / SQLite üretimi: `ilsa_pipeline/utils/storage.py` içindeki `build_master_parquet`, `build_sqlite_database`, `StorageManager`.
+- `output/json/*.json`: Per PDF: `file_name`, `success`, token/cost/duration fields, and `extraction` (object matching the schema).
+- Parquet / SQLite helpers: `build_master_parquet`, `build_sqlite_database`, and `StorageManager` in `ilsa_pipeline/utils/storage.py`.
 
-Eski yedekler ve alternatif şemalar `cop_kutusu/` altında tutulur.
+Legacy backups and alternate schemas live under `cop_kutusu/`.
