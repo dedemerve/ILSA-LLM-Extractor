@@ -149,8 +149,9 @@ class DataBlock(BaseModel):
         description="Survey weighting and replicate design methodology."
     )
     plausible_values_handling: Literal[
-        "rubin_rules", "single_pv", "average_pv",
-        "mitml", "not_applicable", "not_reported"
+        "rubin_rules", "single_pv", "average_pv", "all_pv",
+        "mitml", "wle", "irt_theta",
+        "not_applicable", "not_reported"
     ] = Field(
         description="How plausible values (PVs) were handled in analysis."
     )
