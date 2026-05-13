@@ -1,7 +1,7 @@
 """
 Three-layer storage for extraction results.
 
-v5.3 — SQLite schema aligned with Pydantic ILSAArticleMetadata (v4.1).
+v5.4 — SQLite persistence aligned with nested ILSAArticleMetadata (metadata + data).
 Changes from v5.2:
   - metadata: added source_category
   - core_data: removed obsolete ilsa_type/ilsa_year;
@@ -149,7 +149,7 @@ def build_sqlite_database(parquet_path: Path, db_path: Path) -> None:
 
 
 class StorageManager:
-    """SQLite storage aligned with ILSAArticleMetadata v4.1 Pydantic schema."""
+    """SQLite storage aligned with ILSAArticleMetadata (nested metadata + data)."""
 
     def __init__(self, db_path: Path):
         self.db_path = Path(db_path)
@@ -165,7 +165,7 @@ class StorageManager:
         self.cursor = self.conn.cursor()
 
     def _create_tables(self):
-        """Create tables matching ILSAArticleMetadata v4.1 schema."""
+        """Create tables for flattened extraction fields."""
         self.cursor.executescript("""
         PRAGMA foreign_keys = ON;
 
@@ -283,9 +283,10 @@ class StorageManager:
         m = result.extraction.metadata
         file_name = m.file_name
 
-        survey = result.extraction.survey_design
-        sample = result.extraction.sample_details
-        ml = result.extraction.ml_techniques
+        d = result.extraction.data
+        survey = d.survey_design
+        sample = d.sample_details
+        ml = d.ml_techniques
 
         try:
             # metadata table
@@ -325,7 +326,7 @@ class StorageManager:
             """, (
                 file_name,
                 sample.total_students if sample else None,
-                result.extraction.research_design_type,
+                d.research_design_type,
                 self._bool_to_int(
                     survey.student_weights_used if survey else None
                 ),
@@ -333,13 +334,13 @@ class StorageManager:
                     survey.replicate_weights_used if survey else None
                 ),
                 survey.weight_variable_name if survey else None,
-                result.extraction.plausible_values_handling,
-                result.extraction.missing_data_handling,
+                d.plausible_values_handling,
+                d.missing_data_handling,
                 ml.primary if ml else None,
-                ml.feature_selection if ml else None,
-                ml.baseline_model if ml else None,
-                ml.xai_method if ml else None,
-                result.extraction.outcome_summary,
+                None,
+                None,
+                None,
+                d.outcome_summary,
             ))
 
             # junction tables
@@ -353,7 +354,7 @@ class StorageManager:
             )
             self._insert_junction(
                 file_name, "core_confounders", "confounder_name",
-                result.extraction.confounders_identified or [],
+                d.confounders_identified or [],
             )
 
             # country-level samples

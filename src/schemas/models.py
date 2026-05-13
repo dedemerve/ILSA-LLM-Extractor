@@ -2,8 +2,8 @@ from typing import List, Optional, Literal
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
-class Metadata(BaseModel):
-    """Bibliographic and extraction provenance fields."""
+class MetadataBlock(BaseModel):
+    """Bibliographic fields (no extraction provenance in JSON schema)."""
 
     model_config = ConfigDict(extra="forbid")
 
@@ -41,22 +41,6 @@ class Metadata(BaseModel):
     source_category: Optional[str] = Field(
         default=None,
         description="One of: 'technical_report', 'review_article', 'methodology_paper', 'peer_reviewed_research'."
-    )
-    extraction_timestamp: Optional[str] = Field(
-        default=None,
-        description="ISO-8601 timestamp of when this record was extracted."
-    )
-    extraction_cost_usd: Optional[float] = Field(
-        default=None,
-        description="OpenAI API cost for this extraction in USD."
-    )
-    prompt_tokens: Optional[int] = Field(
-        default=None,
-        description="Input token count for this extraction."
-    )
-    completion_tokens: Optional[int] = Field(
-        default=None,
-        description="Output token count for this extraction."
     )
 
     @field_validator("doi", mode="before")
@@ -134,28 +118,13 @@ class MLTechniques(BaseModel):
     all_techniques: List[str] = Field(
         description="All ML algorithms evaluated (NOT preprocessing/stats methods)."
     )
-    feature_selection: Optional[str] = Field(
-        default=None,
-        description="Feature selection method (e.g. 'LASSO', 'Elastic Net', 'RFE')."
-    )
-    baseline_model: Optional[str] = Field(
-        default=None,
-        description="Baseline/comparison model (e.g. 'Linear Regression')."
-    )
-    xai_method: Optional[str] = Field(
-        default=None,
-        description="Explainability method (e.g. 'SHAP', 'LIME', 'Permutation Importance')."
-    )
 
 
-class ILSAArticleMetadata(BaseModel):
-    """Top-level extraction record for ILSA ML papers (v4.1 schema)."""
+class DataBlock(BaseModel):
+    """Methodological and analytic extraction fields."""
 
     model_config = ConfigDict(extra="forbid")
 
-    metadata: Metadata = Field(
-        description="Bibliographic and extraction provenance fields."
-    )
     survey_design: SurveyDesign = Field(
         description="Survey weighting and replicate design methodology."
     )
@@ -187,4 +156,17 @@ class ILSAArticleMetadata(BaseModel):
     research_design_type: Optional[str] = Field(
         default=None,
         description="One of: 'predictive', 'causal_observational', 'causal_experimental', 'exploratory'."
+    )
+
+
+class ILSAArticleMetadata(BaseModel):
+    """Top-level extraction record for ILSA ML papers (nested metadata + data)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    metadata: MetadataBlock = Field(
+        description="Bibliographic identification fields."
+    )
+    data: DataBlock = Field(
+        description="Survey design, sample, ML, and outcome fields."
     )
