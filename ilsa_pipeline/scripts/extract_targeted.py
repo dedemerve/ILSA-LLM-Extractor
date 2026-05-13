@@ -25,7 +25,12 @@ sys.path.insert(0, str(_here.parent.parent)) # ILSA_LLMs/
 
 from extractors.gpt_extractor import GPTExtractor, ExtractionResult
 from extractors.pdf_processor import process_pdf
-from utils.storage import save_json, build_master_parquet, build_sqlite_database
+from utils.storage import (
+    save_json,
+    build_master_parquet,
+    build_sqlite_database,
+    should_skip_resume_for_json,
+)
 
 MODEL = "gpt-4o-2024-08-06"
 OUTPUT_DIR = _here.parent.parent / "outputs" / "batch_deneme"
@@ -88,7 +93,7 @@ def already_done(pdf_path: Path, json_dir: Path) -> bool:
         return False
     try:
         data = json.loads(candidate.read_text(encoding="utf-8"))
-        return data.get("success", False)
+        return should_skip_resume_for_json(data)
     except Exception:
         return False
 

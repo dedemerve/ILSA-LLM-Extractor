@@ -75,6 +75,16 @@ class SurveyDesign(BaseModel):
         default=None,
         description="Name of weight variable if mentioned (e.g. 'W_FSTUWT', 'TOTWGT')."
     )
+    weight_fields_interpretation: Optional[str] = Field(
+        default=None,
+        description=(
+            "When student_weights_used, replicate_weights_used, and weight_variable_name "
+            "are all null, REQUIRED: 3-4 sentences on what the manuscript does say about "
+            "design or data, what is missing for weighting, whether weights are plausibly "
+            "irrelevant, and what explicit wording or tables would be needed to set each "
+            "field. Omit or null when any weight field is non-null."
+        ),
+    )
 
 
 class CountrySample(BaseModel):
@@ -151,11 +161,24 @@ class DataBlock(BaseModel):
         description="Sociodemographic variables explicitly controlled for."
     )
     outcome_summary: str = Field(
-        description="2-4 sentence summary of key findings and model performance."
+        description=(
+            "4-5 sentence summary of key findings and model performance, grounded only "
+            "in the article text (metrics, comparisons, limitations as reported)."
+        )
     )
     research_design_type: Optional[str] = Field(
         default=None,
         description="One of: 'predictive', 'causal_observational', 'causal_experimental', 'exploratory'."
+    )
+    null_fields_interpretation: Optional[str] = Field(
+        default=None,
+        description=(
+            "When several important fields are still null after careful reading (e.g. "
+            "sparse metadata, no sample size, no ML primary, or many nulls across blocks), "
+            "REQUIRED: a short structured note (plain text, optional bullet lines) listing "
+            "which groups remain sparse and what concrete evidence in a full text would "
+            "be needed to populate them. Omit or null when the record is already dense."
+        ),
     )
 
 
