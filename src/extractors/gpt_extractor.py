@@ -438,12 +438,47 @@ CRITICAL EXTRACTION & INFERENCE RULES
      with "10." followed by a "/" (e.g. "10.1016/j.cedpsych.2023.102196"). \
      Also check "https://doi.org/" links. Strip URL prefixes, store only the \
      DOI itself (e.g. "10.1016/j.cedpsych.2023.102196").
-   - confounders_identified: DO NOT leave this list empty if the study uses \
-     input features/predictors. Academic authors rarely use the word "confounder" \
-     — instead look for "independent variables", "predictors", "features", \
-     "covariates", "control variables", or questionnaire construct names \
-     (ESCS, HOMEPOS, MATHEFF, BELONG, EMOSUPS, ST004D01T, etc.). Extract \
-     ALL named constructs. For ML studies, the feature list IS the confounders.
+   - confounders_identified: EXHAUSTIVE STRUCTURED EXTRACTION — CRITICAL RULES: \
+     *** NO GROUPING (ANTI-LAZINESS) ***: Create a SEPARATE object for EVERY \
+     SINGLE variable. If the study uses 25 predictors, output 25 distinct objects. \
+     NEVER combine variables (e.g. do NOT output "Gender and Age" as one entry). \
+     *** EXHAUSTIVE ***: Read the ENTIRE methodology, variables, and results. \
+     Do not stop after the first few variables. Missing a variable = critical failure. \
+     Each entry is a STRUCTURED OBJECT with three fields: \
+     (a) variable_code — the official ILSA alphanumeric code EXACTLY as written \
+         in the paper (e.g. "ESCS", "ST004Q01TA", "BSBG11A"). If the paper does \
+         NOT explicitly state a code, use "N/A". Do NOT invent or guess codes. \
+     (b) variable_name — a concise, standardised English label (max 8 words). \
+         Remove jargon. Use consistent naming: "Gender", "Socioeconomic status (ESCS)", \
+         "Home possessions", "Math self-efficacy", "School type", "ICT resources". \
+     (c) category — one of 14 categories. Favor specific categories over "other": \
+       socioeconomic → ESCS, HOMEPOS, WEALTH, HISEI, BMMJ/BFMJ, parental education, \
+                       books at home, family resources, cultural possessions \
+       demographic → gender, age, immigration/migrant status, language at home, grade \
+       student_attitude → self-efficacy, motivation, anxiety, enjoyment, belonging, \
+                         self-concept, interest, value beliefs \
+       student_behavior → study time, homework time/frequency, absenteeism, \
+                         learning strategies, reading habits, metacognition \
+       teacher → qualifications, experience, professional development, teaching \
+                strategies, job satisfaction, instructional practices \
+       school → school type (public/private), resources, class size, climate, \
+               safety, autonomy, leadership, location (urban/rural) \
+       ict → ICT resources (ICTRES), computer use, digital access, technology \
+            integration in lessons, internet availability \
+       curriculum → curriculum type, instructional time (SMINS/TMINS), content \
+                   coverage, assessment practices \
+       parent_home → parental involvement, parental support (EMOSUPS), home \
+                    environment, family structure, homework supervision \
+       process_data → response time, action counts, time-to-first-action, \
+                     VOTAT scores, action sequences, number of visits \
+       prior_achievement → previous test scores, prior-year grades, achievement \
+                          in other domains (reading score as math predictor), \
+                          WLE/PV scores used as control variables \
+       peer_effects → classroom disciplinary climate, peer bullying, class-average \
+                     achievement, classroom composition \
+       system_level → country-level GDP, education expenditure, tracking age, \
+                     national policy variables, GINI coefficient, system-level ratios \
+       other → ONLY as last resort when no specific category fits
 
 8) LOGICAL DEDUCTION FOR ML TECHNIQUES (ml_techniques):
    - primary: DO NOT leave primary null if all_techniques is populated!
@@ -604,7 +639,7 @@ CRITICAL EXTRACTION & INFERENCE RULES
      a prediction target.
    - Capture process-specific features (response time, action counts, \
      time-to-first-action, number of visits, VOTAT score, preparation \
-     time, execution time) in independent variables or confounders_identified.
+     time, execution time) in confounders_identified with category='process_data'.
 
 14) REVIEW / META-ANALYSIS / BIBLIOMETRIC PAPERS:
    - These papers synthesize existing literature rather than analyzing ILSA \
@@ -659,7 +694,10 @@ CRITICAL EXTRACTION & INFERENCE RULES
      h) doi — scan headers, footers, footnotes, and copyright notices \
         for "10.xxxx/" patterns. Do NOT leave null if a DOI exists.
      i) confounders_identified — DO NOT return [] if the study has input \
-        features/predictors. Extract ALL named constructs and variables.
+        features/predictors. ONE object per variable. If the paper lists 20 \
+        features, output 20 objects. NEVER group. NEVER truncate. \
+        variable_code = exact ILSA code or "N/A"; variable_name = max 8 \
+        words; category = one of 14 literals (prefer specific over "other").
      j) weight_fields_interpretation — ALWAYS REQUIRED, never null. \
         Write a data preparation summary for every paper.
    - For EVERY null field in your output, ask yourself: "Did I truly search \
@@ -733,8 +771,8 @@ CRITICAL EXTRACTION & INFERENCE RULES
      a) VOTAT detection (systematic vs. non-systematic exploration).
      b) Clustering of sequential paths (k-means on action embeddings).
      c) Manual expert coding of strategy types.
-   - Capture these distinctions in confounders_identified (list the specific \
-     process features) and outcome_summary (describe the approach).
+   - Capture these distinctions in confounders_identified (structured objects \
+     with category='process_data') and outcome_summary (describe the approach).
 
 20) ML ROBUSTNESS, CLASS IMBALANCE & DATA LEAKAGE:
    - Do NOT blindly extract overall model "Accuracy" as the sole metric.
@@ -782,6 +820,9 @@ data.survey_design: student_weights_used, replicate_weights_used,
 data.sample_details: total_students, countries (each: country_code, n_students).
 
 data.ml_techniques: primary, all_techniques.
+
+data.confounders_identified: list of objects, each with:
+  variable_code (string or null), variable_name (short label), category (literal).
 
 Do not emit any other top-level or nested keys.
 No markdown fences, no preamble — valid JSON only.
@@ -1001,15 +1042,32 @@ class GPTExtractor:
             "RMSE/MAE/MAPE'. If truly ambiguous pick the one highlighted in the "
             "abstract or conclusion.\n\n"
 
-            "G) CONFOUNDERS / PREDICTORS / FEATURES (system rule 7) — DO NOT "
-            "return [] if the study has input features. Academic authors rarely "
-            "say 'confounder' — instead look for 'independent variables', "
-            "'predictors', 'features', 'covariates', 'control variables', or "
-            "ILSA questionnaire codes (ESCS, HOMEPOS, MATHEFF, BELONG, EMOSUPS, "
-            "ST004D01T, ICTRES, WEALTH, CULTPOSS, HEDRES, PARED, HISEI, etc.). "
-            "For ML studies, the feature set IS the confounders list. Extract "
-            "ALL named constructs. Return [] ONLY if the paper is a review or "
-            "theoretical framework with no variables.\n\n"
+            "G) CONFOUNDERS / PREDICTORS / FEATURES (system rule 7):\n"
+            "*** ANTI-LAZINESS — CRITICAL RULES ***:\n"
+            "  (1) NO GROUPING: ONE object per variable. If the paper lists 25 "
+            "predictors, you MUST output 25 objects. NEVER combine 'Gender and Age' "
+            "into a single entry.\n"
+            "  (2) EXHAUSTIVE: Read the ENTIRE methodology, variables section, tables, "
+            "and results. Do NOT stop after the first few variables. Missing a "
+            "variable is a critical extraction failure.\n"
+            "  (3) NO CODE HALLUCINATION: variable_code = exact ILSA code from the "
+            "paper or 'N/A'. Do NOT invent codes.\n"
+            "Each entry has three fields:\n"
+            "  variable_code: exact ILSA code or 'N/A' if not mentioned.\n"
+            "  variable_name: concise English label (max 8 words). Consistent naming.\n"
+            "  category: one of 14 literals — socioeconomic | demographic | "
+            "student_attitude | student_behavior | teacher | school | ict | "
+            "curriculum | parent_home | process_data | prior_achievement | "
+            "peer_effects | system_level | other.\n"
+            "EXAMPLES:\n"
+            "  {\"variable_code\": \"ESCS\", \"variable_name\": \"Socioeconomic status (ESCS)\", \"category\": \"socioeconomic\"}\n"
+            "  {\"variable_code\": \"ST004Q01TA\", \"variable_name\": \"Gender\", \"category\": \"demographic\"}\n"
+            "  {\"variable_code\": \"BSBG11A\", \"variable_name\": \"Math self-confidence\", \"category\": \"student_attitude\"}\n"
+            "  {\"variable_code\": \"N/A\", \"variable_name\": \"School type (public/private)\", \"category\": \"school\"}\n"
+            "  {\"variable_code\": \"N/A\", \"variable_name\": \"Prior reading score\", \"category\": \"prior_achievement\"}\n"
+            "  {\"variable_code\": \"N/A\", \"variable_name\": \"Classroom disciplinary climate\", \"category\": \"peer_effects\"}\n"
+            "  {\"variable_code\": \"N/A\", \"variable_name\": \"Country GDP per capita\", \"category\": \"system_level\"}\n"
+            "Return [] ONLY if the paper is a review or theoretical framework.\n\n"
 
             "H) outcome_summary — 4-5 sentences of findings and performance metrics "
             "ONLY from the text. Include specific numbers (accuracy, R², RMSE, AUC, "
@@ -1062,8 +1120,8 @@ class GPTExtractor:
             "Autoencoder, k-means if part of a prediction pipeline, etc.).\n"
             "  - research_design_type → 'predictive' if classifying engagement/"
             "performance; 'exploratory' if only profiling/clustering.\n"
-            "  - Capture process-specific features (response time, action counts, "
-            "time-to-first-action, number of visits) in independent variables.\n\n"
+            "  - Capture process-specific features in confounders_identified "
+            "with category='process_data'.\n\n"
 
             "M) REVIEW / META-ANALYSIS / BIBLIOMETRIC PAPERS (system rule 14):\n"
             "  - source_category → 'review_article'.\n"
@@ -1112,7 +1170,8 @@ class GPTExtractor:
             "actions, Markov) vs. lazy frequency counts (total clicks);\n"
             "    (c) strategy inference: VOTAT detection, path clustering, expert "
             "coding.\n"
-            "  - List specific process features in confounders_identified.\n\n"
+            "  - List specific process features in confounders_identified with "
+            "category='process_data' (e.g. response time, action count, VOTAT score).\n\n"
 
             "R) ML ROBUSTNESS & LEAKAGE (system rule 20):\n"
             "  - Extract ALL performance metrics reported (Accuracy, F1, AUC, Kappa, "
@@ -1131,7 +1190,8 @@ class GPTExtractor:
             "  - countries list empty for a paper that names countries? → FATAL ERROR.\n"
             "  - primary null but all_techniques has entries? → FATAL ERROR.\n"
             "  - doi null? → Check headers, footers, footnotes for 10.xxxx/ patterns.\n"
-            "  - confounders_identified empty for an ML study? → Extract the feature list.\n"
+            "  - confounders_identified empty for an ML study? → ONE object per variable "
+            "(code or 'N/A', name max 8 words, category from 14 literals). NEVER group.\n"
             "  - weight_fields_interpretation null or empty? → FATAL ERROR (always required).\n"
             "  - handling_not_reported_explanation null when PV='not_applicable' or "
             "'not_reported', or missing data='not_reported'? → FATAL ERROR.\n"
@@ -1697,13 +1757,41 @@ class GPTExtractor:
                     str(v) for v in outcome.values() if isinstance(v, str)
                 )
 
+        VALID_CATEGORIES = {
+            "socioeconomic", "demographic", "student_attitude",
+            "student_behavior", "teacher", "school", "ict",
+            "curriculum", "parent_home", "process_data",
+            "prior_achievement", "peer_effects", "system_level", "other",
+        }
         conf = data.get("confounders_identified")
         if not isinstance(conf, list):
             data["confounders_identified"] = []
         else:
-            data["confounders_identified"] = [
-                c for c in conf if isinstance(c, str) and c not in INVALID_STR
-            ]
+            normalised = []
+            for c in conf:
+                if isinstance(c, dict):
+                    name = c.get("variable_name", "")
+                    if isinstance(name, str) and name.strip() and name not in INVALID_STR:
+                        cat = c.get("category", "other")
+                        if cat not in VALID_CATEGORIES:
+                            cat = "other"
+                        code = c.get("variable_code")
+                        if isinstance(code, str) and code.strip() and code.lower() not in ("null", "none", "n/a", ""):
+                            code = code.strip()
+                        else:
+                            code = "N/A"
+                        normalised.append({
+                            "variable_code": code,
+                            "variable_name": name.strip(),
+                            "category": cat,
+                        })
+                elif isinstance(c, str) and c.strip() and c not in INVALID_STR:
+                    normalised.append({
+                        "variable_code": "N/A",
+                        "variable_name": c.strip(),
+                        "category": "other",
+                    })
+            data["confounders_identified"] = normalised
 
         return parsed_data
 
