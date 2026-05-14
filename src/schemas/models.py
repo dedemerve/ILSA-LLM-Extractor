@@ -80,15 +80,14 @@ class SurveyDesign(BaseModel):
         default=None,
         description="Name of weight variable if mentioned (e.g. 'W_FSTUWT', 'TOTWGT')."
     )
-    weight_fields_interpretation: Optional[str] = Field(
-        default=None,
+    weight_fields_interpretation: str = Field(
         description=(
-            "REQUIRED when student_weights_used and replicate_weights_used are both "
-            "false or null AND weight_variable_name is null: 3-4 sentences diagnosing "
-            "why weight information is absent — what the methodology says about the "
-            "sample design, why weights might be missing, and what explicit wording "
-            "would be needed to confirm weighting. Must be null when positive evidence "
-            "of weighting exists (student_weights_used=true or replicate_weights_used=true)."
+            "ALWAYS REQUIRED. Write 3-4 sentences detailing the data preparation, "
+            "sample selection, and weighting strategy. Explain which dataset was used, "
+            "how the data was cleaned or filtered, whether complex survey weights were "
+            "applied (and which variable, e.g. W_FSTUWT), and if weights were ignored, "
+            "explicitly state that and explain why (e.g. ML algorithms lack native "
+            "weight support). This field must never be null."
         ),
     )
 
@@ -157,9 +156,25 @@ class DataBlock(BaseModel):
     )
     missing_data_handling: Literal[
         "listwise_deletion", "pairwise_deletion",
-        "mean_imputation", "multiple_imputation", "not_reported"
+        "mean_imputation", "single_imputation", "knn_imputation",
+        "multiple_imputation", "not_reported"
     ] = Field(
-        description="How missing data was addressed."
+        description=(
+            "How missing data was addressed. Map missForest/RF-based imputation "
+            "to single_imputation; kNN imputation to knn_imputation."
+        ),
+    )
+    handling_not_reported_explanation: Optional[str] = Field(
+        default=None,
+        description=(
+            "REQUIRED IF plausible_values_handling OR missing_data_handling is "
+            "'not_reported' or 'not_applicable'. Write 2-3 sentences as a critical "
+            "peer-reviewer diagnosing WHY the information is missing. Is it a "
+            "reporting gap (authors failed to document their strategy), or is it "
+            "the study's nature (e.g., only Likert-scale responses, no cognitive "
+            "PVs)? Must be null when both PV and missing data handling are explicitly "
+            "reported."
+        ),
     )
     sample_details: SampleDetails = Field(
         description="Total sample size and breakdown by country."
@@ -169,7 +184,13 @@ class DataBlock(BaseModel):
     )
     confounders_identified: List[str] = Field(
         default_factory=list,
-        description="Sociodemographic variables explicitly controlled for."
+        description=(
+            "All independent variables, predictors, or features used in the model. "
+            "Extract specific construct names (ESCS, HOMEPOS, MATHEFF, gender, "
+            "parental education, immigration status, school type, etc.). "
+            "DO NOT leave empty if the study uses input features — scan the "
+            "variables/measures/features section exhaustively."
+        ),
     )
     outcome_summary: str = Field(
         description=(
