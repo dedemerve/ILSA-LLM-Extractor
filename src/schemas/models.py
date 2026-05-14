@@ -121,6 +121,86 @@ class SampleDetails(BaseModel):
     )
 
 
+class Confounder(BaseModel):
+    """A single independent variable / predictor / feature used in the model.
+
+    EXTRACTION RULES — enforced at the schema level:
+    • ONE variable per object. NEVER combine multiple variables into one entry.
+    • Extract EVERY variable mentioned in the study — missing one is a failure.
+    • Do NOT invent ILSA codes — use 'N/A' when no official code is stated.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    variable_code: str = Field(
+        description=(
+            "The official ILSA alphanumeric code exactly as written in the paper "
+            "(e.g. 'ESCS', 'ST004Q01TA', 'BSBG11A', 'HOMEPOS', 'W_FSTUWT'). "
+            "If the paper does NOT explicitly mention a standard code for this "
+            "variable, set to 'N/A'. Do NOT invent or guess codes."
+        ),
+    )
+    variable_name: str = Field(
+        description=(
+            "A concise, standardised English label (max 8 words). Use consistent "
+            "naming across papers: 'Gender', 'Socioeconomic status (ESCS)', "
+            "'Home possessions', 'Math self-efficacy', 'School type', "
+            "'Parental education (mother)', 'ICT resources', etc. Remove "
+            "academic jargon and long-winded descriptions."
+        ),
+    )
+    category: Literal[
+        "socioeconomic",
+        "demographic",
+        "student_attitude",
+        "student_behavior",
+        "teacher",
+        "school",
+        "ict",
+        "curriculum",
+        "parent_home",
+        "process_data",
+        "prior_achievement",
+        "peer_effects",
+        "system_level",
+        "other",
+    ] = Field(
+        description=(
+            "The domain category that BEST fits the variable. Favor specific "
+            "categories over 'other'. Mapping guide: "
+            "socioeconomic → ESCS, HOMEPOS, WEALTH, HISEI, parental education, "
+            "books at home, cultural possessions, family resources; "
+            "demographic → gender, age, immigration/migrant status, language at home, grade; "
+            "student_attitude → self-efficacy, motivation, anxiety, enjoyment, "
+            "belonging, self-concept, interest, value beliefs, intrinsic motivation; "
+            "student_behavior → study time, homework time/frequency, absenteeism, "
+            "learning strategies, reading habits, metacognition; "
+            "teacher → qualifications, experience, professional development, "
+            "teaching practices, job satisfaction, instructional strategies; "
+            "school → school type (public/private), resources, class size, climate, "
+            "safety, autonomy, leadership, location (urban/rural); "
+            "ict → ICT resources (ICTRES), computer use, digital access, "
+            "technology integration in lessons, internet availability; "
+            "curriculum → curriculum type, instructional time (SMINS/TMINS), "
+            "content coverage, assessment practices; "
+            "parent_home → parental involvement/support (EMOSUPS), home environment, "
+            "family structure, homework supervision; "
+            "process_data → response time, action counts, time-to-first-action, "
+            "VOTAT scores, action sequences, number of visits; "
+            "prior_achievement → previous test scores, prior-year grades, "
+            "achievement in other domains (e.g. reading score used as predictor "
+            "for math), WLE/PV scores used as control variables; "
+            "peer_effects → classroom disciplinary climate, peer bullying, "
+            "class-average achievement, classroom composition; "
+            "system_level → country-level GDP, education expenditure, tracking age, "
+            "national policy variables, GINI coefficient, teacher-student ratio "
+            "at system level; "
+            "other → ONLY as a last resort when the variable absolutely does not "
+            "fit any of the above categories."
+        ),
+    )
+
+
 class MLTechniques(BaseModel):
     """ML algorithms and methodological components."""
 
@@ -182,14 +262,16 @@ class DataBlock(BaseModel):
     ml_techniques: MLTechniques = Field(
         description="ML algorithms and methodological components."
     )
-    confounders_identified: List[str] = Field(
+    confounders_identified: List[Confounder] = Field(
         default_factory=list,
         description=(
-            "All independent variables, predictors, or features used in the model. "
-            "Extract specific construct names (ESCS, HOMEPOS, MATHEFF, gender, "
-            "parental education, immigration status, school type, etc.). "
-            "DO NOT leave empty if the study uses input features — scan the "
-            "variables/measures/features section exhaustively."
+            "An EXHAUSTIVE list of ALL independent variables, predictors, features, "
+            "and control variables used in the study. Each variable MUST be a "
+            "separate Confounder object — NEVER combine multiple variables into one "
+            "entry. If the study uses 20 features, output 20 objects. Missing a "
+            "variable is a critical extraction failure. DO NOT leave empty if the "
+            "study uses input features — scan methodology, variables, measures, "
+            "features, and results sections exhaustively."
         ),
     )
     outcome_summary: str = Field(
