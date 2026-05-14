@@ -369,15 +369,14 @@ CRITICAL EXTRACTION & INFERENCE RULES
      and FILL weight_fields_interpretation explaining: "The study applied ML \
      algorithms that do not natively incorporate survey weights. The manuscript \
      does not discuss weighting, suggesting an unweighted analysis."
-   - weight_fields_interpretation: FILL ONLY IF student_weights_used, \
-     replicate_weights_used, AND weight_variable_name are ALL null or false. \
-     Write 3-4 analytical sentences: what the manuscript says about sample design, \
-     why weights might be missing (e.g. ML study without weight support, small \
-     convenience sample, secondary analysis without original weights, process-data \
-     study focused on behavioral sequences rather than population estimation), \
-     and what exact wording would be needed to extract them. \
-     IF ANY weight field is non-null (true or has a variable name), \
-     this field MUST BE null.
+   - weight_fields_interpretation: ALWAYS REQUIRED — this field is NEVER null. \
+     Write 3-4 analytical sentences detailing: (a) which dataset and cycle was \
+     used and how the sample was filtered/cleaned, (b) whether complex survey \
+     weights were applied and which variable (e.g. W_FSTUWT, TOTWGT), (c) if \
+     weights were omitted, explain why (ML algorithms lack native weight support, \
+     process data study, convenience sample, etc.), (d) any other notable data \
+     preprocessing steps (outlier removal, subsample selection, grade filtering). \
+     This field serves as a mandatory "Data Preparation Summary" for every paper.
 
 5) NULL FIELDS INTERPRETATION (THE FALLBACK):
    - null_fields_interpretation: trigger ONLY if the overall extraction is \
@@ -413,29 +412,38 @@ CRITICAL EXTRACTION & INFERENCE RULES
      bibliometric analysis, or theoretical framework without original ILSA \
      micro-data analysis, set student_weights_used = null, replicate_weights_used \
      = null, weight_variable_name = null, and explain in weight_fields_interpretation.
-   - STRICT FAIL-SAFE ENFORCEMENT — if BOTH student_weights_used and \
-     replicate_weights_used end up as false or null, AND weight_variable_name \
-     is null, you ABSOLUTELY MUST fill weight_fields_interpretation with 3-4 \
-     sentences explaining: (a) what the methodology section says about the data, \
-     (b) why weight information is missing (e.g. "The authors focused solely on \
-     the ML architecture without detailing data preparation or ILSA weighting"), \
-     (c) what explicit wording or variable names would be needed to confirm \
-     weights were used.
-   - *** FATAL ERROR ***: returning false/null for all weight fields AND leaving \
-     weight_fields_interpretation as null is a schema violation. You must always \
-     provide either evidence of weighting OR an explanation of its absence.
+   - STRICT FAIL-SAFE ENFORCEMENT — weight_fields_interpretation is ALWAYS \
+     REQUIRED regardless of whether weights were used or not. This is the \
+     "Data Preparation & Weighting Summary" field. It must describe the dataset, \
+     sample filtering, and weighting strategy in every case.
+   - *** FATAL ERROR ***: returning weight_fields_interpretation as null or \
+     empty is a schema violation. Pydantic will reject the output.
 
-7) AGGRESSIVE SAMPLE & COUNTRY EXTRACTION (sample_details):
+7) AGGRESSIVE SAMPLE, COUNTRY, DOI & CONFOUNDER EXTRACTION:
    - total_students: NEVER default to null without an exhaustive search. Scan \
      "Method", "Participants", "Data", "Data Cleaning", and "Results" sections \
      for keywords: "N =", "n =", "final sample", "consisted of", "analytic \
      sample", "valid responses", "after removing", "after exclusion", \
      "remaining students", "total of". Check tables and figure captions too.
-   - countries: identify ALL countries or economies analyzed. If the abstract \
-     says "using PISA data from the USA", extract country_code = "USA". If a \
-     table lists multiple countries, extract ALL of them with ISO 3166-1 alpha-3 \
-     codes. Do not leave the list empty if the data source inherently implies \
-     a country (e.g. "TIMSS 2019 data from Morocco" → [{"country_code":"MAR"}]).
+   - countries & n_students: identify ALL countries analyzed AND their per-country \
+     sample sizes. Aggressively scan "Table 1", "Sample Characteristics", \
+     "Participants", and descriptive statistics tables for country-level N. \
+     Do NOT leave n_students null if the table shows per-country counts. \
+     If the abstract says "using PISA data from the USA", extract \
+     country_code = "USA". If a table lists multiple countries, extract ALL \
+     of them with ISO 3166-1 alpha-3 codes. Do not leave the list empty if \
+     the data source inherently implies a country.
+   - DOI: Do NOT leave doi null. Thoroughly scan the first page header/footer, \
+     article title block, footnotes, and copyright notice for strings starting \
+     with "10." followed by a "/" (e.g. "10.1016/j.cedpsych.2023.102196"). \
+     Also check "https://doi.org/" links. Strip URL prefixes, store only the \
+     DOI itself (e.g. "10.1016/j.cedpsych.2023.102196").
+   - confounders_identified: DO NOT leave this list empty if the study uses \
+     input features/predictors. Academic authors rarely use the word "confounder" \
+     — instead look for "independent variables", "predictors", "features", \
+     "covariates", "control variables", or questionnaire construct names \
+     (ESCS, HOMEPOS, MATHEFF, BELONG, EMOSUPS, ST004D01T, etc.). Extract \
+     ALL named constructs. For ML studies, the feature list IS the confounders.
 
 8) LOGICAL DEDUCTION FOR ML TECHNIQUES (ml_techniques):
    - primary: DO NOT leave primary null if all_techniques is populated!
@@ -457,6 +465,55 @@ CRITICAL EXTRACTION & INFERENCE RULES
      review without an empirical sample" or "The authors listed LASSO and Random \
      Forest but did not report which model achieved the best metric.").
    - This rule complements Rule 5 — both may apply simultaneously.
+
+9b) JUSTIFYING 'NOT_REPORTED' OR 'NOT_APPLICABLE' — MANDATORY EXPLANATION:
+   - *** FATAL ERROR ***: If you set plausible_values_handling to "not_reported" \
+     OR "not_applicable", OR missing_data_handling to "not_reported", you MUST \
+     write 2-3 sentences in handling_not_reported_explanation. Leaving this \
+     field null when triggered is a schema violation.
+   - This rule applies to BOTH "not_reported" AND "not_applicable". Even if PVs \
+     are genuinely not applicable, you MUST explain WHY they are not applicable.
+   - Act as a critical peer-reviewer. Classify the reason into one of these:
+     a) REPORTING GAP (methodological flaw) — the authors performed ML on ILSA \
+        cognitive achievement data but completely failed to document how PVs or \
+        missing data were handled. Flag this as a severe transparency issue. \
+        Example: "The methodology section details the XGBoost architecture \
+        extensively but completely fails to report how missing data was imputed \
+        or deleted. Given that PISA datasets typically contain 5-15% missing \
+        values, this omission represents a severe reporting gap."
+     b) AFFECTIVE / NON-COGNITIVE DV — the study predicts Likert-scale items \
+        (self-efficacy, anxiety, motivation, attitudes) rather than cognitive \
+        achievement scores, so PVs are genuinely not applicable. \
+        Example: "The dependent variable is students' awareness of global \
+        competence (ST218 Likert items), not a cognitive achievement score. \
+        Since PISA generates Plausible Values only for cognitive domains, PVs \
+        are not applicable to this affective outcome."
+     c) PROCESS DATA STUDY — the DV is binary correctness, IRT theta, or \
+        behavioral indicators from log files, not PV-based achievement. \
+        Example: "The study classifies problem-solving strategies from PISA \
+        process log data using binary correctness as the outcome. PVs are \
+        generated for cognitive achievement scales, not for process outcomes."
+     d) DATA PAPER / FRAMEWORK / CURRICULUM ANALYSIS — the paper constructs a \
+        dataset, theoretical framework, or analyzes curriculum content rather \
+        than ILSA micro-data. \
+        Example: "This is a dataset construction paper that harmonizes test \
+        scores across assessments. It does not analyze individual student-level \
+        ILSA micro-data, so PVs and missing data handling are not applicable."
+     e) REVIEW / BIBLIOMETRIC — synthesizes literature, not micro-data.
+     f) COUNTRY-LEVEL AGGREGATION — the study uses country-mean scores rather \
+        than student-level PVs. \
+        Example: "The analysis uses OECD-published country-level mean scores \
+        rather than student-level Plausible Values. PV handling does not apply \
+        to pre-aggregated country-level data."
+   - DO NOT write lazy explanations like "It was not mentioned in the text." \
+     You must explain the CONTEXT: what is the DV, why PVs don't apply or \
+     why missing data handling was omitted, and whether this is a flaw or by design.
+   - ONLY set handling_not_reported_explanation to null when BOTH \
+     plausible_values_handling is one of {rubin_rules, single_pv, average_pv, \
+     all_pv, mitml, wle, irt_theta} AND missing_data_handling is one of \
+     {listwise_deletion, pairwise_deletion, mean_imputation, single_imputation, \
+     knn_imputation, multiple_imputation}. In ALL other cases, this field is \
+     MANDATORY.
 
 10) RESEARCH DESIGN CLASSIFICATION (research_design_type):
    - Papers that predict/classify student outcomes using ML → "predictive"
@@ -590,17 +647,26 @@ CRITICAL EXTRACTION & INFERENCE RULES
      b) countries — if the paper names ANY country, economy, or region \
         in connection with data analysis, extract its ISO code. NEVER \
         return an empty countries list for an empirical paper.
-     c) ml_techniques.primary — if all_techniques has ≥1 entry, primary \
+     c) n_students (per country) — aggressively scan tables (Table 1, \
+        Sample Characteristics) for per-country sample sizes. Do NOT \
+        leave n_students null if a table reports country-level counts.
+     d) ml_techniques.primary — if all_techniques has ≥1 entry, primary \
         MUST be filled. This is a FATAL ERROR if violated.
-     d) outcome_summary — MUST always be 4-5 substantive sentences with \
+     e) outcome_summary — MUST always be 4-5 substantive sentences with \
         specific metrics. Never write vague placeholders.
-     e) research_design_type — MUST be classified for every paper.
-     f) publication_type and source_category — MUST be classified.
+     f) research_design_type — MUST be classified for every paper.
+     g) publication_type and source_category — MUST be classified.
+     h) doi — scan headers, footers, footnotes, and copyright notices \
+        for "10.xxxx/" patterns. Do NOT leave null if a DOI exists.
+     i) confounders_identified — DO NOT return [] if the study has input \
+        features/predictors. Extract ALL named constructs and variables.
+     j) weight_fields_interpretation — ALWAYS REQUIRED, never null. \
+        Write a data preparation summary for every paper.
    - For EVERY null field in your output, ask yourself: "Did I truly search \
      the abstract, methodology, results, tables, footnotes, and appendices?" \
      If not, search again.
-   - PENALTY PATTERN: If you return more than 3 null fields in metadata or \
-     more than 2 null fields in data (excluding the interpretation fields), \
+   - PENALTY PATTERN: If you return more than 2 null fields in metadata or \
+     more than 1 null field in data (excluding null_fields_interpretation), \
      you are being LAZY. Re-read and extract harder.
 
 17) XAI & CAUSALITY SCRUTINY (Explainability ≠ Causality):
@@ -706,11 +772,12 @@ metadata fields: file_name, title, authors, year, doi, venue, publication_type,
   open_access, source_category.
 
 data fields: survey_design, plausible_values_handling, missing_data_handling,
-  sample_details, ml_techniques, confounders_identified, outcome_summary,
-  research_design_type, null_fields_interpretation.
+  handling_not_reported_explanation, sample_details, ml_techniques,
+  confounders_identified, outcome_summary, research_design_type,
+  null_fields_interpretation.
 
 data.survey_design: student_weights_used, replicate_weights_used,
-  weight_variable_name, weight_fields_interpretation.
+  weight_variable_name, weight_fields_interpretation (ALWAYS REQUIRED — never null).
 
 data.sample_details: total_students, countries (each: country_code, n_students).
 
@@ -766,13 +833,48 @@ class GPTExtractor:
             ml.primary = ml.all_techniques[0]
 
         sd = extraction.data.survey_design
-        has_positive = (
-            sd.student_weights_used is True
-            or sd.replicate_weights_used is True
-            or (sd.weight_variable_name and sd.weight_variable_name.strip())
-        )
-        if has_positive:
-            sd.weight_fields_interpretation = None
+        if not sd.weight_fields_interpretation or not sd.weight_fields_interpretation.strip():
+            if sd.student_weights_used is True:
+                sd.weight_fields_interpretation = (
+                    "The study applied survey weights to account for the complex "
+                    "sampling design. No further details were extracted."
+                )
+            else:
+                sd.weight_fields_interpretation = (
+                    "No weighting information was explicitly reported in the "
+                    "manuscript. The extraction could not determine the weighting "
+                    "strategy from the available text."
+                )
+
+        d = extraction.data
+        pv = d.plausible_values_handling
+        md = d.missing_data_handling
+        needs_explanation = pv in ("not_reported", "not_applicable") or md == "not_reported"
+        if needs_explanation and not (
+            d.handling_not_reported_explanation
+            and d.handling_not_reported_explanation.strip()
+        ):
+            reasons = []
+            if pv == "not_applicable":
+                reasons.append(
+                    f"plausible_values_handling is '{pv}' — the study likely "
+                    "does not analyze cognitive achievement PVs (e.g., it may "
+                    "focus on affective/attitudinal outcomes, curriculum data, "
+                    "or non-ILSA micro-data)"
+                )
+            elif pv == "not_reported":
+                reasons.append(
+                    f"plausible_values_handling is '{pv}' — the authors did "
+                    "not document how PVs were handled, which is a reporting gap"
+                )
+            if md == "not_reported":
+                reasons.append(
+                    f"missing_data_handling is '{md}' — the manuscript does "
+                    "not describe any missing data strategy"
+                )
+            d.handling_not_reported_explanation = ". ".join(reasons) + "."
+        elif not needs_explanation:
+            d.handling_not_reported_explanation = None
 
     def _build_user_message(self, processed: "ProcessedPDF") -> list[dict]:
         sections_label = ", ".join(processed.sections.keys()) or "none"
@@ -808,12 +910,15 @@ class GPTExtractor:
             "single_pv; 'WLE scores' → wle; 'IRT theta' → irt_theta; 'EAP' → "
             "irt_theta; '10 PVs averaged' → all_pv.\n"
             "  MISSING DATA TABLE (map ALL to schema literals):\n"
-            "    'kNN imputation' / 'missForest' / 'missRanger' / 'RF-based' / "
-            "'MCMC' / 'PMM' / 'MICE' / 'chained equations' / 'FIML' / "
+            "    'MICE' / 'chained equations' / 'FIML' / 'MCMC' / 'PMM' / "
             "'EM algorithm' / 'expectation maximization' / 'hot-deck' / "
             "'rblimp' / 'blimp' / 'Bayesian imputation' / "
             "'stochastic regression imputation' / 'two-level FCS' / "
             "'fully conditional specification' → multiple_imputation.\n"
+            "    'kNN imputation' / 'k-nearest neighbor imputation' → knn_imputation.\n"
+            "    'missForest' / 'missRanger' / 'RF-based imputation' / "
+            "'single regression imputation' / 'deterministic imputation' "
+            "→ single_imputation.\n"
             "    'mean substitution' / 'series mean' / 'mode imputation' / "
             "'median imputation' / 'SimpleImputer' / 'zero imputation' / "
             "'replaced with zero' → mean_imputation.\n"
@@ -860,7 +965,7 @@ class GPTExtractor:
             "  Set primary to the best-performing model; if ambiguous pick the one "
             "highlighted in the abstract.\n\n"
 
-            "D) SURVEY WEIGHTS (CRITICAL — system rules 4 + 6):\n"
+            "D) SURVEY WEIGHTS & DATA PREPARATION SUMMARY (system rules 4 + 6):\n"
             "  Aggressively scan methodology, data, footnotes, and table notes for "
             "weight terms (W_FSTUWT, TOTWGT, senate/house weights, BRR, jackknife, "
             "complex survey design, stratification, clustering).\n"
@@ -869,22 +974,25 @@ class GPTExtractor:
             "student_weights_used = true (these tools inherently apply weights).\n"
             "  ML-SPECIFIC PATTERN: Many ML studies (RF, XGBoost, SVM, NN) on ILSA "
             "data deliberately omit survey weights. If ML is used without weight "
-            "mention → set student_weights_used = false and FILL "
-            "weight_fields_interpretation explaining the ML omission pattern.\n"
-            "  *** FAIL-SAFE ***: when both student_weights_used and "
-            "replicate_weights_used are false or null AND weight_variable_name is null, "
-            "you MUST fill weight_fields_interpretation with 3-4 sentences. "
-            "Leaving all weight fields as false/null AND weight_fields_interpretation "
-            "as null is a FATAL ERROR.\n\n"
+            "mention → set student_weights_used = false.\n"
+            "  *** weight_fields_interpretation is ALWAYS REQUIRED (never null) ***\n"
+            "  Write 3-4 sentences covering: (a) dataset/cycle used and sample "
+            "filtering, (b) whether survey weights were applied and which variable, "
+            "(c) if weights were omitted, why (ML omission pattern, process data, "
+            "etc.), (d) notable preprocessing (outlier removal, grade filtering). "
+            "This is the 'Data Preparation Summary' — mandatory for every paper.\n\n"
 
-            "E) SAMPLE DETAILS (system rule 7) — exhaustively search Method, "
-            "Participants, Data, Data Cleaning, Data Preprocessing, and Results for "
-            "total N. Look for 'N =', 'final sample', 'analytic sample', 'valid "
-            "responses', 'after removing/exclusion', 'remained for analysis'. "
-            "Check tables and figure captions. For countries, extract ALL ISO "
-            "alpha-3 codes; never leave countries empty if the data source implies "
-            "a country. If the paper says '80 countries' but lists specific ones, "
-            "extract EVERY named country.\n\n"
+            "E) SAMPLE, N_STUDENTS & DOI (system rule 7) — exhaustively search "
+            "Method, Participants, Data, Data Cleaning, Data Preprocessing, and "
+            "Results for total N. Look for 'N =', 'final sample', 'analytic "
+            "sample', 'valid responses', 'after removing/exclusion', 'remained "
+            "for analysis'. Check tables and figure captions.\n"
+            "  COUNTRIES + N_STUDENTS: For each country, aggressively scan tables "
+            "(Table 1, Sample Characteristics, descriptive stats) for per-country "
+            "sample sizes. Do NOT leave n_students null if a table shows the count.\n"
+            "  DOI: Scan first-page header/footer, article info block, footnotes, "
+            "and copyright notice for '10.xxxx/' patterns or 'https://doi.org/' "
+            "links. Strip URL prefixes. Do NOT leave doi null if it exists.\n\n"
 
             "F) ML PRIMARY (system rule 8) — *** FATAL ERROR *** to leave primary "
             "null while all_techniques has values. If only ONE algorithm is listed, "
@@ -893,9 +1001,15 @@ class GPTExtractor:
             "RMSE/MAE/MAPE'. If truly ambiguous pick the one highlighted in the "
             "abstract or conclusion.\n\n"
 
-            "G) CONFOUNDERS — list variable names or short phrases controlled for "
-            "as predictors (SES, gender, parental education, ESCS, immigration "
-            "status, school type, etc.). [] only if the paper truly names none.\n\n"
+            "G) CONFOUNDERS / PREDICTORS / FEATURES (system rule 7) — DO NOT "
+            "return [] if the study has input features. Academic authors rarely "
+            "say 'confounder' — instead look for 'independent variables', "
+            "'predictors', 'features', 'covariates', 'control variables', or "
+            "ILSA questionnaire codes (ESCS, HOMEPOS, MATHEFF, BELONG, EMOSUPS, "
+            "ST004D01T, ICTRES, WEALTH, CULTPOSS, HEDRES, PARED, HISEI, etc.). "
+            "For ML studies, the feature set IS the confounders list. Extract "
+            "ALL named constructs. Return [] ONLY if the paper is a review or "
+            "theoretical framework with no variables.\n\n"
 
             "H) outcome_summary — 4-5 sentences of findings and performance metrics "
             "ONLY from the text. Include specific numbers (accuracy, R², RMSE, AUC, "
@@ -905,6 +1019,26 @@ class GPTExtractor:
             "null, or primary is null while all_techniques is empty, or extraction "
             "is extremely sparse. Write a diagnostic note explaining WHY. "
             "If the record is reasonably dense, this MUST be null.\n\n"
+
+            "I2) handling_not_reported_explanation (system rule 9b) — *** FATAL "
+            "ERROR IF MISSED ***:\n"
+            "  - MANDATORY when plausible_values_handling = 'not_reported' OR "
+            "'not_applicable', OR missing_data_handling = 'not_reported'.\n"
+            "  - Even 'not_applicable' REQUIRES explanation. You must say WHY:\n"
+            "    * AFFECTIVE DV: 'The DV is a Likert-scale attitude measure, not "
+            "a cognitive PV-based score.'\n"
+            "    * PROCESS DATA: 'The DV is binary correctness or IRT theta from "
+            "log data, not PV-based achievement.'\n"
+            "    * DATA PAPER: 'This constructs a dataset, not student-level ILSA "
+            "micro-data analysis.'\n"
+            "    * COUNTRY-LEVEL: 'Uses country-mean scores, not student-level PVs.'\n"
+            "    * REPORTING GAP: 'Authors failed to document PV/missing data "
+            "strategy — severe transparency issue.'\n"
+            "  - DO NOT write 'It was not mentioned.' Explain the CONTEXT.\n"
+            "  - null ONLY when PV is {rubin_rules, single_pv, average_pv, all_pv, "
+            "mitml, wle, irt_theta} AND missing data is {listwise_deletion, "
+            "pairwise_deletion, mean_imputation, single_imputation, knn_imputation, "
+            "multiple_imputation}.\n\n"
 
             "J) ANTI-HALLUCINATION — never invent DOIs, exact N, country codes, "
             "weight variable names, or algorithm names absent from the text. "
@@ -993,11 +1127,17 @@ class GPTExtractor:
             "S) FINAL ANTI-LAZINESS CHECK (system rule 16):\n"
             "  Before submitting your JSON, count your null fields:\n"
             "  - total_students null for an empirical paper? → Re-read Method section.\n"
+            "  - n_students null for listed countries? → Scan Table 1 again.\n"
             "  - countries list empty for a paper that names countries? → FATAL ERROR.\n"
             "  - primary null but all_techniques has entries? → FATAL ERROR.\n"
+            "  - doi null? → Check headers, footers, footnotes for 10.xxxx/ patterns.\n"
+            "  - confounders_identified empty for an ML study? → Extract the feature list.\n"
+            "  - weight_fields_interpretation null or empty? → FATAL ERROR (always required).\n"
+            "  - handling_not_reported_explanation null when PV='not_applicable' or "
+            "'not_reported', or missing data='not_reported'? → FATAL ERROR.\n"
             "  - outcome_summary vague or <3 sentences? → Add specific metrics.\n"
-            "  - More than 3 null metadata fields? → You are being LAZY. Extract more.\n"
-            "  - More than 2 null data fields (excluding interpretations)? → Re-scan.\n"
+            "  - More than 2 null metadata fields? → You are being LAZY. Extract more.\n"
+            "  - More than 1 null data field (excl. null_fields_interpretation)? → Re-scan.\n"
         )
 
         return [
@@ -1111,6 +1251,7 @@ class GPTExtractor:
         """Map free-text / invalid missing-data labels to schema literals."""
         allowed = frozenset({
             "listwise_deletion", "pairwise_deletion", "mean_imputation",
+            "single_imputation", "knn_imputation",
             "multiple_imputation", "not_reported",
         })
         if value in allowed:
@@ -1170,13 +1311,32 @@ class GPTExtractor:
         ):
             return "mean_imputation"
         if (
-            "imput" in t
-            or "mice" in t
-            or "missforest" in t
+            "knn" in t
+            or "k_nearest" in t
+            or "k_nn" in t
+            or "nearest_neighbor" in t
+        ) and "imput" in t:
+            return "knn_imputation"
+        if (
+            "knn_imput" in t
+            or "knn imput" in t.replace("_", " ")
+        ):
+            return "knn_imputation"
+        if (
+            "missforest" in t
             or "miss_forest" in t
             or "missranger" in t
             or "miss_ranger" in t
-            or "rf_based" in t
+            or "rf_based" in t and "imput" in t
+            or "random_forest" in t and "imput" in t
+            or "single_imput" in t
+            or "deterministic_imput" in t
+            or "single_regression" in t and "imput" in t
+        ):
+            return "single_imputation"
+        if (
+            "imput" in t
+            or "mice" in t
             or "fiml" in t
             or "full_information" in t
             or "maximum_likelihood" in t
@@ -1187,10 +1347,6 @@ class GPTExtractor:
             or "fully_conditional" in t
             or ("machine_learning" in t and "missing" in t)
             or t == "imputation"
-            or "knn" in t
-            or "k_nearest" in t
-            or "k_nn" in t
-            or "nearest_neighbor" in t
             or "mcmc" in t
             or "markov_chain" in t
             or "pmm" in t
@@ -1250,6 +1406,7 @@ class GPTExtractor:
             "survey_design",
             "plausible_values_handling",
             "missing_data_handling",
+            "handling_not_reported_explanation",
             "sample_details",
             "ml_techniques",
             "confounders_identified",
@@ -1328,24 +1485,42 @@ class GPTExtractor:
         sdw = data.get("survey_design")
         if isinstance(sdw, dict):
             wfi = sdw.get("weight_fields_interpretation")
-            if isinstance(wfi, str) and wfi.strip() in INVALID_STR:
-                sdw["weight_fields_interpretation"] = None
+            if not isinstance(wfi, str) or wfi.strip() in INVALID_STR or not wfi.strip():
+                if sdw.get("student_weights_used") is True:
+                    sdw["weight_fields_interpretation"] = (
+                        "The study applied survey weights to account for the "
+                        "complex sampling design. No further details were "
+                        "extracted from the manuscript."
+                    )
+                else:
+                    sdw["weight_fields_interpretation"] = (
+                        "No weighting information was explicitly reported. "
+                        "The extraction could not determine the weighting "
+                        "strategy from the available text."
+                    )
             wn = sdw.get("weight_variable_name")
             if isinstance(wn, str) and wn in INVALID_STR:
                 sdw["weight_variable_name"] = None
-                wn = None
-
-            has_positive_weight_evidence = (
-                sdw.get("student_weights_used") is True
-                or sdw.get("replicate_weights_used") is True
-                or (isinstance(wn, str) and wn.strip())
-            )
-            if has_positive_weight_evidence:
-                sdw["weight_fields_interpretation"] = None
 
         nfi = data.get("null_fields_interpretation")
         if isinstance(nfi, str) and nfi.strip() in INVALID_STR:
             data["null_fields_interpretation"] = None
+
+        hnre = data.get("handling_not_reported_explanation")
+        if isinstance(hnre, str) and hnre.strip() in INVALID_STR:
+            data["handling_not_reported_explanation"] = None
+        pv = data.get("plausible_values_handling", "")
+        md = data.get("missing_data_handling", "")
+        needs_explanation = pv in ("not_reported", "not_applicable") or md == "not_reported"
+        if needs_explanation and not (isinstance(hnre, str) and hnre.strip() and hnre.strip() not in INVALID_STR):
+            data["handling_not_reported_explanation"] = (
+                "The extraction pipeline detected that plausible_values_handling "
+                f"is '{pv}' and/or missing_data_handling is '{md}', but the LLM "
+                "did not provide a diagnostic explanation. This may indicate a "
+                "reporting gap in the original manuscript."
+            )
+        elif not needs_explanation:
+            data["handling_not_reported_explanation"] = None
 
         VALID_PUB_TYPES = frozenset({
             "journal", "conference", "book_chapter", "preprint", "report", "thesis",
