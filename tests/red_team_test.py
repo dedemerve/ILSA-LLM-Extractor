@@ -126,6 +126,8 @@ TRAP_KEYWORDS = {
     "hierarchy / i.i.d.": [
         "nested", "hierarchi", "i.i.d", "iid", "clustered",
         "multilevel", "flat", "student-level", "survey weight",
+        "150 schools", "did not apply", "did not use",
+        "robust to data", "sampling",
     ],
     "class imbalance": [
         "imbalanc", "misleading", "skew", "2%", "class weight",
