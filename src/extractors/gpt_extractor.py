@@ -603,6 +603,99 @@ CRITICAL EXTRACTION & INFERENCE RULES
      more than 2 null fields in data (excluding the interpretation fields), \
      you are being LAZY. Re-read and extract harder.
 
+17) XAI & CAUSALITY SCRUTINY (Explainability ≠ Causality):
+   - Many ML papers use SHAP, LIME, Accumulated Local Effects (ALE), or \
+     feature importance rankings and then implicitly or explicitly suggest \
+     causal relationships. This is methodologically unsound on cross-sectional \
+     ILSA data.
+   - When extracting, rigorously differentiate between 'predictive feature \
+     importance' (what variables improve the model's prediction accuracy) and \
+     'causal inference' (what variables actually cause the outcome).
+   - If the paper uses only SHAP / LIME / Gini importance / permutation \
+     importance → research_design_type stays "predictive", NOT causal.
+   - ONLY classify as "causal_observational" if the paper employs actual \
+     causal ML methods (BART, BCF, Propensity Score Matching, diff-in-diff, \
+     instrumental variables, regression discontinuity) AND explicitly states \
+     causal identification assumptions (SUTVA, parallel trends, unconfoundedness).
+   - If the authors overstate causality based on predictive ML feature \
+     importance alone, capture this in outcome_summary as a limitation.
+   - XAI technique names (SHAP, LIME, counterfactual XAI, ALE plots) should \
+     be mentioned in outcome_summary when used but NEVER in ml_techniques \
+     (they are interpretation tools, not learning algorithms).
+
+18) HIERARCHICAL DATA AWARENESS (Nested Structure & i.i.d. Violations):
+   - ILSA data is strictly nested: students → classrooms → schools → countries.
+   - Standard ML algorithms (regular XGBoost, Random Forest, SVM, NN) assume \
+     independent and identically distributed (i.i.d.) observations, which is \
+     violated by the clustered ILSA sampling design.
+   - When extracting methodology, identify EXACTLY how the ML model accounted \
+     for hierarchical structure:
+     a) Multi-level ML models: Mixed-Effects Random Forests, glmmLasso, \
+        multilevel XGBoost, hierarchical neural networks.
+     b) Feature aggregation: school-level or country-level averages used as \
+        additional predictors alongside student-level features.
+     c) Post-hoc corrections: HLM or cluster-robust standard errors applied \
+        after ML prediction stage.
+     d) Country-stratified modeling: separate models per country or per school.
+     e) No adjustment at all: flat ML on raw student-level data.
+   - If the study applies standard flat ML on nested student-level data \
+     WITHOUT survey weights, WITHOUT hierarchical adjustments, and WITHOUT \
+     cluster-stratified modeling, note this in outcome_summary as a \
+     methodological limitation. Do NOT silently ignore it.
+   - student_weights_used is especially important here: ILSA weights partially \
+     correct for clustering. If weights are omitted AND hierarchy is ignored, \
+     both findings should be flagged.
+
+19) PROCESS DATA DYNAMICS — TIME & SEQUENCE GRANULARITY:
+   - Beyond Rule 13's general process data guidance, rigorously extract HOW \
+     time and action sequences were operationalized:
+   - TIME METRICS — differentiate the following:
+     a) Raw total time (crude, loses item-level dynamics).
+     b) Time-to-first-action (engagement onset latency).
+     c) Item-standardised log response times (accounts for item difficulty).
+     d) Effort regulation slope (change in response time across items).
+     e) Differential Response Time (DRT = observed − expected time).
+     f) Response Time Effort (RTE = binary rapid-guess thresholding).
+   - SEQUENCE MINING — differentiate:
+     a) Exact chronological sequence modeling (n-grams, HMM, LSTM on action \
+        streams, sequence autoencoders, Markov chains).
+     b) Lazy frequency aggregation (total clicks, total resets, action counts \
+        without order preservation).
+     c) Graph-based representations (directed graph features, network \
+        statistics from action transitions).
+   - STRATEGY INFERENCE — extract how cognitive strategy was operationalized:
+     a) VOTAT detection (systematic vs. non-systematic exploration).
+     b) Clustering of sequential paths (k-means on action embeddings).
+     c) Manual expert coding of strategy types.
+   - Capture these distinctions in confounders_identified (list the specific \
+     process features) and outcome_summary (describe the approach).
+
+20) ML ROBUSTNESS, CLASS IMBALANCE & DATA LEAKAGE:
+   - Do NOT blindly extract overall model "Accuracy" as the sole metric.
+   - CLASS IMBALANCE HANDLING:
+     a) If the target variable is skewed (e.g., top 5% resilient students, \
+        dropout prediction, cheating detection), extract whether the study \
+        used SMOTE, ADASYN, under-sampling, class-weighted loss functions, \
+        cost-sensitive learning, or threshold calibration.
+     b) Remember: SMOTE/ADASYN/CTGAN/VAE-augmentation are CLASS BALANCING \
+        methods, NOT missing_data_handling (see Rule 3 and checklist A).
+   - EVALUATION METRICS:
+     a) For imbalanced classification, extract F1-Score, Cohen's Kappa, \
+        Precision-Recall AUC, Matthews Correlation Coefficient (MCC), or \
+        balanced accuracy — these are robust to class skew.
+     b) If ONLY "Accuracy" is reported for a known-imbalanced target, note \
+        this as a limitation in outcome_summary.
+   - DATA LEAKAGE:
+     a) Check whether imputation, standardization, SMOTE, or feature \
+        selection were performed INSIDE cross-validation folds (correct) or \
+        on the ENTIRE dataset before splitting (leakage).
+     b) If the paper reports suspiciously high performance (e.g., >95% on \
+        complex ILSA tasks) without rigorous nested CV, flag potential \
+        data leakage in outcome_summary.
+   - VALIDATION STRATEGY: extract the exact method — k-fold CV, stratified \
+     k-fold, leave-one-group-out (LOGO), nested CV, hold-out, repeated \
+     random splits — and note it in outcome_summary.
+
 ═══════════════════════════════════════════════════════════════
 OUTPUT SCHEMA
 ═══════════════════════════════════════════════════════════════
@@ -861,7 +954,43 @@ class GPTExtractor:
             "dataset construction papers.\n"
             "  - MUST trigger null_fields_interpretation explaining the study type.\n\n"
 
-            "O) FINAL ANTI-LAZINESS CHECK (system rule 16):\n"
+            "O) XAI & CAUSALITY (system rule 17):\n"
+            "  - If the paper uses SHAP / LIME / ALE / Gini importance / permutation "
+            "importance, report these in outcome_summary but NEVER in ml_techniques.\n"
+            "  - Do NOT classify as 'causal_observational' unless actual causal methods "
+            "(BART, BCF, PSM, diff-in-diff, IV, RDD) with stated assumptions are used.\n"
+            "  - If authors claim 'X causes Y' based solely on feature importance, "
+            "flag this as overstated causality in outcome_summary.\n\n"
+
+            "P) HIERARCHICAL DATA (system rule 18):\n"
+            "  - Note in outcome_summary whether the ML model accounted for the nested "
+            "ILSA data structure (multilevel ML, feature aggregation, cluster-stratified "
+            "models, or survey weights).\n"
+            "  - If standard flat ML was applied to student-level data with NO "
+            "hierarchical adjustments and NO weights, flag it as a methodological "
+            "limitation in outcome_summary.\n\n"
+
+            "Q) PROCESS DATA GRANULARITY (system rule 19):\n"
+            "  - For process data papers, differentiate in outcome_summary:\n"
+            "    (a) time metric type: raw total time vs. item-standardised log "
+            "response times vs. effort regulation slope vs. DRT/RTE;\n"
+            "    (b) sequence modeling: exact chronological (n-grams, HMM, LSTM on "
+            "actions, Markov) vs. lazy frequency counts (total clicks);\n"
+            "    (c) strategy inference: VOTAT detection, path clustering, expert "
+            "coding.\n"
+            "  - List specific process features in confounders_identified.\n\n"
+
+            "R) ML ROBUSTNESS & LEAKAGE (system rule 20):\n"
+            "  - Extract ALL performance metrics reported (Accuracy, F1, AUC, Kappa, "
+            "MCC, RMSE, MAE, R²). If only 'Accuracy' is reported for an imbalanced "
+            "classification, note it as a limitation.\n"
+            "  - Extract class imbalance handling (SMOTE, under-sampling, class "
+            "weights) — remember these are NOT missing_data_handling.\n"
+            "  - Note the validation strategy (k-fold CV, nested CV, hold-out, LOGO).\n"
+            "  - If preprocessing (imputation, scaling, SMOTE, feature selection) was "
+            "done BEFORE train/test split, flag potential data leakage.\n\n"
+
+            "S) FINAL ANTI-LAZINESS CHECK (system rule 16):\n"
             "  Before submitting your JSON, count your null fields:\n"
             "  - total_students null for an empirical paper? → Re-read Method section.\n"
             "  - countries list empty for a paper that names countries? → FATAL ERROR.\n"
