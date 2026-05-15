@@ -22,155 +22,32 @@
       "student_weights_used": false,
       "replicate_weights_used": null,
       "weight_variable_name": null,
-      "weight_fields_interpretation": "The study uses the OECD PISA 2012 computer-based assessment process data for the “climate control (CP02501)” problem-solving task, sourced from the publicly available OECD database and the R ProcData package. The analytic dataset contains 16,763 preprocessed response behavior sequences, with “draw” removed and sequences binarized to correct (1) vs incorrect (0) based on scoring rules. The manuscript does not report applying PISA sampling/student weights or any replicate-weight procedure (e.g., BRR/jackknife), and it does not mention weight variables (such as W_FSTUWT/TOTWGT) or complex survey design adjustments. Because the predictive models (KNN, SVM, Random Forest) are trained in Python (scikit-learn) without any stated weight-aware fitting, the analysis is treated as effectively unweighted; this may leave clustering/stratification effects unaccounted for in the ML stage."
+      "weight_fields_interpretation": "The study uses the OECD PISA 2012 computer-based assessment process data for the “climate control (CP02501)” problem-solving task, operationalized via the ProcData package. The analytic dataset consists of 16,763 preprocessed response sequences with binary scoring (correct=1, incorrect=0) and subsequent feature extraction using TF-IDF and Word2vec. The manuscript does not report applying PISA sampling/survey weights (e.g., W_FSTUWT/TOTWGT) or any replicate-weight procedure; it also does not describe complex survey design adjustments for the ML models. Because the analysis is ML-based on extracted process-sequence features and the paper provides no weighting details, the weighting strategy is treated as unweighted/unspecified for model training and evaluation."
     },
     "plausible_values_handling": "not_applicable",
     "missing_data_handling": "not_reported",
-    "handling_not_reported_explanation": "Plausible values (PVs) are not applicable because the dependent variable is derived from PISA 2012 process-task scoring for the specific climate control item and is operationalized as a binary correctness outcome (0/1) from log-based task performance, not as a PV-based cognitive achievement score. The paper also does not describe any missing-data strategy for the process sequences (e.g., how incomplete logs or missing actions were handled), which represents a reporting gap given that log-based sequences can be incomplete or vary in length.",
+    "handling_not_reported_explanation": "The dependent variable is derived from PISA 2012 process-task scoring (binary correct/incorrect) for the climate control item, not from PV-based cognitive achievement scales. As a result, plausible values are not applicable to the modeled outcome. The paper also does not describe any missing-data strategy for the process sequences (e.g., exclusions for incomplete logs, handling of missing actions/fields), which is a reporting gap given that log-based sequences can be incomplete or vary in length.",
     "sample_details": {
       "total_students": 16763,
-      "countries": []
+      "countries": [],
+      "sample_filtering_criteria": "Used the PISA 2012 computer-based assessment process data for the specific problem-solving task “climate control (CP02501)”. The dataset comprises 16,763 preprocessed action sequences; scoring was consolidated to a binary outcome (0/1) where partially correct and non-resolving responses were treated as incorrect. The preprocessing focused on the answering process and excluded the “draw” behavior from the action sequence after preprocessing; “start” and “end” were later excluded from TF-IDF feature sets (and “end” was removed due to perfect correlation with “start”) for the TF-IDF logistic analysis."
     },
     "ml_techniques": {
       "primary": "Random Forest",
       "all_techniques": [
-        "TF-IDF + classifier",
-        "Word2Vec",
+        "Logistic Regression",
         "KNN",
         "SVM",
         "Random Forest",
-        "k-means"
+        "k-means",
+        "TF-IDF",
+        "Word2Vec"
       ]
     },
     "confounders_identified": [
       {
-        "variable_code": "start",
-        "variable_name": "Start action frequency",
-        "category": "process_data"
-      },
-      {
-        "variable_code": "end",
-        "variable_name": "End action frequency",
-        "category": "process_data"
-      },
-      {
-        "variable_code": "reset",
-        "variable_name": "Reset action frequency",
-        "category": "process_data"
-      },
-      {
-        "variable_code": "0_0_0",
-        "variable_name": "All sliders at zero (0_0_0)",
-        "category": "process_data"
-      },
-      {
-        "variable_code": "1_0_0",
-        "variable_name": "Top slider +1 (1_0_0)",
-        "category": "process_data"
-      },
-      {
-        "variable_code": "0_1_0",
-        "variable_name": "Middle slider +1 (0_1_0)",
-        "category": "process_data"
-      },
-      {
-        "variable_code": "0_0_1",
-        "variable_name": "Bottom slider +1 (0_0_1)",
-        "category": "process_data"
-      },
-      {
-        "variable_code": "2_0_0",
-        "variable_name": "Top slider +2 (2_0_0)",
-        "category": "process_data"
-      },
-      {
-        "variable_code": "0_2_0",
-        "variable_name": "Middle slider +2 (0_2_0)",
-        "category": "process_data"
-      },
-      {
-        "variable_code": "0_0_2",
-        "variable_name": "Bottom slider +2 (0_0_2)",
-        "category": "process_data"
-      },
-      {
-        "variable_code": "-1_0_0",
-        "variable_name": "Top slider -1 (-1_0_0)",
-        "category": "process_data"
-      },
-      {
-        "variable_code": "-2_0_0",
-        "variable_name": "Top slider -2 (-2_0_0)",
-        "category": "process_data"
-      },
-      {
-        "variable_code": "0_-1_0",
-        "variable_name": "Middle slider -1 (0_-1_0)",
-        "category": "process_data"
-      },
-      {
-        "variable_code": "0_-2_0",
-        "variable_name": "Middle slider -2 (0_-2_0)",
-        "category": "process_data"
-      },
-      {
-        "variable_code": "0_0_-1",
-        "variable_name": "Bottom slider -1 (0_0_-1)",
-        "category": "process_data"
-      },
-      {
-        "variable_code": "0_0_-2",
-        "variable_name": "Bottom slider -2 (0_0_-2)",
-        "category": "process_data"
-      },
-      {
-        "variable_code": "1_2_-2",
-        "variable_name": "Action triple (1_2_-2)",
-        "category": "process_data"
-      },
-      {
-        "variable_code": "2_2_2",
-        "variable_name": "Action triple (2_2_2)",
-        "category": "process_data"
-      },
-      {
-        "variable_code": "2_2_-2",
-        "variable_name": "Action triple (2_2_-2)",
-        "category": "process_data"
-      },
-      {
-        "variable_code": "2_-2_-2",
-        "variable_name": "Action triple (2_-2_-2)",
-        "category": "process_data"
-      },
-      {
-        "variable_code": "-2_-2_-2",
-        "variable_name": "Action triple (-2_-2_-2)",
-        "category": "process_data"
-      },
-      {
-        "variable_code": "-1_-1_-1",
-        "variable_name": "Action triple (-1_-1_-1)",
-        "category": "process_data"
-      },
-      {
-        "variable_code": "1_1_1",
-        "variable_name": "Action triple (1_1_1)",
-        "category": "process_data"
-      },
-      {
-        "variable_code": "1_-1_1",
-        "variable_name": "Action triple (1_-1_1)",
-        "category": "process_data"
-      },
-      {
-        "variable_code": "1_-1_-1",
-        "variable_name": "Action triple (1_-1_-1)",
-        "category": "process_data"
-      },
-      {
-        "variable_code": "2_0_0",
-        "variable_name": "Top slider +2 (2_0_0) TF-IDF feature",
+        "variable_code": "VOTAT",
+        "variable_name": "VOTAT navigation behavior",
         "category": "process_data"
       },
       {
@@ -179,22 +56,31 @@
         "category": "process_data"
       },
       {
-        "variable_code": "VOTAT",
-        "variable_name": "VOTAT strategy behavior set",
+        "variable_code": "reset_frequency",
+        "variable_name": "Reset frequency",
         "category": "process_data"
       },
       {
-        "variable_code": "tfidf_start",
-        "variable_name": "TF-IDF start behavior weight",
-        "category": "process_data"
-      },
-      {
-        "variable_code": "word2vec_behavior_vector",
-        "variable_name": "Word2vec action embedding vector",
+        "variable_code": "zero_state_behavior",
+        "variable_name": "0_0_0 behavior usage",
         "category": "process_data"
       }
     ],
-    "outcome_summary": "The study evaluates TF-IDF and Word2vec feature extraction from PISA 2012 climate control process-response action sequences and then uses supervised ML to predict binary correctness (0/1). For logistic regression, Word2vec features slightly outperform TF-IDF (F1: 0.8224 vs 0.8169; Accuracy: 0.8017 vs 0.7993; Recall: 0.8360 vs 0.8149). For supervised prediction, Random Forest with TF-IDF is the best overall model (F1: 0.8419; Precision: 0.8271; Accuracy: 0.8231; Recall: 0.8572), outperforming Random Forest with Word2vec (F1: 0.8221; Accuracy: 0.8020; Recall: 0.8328). SVM performs better with Word2vec-derived features than with TF-IDF-derived features. In unsupervised clustering, k-means with TF-IDF yields three clusters with correct rates of 81%, 42%, and 36%, while k-means with Word2vec yields correct rates of 78%, 27%, and 26%; higher-accuracy clusters show higher VOTAT usage.",
+    "main_findings": [
+      {
+        "dataset_used": "PISA 2012 Problem Solving process data (Climate control CP02501)",
+        "target_variable": "Correct answer (binary 0/1)",
+        "top_predictors": [
+          "VOTAT navigation behavior",
+          "Sequence length",
+          "Reset frequency",
+          "0_0_0 behavior usage"
+        ],
+        "performance_metrics": "Supervised prediction (5-fold CV, grid search): Random Forest + TF-IDF best — F1: 0.8419, Accuracy: 0.8231, Precision: 0.8271, Recall: 0.8572. Baseline logistic regression (TF-IDF/Word2vec comparisons) reported via F1/Accuracy/Recall/Precision tables; exact baseline metrics not separately tabulated in the excerpt. Additional analysis (Behavior-strategy clusters (k-means groups)): Unsupervised clustering (k-means with K=3 via elbow): TF-IDF clusters — Cluster A: n=5833, correct rate=81%; Cluster B: n=8411, correct rate=42%; Cluster C: n=2519, correct rate=36%. Word2vec clusters — Cluster A: n=9245, correct rate=78%; Cluster B: n=2115, correct rate=27%; Cluster C: n=5403, correct rate=26%. Z tests: Cluster A significantly higher than B and C (p<0.001).",
+        "standardized_conclusion": "Using PISA 2012 Problem Solving process data (Climate control CP02501) the study leveraged VOTAT navigation behavior, sequence length, reset frequency, and 0_0_0 behavior usage to predict correct answer (binary 0/1), finding that Random Forest with TF-IDF features achieved the best overall performance (F1=0.8419; Accuracy=0.8231; Recall=0.8572)."
+      }
+    ],
+    "outcome_summary": "The study analyzes PISA 2012 climate control (CP02501) problem-solving process sequences (n=16,763) and uses TF-IDF and Word2vec to extract behavioral features from action sequences. For predicting correct/incorrect performance, supervised models (KNN, SVM, Random Forest) were trained with 5-fold cross-validation and grid-searched hyperparameters; Random Forest with TF-IDF performed best (F1=0.8419, Accuracy=0.8231, Precision=0.8271, Recall=0.8572). Word2vec features combined with SVM were the second-best overall, with Word2vec generally improving F1/Accuracy/Recall relative to TF-IDF except for precision. For unsupervised analysis, k-means with K=3 produced three clusters with significantly different correct rates; Cluster A had the highest correct rate (TF-IDF: 81%; Word2vec: 78%). The paper does not report plausible values (DV is process-task binary scoring) and does not describe missing-data handling or any survey-weighting/replicate-weight adjustments, which limits generalizability and transparency.",
     "research_design_type": "predictive",
     "null_fields_interpretation": null
   }
