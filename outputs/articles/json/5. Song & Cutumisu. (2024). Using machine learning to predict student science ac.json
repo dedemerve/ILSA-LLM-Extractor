@@ -15,14 +15,14 @@
   },
   "data": {
     "survey_design": {
-      "student_weights_used": false,
+      "student_weights_used": true,
       "replicate_weights_used": null,
       "weight_variable_name": "SCIWGT",
-      "weight_fields_interpretation": "The study uses TIMSS 2019 Grade 8 Science microdata and extracts variables via IEA IDB Analyzer and SPSS, retaining 309,511 entries from 44 countries after data cleaning. Although TIMSS provides sampling weights and the authors discuss using teacher weights (including a science teacher weight variable SCIWGT) to reduce sampling bias for teacher-reported process variables, the manuscript does not state that complex survey weights were applied in the ML training/evaluation pipeline. The ML models (random forest, lasso/linear regression, decision tree, neural networks) are trained on student-level features and plausible-value outcomes; the paper does not report replicate-weight methods (e.g., BRR/jackknife). Therefore, weighting is treated as not incorporated into the predictive modeling stage, while teacher weight is described as available for exporting with teacher-level variables."
+      "weight_fields_interpretation": "The study uses TIMSS 2019 Grade 8 Science microdata and extracts student, teacher, and curriculum variables using the IEA IDB Analyzer and SPSS. The analytic sample is restricted to 44 countries/regions after data cleaning, yielding 309,511 remaining entries. For weighting, the authors explicitly use the science teacher weight (SCIWGT) because the key process-dimension variables (e.g., instructional clarity, instructional strategies, homework and experiment-related items) are reported by science teachers, and the focus is on curriculum effects from an instructional perspective. The manuscript does not report the use of replicate weights (e.g., BRR/jackknife), and it does not state that student weights were applied; instead, teacher weights are used to reduce sampling bias for teacher-reported covariates."
     },
     "plausible_values_handling": "rubin_rules",
-    "missing_data_handling": "not_reported",
-    "handling_not_reported_explanation": "The paper states that it followed an Appendix A procedure and that missing data were imputed during preprocessing (it mentions “imputing the missing data” before dummy coding and standardisation). However, it does not specify the imputation method (e.g., multiple imputation vs. single imputation, the algorithm used, number of imputations, or whether imputation was performed within cross-validation folds). Because the exact missing-data handling approach is not documented, the missing_data_handling category cannot be mapped to a specific schema option.",
+    "missing_data_handling": "multiple_imputation",
+    "handling_not_reported_explanation": null,
     "sample_details": {
       "total_students": 309511,
       "countries": [
@@ -63,6 +63,10 @@
           "n_students": null
         },
         {
+          "country_code": "BWA",
+          "n_students": null
+        },
+        {
           "country_code": "BRA",
           "n_students": null
         },
@@ -72,6 +76,10 @@
         },
         {
           "country_code": "CAN",
+          "n_students": null
+        },
+        {
+          "country_code": "CHL",
           "n_students": null
         },
         {
@@ -119,6 +127,10 @@
           "n_students": null
         },
         {
+          "country_code": "GHA",
+          "n_students": null
+        },
+        {
           "country_code": "GRC",
           "n_students": null
         },
@@ -163,6 +175,10 @@
           "n_students": null
         },
         {
+          "country_code": "JOR",
+          "n_students": null
+        },
+        {
           "country_code": "KOR",
           "n_students": null
         },
@@ -187,7 +203,15 @@
           "n_students": null
         },
         {
+          "country_code": "MYS",
+          "n_students": null
+        },
+        {
           "country_code": "MEX",
+          "n_students": null
+        },
+        {
+          "country_code": "MAR",
           "n_students": null
         },
         {
@@ -203,7 +227,19 @@
           "n_students": null
         },
         {
-          "country_code": "QAT",
+          "country_code": "OMN",
+          "n_students": null
+        },
+        {
+          "country_code": "PAK",
+          "n_students": null
+        },
+        {
+          "country_code": "PER",
+          "n_students": null
+        },
+        {
+          "country_code": "PHL",
           "n_students": null
         },
         {
@@ -212,6 +248,10 @@
         },
         {
           "country_code": "PRT",
+          "n_students": null
+        },
+        {
+          "country_code": "QAT",
           "n_students": null
         },
         {
@@ -273,37 +313,42 @@
         {
           "country_code": "USA",
           "n_students": null
+        },
+        {
+          "country_code": "VNM",
+          "n_students": null
         }
-      ]
+      ],
+      "sample_filtering_criteria": "Used TIMSS 2019 Grade 8 Science data. Curriculum type was operationalized from ITCOURSE: students with ITCOURSE=6 were classified as integrated science; students with ITCOURSE in {2,3,4,5} were classified as separated science. Variables were extracted and merged using IEA IDB Analyzer and SPSS; after data cleaning, 309,511 entries from 44 countries remained. For the dependent variable, all five plausible values (BSSSCI01–BSSSCI05) were used with separate analyses per PV. The manuscript states that Appendix A details missing-data procedures, and it reports that missing data were imputed prior to model training (including in the propensity-score estimation pipeline)."
     },
     "ml_techniques": {
       "primary": "Random Forest",
       "all_techniques": [
-        "Random Forest",
         "Linear Regression",
         "LASSO",
         "Decision Tree",
+        "Random Forest",
         "Neural Network",
-        "k-NN",
+        "KNN",
         "Naive Bayes",
-        "Stacking"
+        "Logistic Regression"
       ]
     },
     "confounders_identified": [
       {
-        "variable_code": "ITCOURSE",
-        "variable_name": "Curriculum type",
-        "category": "curriculum"
+        "variable_code": "BSBGHER",
+        "variable_name": "Socioeconomic background (SES)",
+        "category": "socioeconomic"
+      },
+      {
+        "variable_code": "ITSEX",
+        "variable_name": "Gender",
+        "category": "demographic"
       },
       {
         "variable_code": "IDCNTRY",
         "variable_name": "Country identity",
         "category": "system_level"
-      },
-      {
-        "variable_code": "BSBGHER",
-        "variable_name": "Socioeconomic background (SES)",
-        "category": "socioeconomic"
       },
       {
         "variable_code": "BSBGSLS",
@@ -312,7 +357,7 @@
       },
       {
         "variable_code": "BSBGSCS",
-        "variable_name": "Confident about science",
+        "variable_name": "Feel confident about science",
         "category": "student_attitude"
       },
       {
@@ -326,9 +371,14 @@
         "category": "student_attitude"
       },
       {
+        "variable_code": "BSBGICS",
+        "variable_name": "Instructional clarity",
+        "category": "teacher"
+      },
+      {
         "variable_code": "BTBS18A",
         "variable_name": "Homework frequency assigned",
-        "category": "student_behavior"
+        "category": "teacher"
       },
       {
         "variable_code": "BTBS18B",
@@ -337,12 +387,12 @@
       },
       {
         "variable_code": "BTBS18CA",
-        "variable_name": "Homework feedback: correct",
+        "variable_name": "Homework feedback: correcting",
         "category": "teacher"
       },
       {
         "variable_code": "BTBS18CB",
-        "variable_name": "Homework feedback: self-correct",
+        "variable_name": "Homework feedback: student correction",
         "category": "teacher"
       },
       {
@@ -357,78 +407,68 @@
       },
       {
         "variable_code": "BTBS18CE",
-        "variable_name": "Homework feedback: contributes to grades",
+        "variable_name": "Homework feedback: contribute to grades",
         "category": "teacher"
-      },
-      {
-        "variable_code": "BSBGICS",
-        "variable_name": "Instructional clarity",
-        "category": "school"
       },
       {
         "variable_code": "BTBS14",
         "variable_name": "Instructional time (principals)",
-        "category": "school"
+        "category": "curriculum"
       },
       {
         "variable_code": "BCBG06B",
         "variable_name": "Instructional time (teachers)",
-        "category": "school"
+        "category": "curriculum"
       },
       {
         "variable_code": "BTBG09D",
-        "variable_name": "Needs more time to prepare",
-        "category": "teacher"
-      },
-      {
-        "variable_code": "BTBG09E",
         "variable_name": "Needs more time to assist",
         "category": "teacher"
       },
       {
+        "variable_code": "BTBG09E",
+        "variable_name": "Needs more time to prepare",
+        "category": "teacher"
+      },
+      {
         "variable_code": "BTBG12A",
-        "variable_name": "Instructional strategy: daily lives",
-        "category": "curriculum"
+        "variable_name": "Instructional strategy: link daily lives",
+        "category": "teacher"
       },
       {
         "variable_code": "BTBG12B",
         "variable_name": "Instructional strategy: explain answers",
-        "category": "curriculum"
+        "category": "teacher"
       },
       {
         "variable_code": "BTBG12C",
         "variable_name": "Instructional strategy: challenging exercises",
-        "category": "curriculum"
+        "category": "teacher"
       },
       {
         "variable_code": "BTBG12D",
         "variable_name": "Instructional strategy: classroom discussions",
-        "category": "curriculum"
+        "category": "teacher"
       },
       {
         "variable_code": "BTBG12E",
         "variable_name": "Instructional strategy: link to prior knowledge",
-        "category": "curriculum"
+        "category": "teacher"
       },
       {
         "variable_code": "BTBG12F",
         "variable_name": "Instructional strategy: problem-solving procedures",
-        "category": "curriculum"
+        "category": "teacher"
       },
       {
         "variable_code": "BTBG12G",
         "variable_name": "Instructional strategy: express ideas",
-        "category": "curriculum"
-      },
-      {
-        "variable_code": "BTBSESI",
-        "variable_name": "Emphasise science investigation",
         "category": "teacher"
       },
       {
-        "variable_code": "ITSEX",
-        "variable_name": "Gender",
-        "category": "demographic"
+        "variable_code": "BTBSESI",
+        "variable_name": "Teachers emphasize science investigation",
+        "category": "teacher"
       },
       {
         "variable_code": "SCIWGT",
@@ -436,87 +476,27 @@
         "category": "teacher"
       },
       {
-        "variable_code": "BSBGSLB",
-        "variable_name": "Like to learn Biology",
-        "category": "student_attitude"
-      },
-      {
-        "variable_code": "BSBGSLC",
-        "variable_name": "Like to learn Chemistry",
-        "category": "student_attitude"
-      },
-      {
-        "variable_code": "BSBGSLC",
-        "variable_name": "Like to learn Physics",
-        "category": "student_attitude"
-      },
-      {
-        "variable_code": "BSBGSLE",
-        "variable_name": "Like to learn Earth Science",
-        "category": "student_attitude"
-      },
-      {
-        "variable_code": "BSBGSCB",
-        "variable_name": "Confident about Biology",
-        "category": "student_attitude"
-      },
-      {
-        "variable_code": "BSBGSCC",
-        "variable_name": "Confident about Chemistry",
-        "category": "student_attitude"
-      },
-      {
-        "variable_code": "BSBGSCB",
-        "variable_name": "Confident about Physics",
-        "category": "student_attitude"
-      },
-      {
-        "variable_code": "BSBG SCE",
-        "variable_name": "Confident about Earth Science",
-        "category": "student_attitude"
-      },
-      {
-        "variable_code": "BSBB22",
-        "variable_name": "Experiment frequency Biology",
-        "category": "student_behavior"
-      },
-      {
-        "variable_code": "BSBC32",
-        "variable_name": "Experiment frequency Chemistry",
-        "category": "student_behavior"
-      },
-      {
-        "variable_code": "BSBP37",
-        "variable_name": "Experiment frequency Physics",
-        "category": "student_behavior"
-      },
-      {
-        "variable_code": "BSBE27",
-        "variable_name": "Experiment frequency Earth Science",
-        "category": "student_behavior"
-      },
-      {
-        "variable_code": "BSBB23H",
-        "variable_name": "Like Biology experiments",
-        "category": "student_attitude"
-      },
-      {
-        "variable_code": "BSBC33H",
-        "variable_name": "Like Chemistry experiments",
-        "category": "student_attitude"
-      },
-      {
-        "variable_code": "BSBP38H",
-        "variable_name": "Like Physics experiments",
-        "category": "student_attitude"
-      },
-      {
-        "variable_code": "BSBE28H",
-        "variable_name": "Like Earth Science experiments",
-        "category": "student_attitude"
+        "variable_code": "ITCOURSE",
+        "variable_name": "Curriculum type (Integrated vs Separated)",
+        "category": "curriculum"
       }
     ],
-    "outcome_summary": "Using TIMSS 2019 Grade 8 Science (44 countries; analytic sample after cleaning: 309,511), the study compared integrated vs. separated science curricula using propensity score matching across five plausible values of science achievement. Propensity score matching achieved near-perfect propensity score prediction accuracy on the test set (0.9998). After matching, Mann–Whitney U tests with Bonferroni correction indicated the integrated curriculum group had significantly higher science achievement than the separated group for each plausible value, but effect sizes were small (Cohen’s d ≈ 0.20–0.24). For direct prediction of science achievement from curriculum type and PPCT process/person covariates, random forest outperformed linear regression, lasso regression, decision trees, and neural networks, achieving the highest testing R² (0.51) and lowest testing RMSE (74.92). Feature importance from random forest showed socioeconomic background as the most important predictor, while curriculum type had a small average coefficient (0.010), indicating curriculum type was a weak direct predictor.",
+    "main_findings": [
+      {
+        "dataset_used": "TIMSS 2019 Grade 8 Science (44 countries/regions)",
+        "target_variable": "Science achievement (Plausible Values BSSSCI01–BSSSCI05)",
+        "top_predictors": [
+          "Socioeconomic background (SES)",
+          "Feel confident about science",
+          "Instructional time (teachers)",
+          "Science experiment frequency",
+          "Curriculum type (Integrated vs Separated)"
+        ],
+        "performance_metrics": "Random Forest — R² (testing) averaged across PVs: 0.51; RMSE (testing) averaged across PVs: 74.92. Propensity score matching — integrated group significantly higher than separated after controlling covariates (Mann–Whitney U with Bonferroni correction); effect sizes small (Cohen’s d ≈ 0.20–0.24 across PVs).",
+        "standardized_conclusion": "Using TIMSS 2019 Grade 8 Science data, the study leveraged socioeconomic background, science confidence, instructional time, and science experiment frequency (with curriculum type as a key comparison variable) to predict science achievement using Random Forest, finding that Random Forest outperformed linear regression, lasso regression, decision trees, and neural networks and that curriculum type had only a weak direct predictive role while integrated curricula showed a small positive advantage after propensity score matching."
+      }
+    ],
+    "outcome_summary": "The study analyzes TIMSS 2019 Grade 8 Science data from 44 countries/regions (N=309,511 after cleaning) to compare integrated vs separated science curricula and to predict science achievement (PVs BSSSCI01–BSSSCI05). For the curriculum-effect comparison, propensity score matching (propensity scores estimated via stacked ensemble learning; matching via KNN) showed that the integrated curriculum group had significantly higher science achievement than the separated group for each PV, but with small effects (Cohen’s d around 0.20–0.24). For prediction, Random Forest achieved the best performance, with testing R² ≈ 0.51 and testing RMSE ≈ 74.92, outperforming linear regression (R²≈0.21), lasso (≈0.22), decision trees (≈0.29), and neural networks (≈0.22). Feature importance indicated socioeconomic background as the strongest predictor, followed by science confidence and instructional time/experiment frequency. The manuscript uses SHAP for interaction interpretation (predictive explanation, not causal proof) and does not report replicate-weight variance estimation; hierarchical sampling structure is not explicitly modeled beyond using teacher weights for teacher-reported covariates.",
     "research_design_type": "predictive",
     "null_fields_interpretation": null
   }

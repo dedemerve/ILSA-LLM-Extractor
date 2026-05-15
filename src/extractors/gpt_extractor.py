@@ -1,19 +1,686 @@
 import json
 import logging
 import os
+import re
 import time
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 from openai import OpenAI, APIError, RateLimitError, APITimeoutError
 from pydantic import ValidationError
 
 from src.schemas import ILSAArticleMetadata
+from src.schemas.models import Confounder, StructuredFinding
 
 if TYPE_CHECKING:
     from src.extractors.pdf_processor import ProcessedPDF
 
 logger = logging.getLogger(__name__)
+
+CONFOUNDER_CATEGORIES = frozenset({
+    "socioeconomic", "demographic", "student_attitude", "student_behavior",
+    "teacher", "school", "ict", "curriculum", "parent_home", "process_data",
+    "prior_achievement", "peer_effects", "system_level",
+})
+
+_INVALID_VARIABLE_CODES = frozenset({"n/a", "na", "null", "none", ""})
+_INVALID_FIELD_STRINGS = frozenset({
+    "not_reported", "not_applicable", "n/a", "na", "unknown", "",
+})
+_DEFAULT_SAMPLE_FILTERING = (
+    "Used the full available sample for the specified countries. "
+    "No additional inclusion or exclusion criteria were reported in the manuscript."
+)
+
+_ACTION_SEQUENCE_CODE = re.compile(r"^-?\d+_-?\d+_-?\d+$")
+_MICRO_ACTION_CODES = frozenset({"start", "end", "reset", "click"})
+_MICRO_CONFOUNDER_KEYWORDS = (
+    "slider", "tf-idf", "tfidf", "word2vec", "word2vec", "embedding",
+    "action triple", "action frequency", "n-gram", "ngram", "keystroke",
+    "button click", "state transition", "cosine similarity", "token weight",
+    "behavior weight", "feature vector", "action embedding", "tf-idf feature",
+)
+
+# Well-known ILSA construct codes → category (PISA, TIMSS, PIRLS, TALIS, ICILS, ICCS, PIAAC)
+ILSA_CODE_TO_CATEGORY: dict[str, str] = {
+    # 1. SOCIOECONOMIC & PARENT/HOME
+    "ESCS": "socioeconomic",
+    "HOMEPOS": "socioeconomic",
+    "WEALTH": "socioeconomic",
+    "HISEI": "socioeconomic",
+    "HISCED": "socioeconomic",
+    "MISCED": "socioeconomic",
+    "FISCED": "socioeconomic",
+    "HEDRES": "socioeconomic",
+    "CULTPOSS": "socioeconomic",
+    "PARED": "socioeconomic",
+    "BSBGHER": "socioeconomic",
+    "ASBGHER": "socioeconomic",
+    "ASBGHRL": "socioeconomic",
+    "EMOSUPS": "parent_home",
+    "FAMSUPSL": "parent_home",
+    "ASBGERL": "parent_home",
+    # 2. DEMOGRAPHIC
+    "ST004Q01TA": "demographic",
+    "ST004D01T": "demographic",
+    "ITSEX": "demographic",
+    "IMMIG": "demographic",
+    "LANGN": "demographic",
+    "AGE": "demographic",
+    "REPEAT": "demographic",
+    "TQ-01": "demographic",
+    "TQ-02": "demographic",
+    # 3. STUDENT ATTITUDE
+    "MATHEFF": "student_attitude",
+    "SCIEEFF": "student_attitude",
+    "ANXMAT": "student_attitude",
+    "BELONG": "student_attitude",
+    "BSBM16A": "student_attitude",
+    "JOYREAD": "student_attitude",
+    "MOTIV": "student_attitude",
+    "PISADIFF": "student_attitude",
+    "BSMJ": "student_attitude",
+    "EUDMO": "student_attitude",
+    "BSBG11A": "student_attitude",
+    "BSBGSLS": "student_attitude",
+    "BSBGSLB": "student_attitude",
+    "BSBGSLC": "student_attitude",
+    "BSBGSLP": "student_attitude",
+    "BSBGSLE": "student_attitude",
+    "BSBGSCS": "student_attitude",
+    "BSBGSCB": "student_attitude",
+    "BSBGSCC": "student_attitude",
+    "BSBGSCP": "student_attitude",
+    "BSBGSCE": "student_attitude",
+    "BSBS22H": "student_attitude",
+    "BSBB23H": "student_attitude",
+    "BSBC33H": "student_attitude",
+    "BSBP38H": "student_attitude",
+    "BSBE28H": "student_attitude",
+    "ASBGSMR": "student_attitude",
+    "ASBGCRD": "student_attitude",
+    "S_CIV": "student_attitude",
+    # 4. STUDENT BEHAVIOR & COGNITION
+    "METASPAM": "student_behavior",
+    "METASUM": "student_behavior",
+    "UNDREM": "student_behavior",
+    "FAMCON": "student_behavior",
+    "ABSENT": "student_behavior",
+    "TRUANT": "student_behavior",
+    "ST097Q01TA": "student_behavior",
+    "BSBG09C": "student_behavior",
+    "BSBS21": "student_behavior",
+    "BSBB22": "student_behavior",
+    "BSBC32": "student_behavior",
+    "BSBP37": "student_behavior",
+    "BSBE27": "student_behavior",
+    "BTBS18B": "student_behavior",
+    "LMINS": "student_behavior",
+    "CILUSE": "student_behavior",
+    # 5. TEACHER
+    "ADINST": "teacher",
+    "DIRINS": "teacher",
+    "PERFEED": "teacher",
+    "FEEDBACK": "teacher",
+    "TEACHSUP": "teacher",
+    "BSBGICS": "teacher",
+    "BTBS18A": "teacher",
+    "BTBS18CA": "teacher",
+    "BTBS18CB": "teacher",
+    "BTBS18CC": "teacher",
+    "BTBS18CD": "teacher",
+    "BTBS18CE": "teacher",
+    "BTBG08A": "teacher",
+    "BTBG09D": "teacher",
+    "BTBG09E": "teacher",
+    "BTBG12A": "teacher",
+    "BTBG12B": "teacher",
+    "BTBG12C": "teacher",
+    "BTBG12D": "teacher",
+    "BTBG12E": "teacher",
+    "BTBG12F": "teacher",
+    "BTBG12G": "teacher",
+    "BTBSESI": "teacher",
+    "TQ-03": "teacher",
+    "TQ-04": "teacher",
+    "TQ-06": "teacher",
+    "TQ-08": "teacher",
+    "TQ-11": "teacher",
+    "TQ-16": "teacher",
+    "TQ-51": "teacher",
+    "TQ-53": "teacher",
+    "TT3G01": "teacher",
+    "TTPD": "teacher",
+    "SEFF": "teacher",
+    "TCHYRS": "teacher",
+    # 6. SCHOOL
+    "SCHLTYPE": "school",
+    "STRATIO": "school",
+    "SCHSIZE": "school",
+    "PROPCAT": "school",
+    "TOTAT": "school",
+    "STUBEHA": "school",
+    "TEACHBEHA": "school",
+    "BCBG10A": "school",
+    "BCBG07": "school",
+    "BCBG13BA": "school",
+    "BCBG13BB": "school",
+    "BCBG13CA": "school",
+    "BCBG13CC": "school",
+    "BCBG14H": "school",
+    "BCBG16B": "school",
+    "BCBG16J": "school",
+    "BCBG16K": "school",
+    "TQ-50": "school",
+    # 7. PEER EFFECTS / CLASSROOM CLIMATE
+    "DISCLIMA": "peer_effects",
+    "TCDISCLIMA": "peer_effects",
+    "PERCOMP": "peer_effects",
+    "BULLY": "peer_effects",
+    # 8. ICT
+    "ICTRES": "ict",
+    "ST011Q04TA": "ict",
+    "ENTUSE": "ict",
+    "HOMESCH": "ict",
+    "USESCH": "ict",
+    "SOIAICT": "ict",
+    "AUTICT": "ict",
+    "BTBM20C": "ict",
+    "TQ-52": "ict",
+    "COMPEFF": "ict",
+    "S_CIL": "ict",
+    # 9. CURRICULUM & TIME ON TASK
+    "SMINS": "curriculum",
+    "MMINS": "curriculum",
+    "TMINS": "curriculum",
+    "ITCOURSE": "curriculum",
+    "BTBS14": "curriculum",
+    "BCBG06B": "curriculum",
+    "TQ-13": "curriculum",
+    "TQ-14": "curriculum",
+    # 10. SYSTEM LEVEL
+    "IDCNTRY": "system_level",
+    "CNT": "system_level",
+    "GDP": "system_level",
+    "TRACKING": "system_level",
+    # 11. PROCESS DATA & LOGS
+    "VOTAT": "process_data",
+    "sequence_length": "process_data",
+    "time_on_task": "process_data",
+    "n_actions": "process_data",
+    # 12. PRIOR ACHIEVEMENT
+    "PV1READ": "prior_achievement",
+    "PV1MATH": "prior_achievement",
+}
+
+
+def _is_micro_process_confounder(name: str, code: str) -> bool:
+    """Drop ML inputs / raw log micro-actions mistakenly listed as confounders."""
+    name_lower = name.lower()
+    code_str = code.strip()
+    code_lower = code_str.lower()
+
+    if code_lower == "votat" or "votat" in name_lower:
+        return False
+    if any(
+        phrase in name_lower
+        for phrase in (
+            "total time", "time on task", "response time", "total action",
+            "number of visits", "visits per", "sequence length",
+        )
+    ):
+        return False
+    if code_lower in ("sequence_length", "seq_length"):
+        return False
+
+    if _ACTION_SEQUENCE_CODE.match(code_str):
+        return True
+    if code_lower in _MICRO_ACTION_CODES:
+        return True
+    if code_lower.startswith(("tfidf_", "word2vec_", "w2v_")):
+        return True
+    if re.search(r"\d+_\d+_", code_str):
+        return True
+    if any(kw in name_lower or kw in code_lower for kw in _MICRO_CONFOUNDER_KEYWORDS):
+        return True
+    if re.search(r"slider\s*[+-]?\s*\d", name_lower):
+        return True
+    if "slider" in name_lower and re.search(r"\(\s*-?\d+_\d+", name_lower):
+        return True
+    return False
+
+
+def _slug_variable_code(name: str) -> str:
+    slug = re.sub(r"[^a-zA-Z0-9]+", "_", name.lower()).strip("_")
+    return slug[:48] if slug else "unnamed_variable"
+
+
+def _looks_like_ilsa_code(label: str) -> bool:
+    return bool(re.fullmatch(r"[A-Z][A-Z0-9_]{1,}", label.strip()))
+
+
+def _clean_confounder_part(part: str) -> str:
+    part = part.strip()
+    part = re.sub(r"^(the|a|an)\s+", "", part, flags=re.I)
+    part = re.sub(
+        r"\s+(variable|variables|factor|factors|indicator|indices|index|score|scores)$",
+        "",
+        part,
+        flags=re.I,
+    )
+    return part.strip()
+
+
+def _split_confounder_label(text: str) -> list[str]:
+    """Split combined labels ('Gender and Age', 'ESCS, HOMEPOS, and WEALTH')."""
+    cleaned = re.sub(
+        r"\s+(combined|together|respectively|etc\.?)\s*$",
+        "",
+        text.strip(),
+        flags=re.I,
+    )
+    # Keep unified constructs as one row (e.g. "Economic and education indicators")
+    if re.search(
+        r"\b(indicators?|variables?|features|predictors|covariates|controls)\b",
+        cleaned,
+        flags=re.I,
+    ) and "," not in cleaned:
+        return [cleaned] if cleaned else []
+
+    if not re.search(r"[,;]|\band\b|&", cleaned, flags=re.I):
+        return [cleaned] if cleaned else []
+
+    parts = re.split(r"\s*(?:,|;|\band\b|&)\s*", cleaned, flags=re.I)
+    parts = [_clean_confounder_part(p) for p in parts if p and _clean_confounder_part(p)]
+    return parts if len(parts) > 1 else ([cleaned] if cleaned else [])
+
+
+def _coerce_confounder_category(
+    cat: Optional[str], name: str, code: str,
+) -> str:
+    code_key = code.strip().upper()
+    if code_key in ILSA_CODE_TO_CATEGORY:
+        return ILSA_CODE_TO_CATEGORY[code_key]
+    if cat in CONFOUNDER_CATEGORIES:
+        return cat
+    text = f"{name} {code}".lower()
+    keyword_map = (
+        ("process_data", (
+            "tf-idf", "tfidf", "word2vec", "votat", "process data", "log file",
+            "action sequence", "response time", "time-to-first", "click", "reset",
+            "n-gram", "markov", "0_0_0", "sequence mining",
+        )),
+        ("system_level", (
+            "gdp", "gini", "country-level", "national policy", "education expenditure",
+            "oecd average", "tracking age", "macro", "economic indicator",
+        )),
+        ("peer_effects", (
+            "peer", "bullying", "classroom climate", "disciplinary climate",
+            "class-average", "class average", "class discipline",
+        )),
+        ("prior_achievement", (
+            "prior", "previous score", "prior-year", "wle", "plausible value",
+            "pv1", "pv2", "prior achievement", "prior math", "prior reading",
+        )),
+        ("socioeconomic", (
+            "escs", "homepos", "wealth", "hisei", "parental education",
+            "books at home", "misced", "fisced", "hisced", "socioeconomic",
+        )),
+        ("demographic", (
+            "gender", "immigrant", "migration", "language at home", "age", "grade level",
+        )),
+        ("student_attitude", (
+            "self-efficacy", "motivation", "anxiety", "enjoyment", "belonging",
+            "self-concept", "interest", "confidence", "matheff", "anxmat",
+        )),
+        ("student_behavior", (
+            "homework", "absenteeism", "study time", "learning time", "smins", "tmins",
+            "reading habit", "workpay", "exerprac",
+        )),
+        ("teacher", (
+            "teacher", "professional development", "instructional", "btbg", "btbm",
+            "teaching practice",
+        )),
+        ("school", (
+            "school type", "class size", "school resource", "library", "bcbg",
+            "principal", "school climate",
+        )),
+        ("ict", ("ict", "computer", "digital", "internet", "technology", "ictres")),
+        ("curriculum", (
+            "curriculum", "instructional time", "content coverage", "famcon", "smins",
+        )),
+        ("parent_home", (
+            "parent", "family support", "home environment", "emosups", "famsup",
+        )),
+    )
+    for category, keywords in keyword_map:
+        if any(kw in text for kw in keywords):
+            return category
+    return "student_behavior"
+
+
+def _normalize_confounder_code(code: Optional[str], name: str) -> str:
+    if isinstance(code, str):
+        cleaned = code.strip()
+        if cleaned.lower() not in _INVALID_VARIABLE_CODES:
+            return cleaned
+    paren = re.search(r"\(([A-Z][A-Z0-9_]{2,})\)", name)
+    if paren:
+        return paren.group(1)
+    return _slug_variable_code(name)
+
+
+def _normalize_confounder_dict(entry: dict) -> Optional[dict]:
+    name = entry.get("variable_name", "")
+    if not isinstance(name, str) or not name.strip():
+        return None
+    name = name.strip()
+    code = _normalize_confounder_code(entry.get("variable_code"), name)
+    cat = _coerce_confounder_category(entry.get("category"), name, code)
+    return {
+        "variable_code": code,
+        "variable_name": name,
+        "category": cat,
+    }
+
+
+def _expand_confounder_dict(entry: dict) -> list[dict]:
+    """Split grouped/list confounders into separate normalized objects."""
+    name = entry.get("variable_name", "")
+    if not isinstance(name, str) or not name.strip():
+        return []
+
+    base_code = entry.get("variable_code")
+    base_cat = entry.get("category")
+    parts = _split_confounder_label(name.strip())
+    if not parts:
+        return []
+
+    expanded: list[dict] = []
+    for part in parts:
+        if _looks_like_ilsa_code(part):
+            sub_name = part.upper()
+            sub_code: Optional[str] = part.upper()
+        else:
+            sub_name = part
+            sub_code = base_code if len(parts) == 1 else None
+
+        normalized = _normalize_confounder_dict({
+            "variable_code": sub_code,
+            "variable_name": sub_name,
+            "category": base_cat if len(parts) == 1 else None,
+        })
+        if normalized:
+            expanded.append(normalized)
+    return expanded
+
+
+def _dedupe_confounders(items: list[dict]) -> list[dict]:
+    seen: set[tuple[str, str]] = set()
+    unique: list[dict] = []
+    for item in items:
+        key = (item["variable_code"].upper(), item["variable_name"].lower())
+        if key in seen:
+            continue
+        seen.add(key)
+        unique.append(item)
+    return unique
+
+
+def _normalize_confounders_list(
+    raw: list,
+    *,
+    invalid_names: frozenset[str] = frozenset(),
+) -> list[dict]:
+    """Expand, normalize, and dedupe confounders from LLM or legacy JSON."""
+    expanded: list[dict] = []
+    for item in raw:
+        if isinstance(item, dict):
+            expanded.extend(_expand_confounder_dict(item))
+        elif isinstance(item, str) and item.strip():
+            expanded.extend(_expand_confounder_dict({
+                "variable_code": None,
+                "variable_name": item.strip(),
+                "category": None,
+            }))
+
+    filtered = [
+        c for c in expanded
+        if c["variable_name"] not in invalid_names
+        and not _is_micro_process_confounder(
+            c.get("variable_name", ""),
+            c.get("variable_code") or "",
+        )
+    ]
+    return _dedupe_confounders(filtered)
+
+
+def _dataset_clause(dataset: str) -> str:
+    """Avoid 'process data … data,' when dataset_used already contains 'data'."""
+    d = dataset.strip().rstrip(".")
+    if re.search(r"\bdata\b", d, re.IGNORECASE):
+        return f"Using {d},"
+    return f"Using {d} data,"
+
+
+def _normalize_finding_key_part(text: str) -> str:
+    return re.sub(r"[^a-z0-9]+", " ", text.lower()).strip()
+
+
+def _finding_row_key(finding: dict) -> tuple[str, str]:
+    return (
+        _normalize_finding_key_part(finding.get("dataset_used", "")),
+        _normalize_finding_key_part(finding.get("target_variable", "")),
+    )
+
+
+_AUXILIARY_TARGET = re.compile(
+    r"\b(cluster|k-?means|unsupervised|group|segment|profile|latent\s+class)\b",
+    re.IGNORECASE,
+)
+_PRIMARY_TARGET = re.compile(
+    r"\b(correct|accuracy|achievement|score|resilien|binary|predict|performance|"
+    r"plausible|pv\d|response|outcome)\b",
+    re.IGNORECASE,
+)
+
+
+def _is_auxiliary_finding(finding: dict) -> bool:
+    target = finding.get("target_variable", "")
+    metrics = finding.get("performance_metrics", "")
+    return bool(_AUXILIARY_TARGET.search(f"{target} {metrics}"))
+
+
+def _merge_finding_into_primary(primary: dict, auxiliary: dict) -> None:
+    """Append auxiliary analysis metrics to the primary finding row."""
+    extra = auxiliary.get("performance_metrics", "").strip()
+    if extra and extra not in primary.get("performance_metrics", ""):
+        primary["performance_metrics"] = (
+            f"{primary['performance_metrics'].rstrip('.')}. "
+            f"Additional analysis ({auxiliary.get('target_variable', 'secondary')}): "
+            f"{extra}"
+        )
+
+
+def _dedupe_main_findings(findings: list[dict]) -> list[dict]:
+    """
+    Remove duplicate rows and merge same-dataset auxiliary analyses (e.g. k-means
+    clustering) into the primary supervised finding instead of a second near-copy.
+    """
+    if not findings:
+        return findings
+
+    unique: list[dict] = []
+    seen_keys: set[tuple[str, str]] = set()
+    for finding in findings:
+        key = _finding_row_key(finding)
+        if key in seen_keys:
+            continue
+        seen_keys.add(key)
+        unique.append(finding)
+
+    by_dataset: dict[str, list[dict]] = {}
+    for finding in unique:
+        ds_key = _finding_row_key(finding)[0]
+        by_dataset.setdefault(ds_key, []).append(finding)
+
+    merged: list[dict] = []
+    for group in by_dataset.values():
+        if len(group) == 1:
+            merged.append(group[0])
+            continue
+
+        primaries = [f for f in group if not _is_auxiliary_finding(f)]
+        auxiliaries = [f for f in group if _is_auxiliary_finding(f)]
+
+        if not primaries:
+            primary = group[0]
+            for extra in group[1:]:
+                _merge_finding_into_primary(primary, extra)
+            merged.append(primary)
+            continue
+
+        primary = primaries[0]
+        for aux in auxiliaries:
+            _merge_finding_into_primary(primary, aux)
+        merged.append(primary)
+        for extra in primaries[1:]:
+            merged.append(extra)
+
+    return merged
+
+
+def _build_standardized_conclusion(
+    dataset: str,
+    predictors: list[str],
+    target: str,
+    *,
+    effect_hint: str | None = None,
+) -> str:
+    """Enforce Dataset → Input → Target → Output sentence template."""
+    preds = ", ".join(predictors[:3]) if predictors else "the reported predictors"
+    clause = _dataset_clause(dataset)
+    if effect_hint and effect_hint.strip():
+        effect = effect_hint.strip().rstrip(".")
+        for prefix in (
+            "the study found that ",
+            "finding that ",
+            "the study found ",
+        ):
+            if effect.lower().startswith(prefix):
+                effect = effect[len(prefix):].strip()
+                break
+        if effect.lower().startswith("using "):
+            cleaned = effect if effect.endswith(".") else f"{effect}."
+            cleaned = re.sub(r"\bdata,\s*the study", "the study", cleaned, flags=re.I)
+            return cleaned
+    else:
+        effect = "results were reported without a clear narrative conclusion in the manuscript"
+    return (
+        f"{clause} the study leveraged {preds} to predict {target}, "
+        f"finding that {effect}."
+    )
+
+
+def _normalize_main_findings_list(raw: list) -> list[dict]:
+    """Normalize and validate main_findings entries from LLM or legacy JSON."""
+    findings: list[dict] = []
+    for item in raw:
+        if not isinstance(item, dict):
+            continue
+        dataset = str(
+            item.get("dataset_used") or item.get("ilsa_dataset") or ""
+        ).strip()
+        if not dataset or dataset in _INVALID_FIELD_STRINGS:
+            dataset = "ILSA dataset not specified in manuscript"
+
+        target = str(item.get("target_variable") or "").strip()
+        if not target or target in _INVALID_FIELD_STRINGS:
+            continue
+        predictors = item.get("top_predictors")
+        if isinstance(predictors, str):
+            predictors = [p.strip() for p in predictors.split(",") if p.strip()]
+        elif not isinstance(predictors, list):
+            predictors = []
+        else:
+            predictors = [
+                str(p).strip() for p in predictors
+                if isinstance(p, (str, int, float)) and str(p).strip() not in _INVALID_FIELD_STRINGS
+            ]
+        metrics = str(item.get("performance_metrics") or "").strip()
+        if not metrics or metrics in _INVALID_FIELD_STRINGS:
+            metrics = "Not reported"
+        conclusion = str(item.get("standardized_conclusion") or "").strip()
+        if not conclusion or conclusion in _INVALID_FIELD_STRINGS:
+            conclusion = _build_standardized_conclusion(dataset, predictors, target)
+        elif dataset.lower() not in conclusion.lower():
+            conclusion = _build_standardized_conclusion(
+                dataset, predictors, target, effect_hint=conclusion
+            )
+        elif re.search(r"\bdata,\s*the study", conclusion, re.IGNORECASE):
+            conclusion = _build_standardized_conclusion(
+                dataset, predictors, target, effect_hint=conclusion
+            )
+        findings.append({
+            "dataset_used": dataset,
+            "target_variable": target,
+            "top_predictors": predictors[:5],
+            "performance_metrics": metrics,
+            "standardized_conclusion": conclusion,
+        })
+    return _dedupe_main_findings(findings)
+
+
+def _coerce_outcome_summary_text(value) -> str:
+    """Normalize outcome_summary to a plain string."""
+    if isinstance(value, str):
+        text = value.strip()
+    elif isinstance(value, dict):
+        text = str(value.get("summary") or "").strip()
+        if not text:
+            text = " ".join(str(v) for v in value.values() if isinstance(v, str)).strip()
+    else:
+        text = str(value or "").strip()
+    if not text or text in _INVALID_FIELD_STRINGS:
+        return ""
+    return text
+
+
+def _normalize_findings_fields(data: dict) -> None:
+    """Normalize main_findings and outcome_summary; keep both when present."""
+    raw_findings = data.get("main_findings")
+    if isinstance(raw_findings, list):
+        data["main_findings"] = _normalize_main_findings_list(raw_findings)
+    elif raw_findings is None:
+        data["main_findings"] = []
+    else:
+        data["main_findings"] = []
+
+    outcome = _coerce_outcome_summary_text(data.get("outcome_summary"))
+
+    if not data["main_findings"] and outcome:
+        data["main_findings"] = [{
+            "dataset_used": "ILSA dataset not specified (legacy migration)",
+            "target_variable": "Primary outcome (legacy migration)",
+            "top_predictors": [],
+            "performance_metrics": "Not reported",
+            "standardized_conclusion": outcome,
+        }]
+
+    if not outcome and data["main_findings"]:
+        parts = []
+        for f in data["main_findings"][:3]:
+            parts.append(f.get("standardized_conclusion", ""))
+        outcome = " ".join(p for p in parts if p).strip()
+
+    if not outcome:
+        outcome = (
+            "No narrative outcome summary was extracted. See main_findings for "
+            "structured results if available."
+        )
+
+    data["outcome_summary"] = outcome
+
 
 COUNTRY_NAME_TO_ISO = {
     "türkiye": "TUR", "turkey": "TUR", "usa": "USA",
@@ -433,25 +1100,45 @@ CRITICAL EXTRACTION & INFERENCE RULES
      country_code = "USA". If a table lists multiple countries, extract ALL \
      of them with ISO 3166-1 alpha-3 codes. Do not leave the list empty if \
      the data source inherently implies a country.
-   - DOI: Do NOT leave doi null. Thoroughly scan the first page header/footer, \
-     article title block, footnotes, and copyright notice for strings starting \
-     with "10." followed by a "/" (e.g. "10.1016/j.cedpsych.2023.102196"). \
-     Also check "https://doi.org/" links. Strip URL prefixes, store only the \
-     DOI itself (e.g. "10.1016/j.cedpsych.2023.102196").
-   - confounders_identified: EXHAUSTIVE STRUCTURED EXTRACTION — CRITICAL RULES: \
+   - *** SAMPLE FILTERING AWARENESS (CRITICAL) ***: ILSA datasets are massive; \
+     authors almost NEVER use the entire national or international file. Hunt \
+     inclusion/exclusion steps in Method, Participants, Data, Data Cleaning, and \
+     Preprocessing: CBA-only subsamples, item/task completion filters, grade bands, \
+     school-type restrictions, listwise-deletion rules, process-log completeness, \
+     outlier removal. Document precisely in sample_details.sample_filtering_criteria. \
+     Do NOT assume the full country sample unless the paper explicitly states it.
+   - DOI: Do NOT leave doi null when the document contains one. Scan in order: \
+     (1) first-page header/footer and title block, (2) article information / \
+     copyright page, (3) footnotes and publisher lines, (4) doi.org or dx.doi.org \
+     URLs anywhere in the text. Patterns: "DOI:", "doi:", "https://doi.org/10.…", \
+     bare "10.1016/j.cedpsych.2023.102196". If EXTRACTED_DOI_HINT is provided in \
+     the user message, copy it exactly (unless the PDF clearly shows a different \
+     DOI for this article). Strip URL prefixes; store only the DOI string.
+   - confounders_identified: CONCEPTUAL CONTROLS & PREDICTORS — CRITICAL RULES: \
+     *** CONCEPTUAL ONLY (NOT ML FEATURE COLUMNS) ***: List questionnaire, \
+     background, and high-level process aggregates used as controls or named \
+     predictors. NEVER list TF-IDF tokens, Word2Vec dimensions, n-grams, raw log \
+     action codes (start/reset/end), slider state codes (0_0_0, 1_2_-2), or \
+     per-action frequencies — those belong in main_findings / ml_techniques, \
+     NOT here. Process-data papers with only engineered log features may return []. \
      *** NO GROUPING (ANTI-LAZINESS) ***: Create a SEPARATE object for EVERY \
-     SINGLE variable. If the study uses 25 predictors, output 25 distinct objects. \
-     NEVER combine variables (e.g. do NOT output "Gender and Age" as one entry). \
-     *** EXHAUSTIVE ***: Read the ENTIRE methodology, variables, and results. \
-     Do not stop after the first few variables. Missing a variable = critical failure. \
+     conceptual variable. NEVER combine variables (e.g. do NOT output "Gender and Age" \
+     as one entry; output two objects). Comma-separated lists (ESCS, HOMEPOS) must \
+     be separate objects, not one string. \
+     *** EXHAUSTIVE (for conceptual vars) ***: Read methodology and variables. \
+     Missing a background/control variable = critical failure. Do NOT inflate the \
+     list with hundreds of engineered features. \
      Each entry is a STRUCTURED OBJECT with three fields: \
-     (a) variable_code — the official ILSA alphanumeric code EXACTLY as written \
-         in the paper (e.g. "ESCS", "ST004Q01TA", "BSBG11A"). If the paper does \
-         NOT explicitly state a code, use "N/A". Do NOT invent or guess codes. \
+     (a) variable_code — identifier for tabulation. NEVER output literal "N/A": \
+         Tier 1: official ILSA code exactly as written (ESCS, ST004Q01TA, BSBG11A). \
+         Tier 2: exact author-given label for conceptual constructs (VOTAT, MATHEFF, \
+         ICTRES, gdp_per_capita, sequence_length). NOT raw log codes or ML features. \
+         Tier 3: snake_case slug from variable_name (economic_education_indicators) — \
+         mandatory when no ILSA code exists. Do NOT invent fake ILSA codes. \
      (b) variable_name — a concise, standardised English label (max 8 words). \
          Remove jargon. Use consistent naming: "Gender", "Socioeconomic status (ESCS)", \
          "Home possessions", "Math self-efficacy", "School type", "ICT resources". \
-     (c) category — one of 14 categories. Favor specific categories over "other": \
+     (c) category — exactly ONE of 13 categories (no "other" — mandatory assignment): \
        socioeconomic → ESCS, HOMEPOS, WEALTH, HISEI, BMMJ/BFMJ, parental education, \
                        books at home, family resources, cultural possessions \
        demographic → gender, age, immigration/migrant status, language at home, grade \
@@ -469,8 +1156,8 @@ CRITICAL EXTRACTION & INFERENCE RULES
                    coverage, assessment practices \
        parent_home → parental involvement, parental support (EMOSUPS), home \
                     environment, family structure, homework supervision \
-       process_data → response time, action counts, time-to-first-action, \
-                     VOTAT scores, action sequences, number of visits \
+       process_data → ONLY aggregates: total/response time, VOTAT, visits per \
+                     item, sequence length — NOT raw clicks, slider codes, TF-IDF \
        prior_achievement → previous test scores, prior-year grades, achievement \
                           in other domains (reading score as math predictor), \
                           WLE/PV scores used as control variables \
@@ -478,7 +1165,8 @@ CRITICAL EXTRACTION & INFERENCE RULES
                      achievement, classroom composition \
        system_level → country-level GDP, education expenditure, tracking age, \
                      national policy variables, GINI coefficient, system-level ratios \
-       other → ONLY as last resort when no specific category fits
+     If unclear, pick the closest category (do NOT list engineered log/ML features; \
+     aggregate country indices → system_level or socioeconomic).
 
 8) LOGICAL DEDUCTION FOR ML TECHNIQUES (ml_techniques):
    - primary: DO NOT leave primary null if all_techniques is populated!
@@ -682,23 +1370,31 @@ CRITICAL EXTRACTION & INFERENCE RULES
      b) countries — if the paper names ANY country, economy, or region \
         in connection with data analysis, extract its ISO code. NEVER \
         return an empty countries list for an empirical paper.
-     c) n_students (per country) — aggressively scan tables (Table 1, \
+     c) sample_filtering_criteria — MUST explain how the analytic subsample was \
+        carved from the full ILSA file (task/module filters, exclusions, grade \
+        bands). Never leave vague or empty.
+     d) n_students (per country) — aggressively scan tables (Table 1, \
         Sample Characteristics) for per-country sample sizes. Do NOT \
         leave n_students null if a table reports country-level counts.
-     d) ml_techniques.primary — if all_techniques has ≥1 entry, primary \
+     e) ml_techniques.primary — if all_techniques has ≥1 entry, primary \
         MUST be filled. This is a FATAL ERROR if violated.
-     e) outcome_summary — MUST always be 4-5 substantive sentences with \
-        specific metrics. Never write vague placeholders.
-     f) research_design_type — MUST be classified for every paper.
-     g) publication_type and source_category — MUST be classified.
-     h) doi — scan headers, footers, footnotes, and copyright notices \
+     f) main_findings — MUST contain at least one StructuredFinding per distinct \
+        target. Each row needs dataset_used (e.g. 'TIMSS 2019 Grade 8 Science'), \
+        target_variable, top_predictors, performance_metrics, and standardized_conclusion \
+        in the Dataset→Input→Target→Output template. Never leave empty for empirical studies.
+     g) outcome_summary — MUST also be 4-5 substantive sentences with specific \
+        metrics and limitations. Complements main_findings; do not leave empty for \
+        empirical predictive studies.
+     h) research_design_type — MUST be classified for every paper.
+     i) publication_type and source_category — MUST be classified.
+     j) doi — scan headers, footers, footnotes, and copyright notices \
         for "10.xxxx/" patterns. Do NOT leave null if a DOI exists.
-     i) confounders_identified — DO NOT return [] if the study has input \
+     k) confounders_identified — DO NOT return [] if the study has input \
         features/predictors. ONE object per variable. If the paper lists 20 \
         features, output 20 objects. NEVER group. NEVER truncate. \
-        variable_code = exact ILSA code or "N/A"; variable_name = max 8 \
-        words; category = one of 14 literals (prefer specific over "other").
-     j) weight_fields_interpretation — ALWAYS REQUIRED, never null. \
+        variable_code = ILSA code OR author label OR snake_case slug — never "N/A"; \
+        variable_name = max 8 words; category = one of 13 literals (no "other").
+     l) weight_fields_interpretation — ALWAYS REQUIRED, never null. \
         Write a data preparation summary for every paper.
    - For EVERY null field in your output, ask yourself: "Did I truly search \
      the abstract, methodology, results, tables, footnotes, and appendices?" \
@@ -722,9 +1418,9 @@ CRITICAL EXTRACTION & INFERENCE RULES
      instrumental variables, regression discontinuity) AND explicitly states \
      causal identification assumptions (SUTVA, parallel trends, unconfoundedness).
    - If the authors overstate causality based on predictive ML feature \
-     importance alone, capture this in outcome_summary as a limitation.
+     importance alone, capture this in standardized_conclusion as a limitation.
    - XAI technique names (SHAP, LIME, counterfactual XAI, ALE plots) should \
-     be mentioned in outcome_summary when used but NEVER in ml_techniques \
+     be mentioned in standardized_conclusion when used but NEVER in ml_techniques \
      (they are interpretation tools, not learning algorithms).
 
 18) HIERARCHICAL DATA AWARENESS (Nested Structure & i.i.d. Violations):
@@ -744,7 +1440,7 @@ CRITICAL EXTRACTION & INFERENCE RULES
      e) No adjustment at all: flat ML on raw student-level data.
    - If the study applies standard flat ML on nested student-level data \
      WITHOUT survey weights, WITHOUT hierarchical adjustments, and WITHOUT \
-     cluster-stratified modeling, note this in outcome_summary as a \
+     cluster-stratified modeling, note this in standardized_conclusion as a \
      methodological limitation. Do NOT silently ignore it.
    - student_weights_used is especially important here: ILSA weights partially \
      correct for clustering. If weights are omitted AND hierarchy is ignored, \
@@ -771,8 +1467,9 @@ CRITICAL EXTRACTION & INFERENCE RULES
      a) VOTAT detection (systematic vs. non-systematic exploration).
      b) Clustering of sequential paths (k-means on action embeddings).
      c) Manual expert coding of strategy types.
-   - Capture these distinctions in confounders_identified (structured objects \
-     with category='process_data') and outcome_summary (describe the approach).
+   - Capture micro-level operationalization in standardized_conclusion and ml_techniques. \
+     confounders_identified gets ONLY high-level aggregates (e.g. VOTAT, total time), \
+     never individual action codes or TF-IDF/Word2Vec feature columns.
 
 20) ML ROBUSTNESS, CLASS IMBALANCE & DATA LEAKAGE:
    - Do NOT blindly extract overall model "Accuracy" as the sole metric.
@@ -788,17 +1485,17 @@ CRITICAL EXTRACTION & INFERENCE RULES
         Precision-Recall AUC, Matthews Correlation Coefficient (MCC), or \
         balanced accuracy — these are robust to class skew.
      b) If ONLY "Accuracy" is reported for a known-imbalanced target, note \
-        this as a limitation in outcome_summary.
+        this as a limitation in standardized_conclusion.
    - DATA LEAKAGE:
      a) Check whether imputation, standardization, SMOTE, or feature \
         selection were performed INSIDE cross-validation folds (correct) or \
         on the ENTIRE dataset before splitting (leakage).
      b) If the paper reports suspiciously high performance (e.g., >95% on \
         complex ILSA tasks) without rigorous nested CV, flag potential \
-        data leakage in outcome_summary.
+        data leakage in standardized_conclusion.
    - VALIDATION STRATEGY: extract the exact method — k-fold CV, stratified \
      k-fold, leave-one-group-out (LOGO), nested CV, hold-out, repeated \
-     random splits — and note it in outcome_summary.
+     random splits — and note it in standardized_conclusion.
 
 ═══════════════════════════════════════════════════════════════
 OUTPUT SCHEMA
@@ -811,13 +1508,14 @@ metadata fields: file_name, title, authors, year, doi, venue, publication_type,
 
 data fields: survey_design, plausible_values_handling, missing_data_handling,
   handling_not_reported_explanation, sample_details, ml_techniques,
-  confounders_identified, outcome_summary, research_design_type,
+  confounders_identified, main_findings, outcome_summary, research_design_type,
   null_fields_interpretation.
 
 data.survey_design: student_weights_used, replicate_weights_used,
   weight_variable_name, weight_fields_interpretation (ALWAYS REQUIRED — never null).
 
-data.sample_details: total_students, countries (each: country_code, n_students).
+data.sample_details: total_students, countries (each: country_code, n_students), \
+  sample_filtering_criteria (ALWAYS REQUIRED — how the analytic subsample was defined).
 
 data.ml_techniques: primary, all_techniques.
 
@@ -859,8 +1557,33 @@ class GPTExtractor:
         self.base_delay = base_delay
 
     @staticmethod
-    def _post_process_model(extraction: ILSAArticleMetadata) -> None:
+    def _apply_doi_hint(
+        extraction: ILSAArticleMetadata,
+        processed: Optional["ProcessedPDF"] = None,
+    ) -> None:
+        """Backfill metadata.doi from PDF regex scan when the LLM returned null."""
+        if extraction.metadata.doi:
+            return
+        if processed is None:
+            return
+        hint = processed.metadata.get("extracted_doi")
+        if isinstance(hint, str) and hint.strip().startswith("10."):
+            extraction.metadata.doi = hint.strip()
+            return
+        candidates = processed.metadata.get("doi_candidates")
+        if isinstance(candidates, list):
+            for c in candidates:
+                if isinstance(c, str) and c.strip().startswith("10."):
+                    extraction.metadata.doi = c.strip()
+                    return
+
+    @staticmethod
+    def _post_process_model(
+        extraction: ILSAArticleMetadata,
+        processed: Optional["ProcessedPDF"] = None,
+    ) -> None:
         """Post-process a structured-output extraction in place."""
+        GPTExtractor._apply_doi_hint(extraction, processed)
         for c in extraction.data.sample_details.countries:
             code = c.country_code.strip()
             if len(code) != 3 or not code.isalpha():
@@ -917,6 +1640,24 @@ class GPTExtractor:
         elif not needs_explanation:
             d.handling_not_reported_explanation = None
 
+        sd = d.sample_details
+        if not sd.sample_filtering_criteria or not sd.sample_filtering_criteria.strip():
+            sd.sample_filtering_criteria = _DEFAULT_SAMPLE_FILTERING
+
+        d.confounders_identified = [
+            Confounder.model_validate(c)
+            for c in _normalize_confounders_list(
+                [conf.model_dump() for conf in d.confounders_identified],
+            )
+        ]
+
+        d.main_findings = [
+            StructuredFinding.model_validate(f)
+            for f in _normalize_main_findings_list(
+                [f.model_dump() for f in d.main_findings],
+            )
+        ]
+
     def _build_user_message(self, processed: "ProcessedPDF") -> list[dict]:
         sections_label = ", ".join(processed.sections.keys()) or "none"
         title_hint = ""
@@ -927,11 +1668,26 @@ class GPTExtractor:
                 f"{processed.metadata['extracted_title']}\n"
             )
 
+        doi_hint = ""
+        extracted_doi = processed.metadata.get("extracted_doi")
+        doi_candidates = processed.metadata.get("doi_candidates") or []
+        if extracted_doi:
+            doi_hint = (
+                f"\nEXTRACTED_DOI_HINT (regex scan of title page / headers — "
+                f"USE for metadata.doi unless the article text proves otherwise): "
+                f"{extracted_doi}\n"
+            )
+        elif doi_candidates:
+            doi_hint = (
+                f"\nEXTRACTED_DOI_CANDIDATES (pick the DOI for THIS article): "
+                f"{', '.join(str(c) for c in doi_candidates[:5])}\n"
+            )
+
         document_text = (
             f"FILE: {processed.file_name}\n"
             f"SOURCE: {processed.source_database}\n"
             f"SECTIONS_DETECTED: {sections_label}\n"
-            f"{title_hint}"
+            f"{title_hint}{doi_hint}"
             f"--- BEGIN ARTICLE TEXT ---\n\n"
             f"{processed.extraction_text}\n\n"
             f"--- END ARTICLE TEXT ---\n\n"
@@ -1031,9 +1787,15 @@ class GPTExtractor:
             "  COUNTRIES + N_STUDENTS: For each country, aggressively scan tables "
             "(Table 1, Sample Characteristics, descriptive stats) for per-country "
             "sample sizes. Do NOT leave n_students null if a table shows the count.\n"
-            "  DOI: Scan first-page header/footer, article info block, footnotes, "
-            "and copyright notice for '10.xxxx/' patterns or 'https://doi.org/' "
-            "links. Strip URL prefixes. Do NOT leave doi null if it exists.\n\n"
+            "  SAMPLE_FILTERING_CRITERIA (CRITICAL): Authors rarely use the entire "
+            "ILSA file. Document every inclusion/exclusion step — digital-module only, "
+            "specific assessment unit or log task, grade level, school type, complete "
+            "cases only, missing-data rules, process-sequence cleaning. If none "
+            "reported: 'Used the full available sample for the specified countries.'\n"
+            "  DOI: Scan first-page header/footer, title page, article info block, "
+            "copyright line, footnotes, and doi.org links for '10.xxxx/' patterns. "
+            "If EXTRACTED_DOI_HINT is present above, set metadata.doi to that value "
+            "unless contradicted. Do NOT leave doi null when a DOI exists in the PDF.\n\n"
 
             "F) ML PRIMARY (system rule 8) — *** FATAL ERROR *** to leave primary "
             "null while all_techniques has values. If only ONE algorithm is listed, "
@@ -1046,32 +1808,76 @@ class GPTExtractor:
             "*** ANTI-LAZINESS — CRITICAL RULES ***:\n"
             "  (1) NO GROUPING: ONE object per variable. If the paper lists 25 "
             "predictors, you MUST output 25 objects. NEVER combine 'Gender and Age' "
-            "into a single entry.\n"
+            "into a single entry — use two rows. NEVER output comma-separated lists "
+            "as one string (ESCS, HOMEPOS → two objects).\n"
             "  (2) EXHAUSTIVE: Read the ENTIRE methodology, variables section, tables, "
             "and results. Do NOT stop after the first few variables. Missing a "
             "variable is a critical extraction failure.\n"
-            "  (3) NO CODE HALLUCINATION: variable_code = exact ILSA code from the "
-            "paper or 'N/A'. Do NOT invent codes.\n"
+            "  (3) variable_code TIERS: ILSA code → author label from paper → snake_case "
+            "slug. Literal 'N/A' is FORBIDDEN — use slug (e.g. economic_education_indicators). "
+            "Do NOT invent fake ILSA codes.\n"
+            "  (4) NO MICRO-FEATURES: Do NOT list TF-IDF/Word2Vec columns, n-grams, "
+            "raw log actions (start/reset/end), slider codes (0_0_0), or per-action "
+            "frequencies. Those are ML inputs — describe them in standardized_conclusion only. "
+            "Process-data-only studies may legitimately return [].\n"
+            "  (5) category: exactly 13 literals — NO 'other'. Must assign the closest.\n"
             "Each entry has three fields:\n"
-            "  variable_code: exact ILSA code or 'N/A' if not mentioned.\n"
+            "  variable_code: ILSA code OR conceptual author label OR slug.\n"
             "  variable_name: concise English label (max 8 words). Consistent naming.\n"
-            "  category: one of 14 literals — socioeconomic | demographic | "
-            "student_attitude | student_behavior | teacher | school | ict | "
-            "curriculum | parent_home | process_data | prior_achievement | "
-            "peer_effects | system_level | other.\n"
+            "  category: socioeconomic | demographic | student_attitude | "
+            "student_behavior | teacher | school | ict | curriculum | parent_home | "
+            "process_data | prior_achievement | peer_effects | system_level.\n"
             "EXAMPLES:\n"
             "  {\"variable_code\": \"ESCS\", \"variable_name\": \"Socioeconomic status (ESCS)\", \"category\": \"socioeconomic\"}\n"
             "  {\"variable_code\": \"ST004Q01TA\", \"variable_name\": \"Gender\", \"category\": \"demographic\"}\n"
-            "  {\"variable_code\": \"BSBG11A\", \"variable_name\": \"Math self-confidence\", \"category\": \"student_attitude\"}\n"
-            "  {\"variable_code\": \"N/A\", \"variable_name\": \"School type (public/private)\", \"category\": \"school\"}\n"
-            "  {\"variable_code\": \"N/A\", \"variable_name\": \"Prior reading score\", \"category\": \"prior_achievement\"}\n"
-            "  {\"variable_code\": \"N/A\", \"variable_name\": \"Classroom disciplinary climate\", \"category\": \"peer_effects\"}\n"
-            "  {\"variable_code\": \"N/A\", \"variable_name\": \"Country GDP per capita\", \"category\": \"system_level\"}\n"
-            "Return [] ONLY if the paper is a review or theoretical framework.\n\n"
+            "  {\"variable_code\": \"VOTAT\", \"variable_name\": \"VOTAT navigation behavior\", \"category\": \"process_data\"}\n"
+            "  {\"variable_code\": \"public_private\", \"variable_name\": \"School type (public/private)\", \"category\": \"school\"}\n"
+            "  {\"variable_code\": \"gdp_per_capita\", \"variable_name\": \"Country GDP per capita\", \"category\": \"system_level\"}\n"
+            "Return [] if the paper is a review/theory paper OR uses only engineered "
+            "log/ML features with no questionnaire/background controls.\n\n"
 
-            "H) outcome_summary — 4-5 sentences of findings and performance metrics "
-            "ONLY from the text. Include specific numbers (accuracy, R², RMSE, AUC, "
-            "F1) when available. Do NOT put null-field commentary here.\n\n"
+            "H) MAIN FINDINGS (Dataset → Input → Target → Output standard):\n"
+            "Build a strict main_findings array — ONE object per DISTINCT target_variable. "
+            "Do NOT create two near-duplicate rows with the same dataset_used and the same "
+            "predictors for the same outcome. Compare methods (TF-IDF vs Word2vec, RF vs SVM) "
+            "inside performance_metrics of ONE row. Use a second row ONLY when the "
+            "target_variable truly changes (e.g., Math vs Science; student-level vs country-level). "
+            "Do NOT add a separate row for k-means/clustering on the same dataset unless it "
+            "is the paper's only analysis — otherwise summarize clustering in performance_metrics "
+            "or outcome_summary.\n"
+            "Map the exact empirical pipeline:\n"
+            "  dataset_used: Assessment name + cycle year + grade + domain "
+            "(e.g. 'TIMSS 2019 Grade 8 Science', 'PISA 2018 Reading', "
+            "'PISA 2012 Problem Solving process data', 'PIAAC 2012 Numeracy').\n"
+            "  target_variable: Exactly what was predicted.\n"
+            "  top_predictors: Top 3-5 inputs; names MUST match confounders_identified "
+            "variable_name when listed there.\n"
+            "  performance_metrics: Hard numbers (Accuracy, R², RMSE, AUC, F1) or "
+            "'Not reported'.\n"
+            "  standardized_conclusion: REQUIRED template — "
+            "'Using [dataset_used] data, the study leveraged [top_predictors] to predict "
+            "[target_variable], finding that [direction/effect/result].' "
+            "Flag SHAP-overstated causality, missing weights, or data leakage in the "
+            "finding clause when relevant.\n"
+            "EXAMPLE:\n"
+            "  {\"dataset_used\": \"TIMSS 2019 Grade 8 Science\", "
+            "\"target_variable\": \"Science achievement (Plausible Values)\", "
+            "\"top_predictors\": [\"Socioeconomic background (SES)\", "
+            "\"Curriculum type (Integrated vs. Separated)\"], "
+            "\"performance_metrics\": \"Random Forest — R²: 0.51, RMSE: 74.92\", "
+            "\"standardized_conclusion\": \"Using TIMSS 2019 Grade 8 Science data, the "
+            "study leveraged socioeconomic background and curriculum type to predict science "
+            "achievement, finding that socioeconomic background was the strongest predictor "
+            "while curriculum type had only a weak direct effect.\"}\n"
+            "Return [] only for reviews/theory papers with no predictive results.\n\n"
+
+            "H2) OUTCOME_SUMMARY (narrative companion to main_findings):\n"
+            "ALSO write outcome_summary — 4-5 sentences (~120 words max) synthesizing "
+            "the study's key results in prose. Include: dataset/subset used, best ML model, "
+            "specific performance metrics (Accuracy, R², RMSE, AUC, F1), top predictors, "
+            "and methodological caveats (no survey weights, SHAP≠causality, preprocessing "
+            "leakage). This is the human-readable summary; main_findings is the tabular "
+            "mapping. Do NOT put null-field commentary here.\n\n"
 
             "I) null_fields_interpretation — trigger if total_students is still "
             "null, or primary is null while all_techniques is empty, or extraction "
@@ -1148,22 +1954,22 @@ class GPTExtractor:
 
             "O) XAI & CAUSALITY (system rule 17):\n"
             "  - If the paper uses SHAP / LIME / ALE / Gini importance / permutation "
-            "importance, report these in outcome_summary but NEVER in ml_techniques.\n"
+            "importance, report these in standardized_conclusion but NEVER in ml_techniques.\n"
             "  - Do NOT classify as 'causal_observational' unless actual causal methods "
             "(BART, BCF, PSM, diff-in-diff, IV, RDD) with stated assumptions are used.\n"
             "  - If authors claim 'X causes Y' based solely on feature importance, "
-            "flag this as overstated causality in outcome_summary.\n\n"
+            "flag this as overstated causality in standardized_conclusion.\n\n"
 
             "P) HIERARCHICAL DATA (system rule 18):\n"
-            "  - Note in outcome_summary whether the ML model accounted for the nested "
+            "  - Note in standardized_conclusion whether the ML model accounted for the nested "
             "ILSA data structure (multilevel ML, feature aggregation, cluster-stratified "
             "models, or survey weights).\n"
             "  - If standard flat ML was applied to student-level data with NO "
             "hierarchical adjustments and NO weights, flag it as a methodological "
-            "limitation in outcome_summary.\n\n"
+            "limitation in standardized_conclusion.\n\n"
 
             "Q) PROCESS DATA GRANULARITY (system rule 19):\n"
-            "  - For process data papers, differentiate in outcome_summary:\n"
+            "  - For process data papers, differentiate in standardized_conclusion:\n"
             "    (a) time metric type: raw total time vs. item-standardised log "
             "response times vs. effort regulation slope vs. DRT/RTE;\n"
             "    (b) sequence modeling: exact chronological (n-grams, HMM, LSTM on "
@@ -1188,14 +1994,18 @@ class GPTExtractor:
             "  - total_students null for an empirical paper? → Re-read Method section.\n"
             "  - n_students null for listed countries? → Scan Table 1 again.\n"
             "  - countries list empty for a paper that names countries? → FATAL ERROR.\n"
+            "  - sample_filtering_criteria missing or vague? → Re-read Method/Data "
+            "Cleaning for inclusion/exclusion rules.\n"
             "  - primary null but all_techniques has entries? → FATAL ERROR.\n"
             "  - doi null? → Check headers, footers, footnotes for 10.xxxx/ patterns.\n"
             "  - confounders_identified empty for an ML study? → ONE object per variable "
-            "(code or 'N/A', name max 8 words, category from 14 literals). NEVER group.\n"
+            "(code = ILSA/author label/slug — never literal N/A; category from 13 "
+            "literals, no 'other'). NEVER group.\n"
             "  - weight_fields_interpretation null or empty? → FATAL ERROR (always required).\n"
             "  - handling_not_reported_explanation null when PV='not_applicable' or "
             "'not_reported', or missing data='not_reported'? → FATAL ERROR.\n"
-            "  - outcome_summary vague or <3 sentences? → Add specific metrics.\n"
+            "  - main_findings empty for an empirical ML study? → Add StructuredFinding rows.\n"
+            "  - outcome_summary vague or <3 sentences? → Add specific metrics and limitations.\n"
             "  - More than 2 null metadata fields? → You are being LAZY. Extract more.\n"
             "  - More than 1 null data field (excl. null_fields_interpretation)? → Re-scan.\n"
         )
@@ -1470,6 +2280,7 @@ class GPTExtractor:
             "sample_details",
             "ml_techniques",
             "confounders_identified",
+            "main_findings",
             "outcome_summary",
             "research_design_type",
             "null_fields_interpretation",
@@ -1490,6 +2301,8 @@ class GPTExtractor:
         for key in list(parsed_data.keys()):
             if key not in ("metadata", "data"):
                 parsed_data.pop(key, None)
+
+        _normalize_findings_fields(data)
 
         for key in list(data.keys()):
             if key not in DATA_KEYS:
@@ -1541,6 +2354,11 @@ class GPTExtractor:
                         c["n_students"] = None
                     cleaned.append(c)
                 sd["countries"] = cleaned
+            sfc = sd.get("sample_filtering_criteria")
+            if not isinstance(sfc, str) or not sfc.strip() or sfc.strip() in INVALID_STR:
+                sd["sample_filtering_criteria"] = _DEFAULT_SAMPLE_FILTERING
+            else:
+                sd["sample_filtering_criteria"] = sfc.strip()
 
         sdw = data.get("survey_design")
         if isinstance(sdw, dict):
@@ -1602,9 +2420,23 @@ class GPTExtractor:
                 "completion_tokens",
             ):
                 meta.pop(legacy, None)
-            for field in ("doi", "venue", "title"):
+            for field in ("venue", "title"):
                 if meta.get(field) in INVALID_STR:
                     meta[field] = None
+            doi_val = meta.get("doi")
+            if doi_val in INVALID_STR or doi_val == "null":
+                meta["doi"] = None
+            elif isinstance(doi_val, str):
+                doi_val = doi_val.strip()
+                for prefix in (
+                    "https://doi.org/",
+                    "http://doi.org/",
+                    "https://dx.doi.org/",
+                    "http://dx.doi.org/",
+                ):
+                    if doi_val.lower().startswith(prefix):
+                        doi_val = doi_val[len(prefix):]
+                meta["doi"] = doi_val.rstrip(".,;:)>]}") or None
             if not isinstance(meta.get("authors"), list):
                 meta["authors"] = []
             pt = meta.get("publication_type")
@@ -1748,50 +2580,14 @@ class GPTExtractor:
         if md_raw not in md_allowed:
             data["missing_data_handling"] = GPTExtractor._coerce_md_literal(md_raw)
 
-        outcome = data.get("outcome_summary")
-        if isinstance(outcome, dict):
-            if isinstance(outcome.get("summary"), str):
-                data["outcome_summary"] = outcome["summary"]
-            else:
-                data["outcome_summary"] = " ".join(
-                    str(v) for v in outcome.values() if isinstance(v, str)
-                )
-
-        VALID_CATEGORIES = {
-            "socioeconomic", "demographic", "student_attitude",
-            "student_behavior", "teacher", "school", "ict",
-            "curriculum", "parent_home", "process_data",
-            "prior_achievement", "peer_effects", "system_level", "other",
-        }
         conf = data.get("confounders_identified")
         if not isinstance(conf, list):
             data["confounders_identified"] = []
         else:
-            normalised = []
-            for c in conf:
-                if isinstance(c, dict):
-                    name = c.get("variable_name", "")
-                    if isinstance(name, str) and name.strip() and name not in INVALID_STR:
-                        cat = c.get("category", "other")
-                        if cat not in VALID_CATEGORIES:
-                            cat = "other"
-                        code = c.get("variable_code")
-                        if isinstance(code, str) and code.strip() and code.lower() not in ("null", "none", "n/a", ""):
-                            code = code.strip()
-                        else:
-                            code = "N/A"
-                        normalised.append({
-                            "variable_code": code,
-                            "variable_name": name.strip(),
-                            "category": cat,
-                        })
-                elif isinstance(c, str) and c.strip() and c not in INVALID_STR:
-                    normalised.append({
-                        "variable_code": "N/A",
-                        "variable_name": c.strip(),
-                        "category": "other",
-                    })
-            data["confounders_identified"] = normalised
+            data["confounders_identified"] = _normalize_confounders_list(
+                conf,
+                invalid_names=INVALID_STR,
+            )
 
         return parsed_data
 
@@ -1832,7 +2628,7 @@ class GPTExtractor:
                         if extraction is not None:
                             GPTExtractor._use_structured = True
                             extraction.metadata.file_name = processed.file_name
-                            self._post_process_model(extraction)
+                            self._post_process_model(extraction, processed)
                             usage = response.usage
                             cost = self._calculate_cost(
                                 usage.prompt_tokens, usage.completion_tokens
@@ -1893,6 +2689,8 @@ class GPTExtractor:
                         f"attempt {attempt + 1}: {e}"
                     )
                     continue
+
+                self._post_process_model(extraction, processed)
 
                 usage = response.usage
                 cost = self._calculate_cost(

@@ -29,14 +29,28 @@ from src.schemas.models import (
     SampleDetails,
     MLTechniques,
     DataBlock,
+    StructuredFinding,
 )
 from src.extractors.gpt_extractor import ExtractionResult
 
 logger = logging.getLogger(__name__)
 
-# Written into data.outcome_summary only when the pipeline could not produce a model output.
+# Written into main_findings[].standardized_conclusion when extraction fails.
 # Lets --resume retry failed runs while skipping successful flat JSON files.
 EXTRACTION_FAILED_PREFIX = "__EXTRACTION_FAILED__: "
+
+
+def _failure_text_from_data_block(data_block: dict) -> str | None:
+    """Return pipeline failure message if present in main_findings or legacy field."""
+    for finding in data_block.get("main_findings") or []:
+        if isinstance(finding, dict):
+            text = finding.get("standardized_conclusion")
+            if isinstance(text, str) and text.startswith(EXTRACTION_FAILED_PREFIX):
+                return text
+    legacy = data_block.get("outcome_summary")
+    if isinstance(legacy, str) and legacy.startswith(EXTRACTION_FAILED_PREFIX):
+        return legacy
+    return None
 
 
 def json_looks_like_public_extraction(data: dict) -> bool:
@@ -47,8 +61,7 @@ def json_looks_like_public_extraction(data: dict) -> bool:
 def is_pipeline_failure_payload(data: dict) -> bool:
     if not json_looks_like_public_extraction(data):
         return False
-    summary = (data.get("data") or {}).get("outcome_summary")
-    return isinstance(summary, str) and summary.startswith(EXTRACTION_FAILED_PREFIX)
+    return _failure_text_from_data_block(data.get("data") or {}) is not None
 
 
 def should_skip_resume_for_json(data: dict) -> bool:
@@ -72,7 +85,7 @@ def extraction_payload_for_disk(extraction: ILSAArticleMetadata) -> dict:
 
 
 def failed_extraction_payload_for_disk(result: ExtractionResult) -> dict:
-    """Same top-level keys as a successful file; error text in data.outcome_summary."""
+    """Same top-level keys as a successful file; error in main_findings."""
     msg = result.error or "Extraction failed."
     if not msg.startswith(EXTRACTION_FAILED_PREFIX):
         msg = EXTRACTION_FAILED_PREFIX + msg
@@ -92,9 +105,13 @@ def failed_extraction_payload_for_disk(result: ExtractionResult) -> dict:
             survey_design=SurveyDesign(),
             plausible_values_handling="not_reported",
             missing_data_handling="not_reported",
-            sample_details=SampleDetails(countries=[]),
+            sample_details=SampleDetails(
+                countries=[],
+                sample_filtering_criteria="Not applicable (extraction failed).",
+            ),
             ml_techniques=MLTechniques(primary=None, all_techniques=[]),
             confounders_identified=[],
+            main_findings=[],
             outcome_summary=msg,
             research_design_type=None,
         ),
@@ -153,7 +170,7 @@ def build_master_parquet(json_dir: Path, parquet_path: Path) -> pd.DataFrame:
         if json_looks_like_public_extraction(data) and "success" not in data:
             file_name = (data.get("metadata") or {}).get("file_name") or json_file.stem
             if is_pipeline_failure_payload(data):
-                summary = (data.get("data") or {}).get("outcome_summary") or ""
+                summary = _failure_text_from_data_block(data.get("data") or {}) or ""
                 err = (
                     summary[len(EXTRACTION_FAILED_PREFIX):]
                     if summary.startswith(EXTRACTION_FAILED_PREFIX)
@@ -332,7 +349,7 @@ class StorageManager:
             feature_selection        TEXT,
             baseline_model           TEXT,
             xai_method               TEXT,
-            outcome_summary          TEXT,
+            main_findings            TEXT,
             FOREIGN KEY (file_name) REFERENCES metadata (file_name) ON DELETE CASCADE
         );
 
@@ -453,7 +470,7 @@ class StorageManager:
                 weight_variable_name, plausible_values_handling,
                 missing_data_handling, ml_technique_primary,
                 feature_selection, baseline_model, xai_method,
-                outcome_summary
+                main_findings
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (
                 file_name,
@@ -472,7 +489,10 @@ class StorageManager:
                 None,
                 None,
                 None,
-                d.outcome_summary,
+                json.dumps(
+                    [f.model_dump(mode="json") for f in d.main_findings],
+                    ensure_ascii=False,
+                ),
             ))
 
             # junction tables
