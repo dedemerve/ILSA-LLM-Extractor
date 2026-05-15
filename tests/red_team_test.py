@@ -1,5 +1,5 @@
 """
-Red Team Test: Feed adversarial text with 4 deliberate methodological traps
+Red Team Test: Feed adversarial text with 5 deliberate methodological traps
 to verify the extraction pipeline catches them.
 
 Traps:
@@ -7,6 +7,7 @@ Traps:
   2. 98% accuracy on 2% minority class without SMOTE/F1 (Rule 20)
   3. Process data lazily aggregated to total time + total clicks (Rule 19)
   4. SHAP values claimed to "prove" causality (Rule 17)
+  5. Raw log / TF-IDF micro-features listed as confounders (confounder filter)
 """
 
 import json
@@ -56,8 +57,11 @@ who participated in PISA 2022.
 2.2 Variables
 The dependent variable was a binary indicator of resilience (top 2% vs. rest).
 Plausible values were averaged to create a single performance score for each
-student. Independent variables included ESCS, gender, number of books at home,
-immigration status, and parental education.
+student. Independent variables included ESCS, gender, and process data metrics
+such as VOTAT scores. We also explicitly used raw log features including 1_0_0
+action triples, TF-IDF feature vectors, and reset button clicks as confounders.
+Number of books at home, immigration status, and parental education were also
+included as controls.
 
 2.3 Data Processing
 To process the log files, we aggregated the data into simple counts, using only
@@ -142,7 +146,46 @@ TRAP_KEYWORDS = {
         "feature importance", "not causal", "does not prove",
         "erroneously", "predictive",
     ],
+    "micro-feature confounders": [
+        "tf-idf", "tfidf", "word2vec", "1_0_0", "action triple",
+        "raw log", "micro-feature", "engineered feature",
+        "not a confounder", "ml input", "slider",
+    ],
 }
+
+MICRO_TRAP_FORBIDDEN = frozenset({
+    "1_0_0", "1_2_0", "0_0_0", "start", "reset", "tfidf", "word2vec",
+})
+MICRO_TRAP_REQUIRED = frozenset({"escs", "votat"})
+
+
+def evaluate_micro_confounder_trap(confounders: list) -> dict:
+    """Trap 5: _sanitize must drop micro log/ML features, keep conceptual vars."""
+    codes = {c.get("variable_code", "").lower() for c in confounders}
+    names = " ".join(c.get("variable_name", "").lower() for c in confounders)
+
+    leaked = [c for c in codes if c in MICRO_TRAP_FORBIDDEN or "tfidf" in c or "word2vec" in c]
+    has_escs = "escs" in codes
+    has_votat = "votat" in codes
+    has_gender = any("gender" in c.get("variable_name", "").lower() for c in confounders)
+
+    caught = (
+        not leaked
+        and "tf-idf" not in names
+        and "tfidf" not in names
+        and has_escs
+        and has_votat
+        and has_gender
+    )
+    return {
+        "caught": caught,
+        "keyword_hits": [
+            *(["leaked:" + x for x in leaked]),
+            *([f"kept:{c['variable_code']}" for c in confounders]),
+        ],
+        "hit_count": len(confounders),
+        "codes": sorted(codes),
+    }
 
 
 def evaluate_traps(json_output: dict) -> dict[str, dict]:
@@ -195,12 +238,15 @@ def main():
 
     data = output.get("data", {})
     for field_name in [
-        "outcome_summary",
+        "main_findings",
         "null_fields_interpretation",
     ]:
         val = data.get(field_name, "")
         print(f"\n--- {field_name} ---")
-        print(val if val else "(empty/null)")
+        if field_name == "main_findings" and isinstance(val, list):
+            print(json.dumps(val, indent=2, ensure_ascii=False) if val else "(empty)")
+        else:
+            print(val if val else "(empty/null)")
 
     sd = data.get("survey_design", {})
     print(f"\n--- student_weights_used ---")
@@ -222,11 +268,17 @@ def main():
     print(f"  primary: {ml.get('primary')}")
     print(f"  all: {ml.get('all_techniques')}")
 
+    conf = data.get("confounders_identified", [])
+    print(f"\n--- confounders_identified ({len(conf)}) ---")
+    for c in conf:
+        print(f"  [{c.get('category', '?'):18s}] {c.get('variable_code', '?'):16s} → {c.get('variable_name', '?')}")
+
     print("\n" + "=" * 70)
     print("TRAP EVALUATION")
     print("=" * 70)
 
     trap_results = evaluate_traps(output)
+    trap_results["micro-feature confounders"] = evaluate_micro_confounder_trap(conf)
     all_caught = True
     for trap_name, info in trap_results.items():
         status = "CAUGHT" if info["caught"] else "MISSED"
@@ -237,7 +289,7 @@ def main():
 
     print("\n" + "=" * 70)
     if all_caught:
-        print("VERDICT: ALL 4 TRAPS CAUGHT — Academic Reviewer mode is active!")
+        print("VERDICT: ALL 5 TRAPS CAUGHT — Academic Reviewer mode is active!")
     else:
         missed = [k for k, v in trap_results.items() if not v["caught"]]
         print(f"VERDICT: {len(missed)} TRAP(S) MISSED — {', '.join(missed)}")

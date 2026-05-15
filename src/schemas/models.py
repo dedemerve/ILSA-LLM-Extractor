@@ -1,5 +1,13 @@
+import re
 from typing import List, Optional, Literal
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+
+_NA_VARIABLE_CODES = frozenset({"n/a", "na", "null", "none", ""})
+
+
+def _slug_variable_code(name: str) -> str:
+    slug = re.sub(r"[^a-zA-Z0-9]+", "_", name.lower()).strip("_")
+    return slug[:48] if slug else "unspecified_variable"
 
 
 class MetadataBlock(BaseModel):
@@ -24,7 +32,14 @@ class MetadataBlock(BaseModel):
     )
     doi: Optional[str] = Field(
         default=None,
-        description="DOI without URL prefix (e.g. '10.1016/j.foo.2020.01.001')."
+        description=(
+            "DOI without URL prefix (e.g. '10.1016/j.foo.2020.01.001'). "
+            "MANDATORY when present in the PDF: scan first-page header/footer, "
+            "title page, copyright block, article-info box, footnotes, and "
+            "doi.org / dx.doi.org links. Use EXTRACTED_DOI_HINT from the user "
+            "message when provided. Do NOT leave null if any valid 10.xxxx/… "
+            "identifier appears in the document."
+        ),
     )
     venue: Optional[str] = Field(
         default=None,
@@ -107,17 +122,28 @@ class CountrySample(BaseModel):
 
 
 class SampleDetails(BaseModel):
-    """Detailed sample composition."""
+    """Detailed sample composition and filtering criteria."""
 
     model_config = ConfigDict(extra="forbid")
 
     total_students: Optional[int] = Field(
         default=None,
-        description="Total number of students in the analytic sample."
+        description="Total number of students in the final analytic sample.",
     )
     countries: List[CountrySample] = Field(
         default_factory=list,
-        description="Breakdown of students by country."
+        description="Breakdown of students by country.",
+    )
+    sample_filtering_criteria: str = Field(
+        description=(
+            "CRITICAL: How authors filtered or restricted the original ILSA dataset "
+            "to obtain the final analytic sample. Examples: 'Only students who took "
+            "the CBA digital module', 'Excluded cases with missing ESCS', "
+            "'Focused on 8th-grade students in rural public schools', "
+            "'Only students who completed the climate-control problem-solving task'. "
+            "If no specific filtering is reported, state: 'Used the full available "
+            "sample for the specified countries.'"
+        ),
     )
 
 
@@ -126,27 +152,33 @@ class Confounder(BaseModel):
 
     EXTRACTION RULES — enforced at the schema level:
     • ONE variable per object. NEVER combine multiple variables into one entry.
-    • Extract EVERY variable mentioned in the study — missing one is a failure.
-    • Do NOT invent ILSA codes — use 'N/A' when no official code is stated.
+    • Extract CONCEPTUAL control/predictor variables only — not ML feature columns.
+    • Do NOT list raw log actions, TF-IDF tokens, n-grams, or UI micro-clicks.
+    • variable_code must identify the variable — do NOT default to 'N/A' out of laziness.
+    • category must be one of exactly 13 literals (no 'other').
     """
 
     model_config = ConfigDict(extra="forbid")
 
     variable_code: str = Field(
         description=(
-            "The official ILSA alphanumeric code exactly as written in the paper "
-            "(e.g. 'ESCS', 'ST004Q01TA', 'BSBG11A', 'HOMEPOS', 'W_FSTUWT'). "
-            "If the paper does NOT explicitly mention a standard code for this "
-            "variable, set to 'N/A'. Do NOT invent or guess codes."
+            "Stable identifier for tabulation. NEVER output the literal string 'N/A'. "
+            "STRICT: Do NOT extract raw log sequences, n-grams, TF-IDF/Word2Vec tokens, "
+            "slider states, or action codes (e.g. '0_0_0', '1_2_-2', 'reset', 'start'). "
+            "If a variable is a micro-level ML input, OMIT it entirely — do not list it. "
+            "Use tier (1) Official ILSA code (ESCS, ST004Q01TA); "
+            "(2) high-level construct label (VOTAT, MATHEFF, gdp_per_capita); "
+            "(3) snake_case slug from a CONCEPTUAL variable_name. "
+            "Do NOT invent fake ILSA codes."
         ),
     )
     variable_name: str = Field(
         description=(
-            "A concise, standardised English label (max 8 words). Use consistent "
-            "naming across papers: 'Gender', 'Socioeconomic status (ESCS)', "
-            "'Home possessions', 'Math self-efficacy', 'School type', "
-            "'Parental education (mother)', 'ICT resources', etc. Remove "
-            "academic jargon and long-winded descriptions."
+            "A concise, standardised English label (max 8 words) for a CONCEPTUAL "
+            "variable (e.g. 'Gender', 'Total time on task', 'VOTAT score', 'ESCS'). "
+            "NOT an ML feature or UI action (e.g. 'Top slider +2', 'TF-IDF weight', "
+            "'Action triple', 'Word2vec embedding'). If only micro-features exist, "
+            "return fewer confounders rather than listing model inputs."
         ),
     )
     category: Literal[
@@ -163,11 +195,10 @@ class Confounder(BaseModel):
         "prior_achievement",
         "peer_effects",
         "system_level",
-        "other",
     ] = Field(
         description=(
-            "The domain category that BEST fits the variable. Favor specific "
-            "categories over 'other'. Mapping guide: "
+            "The domain category that BEST fits the variable. You MUST assign "
+            "exactly one of the 13 categories — there is no 'other'. Mapping guide: "
             "socioeconomic → ESCS, HOMEPOS, WEALTH, HISEI, parental education, "
             "books at home, cultural possessions, family resources; "
             "demographic → gender, age, immigration/migrant status, language at home, grade; "
@@ -185,8 +216,9 @@ class Confounder(BaseModel):
             "content coverage, assessment practices; "
             "parent_home → parental involvement/support (EMOSUPS), home environment, "
             "family structure, homework supervision; "
-            "process_data → response time, action counts, time-to-first-action, "
-            "VOTAT scores, action sequences, number of visits; "
+            "process_data → ONLY high-level aggregates (total/response time on task, "
+            "total action counts, VOTAT score, visits per item). NEVER raw clicks, "
+            "slider codes, n-grams, TF-IDF/Word2Vec features, or state transitions; "
             "prior_achievement → previous test scores, prior-year grades, "
             "achievement in other domains (e.g. reading score used as predictor "
             "for math), WLE/PV scores used as control variables; "
@@ -194,9 +226,59 @@ class Confounder(BaseModel):
             "class-average achievement, classroom composition; "
             "system_level → country-level GDP, education expenditure, tracking age, "
             "national policy variables, GINI coefficient, teacher-student ratio "
-            "at system level; "
-            "other → ONLY as a last resort when the variable absolutely does not "
-            "fit any of the above categories."
+            "at system level. If unclear, choose the closest category (e.g. aggregate "
+            "indices → socioeconomic; classroom climate → peer_effects). Do NOT "
+            "categorize micro ML features as process_data."
+        ),
+    )
+
+    @model_validator(mode="after")
+    def coerce_na_variable_code_to_slug(self) -> "Confounder":
+        """Schema-level guard: 'N/A' is never a valid final code when name exists."""
+        if self.variable_code.strip().lower() in _NA_VARIABLE_CODES:
+            self.variable_code = _slug_variable_code(self.variable_name)
+        return self
+
+
+class StructuredFinding(BaseModel):
+    """Dataset → Input → Target → Output pipeline for meta-analysis tabulation."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    dataset_used: str = Field(
+        description=(
+            "The ILSA/PIAAC assessment, cycle year, grade level, and domain for this "
+            "finding (e.g. 'TIMSS 2019 Grade 8 Science', 'PISA 2022 Creative Thinking', "
+            "'PIRLS 2016 Reading', 'PISA 2012 Problem Solving process data'). "
+            "Be specific — include program name, year, grade, and subject/domain."
+        ),
+    )
+    target_variable: str = Field(
+        description=(
+            "The dependent variable / outcome being predicted or analyzed "
+            "(e.g. 'Math achievement (PVs)', 'Resilience (top 2%)')."
+        ),
+    )
+    top_predictors: List[str] = Field(
+        description=(
+            "Top 3-5 most important independent variables driving the model. "
+            "Names MUST match variable_name entries in confounders_identified when "
+            "those variables appear there; otherwise use the exact label from the paper."
+        ),
+    )
+    performance_metrics: str = Field(
+        description=(
+            "Reported model metrics (e.g. 'Accuracy: 85%, AUC: 0.82, R²: 0.45'). "
+            "Write 'Not reported' if the paper gives no metrics for this target."
+        ),
+    )
+    standardized_conclusion: str = Field(
+        description=(
+            "1-2 sentences connecting the full pipeline. MUST follow: "
+            "'Using [dataset_used] data, the study leveraged [top_predictors] to predict "
+            "[target_variable], finding that [key finding/effect].' "
+            "Note methodological limitations (SHAP overstated causality, no weights) "
+            "inside the finding clause when relevant."
         ),
     )
 
@@ -265,21 +347,33 @@ class DataBlock(BaseModel):
     confounders_identified: List[Confounder] = Field(
         default_factory=list,
         description=(
-            "An EXHAUSTIVE list of ALL independent variables, predictors, features, "
-            "and control variables used in the study. Each variable MUST be a "
-            "separate Confounder object — NEVER combine multiple variables into one "
-            "entry. If the study uses 20 features, output 20 objects. Missing a "
-            "variable is a critical extraction failure. DO NOT leave empty if the "
-            "study uses input features — scan methodology, variables, measures, "
-            "features, and results sections exhaustively."
+            "Conceptual independent variables, predictors, and controls used in the "
+            "study — NOT ML feature-engineering columns (TF-IDF tokens, n-grams, "
+            "raw log action codes). Each conceptual variable is one Confounder object. "
+            "Omit micro-level process/log features entirely. DO NOT leave empty if the "
+            "study uses questionnaire or background controls — scan methodology and "
+            "variables sections. Process-data papers may legitimately return []."
+        ),
+    )
+    main_findings: List[StructuredFinding] = Field(
+        default_factory=list,
+        description=(
+            "Structured findings mapping inputs to targets. One object per distinct "
+            "dependent variable analyzed (e.g. separate rows for Math vs Science). "
+            "Each object links top_predictors (from confounders_identified when possible) "
+            "to target_variable with performance_metrics and standardized_conclusion. "
+            "Return [] only for reviews/theory papers with no predictive results."
         ),
     )
     outcome_summary: str = Field(
         description=(
-            "4-5 sentence summary (max ~120 words) of key findings and model "
-            "performance, grounded only in the article text. Focus on empirical "
-            "metrics, model comparisons, and policy-relevant conclusions."
-        )
+            "4-5 sentence narrative summary (max ~120 words) of key findings and model "
+            "performance, grounded only in the article text. Complements main_findings with "
+            "a readable prose overview: best model, key metrics, main predictors, limitations "
+            "(weights, causality overstatement, data leakage). Do NOT duplicate the entire "
+            "main_findings table — synthesize across targets. Do NOT put null-field "
+            "commentary here (use null_fields_interpretation)."
+        ),
     )
     research_design_type: Optional[Literal[
         "predictive", "causal_observational", "causal_experimental", "exploratory"

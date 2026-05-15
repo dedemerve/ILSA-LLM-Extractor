@@ -177,6 +177,103 @@ def estimate_token_count(text: str) -> int:
     return max(1, len(text) // 4)
 
 
+_DOI_URL_PATTERN = re.compile(
+    r"(?:https?://)?(?:dx\.)?doi\.org/(10\.\d{4,9}/[-._;()/:a-zA-Z0-9]+)",
+    re.IGNORECASE,
+)
+_DOI_LABEL_PATTERN = re.compile(
+    r"(?:\bDOI\s*[:#]?\s*|\bdoi\s*[:#]?\s*)(10\.\d{4,9}/[-._;()/:a-zA-Z0-9]+)",
+    re.IGNORECASE,
+)
+_DOI_BARE_PATTERN = re.compile(
+    r"\b(10\.\d{4,9}/[-._;()/:a-zA-Z0-9]+)",
+    re.IGNORECASE,
+)
+
+
+def _clean_doi_token(doi: str) -> str:
+    """Strip trailing punctuation and URL debris from a DOI candidate."""
+    doi = doi.strip()
+    for prefix in (
+        "https://doi.org/",
+        "http://doi.org/",
+        "https://dx.doi.org/",
+        "http://dx.doi.org/",
+    ):
+        if doi.lower().startswith(prefix):
+            doi = doi[len(prefix):]
+    return doi.rstrip(".,;:)>]}")
+
+
+def extract_dois_from_text(text: str) -> list[str]:
+    """
+    Find DOI candidates in text. Order: doi.org URLs, labeled DOI lines, bare 10.x/…
+    """
+    if not text:
+        return []
+
+    found: list[str] = []
+    seen: set[str] = set()
+
+    def _add(match: re.Match[str], group: int = 1) -> None:
+        raw = match.group(group)
+        doi = _clean_doi_token(raw)
+        key = doi.lower()
+        if doi.startswith("10.") and key not in seen and len(doi) >= 12:
+            seen.add(key)
+            found.append(doi)
+
+    for pattern in (_DOI_URL_PATTERN, _DOI_LABEL_PATTERN, _DOI_BARE_PATTERN):
+        for match in pattern.finditer(text):
+            _add(match)
+
+    return found
+
+
+def extract_doi_from_document(
+    raw_text: str,
+    *,
+    pdf_path: Optional[Path] = None,
+) -> tuple[Optional[str], list[str]]:
+    """
+    Aggressively scan first pages, last page, and full text for DOIs.
+
+    Returns (primary_doi, all_unique_candidates).
+    """
+    regions: list[str] = []
+
+    if pdf_path is not None:
+        try:
+            doc = fitz.open(pdf_path)
+            page_count = doc.page_count
+            for idx in range(min(3, page_count)):
+                regions.append(doc.load_page(idx).get_text("text"))
+            if page_count > 3:
+                regions.append(doc.load_page(page_count - 1).get_text("text"))
+            doc.close()
+        except Exception:
+            pass
+
+    if raw_text:
+        regions.append(raw_text[:25_000])
+        regions.append(raw_text[-10_000:])
+        if len(raw_text) <= 120_000:
+            regions.append(raw_text)
+
+    all_candidates: list[str] = []
+    seen: set[str] = set()
+    for region in regions:
+        for doi in extract_dois_from_text(region):
+            key = doi.lower()
+            if key not in seen:
+                seen.add(key)
+                all_candidates.append(doi)
+
+    if not all_candidates:
+        return None, []
+    return all_candidates[0], all_candidates
+
+
 def extract_title(doc: fitz.Document) -> Optional[str]:
     """
     Multi-layer title extraction with fallback chain.
@@ -241,14 +338,23 @@ def process_pdf(pdf_path: Path, source_database: str) -> ProcessedPDF:
     for name, (start, end) in sections_with_bounds.items():
         sections_text[name] = raw_text[start:end].strip()
 
-    # Extract title with multi-layer fallback
+    # Extract title and DOI with multi-layer fallback
     extracted_title = None
+    extracted_doi = None
+    doi_candidates: list[str] = []
     try:
         doc = fitz.open(pdf_path)
         extracted_title = extract_title(doc)
         doc.close()
     except Exception as e:
         errors.append(f"Failed to extract title: {e}")
+
+    try:
+        extracted_doi, doi_candidates = extract_doi_from_document(
+            raw_text, pdf_path=pdf_path
+        )
+    except Exception as e:
+        errors.append(f"Failed to extract DOI: {e}")
 
     return ProcessedPDF(
         file_path=pdf_path,
@@ -261,7 +367,11 @@ def process_pdf(pdf_path: Path, source_database: str) -> ProcessedPDF:
         extraction_text=extraction_text,
         estimated_tokens=estimate_token_count(extraction_text),
         parse_errors=errors,
-        metadata={"extracted_title": extracted_title},
+        metadata={
+            "extracted_title": extracted_title,
+            "extracted_doi": extracted_doi,
+            "doi_candidates": doi_candidates,
+        },
     )
 
 
