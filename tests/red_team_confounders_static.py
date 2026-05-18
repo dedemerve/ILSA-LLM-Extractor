@@ -26,6 +26,7 @@ from src.extractors.gpt_extractor import (
     _coerce_confounder_category,
     _expand_confounder_dict,
     _is_micro_process_confounder,
+    _is_survey_weight_confounder,
     _normalize_findings_fields,
     _normalize_confounder_code,
     _normalize_confounder_dict,
@@ -275,6 +276,7 @@ def test_sanitize_does_not_depend_on_pdf_filename():
 def test_is_micro_process_confounder_detects_zhou_style_noise():
     assert _is_micro_process_confounder("Start action frequency", "start")
     assert _is_micro_process_confounder("All sliders at zero (0_0_0)", "0_0_0")
+    assert _is_micro_process_confounder("0_0_0 behavior usage", "zero_state_behavior")
     assert _is_micro_process_confounder("TF-IDF start behavior weight", "tfidf_start")
     assert _is_micro_process_confounder(
         "Word2vec action embedding vector", "word2vec_behavior_vector"
@@ -283,10 +285,29 @@ def test_is_micro_process_confounder_detects_zhou_style_noise():
     assert not _is_micro_process_confounder("Sequence length", "sequence_length")
 
 
+def test_is_survey_weight_confounder_detects_wgt_codes():
+    assert _is_survey_weight_confounder("Science teacher weight", "SCIWGT")
+    assert _is_survey_weight_confounder("Student final weight", "W_FSTUWT")
+    assert _is_survey_weight_confounder("Total weight", "TOTWGT")
+    assert not _is_survey_weight_confounder("Socioeconomic status (ESCS)", "ESCS")
+    assert not _is_survey_weight_confounder("Gender", "ST004D01")
+
+
+def test_normalize_confounders_list_strips_survey_weights():
+    raw = [
+        {"variable_code": "SCIWGT", "variable_name": "Science teacher weight", "category": "system_level"},
+        {"variable_code": "ESCS", "variable_name": "Socioeconomic status", "category": "socioeconomic"},
+    ]
+    out = _normalize_confounders_list(raw)
+    codes = {c["variable_code"] for c in out}
+    assert codes == {"ESCS"}
+
+
 def test_normalize_confounders_list_strips_zhou_micro_features():
     raw = [
         {"variable_code": "start", "variable_name": "Start action frequency", "category": "process_data"},
         {"variable_code": "0_0_0", "variable_name": "All sliders at zero (0_0_0)", "category": "process_data"},
+        {"variable_code": "zero_state_behavior", "variable_name": "0_0_0 behavior usage", "category": "process_data"},
         {"variable_code": "tfidf_start", "variable_name": "TF-IDF start behavior weight", "category": "process_data"},
         {"variable_code": "VOTAT", "variable_name": "VOTAT strategy behavior set", "category": "process_data"},
         {"variable_code": "sequence_length", "variable_name": "Sequence length", "category": "process_data"},
@@ -294,6 +315,45 @@ def test_normalize_confounders_list_strips_zhou_micro_features():
     out = _normalize_confounders_list(raw)
     codes = {c["variable_code"] for c in out}
     assert codes == {"VOTAT", "sequence_length"}
+
+
+def test_sanitize_backfills_title_from_file_name():
+    payload = {
+        "metadata": {
+            "file_name": (
+                "10. Aydogan & Tat. (2025). Investigating the Performance of "
+                "Artificial Neural Networks in Predicting Affective Responses .pdf"
+            ),
+            "title": None,
+            "authors": ["Aydogan, I."],
+            "year": 2025,
+            "publication_type": "journal",
+            "source_category": "peer_reviewed_research",
+        },
+        "data": {
+            "survey_design": {
+                "student_weights_used": False,
+                "weight_fields_interpretation": "No weights reported.",
+            },
+            "plausible_values_handling": "not_applicable",
+            "missing_data_handling": "listwise_deletion",
+            "handling_not_reported_explanation": "Affective DV; PVs not applicable.",
+            "sample_details": {
+                "total_students": 100,
+                "countries": [],
+                "sample_filtering_criteria": "Lebanon PISA 2018 subsample.",
+            },
+            "ml_techniques": {"primary": "Neural Network", "all_techniques": ["Neural Network"]},
+            "confounders_identified": [],
+            "main_findings": [],
+            "research_design_type": "predictive",
+        },
+    }
+    meta = GPTExtractor._sanitize(payload)["metadata"]
+    assert meta["title"] == (
+        "Investigating the Performance of Artificial Neural Networks in "
+        "Predicting Affective Responses"
+    )
 
 
 def test_sanitize_fills_missing_sample_filtering_criteria():
