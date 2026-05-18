@@ -8,6 +8,7 @@ from src.schemas.models import (
     MLTechniques,
     DataBlock,
     ILSAArticleMetadata,
+    validate_public_article_json,
 )
 
 __all__ = [
@@ -20,4 +21,5 @@ __all__ = [
     "MLTechniques",
     "DataBlock",
     "ILSAArticleMetadata",
+    "validate_public_article_json",
 ]

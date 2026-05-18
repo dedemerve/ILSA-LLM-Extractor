@@ -24,7 +24,10 @@ from src.extractors.gpt_extractor import (
     CONFOUNDER_CATEGORIES,
     GPTExtractor,
     _coerce_confounder_category,
+    _condense_variable_name,
     _expand_confounder_dict,
+    _fix_standardized_conclusion_grammar,
+    _is_invented_confounder_code,
     _is_micro_process_confounder,
     _is_survey_weight_confounder,
     _normalize_findings_fields,
@@ -123,6 +126,55 @@ def test_pydantic_rejects_other_category():
 )
 def test_normalize_confounder_code_fixes_lazy_na(lazy_code, name, expected):
     assert _normalize_confounder_code(lazy_code, name) == expected
+
+
+def test_is_invented_confounder_code_detects_pseudo_ilsa():
+    assert _is_invented_confounder_code("meta_cognition_understanding")
+    assert _is_invented_confounder_code("remembering")
+    assert _is_invented_confounder_code(
+        "Students' expectations of completing ISCED level 5A or 6"
+    )
+    assert not _is_invented_confounder_code("ESCS")
+    assert not _is_invented_confounder_code("ST004Q01TA")
+    assert not _is_invented_confounder_code("UNDREM")
+
+
+def test_normalize_confounder_code_maps_invented_metacog_to_undrem():
+    assert _normalize_confounder_code("meta_cognition_understanding", "Meta-cognition: understanding") == "UNDREM"
+    assert _normalize_confounder_code("remembering", "remembering") == "UNDREM"
+
+
+def test_condense_variable_name_strips_sentence_starters():
+    long = (
+        "Teacher-related variables such as the length of text that students "
+        "had to read for the test language lessons"
+    )
+    condensed = _condense_variable_name(long)
+    assert condensed.startswith("length of text")
+    assert len(condensed.split()) <= 8
+    assert "teacher-related" not in condensed.lower()
+
+
+def test_normalize_confounders_list_merges_duplicate_undrem():
+    raw = [
+        {"variable_code": "meta_cognition_understanding", "variable_name": "Meta-cognition: understanding", "category": "student_behavior"},
+        {"variable_code": "remembering", "variable_name": "remembering", "category": "student_behavior"},
+        {"variable_code": "ESCS", "variable_name": "Socioeconomic status (ESCS)", "category": "socioeconomic"},
+    ]
+    out = _normalize_confounders_list(raw)
+    undrem = [c for c in out if c["variable_code"] == "UNDREM"]
+    assert len(undrem) == 1
+    assert undrem[0]["variable_name"] == "Metacognition (understanding, remembering)"
+
+
+def test_fix_standardized_conclusion_grammar_process_the_study():
+    bad = (
+        "Using PIAAC 2012 PSTRE (US sample) item U01a process the study leveraged "
+        "action-pattern similarity, finding that times increased differentiation."
+    )
+    fixed = _fix_standardized_conclusion_grammar(bad)
+    assert "process data, the study" in fixed
+    assert "process the study" not in fixed.lower()
 
 
 def test_coerce_other_maps_to_valid_category():
@@ -508,6 +560,8 @@ def test_system_prompt_forbids_other_and_lazy_na():
     assert 'no "other"' in SYSTEM_PROMPT or "NO 'other'" in SYSTEM_PROMPT
     assert "13 categor" in SYSTEM_PROMPT or "13 literals" in SYSTEM_PROMPT
     assert "N/A" in SYSTEM_PROMPT  # mentioned as forbidden/lazy, not encouraged
+    assert "STRICT CODE" in SYSTEM_PROMPT
+    assert "STRICT NAMING" in SYSTEM_PROMPT
     assert "Tier 1" in SYSTEM_PROMPT or "Tier 2" in SYSTEM_PROMPT
     assert "CONCEPTUAL ONLY" in SYSTEM_PROMPT or "NOT ML FEATURE" in SYSTEM_PROMPT
     assert "tfidf_start" not in SYSTEM_PROMPT
@@ -534,6 +588,9 @@ def test_post_process_model_normalizes_confounders_in_place():
     for c in conf:
         assert c.variable_code.upper() not in ("N/A", "NA", "")
         assert c.category in CONFOUNDER_CATEGORIES
+    # Lazy N/A row must be repaired or dropped (micro-feature / invalid code).
+    codes = [c.variable_code for c in conf]
+    assert "N/A" not in codes and "na" not in [x.lower() for x in codes]
 
 
 if __name__ == "__main__":

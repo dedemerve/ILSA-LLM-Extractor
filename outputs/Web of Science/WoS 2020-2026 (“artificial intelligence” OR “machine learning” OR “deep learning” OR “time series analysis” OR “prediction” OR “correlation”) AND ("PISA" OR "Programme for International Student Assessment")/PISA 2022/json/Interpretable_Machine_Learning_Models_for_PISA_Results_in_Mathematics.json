@@ -1,0 +1,138 @@
+{
+  "metadata": {
+    "file_name": "Interpretable_Machine_Learning_Models_for_PISA_Results_in_Mathematics.pdf",
+    "title": "Interpretable Machine Learning Models for PISA Results in Mathematics",
+    "authors": [
+      "Ismael Gómez-Talal",
+      "Luis Bote-Curiel",
+      "José Luis Rojo-Álvarez"
+    ],
+    "year": 2025,
+    "doi": "10.1109/ACCESS.2025.3538585",
+    "venue": "IEEE Access",
+    "publication_type": "journal",
+    "open_access": true,
+    "source_category": "peer_reviewed_research"
+  },
+  "data": {
+    "survey_design": {
+      "student_weights_used": false,
+      "replicate_weights_used": null,
+      "weight_variable_name": null,
+      "weight_fields_interpretation": "The study uses the OECD PISA 2022 microdata for Spain and applies a preprocessing step that removes rows with nine or more missing values, yielding 29,282 students from an initial 30,800. The manuscript does not report the use of PISA complex survey weights (e.g., student sampling weights) or replicate-weight procedures, and it does not name any weight variables. Because the modeling pipeline is based on standard ML classifiers (e.g., SVM, Random Forest, XGBoost, LightGBM) and a stacking ensemble, the authors do not describe any weight-aware estimation; thus the analysis appears to be unweighted. The main data preparation also includes one-hot encoding for categorical variables and mean imputation of remaining missing values at the row level after the nine-missing-value exclusion."
+    },
+    "plausible_values_handling": "not_applicable",
+    "missing_data_handling": "mean_imputation",
+    "handling_not_reported_explanation": "Plausible values handling is not applicable because the dependent variable is constructed by categorizing students into Low/Medium/High mathematics proficiency levels (and then forming binary classification tasks between these categories), rather than using PV-based continuous mathematics achievement scores. The paper does not describe PV generation/usage or PV-based scaling; instead it reports a proficiency-level classification system aligned with PISA reporting categories. Missing data handling is addressed via row exclusion (>=9 missing values) followed by mean replacement for remaining missing entries, so the missing-data strategy is documented rather than omitted.",
+    "sample_details": {
+      "total_students": 29282,
+      "countries": [
+        {
+          "country_code": "ESP",
+          "n_students": 29282
+        }
+      ],
+      "sample_filtering_criteria": "Used OECD PISA 2022 dataset for Spain. Starting from 30,800 students, the authors excluded rows with nine or more missing values (columns with no values) based on a histogram threshold, reducing the dataset to 29,282 students. Remaining missing values (at most nine per row) were replaced by the mean value of the entire dataset. Categorical variables were converted using one-hot encoding, while the proficiency-level labels used for Low/Medium/High were kept in their original categorical form for the classification tasks."
+    },
+    "ml_techniques": {
+      "primary": "Logistic Regression",
+      "all_techniques": [
+        "Logistic Regression",
+        "SVM",
+        "Decision Tree",
+        "Random Forest",
+        "Gradient Boosting",
+        "XGBoost",
+        "Neural Network",
+        "LightGBM",
+        "Stacking"
+      ]
+    },
+    "confounders_identified": [
+      {
+        "variable_code": "REPEAT",
+        "variable_name": "Grade repetition",
+        "category": "demographic"
+      },
+      {
+        "variable_code": "ST253Q01JA0",
+        "variable_name": "Digital devices with screens",
+        "category": "ict"
+      },
+      {
+        "variable_code": "ST255Q01JA",
+        "variable_name": "Number of books at home",
+        "category": "parent_home"
+      },
+      {
+        "variable_code": "ST297Q09TA",
+        "variable_name": "Extra mathematics classes",
+        "category": "curriculum"
+      },
+      {
+        "variable_code": "ST004D01T",
+        "variable_name": "Gender",
+        "category": "demographic"
+      },
+      {
+        "variable_code": "ST294Q02JA0",
+        "variable_name": "Study/homework before class",
+        "category": "student_behavior"
+      },
+      {
+        "variable_code": "school_type",
+        "variable_name": "School type (public/private)",
+        "category": "school"
+      },
+      {
+        "variable_code": "autonomous_community",
+        "variable_name": "Autonomous community (region)",
+        "category": "system_level"
+      }
+    ],
+    "main_findings": [
+      {
+        "dataset_used": "PISA 2022 Mathematics (Spain) — binary Low vs High proficiency",
+        "target_variable": "Mathematics proficiency (Low vs High)",
+        "top_predictors": [
+          "Grade repetition",
+          "Digital devices with screens",
+          "Extra mathematics classes",
+          "Number of books at home",
+          "Study/homework before class"
+        ],
+        "performance_metrics": "Stacking meta-model (LR-based): AUC = 0.9766; reported as outperforming individual models across Precision, Recall, and AUC. (Other metrics: Accuracy/Recall/Precision/Specificity/F1 also reported in tables, but exact values for this specific scenario are not fully enumerated in the provided text.)",
+        "standardized_conclusion": "Using PISA 2022 Mathematics data for Spain, the study leveraged grade repetition, digital devices with screens, extra mathematics classes, number of books at home, and study/homework before class to predict mathematics proficiency (Low vs High), finding that the LR-based stacking meta-model achieved the highest discrimination with AUC = 0.9766 and superior Precision/Recall/AUC compared with individual classifiers. This indicates that combining multiple ML models and focusing on actionable student- and home-resource factors may improve identification of students at risk of low mathematics proficiency for targeted interventions, though the SHAP-based interpretation remains predictive rather than causal."
+      },
+      {
+        "dataset_used": "PISA 2022 Mathematics (Spain) — binary Medium vs High proficiency",
+        "target_variable": "Mathematics proficiency (Medium vs High)",
+        "top_predictors": [
+          "Digital devices with screens",
+          "Gender",
+          "Study/homework before class",
+          "Extra mathematics classes",
+          "Number of books at home"
+        ],
+        "performance_metrics": "Meta-model: highest AUC reported as 0.9717 (SVM with RBF kernel is described as best among individual models with AUC = 0.9717 in the provided text). The paper also reports that the meta-model outperforms individual models across metrics, but exact AUC/ACC/PR/RC values for the meta-model in this scenario are not fully enumerated in the provided excerpt.",
+        "standardized_conclusion": "Using PISA 2022 Mathematics data for Spain, the study leveraged digital devices with screens, gender, study/homework before class, extra mathematics classes, and number of books at home to predict mathematics proficiency (Medium vs High), finding that the best-performing discrimination was achieved by an SVM with RBF kernel (C = 10) with AUC = 0.9717 and that the stacking meta-model generally improved performance over single models. This indicates that high-performing mathematics students can be distinguished using a small set of interpretable home-resource and study-practice factors, supporting data-driven targeting of enrichment and support programs, while the results should be treated as predictive associations rather than causal effects."
+      },
+      {
+        "dataset_used": "PISA 2022 Mathematics (Spain) — binary Low vs Medium proficiency",
+        "target_variable": "Mathematics proficiency (Low vs Medium)",
+        "top_predictors": [
+          "Grade repetition",
+          "Digital devices with screens",
+          "Extra mathematics classes",
+          "Number of books at home",
+          "Gender"
+        ],
+        "performance_metrics": "Meta-model: reported as achieving the highest AUC of 0.9775 for the Low vs Medium task (meta-model marked with asterisk). The paper also reports that the meta-model improves ACC and generalization by combining strengths of individual optimized models.",
+        "standardized_conclusion": "Using PISA 2022 Mathematics data for Spain, the study leveraged grade repetition, digital devices with screens, extra mathematics classes, number of books at home, and gender to predict mathematics proficiency (Low vs Medium), finding that the LR-based stacking meta-model achieved the highest AUC of 0.9775 and improved classification performance relative to individual tuned models. This indicates that early risk signals such as grade repetition and differences in home learning resources can be used in predictive analytics to flag students for timely mathematics support, though the study’s unweighted ML pipeline and SHAP-based interpretation do not establish causality."
+      }
+    ],
+    "outcome_summary": "The study analyzes OECD PISA 2022 mathematics data for Spain (30,800 initial students; 29,282 after excluding rows with nine or more missing values and mean-imputing remaining missing entries). Students were categorized into Low/Medium/High mathematics proficiency levels and then recast into three binary classification tasks (Low vs High, Medium vs High, Low vs Medium). Eight ML classifiers (Logistic Regression, SVM, Decision Tree, Random Forest, Gradient Boosting, XGBoost, MLP, LightGBM) were tuned via grid search within stratified 5-fold cross-validation with random undersampling to address class imbalance, and their predictions were combined using an LR-based stacking meta-model. The meta-model achieved strong discrimination, including AUC = 0.9766 for Low vs High and AUC = 0.9775 for Low vs Medium, with SHAP used to interpret feature contributions (e.g., grade repetition, digital device access, extra mathematics classes). Limitations include the absence of reported PISA PV usage/weighting and the fact that SHAP explains predictive importance rather than causal effects.",
+    "research_design_type": "predictive",
+    "null_fields_interpretation": null
+  }
+}

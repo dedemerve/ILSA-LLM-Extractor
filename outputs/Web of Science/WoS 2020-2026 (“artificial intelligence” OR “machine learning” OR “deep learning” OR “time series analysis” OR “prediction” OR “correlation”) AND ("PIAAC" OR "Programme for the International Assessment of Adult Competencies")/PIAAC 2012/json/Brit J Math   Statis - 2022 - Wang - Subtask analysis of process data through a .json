@@ -1,0 +1,93 @@
+{
+  "metadata": {
+    "file_name": "Brit J Math   Statis - 2022 - Wang - Subtask analysis of process data through a predictive model.pdf",
+    "title": "Subtask analysis of process data through a predictive model",
+    "authors": [
+      "Zhi Wang",
+      "Xueying Tang",
+      "Jingchen Liu",
+      "Zhiliang Ying"
+    ],
+    "year": 2023,
+    "doi": "10.1111/bmsp.12290",
+    "venue": "British Journal of Mathematical and Statistical Psychology",
+    "publication_type": "journal",
+    "open_access": null,
+    "source_category": "peer_reviewed_research"
+  },
+  "data": {
+    "survey_design": {
+      "student_weights_used": false,
+      "replicate_weights_used": null,
+      "weight_variable_name": null,
+      "weight_fields_interpretation": "The study uses PIAAC 2012 PSTRE process-log data (14 items) and applies a computational segmentation pipeline (RNN-based action prediction + entropy-based segmentation + k-means clustering) to derive subtask sequences. The manuscript does not report using PIAAC sampling weights or replicate weights in the process-data modeling steps, and the described ML components (GRU, multinomial logistic model, k-means, and generalized linear models for information decomposition) do not natively incorporate complex survey weights. The analytic sample is restricted by process-log cleaning (merging consecutive and removing redundant actions) and by excluding very short processes (<10 actions), and it also simplifies outcomes to dichotomous correctness for prediction. Because no weight variable (e.g., TOTWGT or replicate weights) is mentioned, the results should be interpreted as descriptive/exploratory predictive performance on the available respondents rather than population-representative estimates."
+    },
+    "plausible_values_handling": "not_applicable",
+    "missing_data_handling": "not_reported",
+    "handling_not_reported_explanation": "The paper does not describe a missing-data strategy for the process-log sequences or for the target variables used in the information-decomposition experiment (binary correctness, literacy score, numeracy score, age). This is a reporting gap because PIAAC datasets typically include nonresponse and item noncompletion, and the study’s preprocessing (e.g., excluding processes with fewer than 10 actions and merging/removing redundant actions) suggests that some cases may be dropped beyond the stated criteria. Without explicit rules (e.g., complete-case vs. imputation), it is unclear how missingness could affect the reported AUC and OSR2 performance.",
+    "sample_details": {
+      "total_students": 40230,
+      "countries": [],
+      "sample_filtering_criteria": "Case study uses PIAAC 2012 PSTRE log files for 14 problem-solving items. The dataset includes 40,230 respondents from 17 countries; each respondent answered all or a subset of the 14 items. For preprocessing, the authors merge consecutive actions and remove redundant actions, and exclude response processes with fewer than 10 actions. For some items with polytomous outcomes, they simplify outcomes to dichotomous correctness (fully correct=1, otherwise=0). The segmentation threshold λ is set to 0.3 for all 14 items; the action prediction model uses embedding dimension K=20 and is trained for 50 epochs."
+    },
+    "ml_techniques": {
+      "primary": "GRU",
+      "all_techniques": [
+        "GRU",
+        "Multinomial Logistic Model",
+        "k-NN"
+      ]
+    },
+    "confounders_identified": [
+      {
+        "variable_code": "age",
+        "variable_name": "Age",
+        "category": "demographic"
+      },
+      {
+        "variable_code": "response_time",
+        "variable_name": "Response time",
+        "category": "process_data"
+      },
+      {
+        "variable_code": "final_outcome_correctness",
+        "variable_name": "Final outcome correctness",
+        "category": "process_data"
+      },
+      {
+        "variable_code": "strategy_type",
+        "variable_name": "Problem-solving strategy",
+        "category": "process_data"
+      }
+    ],
+    "main_findings": [
+      {
+        "dataset_used": "PIAAC 2012 PSTRE (14 items) — process-log case study",
+        "target_variable": "Subtask identification accuracy (Precision/Recall/Precision+/Recall+/Overlap)",
+        "top_predictors": [
+          "Problem-solving strategy",
+          "Response time",
+          "Final outcome correctness",
+          "Age"
+        ],
+        "performance_metrics": "SIP vs HMM/eHMM: Precision and Precision+ are relatively low when λ is small; Recall and Recall+ decrease when λ>0.8. Overall performance is robust for λ away from 0 and 1. In the simulation setting (N=5000, M=26, average length≈25), SIP substantially outperforms HMM and eHMM; for HMM, Precision, Precision+, Recall+, and Overlap are all below 0.6; for eHMM, Overlap is relatively high but Precision and Recall are low.",
+        "standardized_conclusion": "Using PIAAC 2012 PSTRE process-log the study leveraged GRU-based next-action predictability (entropy) to segment response processes into subtasks and then clustered subprocesses into subtasks, finding that the proposed SIP substantially improves subtask-transition estimation compared with HMM and eHMM. This indicates that entropy-driven segmentation with a parsimonious predictive model can yield more accurate and interpretable subtask boundaries for exploratory analysis of problem-solving strategies, supporting scalable strategy visualization for assessment design and intervention targeting."
+      },
+      {
+        "dataset_used": "PIAAC 2012 PSTRE item U19a (Club Membership – Member ID)",
+        "target_variable": "Information decomposition: prediction of literacy, numeracy, age, and correctness from subtask sequences vs baseline",
+        "top_predictors": [
+          "Problem-solving strategy",
+          "Final outcome correctness",
+          "Response time",
+          "Age"
+        ],
+        "performance_metrics": "Correctness in U19a: overall correct rate 84.8%. Strategy comparison: SEARCH-only group (n=3865) has 91.6% correct; SORT-only group (n=9812) has 83.1% correct. Strategy efficiency: SEARCH group tends to have less time (log response time histograms and density plots). Information decomposition: subtask-sequence features yield significantly higher OSR2 than baseline for literacy, numeracy, and age; detailed subprocess features within subtasks can further improve prediction, with SORT most informative for literacy/numeracy and WRITE_EMAIL producing the highest OSR2 for age. (Exact OSR2/AUC values are not numerically reported in the provided text.)",
+        "standardized_conclusion": "Using PIAAC 2012 PSTRE item U19a the study leveraged subtask sequences (and optionally within-subtask subprocess features) to predict final correctness, literacy, numeracy, and age, finding that subtask-sequence information improves out-of-sample prediction over a baseline using only the binary final outcome. This indicates that representing complex problem-solving as interpretable subtasks can support richer diagnostic analytics for learners and can inform real-time or targeted intervention design, though the study does not report survey-weighted inference and provides limited missing-data transparency."
+      }
+    ],
+    "outcome_summary": "This paper proposes a computationally efficient exploratory method for analyzing PIAAC 2012 PSTRE process-log data by segmenting long action sequences into shorter “subtasks.” The pipeline first trains a GRU-based action prediction model (with a multinomial logistic layer) to estimate next-action uncertainty, then computes Shannon entropy over time and uses an entropy-depth criterion (λ) to identify U-shaped entropy segments as subprocess boundaries. Subprocesses are labeled as subtasks via k-means clustering on action-frequency profiles, producing interpretable subtask sequences. In simulations (N=5000, M=26), the proposed SIP substantially outperforms HMM and eHMM on transition estimation metrics (Precision/Recall/Precision+/Recall+/Overlap), and in the PIAAC case study it identifies meaningful subtasks for 9 of 14 items. For item U19a, SEARCH strategies show higher correctness (91.6%) than SORT-only strategies (83.1%), and subtask-sequence features improve out-of-sample prediction of literacy, numeracy, and age versus a baseline. Limitations include lack of reported survey-weight usage and missing-data handling, and the method is designed for exploratory interpretation rather than causal inference.",
+    "research_design_type": "exploratory",
+    "null_fields_interpretation": null
+  }
+}

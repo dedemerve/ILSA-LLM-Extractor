@@ -102,7 +102,12 @@ def failed_extraction_payload_for_disk(result: ExtractionResult) -> dict:
             source_category=None,
         ),
         data=DataBlock(
-            survey_design=SurveyDesign(),
+            survey_design=SurveyDesign(
+                weight_fields_interpretation=(
+                    "Extraction failed before survey design could be inferred. "
+                    "No weighting details are available for this record."
+                ),
+            ),
             plausible_values_handling="not_reported",
             missing_data_handling="not_reported",
             sample_details=SampleDetails(
@@ -113,7 +118,7 @@ def failed_extraction_payload_for_disk(result: ExtractionResult) -> dict:
             confounders_identified=[],
             main_findings=[],
             outcome_summary=msg,
-            research_design_type=None,
+            research_design_type="exploratory",
         ),
     )
     return extraction_payload_for_disk(model)

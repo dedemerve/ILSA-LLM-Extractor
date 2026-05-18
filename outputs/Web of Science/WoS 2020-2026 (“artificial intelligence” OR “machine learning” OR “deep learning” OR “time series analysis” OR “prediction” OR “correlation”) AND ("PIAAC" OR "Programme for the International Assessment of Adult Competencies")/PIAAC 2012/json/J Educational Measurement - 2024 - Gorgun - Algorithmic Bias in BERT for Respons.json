@@ -1,0 +1,111 @@
+{
+  "metadata": {
+    "file_name": "J Educational Measurement - 2024 - Gorgun - Algorithmic Bias in BERT for Response Accuracy Prediction  A Case Study for.pdf",
+    "title": "Algorithmic Bias in BERT for Response Accuracy Prediction: A Case Study for Investigating Population Validity",
+    "authors": [],
+    "year": 2024,
+    "doi": "10.1111/jedm.12420",
+    "venue": "Journal of Educational Measurement",
+    "publication_type": "journal",
+    "open_access": null,
+    "source_category": "peer_reviewed_research"
+  },
+  "data": {
+    "survey_design": {
+      "student_weights_used": false,
+      "replicate_weights_used": null,
+      "weight_variable_name": null,
+      "weight_fields_interpretation": "The study uses PIAAC 2012 PSTRE log files for three countries (Finland, Slovakia, United States) and constructs item-level binary response-accuracy targets from dichotomously scored PSTRE items (U03A, U07X, U16X). The manuscript does not report applying PIAAC sampling weights or any complex survey design adjustments (e.g., no W_FSTUWT/TOTWGT-style variables and no replicate-weight procedures). Because the models are fine-tuned BERT classifiers trained and evaluated on a hold-out split, the analysis appears to treat the log-derived examinee records as an unweighted dataset. Analysts using PIAAC microdata should consider whether population-representative inference is intended; if so, they would need to apply the appropriate PIAAC student/sampling weights and replicate methods, but this paper does not document such weighting."
+    },
+    "plausible_values_handling": "not_applicable",
+    "missing_data_handling": "listwise_deletion",
+    "handling_not_reported_explanation": "plausible_values_handling is 'not_applicable' — the study likely does not analyze cognitive achievement PVs (e.g., it may focus on affective/attitudinal outcomes, curriculum data, or non-ILSA micro-data).",
+    "sample_details": {
+      "total_students": 0,
+      "countries": [
+        {
+          "country_code": "FIN",
+          "n_students": 1482
+        },
+        {
+          "country_code": "SVK",
+          "n_students": 1096
+        },
+        {
+          "country_code": "USA",
+          "n_students": 1337
+        }
+      ],
+      "sample_filtering_criteria": "Used PIAAC 2012 PSTRE log files (LogDataAnalyzer) for three dichotomously scored items: U03A (Booklet 1), U07X (Booklet 2), and U16X (Booklet 2). Only examinees with available log data for the selected countries were included; log data were not publicly available for all participating countries. For each item, response accuracy was merged with log data; outcome recoding treated dataset-coded missing as 0 and not-reached as NA (incorrect=0, correct=1). The analysis removed the three cases with missing outcome variables for the selected items (listwise deletion for those cases). Action sequences were tokenized with BERT base cased using max token length 512; sequences longer than 512 were truncated and shorter sequences padded with [PAD]."
+    },
+    "ml_techniques": {
+      "primary": "Neural Network",
+      "all_techniques": [
+        "Neural Network"
+      ]
+    },
+    "confounders_identified": [
+      {
+        "variable_code": "country_id",
+        "variable_name": "Country (Finland/Slovakia/USA)",
+        "category": "system_level"
+      },
+      {
+        "variable_code": "pstre_item",
+        "variable_name": "PSTRE item (U03A/U07X/U16X)",
+        "category": "curriculum"
+      },
+      {
+        "variable_code": "seq_length",
+        "variable_name": "Action sequence length",
+        "category": "process_data"
+      },
+      {
+        "variable_code": "proportion_correct",
+        "variable_name": "Item difficulty (proportion correct)",
+        "category": "curriculum"
+      }
+    ],
+    "main_findings": [
+      {
+        "dataset_used": "PIAAC 2012 PSTRE (U03A—CD Tally; Booklet 1)",
+        "target_variable": "Response accuracy (binary) for U03A",
+        "top_predictors": [
+          "Country (Finland/Slovakia/USA)",
+          "Action sequence length",
+          "Item difficulty (proportion correct)",
+          "PSTRE item (U03A/U07X/U16X)"
+        ],
+        "performance_metrics": "BERT fine-tuned classifier (48 models total across training/test splits). Table 2 (test=Finland): best accuracy 0.86 (train=Finland). Table 2 (test=Slovakia): best accuracy 0.86 (train=Slovakia). Table 2 (test=United States): best accuracy 0.83 (train=Overall); train=Slovakia had low precision 0.64 with higher recall 0.93. ABROCA fairness: differential accuracy when training on Finland vs predicting Slovakia (bias present).",
+        "standardized_conclusion": "Using PIAAC 2012 PSTRE (U03A—CD Tally; Booklet 1) the study leveraged country group membership and action-sequence characteristics to predict response accuracy, finding that overall training data produced the most stable performance across test groups (e.g., United States test accuracy up to 0.83) while Finland-only training led to differential accuracy for Slovakia (population-level bias detected via ABROCA). This indicates that fine-tuned BERT response-accuracy models may require inclusive, multi-country training data to reduce population-validity risks when deployed across subgroups, even when overall accuracy appears high."
+      },
+      {
+        "dataset_used": "PIAAC 2012 PSTRE (U07X—Book Order; Booklet 2)",
+        "target_variable": "Response accuracy (binary) for U07X",
+        "top_predictors": [
+          "Country (Finland/Slovakia/USA)",
+          "Action sequence length",
+          "Item difficulty (proportion correct)",
+          "PSTRE item (U03A/U07X/U16X)"
+        ],
+        "performance_metrics": "BERT fine-tuned classifier (48 models total across training/test splits). Table 3: test=Finland best accuracy 0.84 (train=Overall) with precision 0.83 and recall 0.58 (overall row shows precision/recall tradeoff across splits). test=Slovakia: worst performance when train=Finland (precision 0.86, recall 0.26, F1 0.42, accuracy 0.64). test=United States: best accuracy 0.83 (train=Overall) with precision 0.79 and recall 0.82. ABROCA fairness: Finland-only training is biased against predicting Slovakia (population-level bias), and additional biases appear for other train/test combinations; item U07X shows more bias than U03A.",
+        "standardized_conclusion": "Using PIAAC 2012 PSTRE (U07X—Book Order; Booklet 2) the study leveraged country group membership and action-sequence characteristics to predict response accuracy, finding that cross-country generalization was weaker than for U03A (e.g., Slovakia test accuracy dropped to 0.64 when trained on Finland) and that ABROCA detected population-level bias, especially for Finland-only training when predicting Slovakia. This indicates that some interactive problem-solving items may be more susceptible to algorithmic bias, so fairness checks should be item-specific and training data should be broadened to include representative subgroup behavior."
+      },
+      {
+        "dataset_used": "PIAAC 2012 PSTRE (U16X—Reply All; Booklet 2)",
+        "target_variable": "Response accuracy (binary) for U16X",
+        "top_predictors": [
+          "Country (Finland/Slovakia/USA)",
+          "Action sequence length",
+          "Item difficulty (proportion correct)",
+          "PSTRE item (U03A/U07X/U16X)"
+        ],
+        "performance_metrics": "BERT fine-tuned classifier (48 models total across training/test splits). Table 4: best accuracy across test groups occurs with overall training: test=Finland accuracy 0.78, test=Slovakia 0.78, test=United States 0.86, test=Overall 0.86. When trained on single countries, accuracies ranged roughly 0.73–0.83 depending on test group (e.g., test=Finland: 0.83 when train=Slovakia; test=United States: 0.79 when train=Finland). ABROCA fairness: AUC differences were relatively smaller than U03A and U07X; overall training appears almost bias-free across test sets.",
+        "standardized_conclusion": "Using PIAAC 2012 PSTRE (U16X—Reply All; Booklet 2) the study leveraged country group membership and action-sequence characteristics to predict response accuracy, finding that training on the overall multi-country dataset yielded the most consistent performance across Finland, Slovakia, and the United States (with overall test accuracy 0.86) and that ABROCA showed comparatively smaller AUC differences (near bias-free behavior for overall training). This indicates that population-validity risks can vary substantially by item, and that using pooled, representative training data can improve both predictive utility and fairness for some interactive tasks."
+      }
+    ],
+    "outcome_summary": "The study uses PIAAC 2012 PSTRE log files for three dichotomously scored items (U03A, U07X, U16X) and trains fine-tuned BERT classifiers to predict binary response accuracy from tokenized action sequences. The analytic dataset is limited to examinees from Finland, Slovakia, and the United States for which PSTRE log data were available, with action sequences truncated/padded to 512 tokens and three cases with missing outcomes removed. Across 48 train/test models per item (overall vs single-country training), performance is generally high, but cross-country generalization varies by item: for U07X, training on Finland produced notably low recall for Slovakia (recall 0.26; accuracy 0.64), while for U16X, overall training produced the most consistent accuracies (e.g., overall test accuracy 0.86). Population-validity/fairness is assessed via ABROCA (AUC differences), showing bias for U03A and especially U07X when training data are not representative. Limitations include lack of documented survey-weighting/replicate design handling and truncation at 512 tokens, which may affect subgroup representation.",
+    "research_design_type": "predictive",
+    "null_fields_interpretation": null
+  }
+}

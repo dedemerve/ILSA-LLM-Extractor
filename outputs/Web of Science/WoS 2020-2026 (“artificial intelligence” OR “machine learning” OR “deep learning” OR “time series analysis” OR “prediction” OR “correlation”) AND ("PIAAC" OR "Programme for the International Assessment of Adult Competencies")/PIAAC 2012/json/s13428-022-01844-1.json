@@ -1,0 +1,131 @@
+{
+  "metadata": {
+    "file_name": "s13428-022-01844-1.pdf",
+    "title": "A machine learning-based procedure for leveraging clickstream data to investigate early predictability of failure on interactive tasks",
+    "authors": [
+      "Esther Ulitzsch"
+    ],
+    "year": 2023,
+    "doi": "10.3758/s13428-022-01844-1",
+    "venue": "Behavior Research Methods",
+    "publication_type": "journal",
+    "open_access": true,
+    "source_category": "peer_reviewed_research"
+  },
+  "data": {
+    "survey_design": {
+      "student_weights_used": null,
+      "replicate_weights_used": null,
+      "weight_variable_name": null,
+      "weight_fields_interpretation": "The study uses PIAAC 2012 PSTRE clickstream data from two specific PSTRE items (U23 “Lamp Return” and U02 “Meeting Rooms”) and constructs multiple trimmed early-window datasets by restricting sequences to the first wa actions and/or the first wt seconds. The manuscript does not report applying PIAAC sampling weights or replicate weights in the XGBoost training/evaluation pipeline, and the analysis is based on nested cross-validation with upsampling for class imbalance. Because the dependent variable is derived from item-level success/failure and the models are trained with standard XGBoost implementations, the paper does not document any complex-survey-weight adjustment (e.g., W_FSTUWT/TOTWGT equivalents) or replicate-weight variance estimation. For replication, analysts should check the OSF materials for the exact PIAAC Data Explorer/IDB Analyzer workflow; if weights are available, they are not described as being used here."
+    },
+    "plausible_values_handling": "not_applicable",
+    "missing_data_handling": "not_reported",
+    "handling_not_reported_explanation": "The study’s outcomes are binary success/failure labels derived from item performance on PSTRE tasks, not cognitive achievement scores with plausible values. Missingness arises in engineered process features (e.g., time-to-first-occurrence is coded as missing when an action does not occur), and the paper relies on XGBoost’s built-in handling of missing values rather than reporting a separate missing-data imputation strategy. Therefore, a conventional missing-data handling label for PV-based achievement is not applicable, and the paper does not provide a full missing-data protocol beyond model-internal missing-value routing.",
+    "sample_details": {
+      "total_students": 13653,
+      "countries": [
+        {
+          "country_code": "IRL",
+          "n_students": null
+        },
+        {
+          "country_code": "JPN",
+          "n_students": null
+        },
+        {
+          "country_code": "NLD",
+          "n_students": null
+        },
+        {
+          "country_code": "GBR",
+          "n_students": null
+        },
+        {
+          "country_code": "USA",
+          "n_students": null
+        }
+      ],
+      "sample_filtering_criteria": "The analysis uses PIAAC 2012 PSTRE clickstreams for item U23 (“Lamp Return”) and item U02 (“Meeting Rooms”). Clickstreams were excluded when examinees proceeded to the next task without performing any actions on the respective item (761 excluded for Lamp Return; 920 excluded for Meeting Rooms). The final analytic clickstreams considered were 6,791 for Lamp Return and 6,629 for Meeting Rooms. For early prediction, the authors further created multiple trimmed datasets by selecting only sequences with total action count ai > wa and/or time spent ti > wt, then trimming each sequence to the first wa actions (with associated timestamps) or to the first wt seconds (with associated timestamps). Actions that would make prediction trivial were removed from sequences by stripping time-stamped actions related to submitting forms/requests and removing fine-grained form-entry details (while retaining higher-level indicators such as selecting a reason category)."
+    },
+    "ml_techniques": {
+      "primary": "XGBoost",
+      "all_techniques": [
+        "XGBoost"
+      ]
+    },
+    "confounders_identified": [
+      {
+        "variable_code": "Lamp_Return_item",
+        "variable_name": "Item (Lamp Return vs Meeting Rooms)",
+        "category": "curriculum"
+      },
+      {
+        "variable_code": "Meeting_Rooms_item",
+        "variable_name": "Item (Meeting Rooms vs Lamp Return)",
+        "category": "curriculum"
+      },
+      {
+        "variable_code": "early_window_actions_wa",
+        "variable_name": "Early window (number of actions)",
+        "category": "process_data"
+      },
+      {
+        "variable_code": "early_window_time_wt",
+        "variable_name": "Early window (elapsed time)",
+        "category": "process_data"
+      },
+      {
+        "variable_code": "time_to_first_action",
+        "variable_name": "Time to first action",
+        "category": "process_data"
+      },
+      {
+        "variable_code": "time_to_action_first_occurrence",
+        "variable_name": "Time to action first occurrence",
+        "category": "process_data"
+      },
+      {
+        "variable_code": "bi_trigram_presence",
+        "variable_name": "Bi-/trigram sequential patterns",
+        "category": "process_data"
+      },
+      {
+        "variable_code": "activity_within_window",
+        "variable_name": "Activity intensity within window",
+        "category": "process_data"
+      }
+    ],
+    "main_findings": [
+      {
+        "dataset_used": "PIAAC 2012 PSTRE Item U23 (Lamp Return) clickstream early prediction",
+        "target_variable": "Failure vs (partial) success on Lamp Return (binary classification)",
+        "top_predictors": [
+          "Action tf-idf intensity",
+          "Time to action first occurrence",
+          "Time to first action",
+          "Activity intensity within window",
+          "Early window (number of actions)"
+        ],
+        "performance_metrics": "Nested CV (5 outer folds, 3 inner folds) with upsampling of the minority class; XGBoost. Baseline with complete clickstreams: AUC=1.00, φ=1.00, Sensitivity=1.00, Specificity=1.00, PPV=1.00, NPV=1.00. Early-window by actions: AUC=0.64 at wa=1; AUC and φ exceeded 0.70 and 0.30 at wa=3 (Sensitivity=0.68, Specificity=0.64, PPV=0.58, NPV=0.73). Early-window by time: AUC and φ exceeded 0.70 and 0.30 at wt=40 (median Earlinesst(t)=0.69).",
+        "standardized_conclusion": "Using PIAAC 2012 PSTRE Item U23 (Lamp Return) clickstream the study leveraged action tf-idf intensity, time to action first occurrence, time to first action, activity intensity within window, and early-window (number of actions) information to predict failure vs (partial) success, finding that XGBoost achieved AUC=0.64 already at wa=1 and exceeded AUC>0.70 with φ>0.30 by wa=3 while detecting most failures before completion. This indicates that early behavioral signals in interactive PSTRE tasks can support timely risk-of-failure identification, enabling adaptive support (e.g., hints) before examinees finish, though the study is predictive and does not establish causal effects."
+      },
+      {
+        "dataset_used": "PIAAC 2012 PSTRE Item U02 (Meeting Rooms) clickstream early prediction",
+        "target_variable": "Failure vs (partial) success on Meeting Rooms (binary classification)",
+        "top_predictors": [
+          "Action tf-idf intensity",
+          "Time to action first occurrence",
+          "Time to first action",
+          "Bi-/trigram sequential patterns",
+          "Early window (number of actions)"
+        ],
+        "performance_metrics": "Nested CV (5 outer folds, 3 inner folds) with upsampling of the minority class; XGBoost. Baseline with complete clickstreams: AUC=0.98, φ=0.86, Sensitivity=0.91, Specificity=0.96, PPV=0.97, NPV=0.88. Early-window by actions: AUC=0.53 at wa=1; AUC and φ exceeded 0.70 and 0.30 at wa=7 (Sensitivity=0.67, Specificity=0.64, PPV=0.66, NPV=0.66). Early-window by time: AUC and φ exceeded 0.70 and 0.30 at wt=60 (median Earlinesst(t)=0.79).",
+        "standardized_conclusion": "Using PIAAC 2012 PSTRE Item U02 (Meeting Rooms) clickstream the study leveraged action tf-idf intensity, time to action first occurrence, time to first action, bi-/trigram sequential patterns, and early-window (number of actions) information to predict failure vs (partial) success, finding that early prediction required longer windows than Lamp Return but still reached AUC>0.70 and φ>0.30 by wa=7 with balanced sensitivity/specificity (Sensitivity=0.67, Specificity=0.64). This indicates that even for more complex interactive tasks, sufficiently late-in-process early signals can identify examinees at risk before completion, supporting adaptive interventions, while performance depends on window choice and class imbalance."
+      }
+    ],
+    "outcome_summary": "The study develops and evaluates an ML procedure for early detection of risk of failure on interactive tasks using PIAAC 2012 PSTRE clickstream data from two items: U23 “Lamp Return” and U02 “Meeting Rooms.” For each item, the authors derive features from early-window action sequences (occurrence/frequency, sequentiality via bi-/trigrams, and timing such as time to first action and time to first occurrence of actions) and train an XGBoost classifier with nested cross-validation (5 outer folds, 3 inner folds) and upsampling to address class imbalance. With complete clickstreams, performance was near-perfect for Lamp Return (AUC=1.00) and very high for Meeting Rooms (AUC=0.98). For early windows, Lamp Return reached AUC>0.70 by wa=3 (φ>0.30), while Meeting Rooms reached AUC>0.70 by wa=7; time-based thresholds were wt=40 and wt=60, respectively. The paper does not report survey-weight usage and treats missingness via XGBoost’s internal missing-value handling, so results are predictive rather than causal and may not generalize without checking weighting and data-preparation details.",
+    "research_design_type": "predictive",
+    "null_fields_interpretation": null
+  }
+}
