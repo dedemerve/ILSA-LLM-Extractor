@@ -2,7 +2,37 @@ import re
 from typing import List, Optional, Literal
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
+from src.schemas.findings_validation import article_requires_main_findings
+
 _NA_VARIABLE_CODES = frozenset({"n/a", "na", "null", "none", ""})
+
+_BOOL_NULL_STRINGS = frozenset({
+    "n/a", "na", "not applicable", "not_applicable", "", "none", "null",
+})
+_BOOL_TRUE_STRINGS = frozenset({"true", "yes", "1"})
+_BOOL_FALSE_STRINGS = frozenset({"false", "no", "0"})
+
+
+def coerce_optional_bool(value: object) -> Optional[bool]:
+    """Coerce LLM output to Optional[bool]; invalid strings become None."""
+    if value is None:
+        return None
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, int) and value in (0, 1):
+        return bool(value)
+    if isinstance(value, float) and value in (0.0, 1.0):
+        return bool(int(value))
+    if isinstance(value, str):
+        normalized = value.strip().lower().replace("-", "_")
+        if normalized in _BOOL_NULL_STRINGS:
+            return None
+        if normalized in _BOOL_TRUE_STRINGS:
+            return True
+        if normalized in _BOOL_FALSE_STRINGS:
+            return False
+        return None
+    return None
 
 
 def _slug_variable_code(name: str) -> str:
@@ -105,6 +135,11 @@ class SurveyDesign(BaseModel):
             "weight support). This field must never be null."
         ),
     )
+
+    @field_validator("student_weights_used", "replicate_weights_used", mode="before")
+    @classmethod
+    def coerce_survey_design_bools(cls, v: object) -> Optional[bool]:
+        return coerce_optional_bool(v)
 
 
 class CountrySample(BaseModel):
@@ -274,9 +309,10 @@ class StructuredFinding(BaseModel):
     )
     standardized_conclusion: str = Field(
         description=(
-            "1-2 sentences connecting the full pipeline. MUST follow: "
+            "2-3 sentences connecting the full pipeline. MUST follow: "
             "'Using [dataset_used] data, the study leveraged [top_predictors] to predict "
-            "[target_variable], finding that [key finding/effect].' "
+            "[target_variable], finding that [key finding/effect]. This indicates that "
+            "[education/policy implication].' "
             "Note methodological limitations (SHAP overstated causality, no weights) "
             "inside the finding clause when relevant."
         ),
@@ -356,13 +392,14 @@ class DataBlock(BaseModel):
         ),
     )
     main_findings: List[StructuredFinding] = Field(
-        default_factory=list,
         description=(
             "Structured findings mapping inputs to targets. One object per distinct "
             "dependent variable analyzed (e.g. separate rows for Math vs Science). "
             "Each object links top_predictors (from confounders_identified when possible) "
             "to target_variable with performance_metrics and standardized_conclusion. "
-            "Return [] only for reviews/theory papers with no predictive results."
+            "Required non-empty when outcome_summary is substantive or empirical ML "
+            "signals exist (see ILSAArticleMetadata validator). Empty [] only for "
+            "reviews/theory with no predictive results and no substantive outcome."
         ),
     )
     outcome_summary: str = Field(
@@ -404,3 +441,24 @@ class ILSAArticleMetadata(BaseModel):
     data: DataBlock = Field(
         description="Survey design, sample, ML, and outcome fields."
     )
+
+    @model_validator(mode="after")
+    def validate_main_findings_when_required(self) -> "ILSAArticleMetadata":
+        data_dict = self.data.model_dump(mode="python")
+        meta_dict = self.metadata.model_dump(mode="python")
+        if article_requires_main_findings(data_dict, meta_dict) and not self.data.main_findings:
+            raise ValueError(
+                "data.main_findings must contain at least one StructuredFinding when "
+                "outcome_summary is substantive or empirical ML signals are present"
+            )
+        return self
+
+
+def validate_public_article_json(raw: dict) -> ILSAArticleMetadata:
+    """Validate on-disk article JSON (``{"metadata": ..., "data": ...}``).
+
+    ``ILSAArticleMetadata`` is the root model for the full file. Do not pass
+    ``raw["metadata"]`` alone — that block is a ``MetadataBlock``, not the
+    top-level record.
+    """
+    return ILSAArticleMetadata.model_validate(raw)

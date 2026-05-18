@@ -10,7 +10,14 @@ from openai import OpenAI, APIError, RateLimitError, APITimeoutError
 from pydantic import ValidationError
 
 from src.schemas import ILSAArticleMetadata
-from src.schemas.models import Confounder, StructuredFinding
+from src.schemas.findings_validation import (
+    _coerce_report_literals,
+    article_requires_main_findings,
+    is_official_report_document,
+    should_apply_report_literal_coercion,
+    substantive_outcome_summary,
+)
+from src.schemas.models import Confounder, StructuredFinding, coerce_optional_bool
 
 if TYPE_CHECKING:
     from src.extractors.pdf_processor import ProcessedPDF
@@ -290,7 +297,35 @@ def _title_from_file_name(file_name: str) -> Optional[str]:
     if match:
         title = match.group(1).strip()
         return title if len(title) >= 10 else None
+    if re.match(r"^978\d{10,13}(?:-en)?$", stem, re.I):
+        return f"OECD publication {stem}"
+    if re.match(r"^[\da-f]{6,12}-en$", stem, re.I):
+        return f"OECD document {stem}"
     return stem if len(stem) >= 15 else None
+
+
+def _doi_backfill_blob(data: dict, meta: dict | None) -> str:
+    """Concatenate JSON text fields that may contain a DOI (no PDF/API)."""
+    parts: list[str] = []
+    meta = meta or {}
+    for key in ("title", "file_name", "venue"):
+        val = meta.get(key)
+        if isinstance(val, str) and val.strip():
+            parts.append(val.strip())
+    for key in (
+        "outcome_summary",
+        "null_fields_interpretation",
+        "handling_not_reported_explanation",
+    ):
+        val = data.get(key)
+        if isinstance(val, str) and val.strip():
+            parts.append(val.strip())
+    survey = data.get("survey_design")
+    if isinstance(survey, dict):
+        wfi = survey.get("weight_fields_interpretation")
+        if isinstance(wfi, str) and wfi.strip():
+            parts.append(wfi.strip())
+    return "\n".join(parts)
 
 
 def _slug_variable_code(name: str) -> str:
@@ -298,8 +333,95 @@ def _slug_variable_code(name: str) -> str:
     return slug[:48] if slug else "unnamed_variable"
 
 
+_SENTENCE_NAME_STARTERS = (
+    r"^the\s+",
+    r"^teacher[- ]related\s+variables\s+such\s+as\s+(?:the\s+)?",
+    r"^students?['']?\s+",
+    r"^student['']?s?\s+",
+)
+_UNDREM_NAME_PATTERN = re.compile(
+    r"\b(meta[- ]?cognit\w*|understanding|remembering)\b", re.I,
+)
+_INVENTED_METACOG_SLUGS = frozenset({
+    "meta_cognition_understanding",
+    "meta_cognition",
+    "metacognition",
+    "metacognition_understanding",
+    "remembering",
+    "understanding",
+})
+
+
+def _condense_variable_name(name: str) -> str:
+    """Cap labels at 8 words; strip pasted sentence starters."""
+    if not isinstance(name, str) or not name.strip():
+        return name
+    text = name.strip()
+    if text.count("(") < text.count(")"):
+        text = re.sub(r"\)+$", "", text).strip()
+    if text.count("(") > text.count(")"):
+        text += ")" * (text.count("(") - text.count(")"))
+    for pat in _SENTENCE_NAME_STARTERS:
+        text = re.sub(pat, "", text, flags=re.I).strip()
+    words = text.split()
+    if len(words) > 8:
+        text = " ".join(words[:8])
+    return text.strip() or name.strip()
+
+
 def _looks_like_ilsa_code(label: str) -> bool:
     return bool(re.fullmatch(r"[A-Z][A-Z0-9_]{1,}", label.strip()))
+
+
+def _is_invented_confounder_code(code: str) -> bool:
+    """True for pseudo-ILSA / prose codes; false for official ILSA acronyms."""
+    if not isinstance(code, str) or not code.strip():
+        return False
+    c = code.strip()
+    key = c.upper()
+    if key in ILSA_CODE_TO_CATEGORY:
+        return False
+    if _looks_like_ilsa_code(c):
+        return False
+    if re.search(r"[:;]|(?:\band\b)", c, re.I):
+        return True
+    if " " in c:
+        return True
+    if "/" in c:
+        return True
+    lower = c.lower()
+    if lower in _INVENTED_METACOG_SLUGS:
+        return True
+    if re.search(r"meta[-_]?cognit", lower):
+        return True
+    return False
+
+
+def _fix_invented_variable_code(code: str, name: str) -> str:
+    """Map invented codes to ILSA slug or official construct."""
+    condensed = _condense_variable_name(name)
+    combined = f"{code} {condensed}"
+    if _UNDREM_NAME_PATTERN.search(combined):
+        return "UNDREM"
+    paren = re.search(r"\(([A-Z][A-Z0-9_]{2,})\)", condensed) or re.search(
+        r"\(([A-Z][A-Z0-9_]{2,})\)", code,
+    )
+    if paren:
+        return paren.group(1)
+    return _slug_variable_code(condensed)
+
+
+def _collapse_undrem_duplicates(items: list[dict]) -> list[dict]:
+    """Merge split UNDREM sub-parts into one row."""
+    undrem = [c for c in items if c["variable_code"].upper() == "UNDREM"]
+    rest = [c for c in items if c["variable_code"].upper() != "UNDREM"]
+    if len(undrem) <= 1:
+        return items
+    return rest + [{
+        "variable_code": "UNDREM",
+        "variable_name": "Metacognition (understanding, remembering)",
+        "category": "student_behavior",
+    }]
 
 
 def _clean_confounder_part(part: str) -> str:
@@ -403,22 +525,27 @@ def _coerce_confounder_category(
 
 
 def _normalize_confounder_code(code: Optional[str], name: str) -> str:
+    condensed = _condense_variable_name(name)
     if isinstance(code, str):
         cleaned = code.strip()
         if cleaned.lower() not in _INVALID_VARIABLE_CODES:
+            if _is_invented_confounder_code(cleaned):
+                return _fix_invented_variable_code(cleaned, condensed)
             return cleaned
-    paren = re.search(r"\(([A-Z][A-Z0-9_]{2,})\)", name)
+    paren = re.search(r"\(([A-Z][A-Z0-9_]{2,})\)", condensed)
     if paren:
         return paren.group(1)
-    return _slug_variable_code(name)
+    return _slug_variable_code(condensed)
 
 
 def _normalize_confounder_dict(entry: dict) -> Optional[dict]:
     name = entry.get("variable_name", "")
     if not isinstance(name, str) or not name.strip():
         return None
-    name = name.strip()
+    name = _condense_variable_name(name.strip())
     code = _normalize_confounder_code(entry.get("variable_code"), name)
+    if code.upper() == "UNDREM":
+        name = "Metacognition (understanding, remembering)"
     cat = _coerce_confounder_category(entry.get("category"), name, code)
     return {
         "variable_code": code,
@@ -434,6 +561,9 @@ def _expand_confounder_dict(entry: dict) -> list[dict]:
         return []
 
     base_code = entry.get("variable_code")
+    if isinstance(base_code, str) and base_code.strip().upper() == "UNDREM":
+        normalized = _normalize_confounder_dict(entry)
+        return [normalized] if normalized else []
     base_cat = entry.get("category")
     parts = _split_confounder_label(name.strip())
     if not parts:
@@ -499,14 +629,116 @@ def _normalize_confounders_list(
             c.get("variable_code") or "",
         )
     ]
-    return _dedupe_confounders(filtered)
+    return _dedupe_confounders(_collapse_undrem_duplicates(filtered))
+
+
+_MEANING_CLAUSE_RE = re.compile(r"\bthis\s+indicates\b", re.IGNORECASE)
+_GENERIC_WFI_MARKERS = (
+    "no weighting information was explicitly reported",
+    "the extraction could not determine the weighting",
+    "the extraction could not determine",
+)
+
+
+def _derive_meaning_clause(effect_hint: str | None, conclusion: str) -> str:
+    """Build policy/practice implication when the model omits 'This indicates that'."""
+    for source in (effect_hint, conclusion):
+        if not source or not isinstance(source, str):
+            continue
+        match = re.search(
+            r"this\s+indicates\s+that\s+(.+?)(?:\.|$)",
+            source,
+            re.IGNORECASE | re.DOTALL,
+        )
+        if match:
+            return match.group(1).strip().rstrip(".")
+    blob = (effect_hint or conclusion or "").lower()
+    if any(k in blob for k in ("policy", "practice", "equity", "instruction", "curriculum")):
+        tail = (effect_hint or conclusion or "").strip().rstrip(".")
+        if len(tail) > 40:
+            return tail[-220:]
+    return (
+        "these patterns have implications for educational policy and instructional "
+        "practice, though cross-sectional ILSA designs cannot establish causality"
+    )
+
+
+def _ensure_conclusion_meaning_clause(
+    conclusion: str,
+    *,
+    effect_hint: str | None = None,
+) -> str:
+    """Append 'This indicates that …' when the model stops at the finding clause."""
+    text = conclusion.strip()
+    if not text:
+        return text
+    if _MEANING_CLAUSE_RE.search(text):
+        return _fix_standardized_conclusion_grammar(text)
+    base = text.rstrip(".")
+    meaning = _derive_meaning_clause(effect_hint, text)
+    combined = f"{base}. This indicates that {meaning}."
+    return _fix_standardized_conclusion_grammar(combined)
+
+
+def _is_generic_weight_interpretation(text: str) -> bool:
+    lowered = text.strip().lower()
+    return any(marker in lowered for marker in _GENERIC_WFI_MARKERS)
+
+
+def _weight_fields_interpretation_from_outcome(outcome: str) -> str:
+    """Synthesize survey-design summary for official reports when WFI is empty."""
+    text = outcome.strip()
+    if not text:
+        return (
+            "This official IEA/OECD technical document describes assessment design, "
+            "sampling, and scaling procedures rather than student-level ML estimation. "
+            "Survey weights and replicate methods should be taken from the "
+            "international sampling and weighting manual for the cited cycle."
+        )
+    sentences = re.split(r"(?<=[.!?])\s+", text)
+    picked = [s.strip() for s in sentences if s.strip()][:4]
+    body = " ".join(picked) if picked else text[:600]
+    if len(body) > 520:
+        body = body[:517].rstrip() + "..."
+    return (
+        f"{body} "
+        "As a framework or implementation manual, the document explains how the "
+        "assessment is administered and analyzed; apply cycle-specific weight "
+        "variables (e.g. W_FSTUWT) when using micro-data from the international database."
+    )
+
+
+def _fix_standardized_conclusion_grammar(text: str) -> str:
+    """Fix 'Using X process the study' → 'Using X process data, the study'."""
+    if not isinstance(text, str) or not text.strip():
+        return text
+    if re.search(r"\bprocess\s+data,\s*the\s+study\b", text, re.I):
+        return text
+    fixed = re.sub(
+        r"(Using\s+[^,]+?)\s+process\s+the\s+study\b",
+        r"\1 process data, the study",
+        text,
+        count=1,
+        flags=re.I,
+    )
+    return re.sub(
+        r"\bprocess\s+the\s+study\b",
+        "process data, the study",
+        fixed,
+        count=1,
+        flags=re.I,
+    )
 
 
 def _dataset_clause(dataset: str) -> str:
     """Avoid 'process data … data,' when dataset_used already contains 'data'."""
     d = dataset.strip().rstrip(".")
+    if re.search(r"\bprocess\s+data\b", d, re.IGNORECASE):
+        return f"Using {d},"
     if re.search(r"\bdata\b", d, re.IGNORECASE):
         return f"Using {d},"
+    if re.search(r"\bprocess\b", d, re.IGNORECASE):
+        return f"Using {d} data,"
     return f"Using {d} data,"
 
 
@@ -620,13 +852,17 @@ def _build_standardized_conclusion(
         if effect.lower().startswith("using "):
             cleaned = effect if effect.endswith(".") else f"{effect}."
             cleaned = re.sub(r"\bdata,\s*the study", "the study", cleaned, flags=re.I)
-            return cleaned
+            return _ensure_conclusion_meaning_clause(
+                _fix_standardized_conclusion_grammar(cleaned),
+                effect_hint=effect_hint,
+            )
     else:
         effect = "results were reported without a clear narrative conclusion in the manuscript"
-    return (
+    built = _fix_standardized_conclusion_grammar(
         f"{clause} the study leveraged {preds} to predict {target}, "
         f"finding that {effect}."
     )
+    return _ensure_conclusion_meaning_clause(built, effect_hint=effect_hint)
 
 
 def _normalize_main_findings_list(raw: list) -> list[dict]:
@@ -668,6 +904,14 @@ def _normalize_main_findings_list(raw: list) -> list[dict]:
             conclusion = _build_standardized_conclusion(
                 dataset, predictors, target, effect_hint=conclusion
             )
+        elif re.search(r"\bprocess\s+the\s+study\b", conclusion, re.IGNORECASE):
+            conclusion = _fix_standardized_conclusion_grammar(conclusion)
+        else:
+            conclusion = _fix_standardized_conclusion_grammar(conclusion)
+        conclusion = _ensure_conclusion_meaning_clause(
+            conclusion,
+            effect_hint=str(item.get("standardized_conclusion") or ""),
+        )
         findings.append({
             "dataset_used": dataset,
             "target_variable": target,
@@ -693,8 +937,558 @@ def _coerce_outcome_summary_text(value) -> str:
     return text
 
 
-def _normalize_findings_fields(data: dict) -> None:
+_LEGACY_MIGRATION_MARKER = "legacy migration"
+_ILSA_PROGRAM_YEAR_RE = re.compile(
+    r"\b(PISA|TIMSS|PIRLS|TALIS|PIAAC|ICILS|ICCS|OECD)\b"
+    r"(?:\s*[-–]?\s*(20\d{2}))?",
+    re.IGNORECASE,
+)
+_ILSA_DATASET_PHRASE_RE = re.compile(
+    r"\b((?:PISA|TIMSS|PIRLS|TALIS|PIAAC|ICILS|ICCS)\s+20\d{2}"
+    r"(?:\s+[\w][\w\s\-]{2,40})?)",
+    re.IGNORECASE,
+)
+_METRICS_SNIPPET_RE = re.compile(
+    r"(?:R[²2]\s*[=:]\s*[\d.]+|AUC\s*[=:]\s*[\d.]+|"
+    r"(?:accuracy|Accuracy)\s*[=:]\s*[\d.]+%?|RMSE\s*[=:]\s*[\d.]+|"
+    r"F1[- ]?score?\s*[=:]\s*[\d.]+|"
+    r"(?:\d{1,3}(?:\.\d+)?)\s*%\s+accuracy)",
+    re.IGNORECASE,
+)
+_NON_EMPIRICAL_SOURCE_CATEGORIES = frozenset({
+    "review_article", "methodology_paper", "technical_report",
+})
+
+
+def _is_legacy_migration_finding(finding: dict) -> bool:  # noqa: D103
+    ds = str(finding.get("dataset_used") or "").lower()
+    tv = str(finding.get("target_variable") or "").lower()
+    return _LEGACY_MIGRATION_MARKER in ds or _LEGACY_MIGRATION_MARKER in tv
+
+
+def _collect_migration_context_text(data: dict, metadata: dict | None) -> str:
+    """Concatenate extraction fields used for heuristic dataset/target inference."""
+    parts: list[str] = []
+    meta = metadata or {}
+    for key in ("title", "file_name"):
+        val = meta.get(key)
+        if isinstance(val, str) and val.strip():
+            parts.append(val.strip())
+    sd = data.get("sample_details") if isinstance(data.get("sample_details"), dict) else {}
+    sfc = sd.get("sample_filtering_criteria")
+    if isinstance(sfc, str) and sfc.strip():
+        parts.append(sfc.strip())
+    survey = data.get("survey_design") if isinstance(data.get("survey_design"), dict) else {}
+    wfi = survey.get("weight_fields_interpretation")
+    if isinstance(wfi, str) and wfi.strip():
+        parts.append(wfi.strip())
+    for key in ("outcome_summary", "null_fields_interpretation"):
+        val = data.get(key)
+        if isinstance(val, str) and val.strip():
+            parts.append(val.strip())
+    return "\n".join(parts)
+
+
+def _infer_dataset_from_context(data: dict, metadata: dict | None) -> str:
+    blob = _collect_migration_context_text(data, metadata)
+    phrase_hits = _ILSA_DATASET_PHRASE_RE.findall(blob)
+    if phrase_hits:
+        return phrase_hits[0].strip().split("\n")[0][:120]
+
+    programs: list[str] = []
+    for match in _ILSA_PROGRAM_YEAR_RE.finditer(blob):
+        program = match.group(1).upper()
+        year = match.group(2) or ""
+        label = f"{program} {year}".strip()
+        if label not in programs:
+            programs.append(label)
+    if programs:
+        return programs[0][:120]
+
+    sc = (metadata or {}).get("source_category")
+    if sc in _NON_EMPIRICAL_SOURCE_CATEGORIES:
+        return (
+            "ILSA literature synthesis (systematic review; "
+            "no single student-level analytic micro-dataset)"
+        )
+    return "ILSA assessment context not specified in extraction (heuristic migration)"
+
+
+def _infer_target_from_context(data: dict, metadata: dict | None) -> str:
+    outcome = _coerce_outcome_summary_text(data.get("outcome_summary"))
+    blob = f"{outcome}\n{_collect_migration_context_text(data, metadata)}"
+    target_patterns = (
+        r"predict(?:ing|ed|s)?\s+([^.;,\n]{5,70})",
+        r"(?:math(?:ematics)?|science|reading)\s+"
+        r"(?:achievement|literacy|proficiency|performance|score)s?",
+        r"academic\s+resilience",
+        r"(?:student\s+)?well[- ]?being",
+        r"creative\s+thinking(?:\s+score)?",
+        r"problem[- ]solving(?:\s+success)?",
+        r"environmental\s+action",
+        r"job\s+satisfaction",
+        r"item\s+difficulty",
+    )
+    for pattern in target_patterns:
+        match = re.search(pattern, blob, re.IGNORECASE)
+        if match:
+            return match.group(0).strip()[:80]
+
+    sc = (metadata or {}).get("source_category")
+    ml = data.get("ml_techniques") if isinstance(data.get("ml_techniques"), dict) else {}
+    has_ml = bool(ml.get("primary")) or bool(ml.get("all_techniques"))
+    if sc in _NON_EMPIRICAL_SOURCE_CATEGORIES:
+        return "Literature synthesis outcome (not student-level prediction)"
+    if has_ml:
+        return "Primary analytic outcome (inferred from extraction)"
+    return "Primary study outcome (heuristic migration)"
+
+
+def _infer_top_predictors_from_data(data: dict) -> list[str]:
+    predictors: list[str] = []
+    for item in data.get("confounders_identified") or []:
+        if not isinstance(item, dict):
+            continue
+        name = item.get("variable_name") or item.get("variable_code")
+        if not isinstance(name, str):
+            continue
+        cleaned = name.strip()
+        if cleaned and cleaned.lower() not in _INVALID_FIELD_STRINGS:
+            predictors.append(cleaned)
+        if len(predictors) >= 5:
+            break
+    return predictors
+
+
+def _extract_performance_metrics_from_text(text: str) -> str:
+    if not text:
+        return "Not reported"
+    hits = _METRICS_SNIPPET_RE.findall(text)
+    if hits:
+        return "; ".join(dict.fromkeys(h.strip() for h in hits))[:220]
+    return "Not reported"
+
+
+_DESCRIPTIVE_TARGET_PATTERNS = (
+    re.compile(r"mean\s+(.{3,55}?)\s+score", re.IGNORECASE),
+    re.compile(
+        r"summaris(?:e|es|ing)\s+(?:[^.]{0,60}?\s+)?performance\s+on\s+(?:the\s+)?"
+        r"([^.;,\n]{5,70})",
+        re.IGNORECASE,
+    ),
+    re.compile(
+        r"\b((?:math(?:ematics)?|science|reading|creative thinking|problem solving|"
+        r"financial literacy|collaborative problem solving|environmental action|"
+        r"well[- ]?being|job satisfaction|literacy|numeracy|general pedagogical knowledge)"
+        r"[^.;]{0,35}?(?:achievement|proficiency|performance|literacy|score|knowledge)s?)",
+        re.IGNORECASE,
+    ),
+    re.compile(
+        r"performance\s+in\s+([^.;,\n]{5,60})",
+        re.IGNORECASE,
+    ),
+    re.compile(
+        r"performed in\s+([^.;]{8,160})",
+        re.IGNORECASE,
+    ),
+    re.compile(
+        r"measures teachers['\u2019]?\s*(.{5,80}?)(?:\s+through|\s+using|\s+via|,|\.)",
+        re.IGNORECASE,
+    ),
+    re.compile(
+        r"((?:financial literacy|creative thinking|problem solving|"
+        r"collaborative problem solving|global competence)"
+        r"[^.;]{0,30}?)\s+was assessed",
+        re.IGNORECASE,
+    ),
+    re.compile(
+        r"synthesiz(?:e|es|ing)\s+([^.;]{12,100}?)\s+results",
+        re.IGNORECASE,
+    ),
+    re.compile(
+        r"(?:addresses|examines|explains)\s+([^.;]{10,90})",
+        re.IGNORECASE,
+    ),
+    re.compile(
+        r"associations between .{5,80}?\s+and\s+([^.;]{8,80}?)(?:\s+indicators|\s+outcomes|\.|,)",
+        re.IGNORECASE,
+    ),
+)
+_DESCRIPTIVE_METRIC_SNIPPET_RE = re.compile(
+    r"(?:mean\s+[\w\s]{2,30}?\s+score\s+is\s+[^.;]{5,40}|"
+    r"[\d]{1,3}(?:\.\d+)?\s*%\s+of\s+[^.;]{10,80}|"
+    r"correlation[s]?\s+(?:is|are|of)?\s*[\d.]+[^.;]{0,40}|"
+    r"[\d.]+\s*\([^)]{5,60}\)|"
+    r"significantly\s+(?:below|above)\s+[^.;]{10,60}|"
+    r"OECD\s+average[^.;]{0,40})",
+    re.IGNORECASE,
+)
+_ASSOCIATED_VARIABLE_RE = re.compile(
+    r"(?:correlation[s]?\s+(?:is|are|of)?\s*)?[\d.]+\s*\(([^)]+)\)|"
+    r"attributed\s+to\s+([^.;,\n]{5,60})|"
+    r"associated\s+with\s+([^.;,\n]{5,60})",
+    re.IGNORECASE,
+)
+_GROUNDING_SKIP_MARKERS = (
+    "not specified",
+    "heuristic migration",
+    "literature synthesis",
+)
+_BAD_TARGET_MARKERS = (
+    "split into",
+    "other group",
+    "sampled schools",
+    "one group took",
+)
+
+
+def _is_grounded_migration_label(text: str) -> bool:
+    lowered = text.strip().lower()
+    if not lowered or any(m in lowered for m in _GROUNDING_SKIP_MARKERS):
+        return False
+    if any(m in lowered for m in _BAD_TARGET_MARKERS):
+        return False
+    return True
+
+
+def _split_domain_phrase(phrase: str) -> list[str]:
+    normalized = re.sub(r"\s+and\s+", ", ", phrase.strip(), flags=re.IGNORECASE)
+    return [p.strip() for p in normalized.split(",") if len(p.strip()) >= 3]
+
+
+def _normalize_descriptive_target_label(raw: str) -> str:
+    target = raw.strip().rstrip(".,;")
+    if not target:
+        return ""
+    lowered = target.lower()
+    if any(
+        tok in lowered
+        for tok in (
+            "achievement", "proficiency", "performance", "literacy",
+            "knowledge", "score", "questionnaire", "results", "outcomes",
+        )
+    ):
+        return target[:80]
+    return f"{target} achievement"[:80]
+
+
+def _fallback_descriptive_target_from_outcome(outcome: str) -> str | None:
+    for pattern in (
+        r"summariz(?:e|es|ing)\s+(?:[^.]{0,50}?\s+)?(?:results|findings)\s+"
+        r"(?:from|on)\s+(?:the\s+)?([^.;]{8,90})",
+        r"presents results from\s+(?:the\s+)?([^.;]{8,90})",
+        r"reviews how\s+([^.;]{12,100})",
+        r"uses\s+[^.;]{0,60}?\s+to\s+(?:describe|explain)\s+([^.;]{10,90})",
+    ):
+        match = re.search(pattern, outcome, re.IGNORECASE)
+        if not match:
+            continue
+        label = _normalize_descriptive_target_label(match.group(1))
+        if label and _is_grounded_migration_label(label):
+            return label
+    return None
+
+
+def _outcome_explicitly_non_assessment(outcome: str) -> bool:
+    lowered = outcome.lower()
+    return any(
+        phrase in lowered
+        for phrase in (
+            "does not describe any student assessment",
+            "policy-oriented macroeconomic",
+            "rather than an empirical large-scale assessment",
+            "no predictive-model performance metrics",
+        )
+    )
+
+
+def _infer_domain_list_from_outcome(outcome: str) -> list[str]:
+    domain_patterns = (
+        r"performed in\s+([^.;]{8,160})",
+        r"students?\s+in\s+([^.;]{8,160})",
+        r"across\s+([^.;]{8,160})",
+        r"trends in\s+([^.;]{8,160})",
+        r"performance (?:levels )?in\s+([^.;]{8,160})",
+    )
+    for pattern in domain_patterns:
+        match = re.search(pattern, outcome, re.IGNORECASE)
+        if not match:
+            continue
+        phrase = match.group(1).strip().rstrip(".")
+        if len(phrase) > 90:
+            continue
+        if not re.search(
+            r"\b(mathematics|reading|science|literacy|thinking|financial)\b",
+            phrase,
+            re.I,
+        ):
+            continue
+        domains = _split_domain_phrase(phrase)
+        if len(domains) >= 2:
+            labels = [_normalize_descriptive_target_label(d) for d in domains[:5]]
+            return [label for label in labels if label and _is_grounded_migration_label(label)]
+        if domains:
+            label = _normalize_descriptive_target_label(domains[0])
+            if label and _is_grounded_migration_label(label):
+                return [label]
+    return []
+
+
+def _infer_descriptive_targets_from_outcome(outcome: str) -> list[str]:
+    if _outcome_explicitly_non_assessment(outcome):
+        return []
+
+    domain_targets = _infer_domain_list_from_outcome(outcome)
+    if domain_targets:
+        return domain_targets
+
+    targets: list[str] = []
+    seen: set[str] = set()
+    for pattern in _DESCRIPTIVE_TARGET_PATTERNS:
+        match = pattern.search(outcome)
+        if not match:
+            continue
+        label = _normalize_descriptive_target_label(match.group(1))
+        if not label or not _is_grounded_migration_label(label):
+            continue
+        key = label.lower()
+        if key in seen:
+            continue
+        seen.add(key)
+        targets.append(label)
+        if len(targets) >= 5:
+            break
+    if targets:
+        return targets
+
+    fallback = _fallback_descriptive_target_from_outcome(outcome)
+    return [fallback] if fallback else []
+
+
+def _infer_descriptive_target_from_outcome(outcome: str) -> str | None:
+    multi = _infer_descriptive_targets_from_outcome(outcome)
+    return multi[0] if multi else None
+
+
+def _extract_descriptive_metric_snippets(outcome: str) -> str:
+    hits = [m.group(0).strip() for m in _DESCRIPTIVE_METRIC_SNIPPET_RE.finditer(outcome)]
+    ml_hits = _METRICS_SNIPPET_RE.findall(outcome)
+    combined: list[str] = []
+    for item in hits + ml_hits:
+        cleaned = item.strip()
+        if cleaned and cleaned not in combined:
+            combined.append(cleaned)
+    if combined:
+        return "; ".join(combined)[:220]
+    return "Descriptive statistics only (no ML performance metrics; see outcome_summary)"
+
+
+def _infer_associated_variables_from_outcome(outcome: str) -> list[str]:
+    variables: list[str] = []
+    for match in _ASSOCIATED_VARIABLE_RE.finditer(outcome):
+        for group in match.groups():
+            if not group:
+                continue
+            label = group.strip().rstrip(".,;")
+            if not label or len(label) < 4:
+                continue
+            label = re.sub(r"\s+", " ", label)
+            if label.lower() not in {v.lower() for v in variables}:
+                variables.append(label[:80])
+            if len(variables) >= 5:
+                return variables
+    return variables
+
+
+def _derive_descriptive_meaning_clause(outcome: str) -> str:
+    for pattern in (
+        r"(significantly\s+(?:below|above)\s+[^.]{10,140}\.)",
+        r"((?:below|above)\s+(?:the\s+)?OECD\s+average[^.]{0,80}\.)",
+        r"(implications?[^.]{15,160}\.)",
+        r"(suggests?\s+that\s+[^.]{15,160}\.)",
+    ):
+        match = re.search(pattern, outcome, re.IGNORECASE)
+        if match:
+            return match.group(1).strip().rstrip(".")[:220]
+    sentences = [s.strip() for s in re.split(r"(?<=[.!?])\s+", outcome.strip()) if s.strip()]
+    if len(sentences) >= 2:
+        return sentences[-1].rstrip(".")[:220]
+    if sentences:
+        return sentences[0].rstrip(".")[:220]
+    return outcome[:220]
+
+
+def _build_descriptive_standardized_conclusion(
+    dataset: str,
+    associated: list[str],
+    target: str,
+    outcome: str,
+) -> str:
+    assoc = ", ".join(associated[:3]) if associated else "documented contextual indicators"
+    sentences = [s.strip() for s in re.split(r"(?<=[.!?])\s+", outcome.strip()) if s.strip()]
+    lead = sentences[0] if sentences else outcome[:280]
+    if len(lead) > 280:
+        lead = lead[:277].rstrip() + "..."
+    clause = _dataset_clause(dataset)
+    built = _fix_standardized_conclusion_grammar(
+        f"{clause} the document summarizes {target} in relation to {assoc}, "
+        f"reporting that {lead.rstrip('.')}."
+    )
+    meaning = _derive_descriptive_meaning_clause(outcome)
+    if not _MEANING_CLAUSE_RE.search(built):
+        built = f"{built.rstrip('.')}. This indicates that {meaning}."
+    return _fix_standardized_conclusion_grammar(built)
+
+
+def _build_descriptive_findings_from_outcome(
+    data: dict,
+    metadata: dict | None,
+) -> list[dict]:
+    """
+    Ground main_findings in outcome_summary for official IEA/OECD reports.
+
+    No API calls; no invented ML metrics. Skips when target/dataset cannot be
+    inferred from existing extraction text.
+    """
+    outcome = _coerce_outcome_summary_text(data.get("outcome_summary"))
+    if not substantive_outcome_summary(data):
+        return []
+
+    targets = _infer_descriptive_targets_from_outcome(outcome)
+    if not targets:
+        return []
+
+    dataset = _infer_dataset_from_context(data, metadata)
+    if not _is_grounded_migration_label(dataset):
+        return []
+
+    predictors = _infer_top_predictors_from_data(data)
+    if not predictors:
+        predictors = _infer_associated_variables_from_outcome(outcome)
+    if not predictors:
+        predictors = ["See outcome_summary (descriptive associations not coded as predictors)"]
+
+    metrics = _extract_descriptive_metric_snippets(outcome)
+    findings: list[dict] = []
+    for target in targets:
+        findings.append({
+            "dataset_used": dataset,
+            "target_variable": target,
+            "top_predictors": predictors[:5],
+            "performance_metrics": metrics,
+            "standardized_conclusion": _build_descriptive_standardized_conclusion(
+                dataset, predictors, target, outcome,
+            ),
+        })
+    return findings
+
+
+def _has_empirical_ml_signals(data: dict) -> bool:
+    ml = data.get("ml_techniques") if isinstance(data.get("ml_techniques"), dict) else {}
+    if ml.get("primary"):
+        return True
+    techniques = ml.get("all_techniques")
+    if isinstance(techniques, list) and techniques:
+        return True
+    if data.get("confounders_identified"):
+        return True
+    sd = data.get("sample_details") if isinstance(data.get("sample_details"), dict) else {}
+    if sd.get("total_students"):
+        return True
+    if sd.get("countries"):
+        return True
+    return False
+
+
+def _build_migration_skeleton_finding(
+    data: dict,
+    metadata: dict | None,
+    *,
+    conclusion: str | None = None,
+) -> dict:
+    outcome = _coerce_outcome_summary_text(data.get("outcome_summary"))
+    dataset = _infer_dataset_from_context(data, metadata)
+    target = _infer_target_from_context(data, metadata)
+    predictors = _infer_top_predictors_from_data(data)
+    metrics = _extract_performance_metrics_from_text(outcome or conclusion or "")
+    ml = data.get("ml_techniques") if isinstance(data.get("ml_techniques"), dict) else {}
+    primary = ml.get("primary")
+    if metrics == "Not reported" and isinstance(primary, str) and primary.strip():
+        metrics = f"Best model: {primary.strip()} (see outcome_summary for metrics)"
+    effect = (conclusion or outcome or "").strip()
+    if not effect:
+        effect = (
+            "results were synthesized heuristically from outcome_summary during "
+            "offline migration (no API re-extraction)"
+        )
+    return {
+        "dataset_used": dataset,
+        "target_variable": target,
+        "top_predictors": predictors,
+        "performance_metrics": metrics,
+        "standardized_conclusion": _build_standardized_conclusion(
+            dataset, predictors, target, effect_hint=effect,
+        ),
+    }
+
+
+def _upgrade_legacy_and_empty_findings(data: dict, metadata: dict | None) -> None:
+    """Heuristic migration: never leave main_findings empty when signals exist."""
+    if is_official_report_document(data, metadata):
+        data["main_findings"] = []
+        return
+    raw = data.get("main_findings")
+    findings: list[dict] = []
+    if isinstance(raw, list):
+        for item in raw:
+            if isinstance(item, dict):
+                findings.append(dict(item))
+
+    outcome = _coerce_outcome_summary_text(data.get("outcome_summary"))
+    needs_fill = article_requires_main_findings(data, metadata)
+
+    if not findings and needs_fill:
+        data["main_findings"] = [_build_migration_skeleton_finding(data, metadata)]
+        return
+
+    if not findings:
+        return
+
+    upgraded: list[dict] = []
+    any_legacy = False
+    for finding in findings:
+        if _is_legacy_migration_finding(finding):
+            any_legacy = True
+            skeleton = _build_migration_skeleton_finding(
+                data, metadata, conclusion=outcome or finding.get("standardized_conclusion"),
+            )
+            upgraded.append({
+                **finding,
+                "dataset_used": skeleton["dataset_used"],
+                "target_variable": skeleton["target_variable"],
+                "top_predictors": skeleton["top_predictors"] or finding.get("top_predictors") or [],
+                "performance_metrics": (
+                    skeleton["performance_metrics"]
+                    if skeleton["performance_metrics"] != "Not reported"
+                    else finding.get("performance_metrics") or "Not reported"
+                ),
+                "standardized_conclusion": skeleton["standardized_conclusion"],
+            })
+        else:
+            upgraded.append(finding)
+
+    data["main_findings"] = _normalize_main_findings_list(upgraded)
+
+    if needs_fill and not data["main_findings"]:
+        data["main_findings"] = [_build_migration_skeleton_finding(data, metadata)]
+    elif any_legacy and data["main_findings"]:
+        data["main_findings"] = _normalize_main_findings_list(data["main_findings"])
+
+
+def _normalize_findings_fields(data: dict, metadata: dict | None = None) -> None:
     """Normalize main_findings and outcome_summary; keep both when present."""
+    _upgrade_legacy_and_empty_findings(data, metadata)
+
     raw_findings = data.get("main_findings")
     if isinstance(raw_findings, list):
         data["main_findings"] = _normalize_main_findings_list(raw_findings)
@@ -705,14 +1499,8 @@ def _normalize_findings_fields(data: dict) -> None:
 
     outcome = _coerce_outcome_summary_text(data.get("outcome_summary"))
 
-    if not data["main_findings"] and outcome:
-        data["main_findings"] = [{
-            "dataset_used": "ILSA dataset not specified (legacy migration)",
-            "target_variable": "Primary outcome (legacy migration)",
-            "top_predictors": [],
-            "performance_metrics": "Not reported",
-            "standardized_conclusion": outcome,
-        }]
+    if not data["main_findings"] and outcome and article_requires_main_findings(data, metadata):
+        data["main_findings"] = [_build_migration_skeleton_finding(data, metadata)]
 
     if not outcome and data["main_findings"]:
         parts = []
@@ -727,6 +1515,10 @@ def _normalize_findings_fields(data: dict) -> None:
         )
 
     data["outcome_summary"] = outcome
+
+    if article_requires_main_findings(data, metadata) and not data["main_findings"]:
+        data["main_findings"] = [_build_migration_skeleton_finding(data, metadata)]
+        data["main_findings"] = _normalize_main_findings_list(data["main_findings"])
 
 
 COUNTRY_NAME_TO_ISO = {
@@ -815,6 +1607,76 @@ COUNTRY_NAME_TO_ISO = {
     "korea, republic of": "KOR",
 }
 
+_VALID_ISO_CODES = frozenset(COUNTRY_NAME_TO_ISO.values())
+
+_TOTAL_STUDENTS_RE = re.compile(
+    r"\b(?:N|n)\s*=\s*([\d][\d,]{2,8})\b|"
+    r"\b(?:sample\s+of\s+)?([\d][\d,]{3,8})\s+(?:students?|participants?|learners?)\b",
+    re.IGNORECASE,
+)
+
+
+def _backfill_countries_from_extracted_text(
+    data: dict,
+    metadata: dict | None,
+) -> None:
+    """Ground empty countries[] in already-extracted text (offline, no API)."""
+    if is_official_report_document(data, metadata):
+        return
+    sd = data.get("sample_details")
+    if not isinstance(sd, dict):
+        return
+    existing = sd.get("countries")
+    if isinstance(existing, list) and existing:
+        return
+
+    blob = _collect_migration_context_text(data, metadata)
+    if not blob.strip():
+        return
+
+    found: list[dict] = []
+    seen: set[str] = set()
+    for name, code in sorted(COUNTRY_NAME_TO_ISO.items(), key=lambda x: -len(x[0])):
+        if len(name) < 4:
+            continue
+        if not re.search(rf"\b{re.escape(name)}\b", blob, re.IGNORECASE):
+            continue
+        if code in seen:
+            continue
+        seen.add(code)
+        found.append({"country_code": code, "n_students": None})
+
+    for match in re.finditer(r"\b([A-Z]{3})\b", blob):
+        code = match.group(1).upper()
+        if code in _VALID_ISO_CODES and code not in seen:
+            seen.add(code)
+            found.append({"country_code": code, "n_students": None})
+
+    if found:
+        sd["countries"] = found[:80]
+
+
+def _backfill_total_students_from_extracted_text(
+    data: dict,
+    metadata: dict | None,
+) -> None:
+    """Infer total_students only when explicitly stated in extracted text."""
+    sd = data.get("sample_details")
+    if not isinstance(sd, dict) or sd.get("total_students"):
+        return
+    blob = _collect_migration_context_text(data, metadata)
+    for match in _TOTAL_STUDENTS_RE.finditer(blob):
+        raw = match.group(1) or match.group(2)
+        if not raw:
+            continue
+        try:
+            value = int(raw.replace(",", ""))
+        except ValueError:
+            continue
+        if 50 <= value <= 10_000_000:
+            sd["total_students"] = value
+            return
+
 MODEL_NAME = "gpt-5.4-nano"
 PRICE_INPUT_PER_1M = 2.50
 PRICE_OUTPUT_PER_1M = 10.00
@@ -828,6 +1690,50 @@ Your task is to extract a highly detailed, structured metadata and methodologica
 sheet from an academic article. You must rigorously map academic jargon to the \
 strict schema provided, and MINIMIZE null values through deep semantic search \
 and expert domain inference.
+
+═══════════════════════════════════════════════════════════════
+CORE OBJECTIVE (data → methods → results → meaning)
+═══════════════════════════════════════════════════════════════
+Every extraction must answer four questions:
+  (1) Which ILSA or related large-scale data were used (program, cycle, grade, domain)?
+  (2) Which methods (sampling/weights, PV handling, missing data, ML or design docs)?
+  (3) What results were obtained (metrics, effects, benchmarks)?
+  (4) What do they MEAN for education policy and practice (implications beyond numbers)?
+
+RULE 1 — EMPIRICAL ML / PREDICTIVE PAPERS:
+  - Populate main_findings with one StructuredFinding per DISTINCT target_variable.
+  - standardized_conclusion MUST use the Dataset→Input→Target→Output template AND end with \
+    an implication clause: "... finding that [effect]. This indicates that [policy/practice \
+    meaning]." Example ending: "This indicates that strengthening early numeracy support \
+    may narrow socioeconomic achievement gaps, though causality cannot be inferred."
+  - outcome_summary: 4-5 sentences (~120 words) with metrics and limitations.
+
+RULE 2 — CRASH-PROOF OFFICIAL IEA/OECD TECHNICAL REPORTS & ASSESSMENT FRAMEWORKS:
+  Pydantic REJECTS any string outside the exact literals below. Never invent labels \
+  like "Official Report", "technical report", or prose in enum fields.
+  - metadata.publication_type: EXACTLY "report" (never "Official Report" or variants).
+  - metadata.source_category: EXACTLY "technical_report" OR "methodology_paper".
+  - data.plausible_values_handling: EXACTLY "not_applicable" (frameworks/manuals; \
+    allowed PV literals for empirical papers only: rubin_rules, single_pv, average_pv, \
+    all_pv, mitml, wle, irt_theta, not_reported).
+  - data.missing_data_handling: EXACTLY "not_reported" (allowed elsewhere: listwise_deletion, \
+    pairwise_deletion, mean_imputation, single_imputation, knn_imputation, multiple_imputation).
+  - data.research_design_type: JSON null OR EXACTLY "exploratory" — never predictive/causal.
+  - handling_not_reported_explanation: REQUIRED 2-3 sentences whenever PV is \
+    not_applicable/not_reported OR missing_data_handling is not_reported (explain WHY).
+  - null_fields_interpretation: REQUIRED 2-3 sentences for framework/report extractions \
+    (no ML sample, no predictive findings — diagnose sparse fields by design).
+  - outcome_summary: REQUIRED (~120-150 words) on assessment design, sampling, scaling, \
+    instruments, benchmarks, administration — teach how the exam works.
+  - main_findings: MUST be [] — do NOT fabricate StructuredFinding rows.
+  - confounders_identified: MUST be [] (reference codes are not ML predictors).
+  - ml_techniques.primary = null; all_techniques = [] unless the report itself trains ML.
+  - student_weights_used / replicate_weights_used / metadata.open_access: JSON null when \
+    unknown — NEVER strings "N/A", "na", "unknown", "not applicable" (non-boolean strings fail).
+  - weight_fields_interpretation: ALWAYS REQUIRED (3-4 sentences) on sampling, weights, \
+    PV/scaling guidance — even when student_weights_used is null.
+  - variable_code in confounders (if any): NEVER literal "N/A" — use snake_case slug \
+    from variable_name per schema validator (reports should still use []).
 
 ═══════════════════════════════════════════════════════════════
 CRITICAL EXTRACTION & INFERENCE RULES
@@ -845,7 +1751,8 @@ CRITICAL EXTRACTION & INFERENCE RULES
      randomized experiment → "causal_experimental";
      clustering, topic modeling, EDA, data description → "exploratory".
    - plausible_values_handling MUST be exactly one of:
-     ['rubin_rules', 'single_pv', 'average_pv', 'mitml', 'not_applicable', 'not_reported'].
+     ['rubin_rules', 'single_pv', 'average_pv', 'all_pv', 'mitml', 'wle', 'irt_theta',
+      'not_applicable', 'not_reported'].
      Synonym table:
        "Rubin's rules" / "Rubin combining rules" / "combined PV estimates" /
        "pooled across PVs" / "PV estimates combined"               → rubin_rules
@@ -887,8 +1794,8 @@ CRITICAL EXTRACTION & INFERENCE RULES
     If the paper dichotomizes achievement into binary (e.g. "proficient
     vs not") using PV benchmarks, it still used PVs → infer from context.
    - missing_data_handling MUST be exactly one of:
-     ['listwise_deletion', 'pairwise_deletion', 'mean_imputation',
-      'multiple_imputation', 'not_reported'].
+     ['listwise_deletion', 'pairwise_deletion', 'mean_imputation', 'single_imputation',
+      'knn_imputation', 'multiple_imputation', 'not_reported'].
      Synonym table:
        "listwise deletion" / "complete case" / "excluded incomplete" /
        "removed cases with missing" / "cases with missing data were
@@ -1133,7 +2040,21 @@ CRITICAL EXTRACTION & INFERENCE RULES
    - *** FATAL ERROR ***: returning weight_fields_interpretation as null or \
      empty is a schema violation. Pydantic will reject the output.
 
-7) AGGRESSIVE SAMPLE, COUNTRY, DOI & CONFOUNDER EXTRACTION:
+7) OFFICIAL REPORTS & FRAMEWORKS — see RULE 2 above (IEA technical reports, \
+   assessment frameworks, encyclopedias, implementation manuals, user guides):
+   - Follow RULE 2: rich outcome_summary, main_findings=[], confounders_identified=[].
+   - For JSON boolean fields (student_weights_used, replicate_weights_used, \
+     metadata.open_access): use JSON null when unknown — NEVER strings "N/A", "na", \
+     "not applicable", "unknown", or similar (Pydantic rejects non-boolean strings).
+   - For integer fields (total_students, n_students, year): use JSON null when \
+     unknown — NEVER "N/A" or other placeholder strings.
+   - For array fields (countries, all_techniques, confounders_identified, \
+     main_findings): use [] when empty — not null and not "N/A".
+   - weight_fields_interpretation remains REQUIRED (3-4 sentences from the manual) even \
+     when weights are null/unknown; describe sampling design, PV/scaling, and which \
+     weight variables analysts should use in the international database.
+
+8) AGGRESSIVE SAMPLE, COUNTRY, DOI & CONFOUNDER EXTRACTION:
    - total_students: NEVER default to null without an exhaustive search. Scan \
      "Method", "Participants", "Data", "Data Cleaning", and "Results" sections \
      for keywords: "N =", "n =", "final sample", "consisted of", "analytic \
@@ -1176,15 +2097,14 @@ CRITICAL EXTRACTION & INFERENCE RULES
      Missing a background/control variable = critical failure. Do NOT inflate the \
      list with hundreds of engineered features. \
      Each entry is a STRUCTURED OBJECT with three fields: \
-     (a) variable_code — identifier for tabulation. NEVER output literal "N/A": \
-         Tier 1: official ILSA code exactly as written (ESCS, ST004Q01TA, BSBG11A). \
-         Tier 2: exact author-given label for conceptual constructs (VOTAT, MATHEFF, \
-         ICTRES, gdp_per_capita, sequence_length). NOT raw log codes or ML features. \
-         Tier 3: snake_case slug from variable_name (economic_education_indicators) — \
-         mandatory when no ILSA code exists. Do NOT invent fake ILSA codes. \
-     (b) variable_name — a concise, standardised English label (max 8 words). \
-         Remove jargon. Use consistent naming: "Gender", "Socioeconomic status (ESCS)", \
-         "Home possessions", "Math self-efficacy", "School type", "ICT resources". \
+     (a) variable_code — STRICT CODE: use ONLY official ILSA acronyms (ESCS, UNDREM, \
+         ST004D01TA) when they appear in the text. Tier 2: exact author-given label \
+         (VOTAT, MATHEFF, ICTRES). Tier 3: snake_case slug from variable_name when no \
+         official code exists — NOT invented pseudo-codes (e.g. meta_cognition_understanding, \
+         remembering). NEVER literal "N/A" (Pydantic rejects it) — Tier 3 snake_case slug only. \
+     (b) variable_name — STRICT NAMING: max 8 words; no copy-paste long phrases or \
+         sentence starters ("The …", "Teacher-related variables such as …"). Distill to \
+         labels like "Test effort", "Gender", "Metacognition (understanding & remembering)". \
      (c) category — exactly ONE of 13 categories (no "other" — mandatory assignment): \
        socioeconomic → ESCS, HOMEPOS, WEALTH, HISEI, BMMJ/BFMJ, parental education, \
                        books at home, family resources, cultural possessions \
@@ -1215,7 +2135,7 @@ CRITICAL EXTRACTION & INFERENCE RULES
      If unclear, pick the closest category (do NOT list engineered log/ML features; \
      aggregate country indices → system_level or socioeconomic).
 
-8) LOGICAL DEDUCTION FOR ML TECHNIQUES (ml_techniques):
+9) LOGICAL DEDUCTION FOR ML TECHNIQUES (ml_techniques):
    - primary: DO NOT leave primary null if all_techniques is populated!
      a) If ONLY ONE algorithm is in all_techniques (e.g. ["LASSO"]), that \
         algorithm IS inherently the primary model — copy it to primary.
@@ -1228,7 +2148,7 @@ CRITICAL EXTRACTION & INFERENCE RULES
    - *** FATAL ERROR ***: primary left null while all_techniques has values \
      is a schema violation.
 
-9) ENFORCING THE NULL INTERPRETATION FALLBACK:
+10) ENFORCING THE NULL INTERPRETATION FALLBACK:
    - If after exhaustive search total_students is still null, OR primary is \
      null while all_techniques is empty, you MUST trigger null_fields_interpretation. \
      Write 2-3 sentences diagnosing the omission (e.g. "The study is a scoping \
@@ -1285,7 +2205,7 @@ CRITICAL EXTRACTION & INFERENCE RULES
      knn_imputation, multiple_imputation}. In ALL other cases, this field is \
      MANDATORY.
 
-10) RESEARCH DESIGN CLASSIFICATION (research_design_type):
+11) RESEARCH DESIGN CLASSIFICATION (research_design_type):
    - Papers that predict/classify student outcomes using ML → "predictive"
    - Papers using causal ML (BART, BCF, propensity score matching, \
      diff-in-diff, instrumental variables, causal forests) → "causal_observational"
@@ -1298,14 +2218,14 @@ CRITICAL EXTRACTION & INFERENCE RULES
      → "predictive" (the supervised component dominates)
    - Process-data papers that classify engagement or strategy profiles → "predictive"
 
-11) ANTI-HALLUCINATION:
+12) ANTI-HALLUCINATION:
    - Never INVENT: DOIs, exact N, country codes, author names, weight variable \
      names, or algorithm names not present in the text.
    - Inference is allowed ONLY for categorical/boolean/enum fields where ILSA \
      domain knowledge provides a clear default (rules 1 and 4 above).
    - Numeric fields (total_students, n_students, year) MUST come from the text.
 
-12) NATIONAL / REGIONAL LARGE-SCALE ASSESSMENTS AND OTHER ILSAs:
+13) NATIONAL / REGIONAL LARGE-SCALE ASSESSMENTS AND OTHER ILSAs:
    - Papers using NAEP (USA), CEDRE (France), INVALSI (Italy), or other
      national LSAs should be treated with the SAME extraction rigor as
      ILSA papers. They are valid data sources for this pipeline.
@@ -1334,7 +2254,7 @@ CRITICAL EXTRACTION & INFERENCE RULES
      platforms → treat as non-ILSA empirical data; PV handling is
      typically "not_applicable".
 
-13) PROCESS DATA PAPERS (log files, clickstreams, response times, action sequences):
+14) PROCESS DATA PAPERS (log files, clickstreams, response times, action sequences):
    - These papers analyze HOW students interact with computer-based assessments \
      rather than traditional achievement scores.
    - Typical data: action sequences, response times, mouse clicks, keystrokes, \
@@ -1376,7 +2296,7 @@ CRITICAL EXTRACTION & INFERENCE RULES
      time-to-first-action, number of visits, VOTAT score, preparation \
      time, execution time) in confounders_identified with category='process_data'.
 
-14) REVIEW / META-ANALYSIS / BIBLIOMETRIC PAPERS:
+15) REVIEW / META-ANALYSIS / BIBLIOMETRIC PAPERS:
    - These papers synthesize existing literature rather than analyzing ILSA \
      micro-data directly.
    - source_category: "review_article" (systematic review, scoping review, \
@@ -1395,7 +2315,7 @@ CRITICAL EXTRACTION & INFERENCE RULES
      ILSA micro-data analysis."
    - student_weights_used: null; replicate_weights_used: null.
 
-15) NON-EMPIRICAL / FRAMEWORK / APP-DEVELOPMENT PAPERS:
+16) NON-EMPIRICAL / FRAMEWORK / APP-DEVELOPMENT PAPERS:
    - Papers that develop theoretical frameworks, assessment designs, mobile \
      apps, or methodological proposals without analyzing ILSA student data.
    - Examples: ISM-based cognitive model construction, CAT algorithm design, \
@@ -1409,7 +2329,7 @@ CRITICAL EXTRACTION & INFERENCE RULES
      "predictive" if simulations test predictive models.
    - MUST trigger null_fields_interpretation explaining the non-empirical nature.
 
-16) ANTI-LAZINESS ENFORCEMENT — MANDATORY EXTRACTION RULES:
+17) ANTI-LAZINESS ENFORCEMENT — MANDATORY EXTRACTION RULES:
    - *** ZERO-TOLERANCE FOR UNNECESSARY NULLS ***
    - The following fields MUST NEVER be null without exhaustive justification:
      a) total_students — scan EVERY section for sample size indicators. \
@@ -1425,10 +2345,11 @@ CRITICAL EXTRACTION & INFERENCE RULES
         leave n_students null if a table reports country-level counts.
      e) ml_techniques.primary — if all_techniques has ≥1 entry, primary \
         MUST be filled. This is a FATAL ERROR if violated.
-     f) main_findings — MUST contain at least one StructuredFinding per distinct \
-        target. Each row needs dataset_used (e.g. 'TIMSS 2019 Grade 8 Science'), \
-        target_variable, top_predictors, performance_metrics, and standardized_conclusion \
-        in the Dataset→Input→Target→Output template. Never leave empty for empirical studies.
+     f) main_findings — FATAL ERROR if empty for any empirical ML / predictive study. \
+        MUST contain at least one StructuredFinding per distinct target. Each row needs \
+        dataset_used (e.g. 'TIMSS 2019 Grade 8 Science'), target_variable, top_predictors, \
+        performance_metrics, and standardized_conclusion ending with "This indicates that …". \
+        Official IEA/OECD technical reports/frameworks (RULE 2) MUST use [].
      g) outcome_summary — MUST also be 4-5 substantive sentences with specific \
         metrics and limitations. Complements main_findings; do not leave empty for \
         empirical predictive studies.
@@ -1450,7 +2371,7 @@ CRITICAL EXTRACTION & INFERENCE RULES
      more than 1 null field in data (excluding null_fields_interpretation), \
      you are being LAZY. Re-read and extract harder.
 
-17) XAI & CAUSALITY SCRUTINY (Explainability ≠ Causality):
+18) XAI & CAUSALITY SCRUTINY (Explainability ≠ Causality):
    - Many ML papers use SHAP, LIME, Accumulated Local Effects (ALE), or \
      feature importance rankings and then implicitly or explicitly suggest \
      causal relationships. This is methodologically unsound on cross-sectional \
@@ -1470,7 +2391,7 @@ CRITICAL EXTRACTION & INFERENCE RULES
      be mentioned in standardized_conclusion when used but NEVER in ml_techniques \
      (they are interpretation tools, not learning algorithms).
 
-18) HIERARCHICAL DATA AWARENESS (Nested Structure & i.i.d. Violations):
+19) HIERARCHICAL DATA AWARENESS (Nested Structure & i.i.d. Violations):
    - ILSA data is strictly nested: students → classrooms → schools → countries.
    - Standard ML algorithms (regular XGBoost, Random Forest, SVM, NN) assume \
      independent and identically distributed (i.i.d.) observations, which is \
@@ -1493,7 +2414,7 @@ CRITICAL EXTRACTION & INFERENCE RULES
      correct for clustering. If weights are omitted AND hierarchy is ignored, \
      both findings should be flagged.
 
-19) PROCESS DATA DYNAMICS — TIME & SEQUENCE GRANULARITY:
+20) PROCESS DATA DYNAMICS — TIME & SEQUENCE GRANULARITY:
    - Beyond Rule 13's general process data guidance, rigorously extract HOW \
      time and action sequences were operationalized:
    - TIME METRICS — differentiate the following:
@@ -1518,7 +2439,7 @@ CRITICAL EXTRACTION & INFERENCE RULES
      confounders_identified gets ONLY high-level aggregates (e.g. VOTAT, total time), \
      never individual action codes or TF-IDF/Word2Vec feature columns.
 
-20) ML ROBUSTNESS, CLASS IMBALANCE & DATA LEAKAGE:
+21) ML ROBUSTNESS, CLASS IMBALANCE & DATA LEAKAGE:
    - Do NOT blindly extract overall model "Accuracy" as the sole metric.
    - CLASS IMBALANCE HANDLING:
      a) If the target variable is skewed (e.g., top 5% resilient students, \
@@ -1625,11 +2546,36 @@ class GPTExtractor:
                     return
 
     @staticmethod
+    def _prevalidate_structured_payload(
+        extraction: ILSAArticleMetadata,
+    ) -> ILSAArticleMetadata:
+        """Coerce official-report literals before main_findings validator runs."""
+        payload = extraction.model_dump(mode="python")
+        meta_dict = payload.get("metadata")
+        data_dict = payload.get("data")
+        if not isinstance(data_dict, dict) or not isinstance(meta_dict, dict):
+            return extraction
+        report_mode = should_apply_report_literal_coercion(
+            data_dict, meta_dict,
+        ) or is_official_report_document(data_dict, meta_dict)
+        if report_mode:
+            _coerce_report_literals(data_dict, meta_dict)
+            descriptive = _build_descriptive_findings_from_outcome(
+                data_dict, meta_dict,
+            )
+            if descriptive:
+                data_dict["main_findings"] = descriptive
+        return ILSAArticleMetadata.model_validate(payload)
+
+    @staticmethod
     def _post_process_model(
         extraction: ILSAArticleMetadata,
         processed: Optional["ProcessedPDF"] = None,
-    ) -> None:
-        """Post-process a structured-output extraction in place."""
+    ) -> ILSAArticleMetadata:
+        """Post-process a structured-output extraction in place (mutates caller's model)."""
+        validated = GPTExtractor._prevalidate_structured_payload(extraction)
+        extraction.metadata = validated.metadata
+        extraction.data = validated.data
         GPTExtractor._apply_doi_hint(extraction, processed)
         meta = extraction.metadata
         if not meta.title and meta.file_name:
@@ -1709,9 +2655,40 @@ class GPTExtractor:
                 [f.model_dump() for f in d.main_findings],
             )
         ]
+        return extraction
+
+    @staticmethod
+    def _catalog_extraction_addon(processed: "ProcessedPDF") -> str:
+        """Extra instructions for Scopus/WoS catalogued empirical PDFs."""
+        parts: list[str] = []
+        folder_hint = processed.metadata.get("folder_organization_hint")
+        if folder_hint:
+            parts.append(
+                "FOLDER_ORGANIZATION_HINT (weak prior for ILSA program/cycle when the "
+                f"PDF is silent; NEVER contradict the article text): {folder_hint}\n"
+            )
+        if processed.source_database not in ("scopus", "web_of_science"):
+            return "".join(parts)
+        parts.append(
+            "\nSCOPUS/WoS META-ANALYSIS PRIORITY — the user must know, per paper:\n"
+            "  (1) WHICH DATA: exact ILSA program + cycle + grade/domain in every "
+            "main_findings.dataset_used and outcome_summary opening sentence.\n"
+            "  (2) WHICH COUNTRIES: data.sample_details.countries with ISO alpha-3 "
+            "and n_students for EVERY analyzed economy when tables report counts.\n"
+            "  (3) WHICH METHODS: ml_techniques (all models + primary), PV handling, "
+            "missing-data strategy, survey weights (survey_design), and preprocessing "
+            "in sample_filtering_criteria + weight_fields_interpretation.\n"
+            "  (4) WHAT RESULTS: main_findings with numeric performance_metrics from "
+            "Results tables; standardized_conclusion must end with 'This indicates that …'.\n"
+            "  Peer-reviewed empirical ML papers MUST have ≥1 main_findings row and a "
+            "substantive outcome_summary (~120 words) naming dataset, countries, best "
+            "model, metrics, and top predictors.\n"
+        )
+        return "".join(parts)
 
     def _build_user_message(self, processed: "ProcessedPDF") -> list[dict]:
         sections_label = ", ".join(processed.sections.keys()) or "none"
+        catalog_addon = self._catalog_extraction_addon(processed)
         title_hint = ""
         if processed.metadata.get("extracted_title"):
             title_hint = (
@@ -1739,7 +2716,7 @@ class GPTExtractor:
             f"FILE: {processed.file_name}\n"
             f"SOURCE: {processed.source_database}\n"
             f"SECTIONS_DETECTED: {sections_label}\n"
-            f"{title_hint}{doi_hint}"
+            f"{catalog_addon}{title_hint}{doi_hint}"
             f"--- BEGIN ARTICLE TEXT ---\n\n"
             f"{processed.extraction_text}\n\n"
             f"--- END ARTICLE TEXT ---\n\n"
@@ -1865,9 +2842,10 @@ class GPTExtractor:
             "  (2) EXHAUSTIVE: Read the ENTIRE methodology, variables section, tables, "
             "and results. Do NOT stop after the first few variables. Missing a "
             "variable is a critical extraction failure.\n"
-            "  (3) variable_code TIERS: ILSA code → author label from paper → snake_case "
-            "slug. Literal 'N/A' is FORBIDDEN — use slug (e.g. economic_education_indicators). "
-            "Do NOT invent fake ILSA codes.\n"
+            "  (3) STRICT CODE: official ILSA acronyms only when in text; else author label "
+            "or snake_case slug from variable_name (Tier 3). No invented pseudo-codes "
+            "(meta_cognition_understanding, remembering). Literal 'N/A' FORBIDDEN.\n"
+            "  (3b) STRICT NAMING: variable_name max 8 words — distill, no pasted sentences.\n"
             "  (4) NO MICRO-FEATURES: Do NOT list TF-IDF/Word2Vec columns, n-grams, "
             "raw log actions (start/reset/end), slider codes (0_0_0), or per-action "
             "frequencies. Those are ML inputs — describe them in standardized_conclusion only. "
@@ -1908,7 +2886,8 @@ class GPTExtractor:
             "'Not reported'.\n"
             "  standardized_conclusion: REQUIRED template — "
             "'Using [dataset_used] data, the study leveraged [top_predictors] to predict "
-            "[target_variable], finding that [direction/effect/result].' "
+            "[target_variable], finding that [direction/effect/result]. This indicates that "
+            "[education/policy implication].' "
             "Flag SHAP-overstated causality, missing weights, or data leakage in the "
             "finding clause when relevant.\n"
             "EXAMPLE:\n"
@@ -1920,8 +2899,18 @@ class GPTExtractor:
             "\"standardized_conclusion\": \"Using TIMSS 2019 Grade 8 Science data, the "
             "study leveraged socioeconomic background and curriculum type to predict science "
             "achievement, finding that socioeconomic background was the strongest predictor "
-            "while curriculum type had only a weak direct effect.\"}\n"
-            "Return [] only for reviews/theory papers with no predictive results.\n\n"
+            "while curriculum type had only a weak direct effect. This indicates that "
+            "equity-focused resource policies may matter more than curriculum structure "
+            "alone for narrowing science gaps.\"}\n"
+            "Return [] for reviews/theory papers AND official IEA/OECD technical reports "
+            "(RULE 2) with no student-level ML prediction.\n\n"
+
+            "H-REPORT) OFFICIAL IEA/OECD REPORTS / FRAMEWORKS (RULE 2):\n"
+            "  - outcome_summary ~120-150 words on assessment design (sampling, PVs, items).\n"
+            "  - main_findings = []; confounders_identified = [].\n"
+            "  - student_weights_used / replicate_weights_used: null unless explicitly stated "
+            "(never string 'N/A').\n"
+            "  - weight_fields_interpretation: REQUIRED 3-4 sentences from the manual.\n\n"
 
             "H2) OUTCOME_SUMMARY (narrative companion to main_findings):\n"
             "ALSO write outcome_summary — 4-5 sentences (~120 words max) synthesizing "
@@ -2056,10 +3045,12 @@ class GPTExtractor:
             "  - weight_fields_interpretation null or empty? → FATAL ERROR (always required).\n"
             "  - handling_not_reported_explanation null when PV='not_applicable' or "
             "'not_reported', or missing data='not_reported'? → FATAL ERROR.\n"
-            "  - main_findings empty for an empirical ML study? → Add StructuredFinding rows.\n"
+            "  - main_findings empty for an empirical ML study? → FATAL ERROR; add ≥1 "
+            "StructuredFinding row per target.\n"
             "  - outcome_summary vague or <3 sentences? → Add specific metrics and limitations.\n"
             "  - More than 2 null metadata fields? → You are being LAZY. Extract more.\n"
             "  - More than 1 null data field (excl. null_fields_interpretation)? → Re-scan.\n"
+            f"{catalog_addon}"
         )
 
         return [
@@ -2356,7 +3347,26 @@ class GPTExtractor:
             if key not in ("metadata", "data"):
                 parsed_data.pop(key, None)
 
-        _normalize_findings_fields(data)
+        meta_early = parsed_data.get("metadata")
+        meta_early_dict = meta_early if isinstance(meta_early, dict) else None
+        report_mode = should_apply_report_literal_coercion(
+            data, meta_early_dict,
+        ) or is_official_report_document(data, meta_early_dict)
+        if report_mode:
+            _coerce_report_literals(data, meta_early_dict)
+            descriptive = _build_descriptive_findings_from_outcome(
+                data, meta_early_dict,
+            )
+            if descriptive:
+                data["main_findings"] = _normalize_main_findings_list(descriptive)
+        else:
+            _normalize_findings_fields(data, meta_early_dict)
+            if not data.get("main_findings") and substantive_outcome_summary(data):
+                descriptive = _build_descriptive_findings_from_outcome(
+                    data, meta_early_dict,
+                )
+                if descriptive:
+                    data["main_findings"] = _normalize_main_findings_list(descriptive)
 
         for key in list(data.keys()):
             if key not in DATA_KEYS:
@@ -2413,9 +3423,14 @@ class GPTExtractor:
                 sd["sample_filtering_criteria"] = _DEFAULT_SAMPLE_FILTERING
             else:
                 sd["sample_filtering_criteria"] = sfc.strip()
+            _backfill_countries_from_extracted_text(data, meta_early_dict)
+            _backfill_total_students_from_extracted_text(data, meta_early_dict)
 
         sdw = data.get("survey_design")
         if isinstance(sdw, dict):
+            for bool_key in ("student_weights_used", "replicate_weights_used"):
+                if bool_key in sdw:
+                    sdw[bool_key] = coerce_optional_bool(sdw[bool_key])
             wfi = sdw.get("weight_fields_interpretation")
             if not isinstance(wfi, str) or wfi.strip() in INVALID_STR or not wfi.strip():
                 if sdw.get("student_weights_used") is True:
@@ -2472,6 +3487,7 @@ class GPTExtractor:
                 "extraction_cost_usd",
                 "prompt_tokens",
                 "completion_tokens",
+                "catalog_folder_path",
             ):
                 meta.pop(legacy, None)
             for field in ("venue", "title"):
@@ -2481,6 +3497,12 @@ class GPTExtractor:
                 backfill = _title_from_file_name(meta.get("file_name", ""))
                 if backfill:
                     meta["title"] = backfill
+            if not meta.get("doi"):
+                from src.extractors.pdf_processor import extract_dois_from_text
+
+                dois = extract_dois_from_text(_doi_backfill_blob(data, meta))
+                if dois:
+                    meta["doi"] = dois[0]
             doi_val = meta.get("doi")
             if doi_val in INVALID_STR or doi_val == "null":
                 meta["doi"] = None
@@ -2600,6 +3622,17 @@ class GPTExtractor:
                             break
                 data["research_design_type"] = matched
 
+        meta_for_rdt = parsed_data.get("metadata")
+        meta_rdt_dict = meta_for_rdt if isinstance(meta_for_rdt, dict) else None
+        if data.get("research_design_type") is None and (
+            is_official_report_document(data, meta_rdt_dict)
+            or (
+                isinstance(meta_rdt_dict, dict)
+                and meta_rdt_dict.get("publication_type") == "report"
+            )
+        ):
+            data["research_design_type"] = "exploratory"
+
         data["plausible_values_handling"] = _normalize_literal(
             data.get("plausible_values_handling"),
             "plausible_values_handling",
@@ -2647,6 +3680,25 @@ class GPTExtractor:
                 invalid_names=INVALID_STR,
             )
 
+        meta = parsed_data.get("metadata")
+        if isinstance(meta, dict) and "open_access" in meta:
+            meta["open_access"] = coerce_optional_bool(meta.get("open_access"))
+
+        meta_dict = meta if isinstance(meta, dict) else None
+        if is_official_report_document(data, meta_dict):
+            sdw_report = data.get("survey_design")
+            if isinstance(sdw_report, dict):
+                wfi_report = sdw_report.get("weight_fields_interpretation")
+                outcome_report = _coerce_outcome_summary_text(data.get("outcome_summary"))
+                if (
+                    not isinstance(wfi_report, str)
+                    or not wfi_report.strip()
+                    or _is_generic_weight_interpretation(wfi_report)
+                ):
+                    sdw_report["weight_fields_interpretation"] = (
+                        _weight_fields_interpretation_from_outcome(outcome_report)
+                    )
+
         return parsed_data
 
     def extract(self, processed: "ProcessedPDF") -> ExtractionResult:
@@ -2686,26 +3738,42 @@ class GPTExtractor:
                         if extraction is not None:
                             GPTExtractor._use_structured = True
                             extraction.metadata.file_name = processed.file_name
-                            self._post_process_model(extraction, processed)
-                            usage = response.usage
-                            prompt_tokens = usage.prompt_tokens if usage else 0
-                            completion_tokens = (
-                                usage.completion_tokens if usage else 0
-                            )
-                            cost = self._calculate_cost(
-                                prompt_tokens, completion_tokens
-                            )
-                            return ExtractionResult(
-                                file_name=processed.file_name,
-                                success=True,
-                                extraction=extraction,
-                                input_tokens=prompt_tokens,
-                                output_tokens=completion_tokens,
-                                cost_usd=cost,
-                                duration_seconds=duration,
-                            )
+                            try:
+                                self._post_process_model(extraction, processed)
+                            except (ValidationError, ValueError) as val_err:
+                                logger.warning(
+                                    "Structured output failed local validation on "
+                                    f"{processed.file_name}: {val_err}; "
+                                    "falling back to JSON mode"
+                                )
+                                last_error = f"Structured validation: {val_err}"
+                            else:
+                                usage = response.usage
+                                prompt_tokens = usage.prompt_tokens if usage else 0
+                                completion_tokens = (
+                                    usage.completion_tokens if usage else 0
+                                )
+                                cost = self._calculate_cost(
+                                    prompt_tokens, completion_tokens
+                                )
+                                return ExtractionResult(
+                                    file_name=processed.file_name,
+                                    success=True,
+                                    extraction=extraction,
+                                    input_tokens=prompt_tokens,
+                                    output_tokens=completion_tokens,
+                                    cost_usd=cost,
+                                    duration_seconds=duration,
+                                )
                         last_error = "Model refused structured output"
                         continue
+                    except ValidationError as struct_val_err:
+                        logger.warning(
+                            "Structured parse validation failed on "
+                            f"{processed.file_name}: {struct_val_err}; "
+                            "falling back to JSON mode"
+                        )
+                        last_error = f"Structured parse: {struct_val_err}"
                     except (AttributeError, TypeError):
                         GPTExtractor._use_structured = False
                         logger.info(

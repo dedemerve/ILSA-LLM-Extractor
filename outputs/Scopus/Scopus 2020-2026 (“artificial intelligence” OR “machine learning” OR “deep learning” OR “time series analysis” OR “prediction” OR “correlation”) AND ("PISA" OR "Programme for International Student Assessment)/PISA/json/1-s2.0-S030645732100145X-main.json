@@ -1,0 +1,90 @@
+{
+  "metadata": {
+    "file_name": "1-s2.0-S030645732100145X-main.pdf",
+    "title": "FairLens: Auditing black-box clinical decision support systems",
+    "authors": [
+      "Cecilia Panigutti",
+      "Alan Perotti",
+      "André Panisson",
+      "Paolo Bajardi",
+      "Dino Pedreschi"
+    ],
+    "year": 2021,
+    "doi": "10.1016/j.ipm.2021.102657",
+    "venue": "Information Processing and Management",
+    "publication_type": "journal",
+    "open_access": null,
+    "source_category": "peer_reviewed_research"
+  },
+  "data": {
+    "survey_design": {
+      "student_weights_used": null,
+      "replicate_weights_used": null,
+      "weight_variable_name": null,
+      "weight_fields_interpretation": "This study uses the MIMIC-IV ICU electronic health record dataset (not an ILSA/PISA-style complex survey). The paper does not report any sampling/survey weights or replicate-weight procedures, and the analysis is framed as training/validation/test splits plus auditing on a held-out test set. Because the data are observational clinical records rather than a probability sample with ILSA-style design weights, there is no weight variable to apply for population-representativeness in the sense used by ILSA. The relevant “data preparation” step is the explicit restriction to patients with at least two admissions and the ICD-9/CCS coding setup, followed by the train/validation/test split used to deploy the black-box DSS."
+    },
+    "plausible_values_handling": "not_applicable",
+    "missing_data_handling": "not_reported",
+    "handling_not_reported_explanation": "This paper does not use ILSA-style cognitive achievement outcomes with Plausible Values; instead it audits a clinical DSS that predicts future diagnoses (multi-label ICD/CCS codes) and evaluates group disparities using recall@k and Wasserstein-distance-based disparity scores. Missing-data handling is not described in the provided text because the study focuses on the FairLens auditing pipeline and XAI aggregation rather than reporting an imputation strategy for missing clinical features/codes. Given the absence of explicit documentation, the missing-data strategy should be treated as a reporting gap for reproducibility.",
+    "sample_details": {
+      "total_students": 43697,
+      "countries": [],
+      "sample_filtering_criteria": "Used MIMIC-IV ICU admissions with ICD-9 billing codes, restricted to patients with at least two hospital admissions (reducing to 43,697 patients and 164,411 admissions). The dataset was split into training (29,714 patients, 68%), validation (5,244 patients, 12%), and test/auditing set (8,739 patients, 20%). For the auditing groups, the pipeline excludes each patient’s first visit (no prior history) and evaluates non-first visits as separate data points for group disparity scoring."
+    },
+    "ml_techniques": {
+      "primary": "Neural Network",
+      "all_techniques": [
+        "Neural Network"
+      ]
+    },
+    "confounders_identified": [
+      {
+        "variable_code": "gender",
+        "variable_name": "Gender",
+        "category": "demographic"
+      },
+      {
+        "variable_code": "ethnicity",
+        "variable_name": "Ethnicity",
+        "category": "demographic"
+      },
+      {
+        "variable_code": "age",
+        "variable_name": "Age group",
+        "category": "demographic"
+      },
+      {
+        "variable_code": "insurance_type",
+        "variable_name": "Insurance type",
+        "category": "socioeconomic"
+      }
+    ],
+    "main_findings": [
+      {
+        "dataset_used": "MIMIC-IV ICU (ICD-9/CCS) — sequential diagnoses prediction (train/val/test split; auditing on test set)",
+        "target_variable": "Group disparity in next-visit CCS code predictions (disparity@30 via Wasserstein distance)",
+        "top_predictors": [
+          "Insurance type",
+          "Age group",
+          "Ethnicity",
+          "Gender"
+        ],
+        "performance_metrics": "Clinical DSS global performance (recall@k): 0.481 (@10), 0.623 (@20), 0.712 (@30). FairLens disparity results: highest-disparity groups by group-size bins include (examples) Asian, over-65: disparity score 0.88 (group size 286); Female, 65+, Medicare/Other ethnicity: disparity score 0.83 (group size 70); Female, 65+, Other ethnicity: disparity score 0.84 (group size 111).",
+        "standardized_conclusion": "Using MIMIC-IV ICU (ICD-9/CCS) sequential diagnoses prediction the study leveraged Insurance type, Age group, Ethnicity, and Gender to audit group-level truth–prediction disparity, finding that the DSS shows systematically higher disparity for older patients (over-65) and for the “Other” insurance category when using disparity@30 (Wasserstein distance on top-30 CCS code distributions). This indicates that deploying black-box clinical DSSs without group-specific auditing may perpetuate unequal diagnostic performance across protected and socioeconomic proxy groups, so healthcare facilities should incorporate FairLens-style audits before adoption."
+      },
+      {
+        "dataset_used": "MIMIC-IV ICU (ICD-9/CCS) — synthetic bias validation (biased vs baseline DSS; auditing on test set)",
+        "target_variable": "Detection of synthetically injected bias via disparity@k (Wasserstein distance) despite stable standard metrics",
+        "top_predictors": [
+          "Insurance type",
+          "Age group"
+        ],
+        "performance_metrics": "Biased vs baseline DSS recall@k on biased training set: 0.449/0.586/0.671 (@10/@20/@30) vs baseline 0.454/0.591/0.683. FairLens detected injected biases: highest-disparity groups for biased DSS include Age 0–15 with disparity score 1.00 (group size 10) and Insurance “Other” with disparity score 0.66 (group size 57) in the 50–100 bin; baseline DSS ranking differs (Table 8: Medicare ranked #1 on baseline, Other ranked #1 on biased). Disparity@20 and disparity@30 increased for the under-sampled “Other” insurance group while standard metrics (recall@k and microAUC) remained almost constant or slightly decreased.",
+        "standardized_conclusion": "Using MIMIC-IV ICU data with a synthetically biased training set (90% undersampling of “Other” insurance patients), the study leveraged Insurance type and Age group to audit group disparity, finding that FairLens disparity@20 and disparity@30 increased for the under-sampled “Other” group even though standard multi-label performance metrics stayed nearly constant between biased and baseline DSSs. This indicates that fairness auditing based only on aggregate accuracy/recall can miss clinically consequential bias, so facilities should use disparity-focused auditing to detect subgroup harms before deployment."
+      }
+    ],
+    "outcome_summary": "The paper introduces FairLens, an auditing pipeline for black-box clinical decision support systems that predict future diagnoses from sequential ICD-9/CCS histories. Using MIMIC-IV ICU data restricted to patients with at least two admissions, the authors train a GRU-based recurrent neural network (DoctorAI) on a training/validation split and audit performance on a held-out test set, excluding first visits when no prior history exists. Global model performance is reported via recall@k (0.481 @10, 0.623 @20, 0.712 @30). FairLens stratifies patients by Gender, Ethnicity, Age group, and Insurance type, then computes group disparity using Wasserstein distance between predicted and ground-truth CCS code distributions (disparity@k, default disparity@30). In the synthetic-bias validation, disparity@20/@30 increases for the under-sampled “Other” insurance group even when standard metrics (recall@k and microAUC) remain almost constant, highlighting the added value of group-disparity auditing. The study does not document missing-data handling in the provided text and does not use survey weights, limiting direct generalization beyond the MIMIC-IV setting.",
+    "research_design_type": "predictive",
+    "null_fields_interpretation": null
+  }
+}
