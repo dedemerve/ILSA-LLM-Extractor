@@ -924,7 +924,7 @@ CRITICAL EXTRACTION & INFERENCE RULES
    - NEVER write full country names, 2-letter codes, or non-standard abbreviations.
    - SPECIAL ECONOMIES & REGIONS — use these mappings:
      "Beijing-Shanghai-Jiangsu-Zhejiang" / "B-S-J-Z" / "B-S-J-G"
-       / "BSJZ" / "Chinese mainland"                              → CHN
+       / "BSJZ" / "Chinese mainland"                               → CHN
      "Chinese Taipei" / "Taiwan"                                   → TWN
      "Hong Kong" / "Hong Kong SAR"                                 → HKG
      "Macao" / "Macau" / "Macao SAR"                               → MAC
@@ -1592,13 +1592,13 @@ class GPTExtractor:
 
     def __init__(
         self,
-        api_key: str = None,
+        api_key: str | None = None,
         model: str = MODEL_NAME,
         max_retries: int = 4,
         base_delay: float = 2.0,
     ):
-        api_key = api_key or os.getenv("OPENAI_API_KEY")
-        self.client = OpenAI(api_key=api_key)
+        resolved_key = api_key or os.getenv("OPENAI_API_KEY") or ""
+        self.client = OpenAI(api_key=resolved_key)
         self.model = model
         self.max_retries = max_retries
         self.base_delay = base_delay
@@ -2302,7 +2302,9 @@ class GPTExtractor:
         Post-process model output to fix known failure modes before Pydantic validation.
         Modifies parsed_data in place and returns it.
         """
-        INVALID_STR = {"not_reported", "not_applicable", "N/A", "n/a", "unknown", ""}
+        INVALID_STR = frozenset({
+            "not_reported", "not_applicable", "N/A", "n/a", "unknown", "",
+        })
 
         def _normalize_literal(value, field_name, allowed, default):
             if isinstance(value, str):
@@ -2686,15 +2688,19 @@ class GPTExtractor:
                             extraction.metadata.file_name = processed.file_name
                             self._post_process_model(extraction, processed)
                             usage = response.usage
+                            prompt_tokens = usage.prompt_tokens if usage else 0
+                            completion_tokens = (
+                                usage.completion_tokens if usage else 0
+                            )
                             cost = self._calculate_cost(
-                                usage.prompt_tokens, usage.completion_tokens
+                                prompt_tokens, completion_tokens
                             )
                             return ExtractionResult(
                                 file_name=processed.file_name,
                                 success=True,
                                 extraction=extraction,
-                                input_tokens=usage.prompt_tokens,
-                                output_tokens=usage.completion_tokens,
+                                input_tokens=prompt_tokens,
+                                output_tokens=completion_tokens,
                                 cost_usd=cost,
                                 duration_seconds=duration,
                             )
@@ -2749,15 +2755,17 @@ class GPTExtractor:
                 self._post_process_model(extraction, processed)
 
                 usage = response.usage
+                prompt_tokens = usage.prompt_tokens if usage else 0
+                completion_tokens = usage.completion_tokens if usage else 0
                 cost = self._calculate_cost(
-                    usage.prompt_tokens, usage.completion_tokens
+                    prompt_tokens, completion_tokens
                 )
                 return ExtractionResult(
                     file_name=processed.file_name,
                     success=True,
                     extraction=extraction,
-                    input_tokens=usage.prompt_tokens,
-                    output_tokens=usage.completion_tokens,
+                    input_tokens=prompt_tokens,
+                    output_tokens=completion_tokens,
                     cost_usd=cost,
                     duration_seconds=duration,
                 )
