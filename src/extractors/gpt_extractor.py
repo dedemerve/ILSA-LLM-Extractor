@@ -247,7 +247,50 @@ def _is_micro_process_confounder(name: str, code: str) -> bool:
         return True
     if "slider" in name_lower and re.search(r"\(\s*-?\d+_\d+", name_lower):
         return True
+    if re.search(r"\b0_0_0\b", name_lower):
+        return True
+    if re.search(r"\d+_\d+_-?\d+", name_lower):
+        return True
     return False
+
+
+def _is_survey_weight_confounder(name: str, code: str) -> bool:
+    """Drop sampling-weight variables mistakenly listed as predictors/confounders."""
+    code_key = (code or "").strip().upper()
+    if not code_key:
+        return False
+    if code_key.endswith("WGT") or code_key.startswith("W_"):
+        return True
+    if code_key in (
+        "TOTWGT", "FSTUWT", "W_FSTUWT", "SCHWGT", "HOUWGT", "SENWGT",
+        "MATWGT", "SCIWGT", "REAWGT",
+    ):
+        return True
+    name_lower = name.lower()
+    if any(
+        phrase in name_lower
+        for phrase in (
+            "survey weight", "sampling weight", "student weight",
+            "senate weight", "house weight", "replicate weight",
+        )
+    ):
+        return True
+    return False
+
+
+def _title_from_file_name(file_name: str) -> Optional[str]:
+    """Derive a catalog title from pipeline file_name when metadata.title is missing."""
+    if not isinstance(file_name, str) or not file_name.strip():
+        return None
+    stem = file_name.strip()
+    if stem.lower().endswith(".pdf"):
+        stem = stem[:-4]
+    stem = re.sub(r"^\d+\.\s*", "", stem).strip()
+    match = re.match(r"^.+?\(\d{4}\)\.\s*(.+)$", stem)
+    if match:
+        title = match.group(1).strip()
+        return title if len(title) >= 10 else None
+    return stem if len(stem) >= 15 else None
 
 
 def _slug_variable_code(name: str) -> str:
@@ -448,6 +491,10 @@ def _normalize_confounders_list(
         c for c in expanded
         if c["variable_name"] not in invalid_names
         and not _is_micro_process_confounder(
+            c.get("variable_name", ""),
+            c.get("variable_code") or "",
+        )
+        and not _is_survey_weight_confounder(
             c.get("variable_name", ""),
             c.get("variable_code") or "",
         )
@@ -1584,6 +1631,11 @@ class GPTExtractor:
     ) -> None:
         """Post-process a structured-output extraction in place."""
         GPTExtractor._apply_doi_hint(extraction, processed)
+        meta = extraction.metadata
+        if not meta.title and meta.file_name:
+            backfill = _title_from_file_name(meta.file_name)
+            if backfill:
+                meta.title = backfill
         for c in extraction.data.sample_details.countries:
             code = c.country_code.strip()
             if len(code) != 3 or not code.isalpha():
@@ -2423,6 +2475,10 @@ class GPTExtractor:
             for field in ("venue", "title"):
                 if meta.get(field) in INVALID_STR:
                     meta[field] = None
+            if not meta.get("title"):
+                backfill = _title_from_file_name(meta.get("file_name", ""))
+                if backfill:
+                    meta["title"] = backfill
             doi_val = meta.get("doi")
             if doi_val in INVALID_STR or doi_val == "null":
                 meta["doi"] = None
