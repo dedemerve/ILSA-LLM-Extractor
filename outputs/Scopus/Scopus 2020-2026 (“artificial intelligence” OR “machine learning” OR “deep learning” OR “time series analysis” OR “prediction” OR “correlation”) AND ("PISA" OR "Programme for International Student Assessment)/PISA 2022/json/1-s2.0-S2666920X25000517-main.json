@@ -1,0 +1,154 @@
+{
+  "metadata": {
+    "file_name": "1-s2.0-S2666920X25000517-main.pdf",
+    "title": "Assessing reading fluency in elementary grades: A machine learning approach",
+    "authors": [
+      "G.C. da Silva",
+      "R.L. Rodrigues",
+      "A.N. Amorim",
+      "L. Jeon",
+      "E.X.S. Albuquerque",
+      "V.C. Silva",
+      "V.F. da Silva",
+      "A.L.A. Pinheiro",
+      "J.P.J.R. Nunes",
+      "S.X.M.G. de Souza",
+      "M.S. Silva",
+      "I. Mauro",
+      "A.M.A. Maciel"
+    ],
+    "year": 2025,
+    "doi": "10.1016/j.caeai.2025.100411",
+    "venue": "Computers and Education: Artificial Intelligence",
+    "publication_type": "journal",
+    "open_access": null,
+    "source_category": "peer_reviewed_research"
+  },
+  "data": {
+    "survey_design": {
+      "student_weights_used": null,
+      "replicate_weights_used": null,
+      "weight_variable_name": null,
+      "weight_fields_interpretation": "The study uses audio recordings collected by Escribo during regular school activities in 144 schools across Brazil, and then constructs a supervised-learning dataset from Whisper/WhisperX transcriptions and human fluency ratings. The manuscript does not describe any complex survey design, sampling weights, or replicate-weight procedures, and it does not report any ILSA-style weight variables (e.g., W_FSTUWT) or BRR/jackknife methods. Because the analysis is based on a locally collected school sample and not on a PISA microdata extract with documented sampling weights, weighting is not specified and should not be assumed. Analysts replicating this work should treat the dataset as a convenience/operational sample unless the authors provide a weighting scheme; model evaluation is based on StratifiedKFold cross-validation rather than survey-weighted estimation."
+    },
+    "plausible_values_handling": "not_applicable",
+    "missing_data_handling": "not_reported",
+    "handling_not_reported_explanation": "This study predicts an expert-derived continuous fluency score and its discretized versions from transcription-derived features (Accuracy, Speed, Prosody). Plausible Values are not part of the data-generating process because the dependent variable is not an ILSA cognitive achievement scale with PVs; it is a rubric-based fluency rating derived from human evaluation. Missing-data handling is not reported because the paper focuses on filtering out low-quality/invalid recordings via tags (e.g., muted audio, extremely low volume, uncomprehensible reading) rather than describing an explicit missingness-imputation protocol for partially missing feature values.",
+    "sample_details": {
+      "total_students": 108,
+      "countries": [
+        {
+          "country_code": "BRA",
+          "n_students": null
+        }
+      ],
+      "sample_filtering_criteria": "The study collected 600 audio recordings from children in 2nd and 3rd grades across 144 public and private schools in Brazil. After transcription with WhisperX (large-v3), fluency features were extracted (Accuracy, Speed, Prosody) and a target fluency score was created from specialist ratings. For modeling, the authors used two dataset versions: (i) a complete labeled set of 513 audios and (ii) a filtered set of 327 audios after excluding recordings tagged with issues. Exclusion tags included muted audio (n=8), extremely low volume (n=44), uncomprehensible reading (n=86), excessive background noise (n=108), no actual reading (n=82), and presence of other people speaking (grouped into one/two/three/many speakers with counts n=38, 13, 5, 72). Because a single audio could have multiple tags, exclusion counts sum to more than the initial difference between 513 and 327."
+    },
+    "ml_techniques": {
+      "primary": "Logistic Regression",
+      "all_techniques": [
+        "Logistic Regression",
+        "Random Forest",
+        "XGBoost",
+        "SVM",
+        "k-NN",
+        "Decision Tree",
+        "Gradient Boosting",
+        "AdaBoost",
+        "Naive Bayes",
+        "LightGBM",
+        "CatBoost",
+        "SVR",
+        "Linear Regression"
+      ]
+    },
+    "confounders_identified": [
+      {
+        "variable_code": "accuracy",
+        "variable_name": "Accuracy (correct words)",
+        "category": "student_behavior"
+      },
+      {
+        "variable_code": "speed",
+        "variable_name": "Reading speed (WPM)",
+        "category": "student_behavior"
+      },
+      {
+        "variable_code": "prosody",
+        "variable_name": "Prosody (correct pauses)",
+        "category": "student_behavior"
+      }
+    ],
+    "main_findings": [
+      {
+        "dataset_used": "Brazil (Grades 2-3) reading fluency audio dataset — complete set (n=513)",
+        "target_variable": "Fluency (binary: fluent vs nonfluent)",
+        "top_predictors": [
+          "Reading speed (WPM)",
+          "Accuracy (correct words)",
+          "Prosody (correct pauses)"
+        ],
+        "performance_metrics": "Binary classification (complete dataset): Logistic Regression Accuracy=0.83, Precision=0.83, Recall=0.77, F1=0.80; LightGBM Accuracy=0.83, Precision=0.80, Recall=0.82, F1=0.81; SVC Accuracy=0.82, Precision=0.84, Recall=0.75, F1=0.79. AUC reported as 0.92 for Logistic Regression, SVC, and CatBoost.",
+        "standardized_conclusion": "Using the Brazil (Grades 2-3) reading fluency audio dataset (complete set, n=513), the study leveraged Reading speed (WPM), Accuracy (correct words), and Prosody (correct pauses) to predict Fluency (binary: fluent vs nonfluent), finding that Logistic Regression achieved the highest overall accuracy (0.83) with strong precision (0.83) and that speed dominated model importance. This indicates that automated fluency screening systems should prioritize reading-rate features (with prosody as a supporting signal) to reduce false positives when flagging fluent readers for instructional decisions."
+      },
+      {
+        "dataset_used": "Brazil (Grades 2-3) reading fluency audio dataset — complete set (n=513)",
+        "target_variable": "Fluency (multiclass: nonfluent, partially fluent, fluent)",
+        "top_predictors": [
+          "Reading speed (WPM)",
+          "Prosody (correct pauses)",
+          "Accuracy (correct words)"
+        ],
+        "performance_metrics": "Multiclass classification (complete dataset): Logistic Regression Accuracy=0.75, Precision=0.73, Recall=0.75, F1=0.73 (best overall across 3 classes). Other models: SVC Accuracy=0.74, F1=0.73; Gradient Boosting Accuracy=0.73, F1=0.72; Random Forest Accuracy=0.73, F1=0.71.",
+        "standardized_conclusion": "Using the Brazil (Grades 2-3) reading fluency audio dataset (complete set, n=513), the study leveraged Reading speed (WPM), Prosody (correct pauses), and Accuracy (correct words) to predict Fluency (multiclass: nonfluent, partially fluent, fluent), finding that Logistic Regression achieved the highest overall accuracy (0.75) and balanced recall (0.75) across classes. This indicates that multi-level grouping of fluency can be automated, but instructional use should account for the model’s weaker discrimination around the intermediate (partially fluent) band."
+      },
+      {
+        "dataset_used": "Brazil (Grades 2-3) reading fluency audio dataset — complete set (n=513)",
+        "target_variable": "Fluency (continuous score, 0-10)",
+        "top_predictors": [
+          "Reading speed (WPM)",
+          "Prosody (correct pauses)",
+          "Accuracy (correct words)"
+        ],
+        "performance_metrics": "Regression (complete dataset): SVR MAE=1.0477, MSE=2.4268, R2=0.7005 (lowest MAE); CatBoost MAE=1.0931, MSE=2.3734, R2=0.7071 (highest R2); Random Forest MAE=1.0919, MSE=2.3774, R2=0.7066.",
+        "standardized_conclusion": "Using the Brazil (Grades 2-3) reading fluency audio dataset (complete set, n=513), the study leveraged Reading speed (WPM), Prosody (correct pauses), and Accuracy (correct words) to predict Fluency (continuous score, 0-10), finding that CatBoost and Random Forest explained the most variance (R2≈0.71) with low error (MAE≈1.09). This indicates that continuous progress-monitoring of oral reading fluency can be automated effectively, with speed as the dominant driver and prosody contributing additional explanatory power."
+      },
+      {
+        "dataset_used": "Brazil (Grades 2-3) reading fluency audio dataset — filtered set (n=327)",
+        "target_variable": "Fluency (binary: fluent vs nonfluent)",
+        "top_predictors": [
+          "Reading speed (WPM)",
+          "Accuracy (correct words)",
+          "Prosody (correct pauses)"
+        ],
+        "performance_metrics": "Binary classification (filtered dataset): Logistic Regression Accuracy=0.82, Precision=0.84, Recall=0.82, F1=0.83; Gradient Boosting Accuracy=0.82, Precision=0.84, Recall=0.82, F1=0.83. AUC reported as 0.90 for Logistic Regression (highest).",
+        "standardized_conclusion": "Using the Brazil (Grades 2-3) reading fluency audio dataset (filtered set, n=327), the study leveraged Reading speed (WPM), Accuracy (correct words), and Prosody (correct pauses) to predict Fluency (binary: fluent vs nonfluent), finding that Logistic Regression (tied with Gradient Boosting) reached Accuracy=0.82 and F1=0.83 with improved precision (0.84) after quality filtering. This indicates that robust fluency automation in real classrooms may require explicit audio-quality screening (tag-based filtering) so that speed-driven models maintain diagnostic precision."
+      },
+      {
+        "dataset_used": "Brazil (Grades 2-3) reading fluency audio dataset — filtered set (n=327)",
+        "target_variable": "Fluency (multiclass: nonfluent, partially fluent, fluent)",
+        "top_predictors": [
+          "Reading speed (WPM)",
+          "Prosody (correct pauses)",
+          "Accuracy (correct words)"
+        ],
+        "performance_metrics": "Multiclass classification (filtered dataset): best models reported as Random Forest Accuracy=0.74, Precision=0.73, Recall=0.74, F1=0.74; CatBoost Accuracy=0.74, Precision=0.73, Recall=0.74, F1=0.73. Logistic Regression Accuracy=0.72, Precision=0.71, Recall=0.72, F1=0.71.",
+        "standardized_conclusion": "Using the Brazil (Grades 2-3) reading fluency audio dataset (filtered set, n=327), the study leveraged Reading speed (WPM), Prosody (correct pauses), and Accuracy (correct words) to predict Fluency (multiclass: nonfluent, partially fluent, fluent), finding that Random Forest and CatBoost performed best (Accuracy=0.74, F1≈0.74) after excluding low-quality recordings. This indicates that for classroom grouping into multiple fluency levels, ensemble models may be more resilient to noise and transcription artifacts than linear models."
+      },
+      {
+        "dataset_used": "Brazil (Grades 2-3) reading fluency audio dataset — filtered set (n=327)",
+        "target_variable": "Fluency (continuous score, 0-10)",
+        "top_predictors": [
+          "Reading speed (WPM)",
+          "Prosody (correct pauses)",
+          "Accuracy (correct words)"
+        ],
+        "performance_metrics": "Regression (filtered dataset): SVR MAE=1.0379, MSE=2.2960, R2=0.5751 (best MAE); KNN MAE=1.0591, MSE=2.1941, R2=0.5939 (best R2 among filtered models); CatBoost MAE=1.0771, MSE=2.1992, R2=0.5930.",
+        "standardized_conclusion": "Using the Brazil (Grades 2-3) reading fluency audio dataset (filtered set, n=327), the study leveraged Reading speed (WPM), Prosody (correct pauses), and Accuracy (correct words) to predict Fluency (continuous score, 0-10), finding that KNN achieved the highest R2 (0.5939) while SVR minimized MAE (1.0379). This indicates that when audio quality is controlled via filtering, multiple model families can support continuous fluency scoring, but model choice should align with whether schools prioritize variance explanation (R2) or absolute error (MAE)."
+      }
+    ],
+    "outcome_summary": "The study develops an automated reading-fluency assessment pipeline for children in Brazil (grades 2–3) using Whisper/WhisperX transcriptions of a short story (“O Lobo e o Veado”). From transcriptions, it extracts three fluency features—Accuracy (correct words), Speed (correct words per minute), and Prosody (correct pauses)—and predicts an expert-rated fluency score (0–10), evaluated in binary, multiclass, and regression settings. Across the complete labeled set (513 audios), Logistic Regression achieved the best binary performance (Accuracy=0.83; AUC=0.92) and the best multiclass overall performance (Accuracy=0.75; F1=0.73). For regression, CatBoost and Random Forest achieved the highest variance explanation (R2≈0.71) with low error (MAE≈1.09). The authors also report improved precision after tag-based filtering (327 audios), but they do not document any missing-data imputation strategy or survey-weighting; thus, results reflect a filtered operational sample rather than a nationally representative design.",
+    "research_design_type": "predictive",
+    "null_fields_interpretation": null
+  }
+}
