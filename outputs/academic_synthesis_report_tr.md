@@ -361,10 +361,10 @@ _Ozet (bu ikili): toplam 1 study-count birimi, 1 trend kovası._
 ### teorik ve meta-sentez içeriği
 
 - 13 kayıt, teorik ve meta-sentez katmanında teorik ve meta-sentez içeriği bağlamında literatür düzeyinde sentez/tartışma içermektedir; bu satırlar ampirik etki büyüklüğü değil, meta-bilişsel özet niteliğindedir (Study_Count=13).
-- 163 kayıt, teorik ve meta-sentez katmanında teorik ve meta-sentez içeriği bağlamında literatür düzeyinde sentez/tartışma içermektedir; bu satırlar ampirik etki büyüklüğü değil, meta-bilişsel özet niteliğindedir (Study_Count=163).
+- 164 kayıt, teorik ve meta-sentez katmanında teorik ve meta-sentez içeriği bağlamında literatür düzeyinde sentez/tartışma içermektedir; bu satırlar ampirik etki büyüklüğü değil, meta-bilişsel özet niteliğindedir (Study_Count=164).
 - 37 kayıt, teorik ve meta-sentez katmanında teorik ve meta-sentez içeriği bağlamında literatür düzeyinde sentez/tartışma içermektedir; bu satırlar ampirik etki büyüklüğü değil, meta-bilişsel özet niteliğindedir (Study_Count=37).
 
-_Ozet (bu ikili): toplam 213 study-count birimi, 3 trend kovası._
+_Ozet (bu ikili): toplam 214 study-count birimi, 3 trend kovası._
 
 
 ## Geleneksel Istatistik (Traditional_Stats)
@@ -418,9 +418,9 @@ _Ozet (bu ikili): toplam 20 study-count birimi, 3 trend kovası._
 
 - 4 çalışma, geleneksel istatistik yöntemiyle Civic Engagement için negatif bir eğilim raporlamıştır (Study_Count=4).
 - 2 çalışma, geleneksel istatistik yöntemiyle Civic Engagement için net yönlü bir etki bildirmemiş veya null/belirsiz sonuç raporlamıştır (Study_Count=2).
-- 9 çalışma, geleneksel istatistik yöntemiyle Civic Engagement için pozitif bir eğilim raporlamıştır (Study_Count=9).
+- 8 çalışma, geleneksel istatistik yöntemiyle Civic Engagement için pozitif bir eğilim raporlamıştır (Study_Count=8).
 
-_Ozet (bu ikili): toplam 15 study-count birimi, 3 trend kovası._
+_Ozet (bu ikili): toplam 14 study-count birimi, 3 trend kovası._
 
 
 ### Curriculum Instruction
@@ -494,9 +494,9 @@ _Ozet (bu ikili): toplam 1 study-count birimi, 1 trend kovası._
 
 - 23 çalışma, geleneksel istatistik yöntemiyle Math Achievement için negatif bir eğilim raporlamıştır (Study_Count=23).
 - 97 çalışma, geleneksel istatistik yöntemiyle Math Achievement için net yönlü bir etki bildirmemiş veya null/belirsiz sonuç raporlamıştır (Study_Count=97).
-- 60 çalışma, geleneksel istatistik yöntemiyle Math Achievement için pozitif bir eğilim raporlamıştır (Study_Count=60).
+- 59 çalışma, geleneksel istatistik yöntemiyle Math Achievement için pozitif bir eğilim raporlamıştır (Study_Count=59).
 
-_Ozet (bu ikili): toplam 180 study-count birimi, 3 trend kovası._
+_Ozet (bu ikili): toplam 179 study-count birimi, 3 trend kovası._
 
 
 ### Metacognition Strategies
@@ -542,10 +542,10 @@ _Ozet (bu ikili): toplam 1 study-count birimi, 1 trend kovası._
 ### Problem Solving Achievement
 
 - 3 çalışma, geleneksel istatistik yöntemiyle Problem Solving Achievement için negatif bir eğilim raporlamıştır (Study_Count=3).
-- 20 çalışma, geleneksel istatistik yöntemiyle Problem Solving Achievement için net yönlü bir etki bildirmemiş veya null/belirsiz sonuç raporlamıştır (Study_Count=20).
+- 21 çalışma, geleneksel istatistik yöntemiyle Problem Solving Achievement için net yönlü bir etki bildirmemiş veya null/belirsiz sonuç raporlamıştır (Study_Count=21).
 - 13 çalışma, geleneksel istatistik yöntemiyle Problem Solving Achievement için pozitif bir eğilim raporlamıştır (Study_Count=13).
 
-_Ozet (bu ikili): toplam 36 study-count birimi, 3 trend kovası._
+_Ozet (bu ikili): toplam 37 study-count birimi, 3 trend kovası._
 
 
 ### Process Data Log
@@ -569,8 +569,8 @@ _Ozet (bu ikili): toplam 43 study-count birimi, 3 trend kovası._
 ### Reading Achievement
 
 - 18 çalışma, geleneksel istatistik yöntemiyle Reading Achievement için negatif bir eğilim raporlamıştır (Study_Count=18).
-- 134 çalışma, geleneksel istatistik yöntemiyle Reading Achievement için net yönlü bir etki bildirmemiş veya null/belirsiz sonuç raporlamıştır (Study_Count=134).
-- 44 çalışma, geleneksel istatistik yöntemiyle Reading Achievement için pozitif bir eğilim raporlamıştır (Study_Count=44).
+- 133 çalışma, geleneksel istatistik yöntemiyle Reading Achievement için net yönlü bir etki bildirmemiş veya null/belirsiz sonuç raporlamıştır (Study_Count=133).
+- 45 çalışma, geleneksel istatistik yöntemiyle Reading Achievement için pozitif bir eğilim raporlamıştır (Study_Count=45).
 
 _Ozet (bu ikili): toplam 196 study-count birimi, 3 trend kovası._
 
@@ -639,10 +639,10 @@ _Ozet (bu ikili): toplam 15 study-count birimi, 2 trend kovası._
 ### Teacher Efficacy Workforce
 
 - 7 çalışma, geleneksel istatistik yöntemiyle Teacher Efficacy Workforce için negatif bir eğilim raporlamıştır (Study_Count=7).
-- 14 çalışma, geleneksel istatistik yöntemiyle Teacher Efficacy Workforce için net yönlü bir etki bildirmemiş veya null/belirsiz sonuç raporlamıştır (Study_Count=14).
+- 15 çalışma, geleneksel istatistik yöntemiyle Teacher Efficacy Workforce için net yönlü bir etki bildirmemiş veya null/belirsiz sonuç raporlamıştır (Study_Count=15).
 - 23 çalışma, geleneksel istatistik yöntemiyle Teacher Efficacy Workforce için pozitif bir eğilim raporlamıştır (Study_Count=23).
 
-_Ozet (bu ikili): toplam 44 study-count birimi, 3 trend kovası._
+_Ozet (bu ikili): toplam 45 study-count birimi, 3 trend kovası._
 
 
 ### Teacher Quality Practices
