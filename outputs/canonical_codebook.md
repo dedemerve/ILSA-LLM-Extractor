@@ -68,7 +68,7 @@
 
 ## ICT_Usage
 
-**Examples:** two ICILS 2023 assessments for 9th graders: Digital Competen achievement | how the PISA 2012 database is built from paper-based and computer-based test des | digital reading scale achievement
+**Examples:** two ICILS 2023 assessments for 9th graders: Digital Competen achievement | digital reading scale achievement | how the PISA 2012 database is built from paper-based and computer-based test des
 
 **Definition:** Student ICT access, frequency of use, and digital learning engagement (ICTRES, ENCTUSE).
 
@@ -80,7 +80,7 @@
 
 ## Labor_Market_Outcomes
 
-**Examples:** Abstract task price (within-occupation wage premium, log hourly earnings) | Routine task price (within-occupation wage decrease, log hourly earnings) | Manual task price (within-occupation wage decrease, log hourly earnings)
+**Examples:** Log daily wage | Log daily wage (AI subfield exposure) | Log daily wage (low vs high task churning occupations)
 
 **Definition:** PIAAC/ILSA-linked labor market outcomes: wages, employment, automation risk, overeducation penalties, task prices, and unemployment transitions.
 
@@ -92,7 +92,7 @@
 
 ## Math_Achievement
 
-**Examples:** numeracy activities, and children’s early literacy | mathematics achievement | mathematics (and also describes the broader TIMSS design) achievement
+**Examples:** numeracy activities, and children’s early literacy | how Chinese Taipei used successive TIMSS cycles as an evidence base for mathemat | mathematics report excerpt summarizes student achievement
 
 **Definition:** Mathematics proficiency on ILSA scales (e.g. PISA PV1MATH–PV10MATH, TIMSS numeracy).
 
@@ -146,7 +146,7 @@
 
 ## Reading_Achievement
 
-**Examples:** literacy (RI literacy | reading literacy | Reading Literacy
+**Examples:** literacy (RI literacy | reading” scores | reading literacy
 
 **Definition:** Reading literacy proficiency (PISA/PIRLS reading scales and text comprehension outcomes).
 
@@ -170,13 +170,13 @@
 
 ## School_Type_Composition
 
-**Examples:** School type (public/private) | Urban/rural birthplace | School type (charter/private)
+**Examples:** School type (public/private) | School type (charter/private) | Urban/rural birthplace
 
 **Definition:** Public/private, urban/rural, school type
 
 ## Science_Achievement
 
-**Examples:** science achievement | mathematics and science literacy | mathematics and science achievement
+**Examples:** mathematics and science achievement | science achievement | mathematics and science literacy
 
 **Definition:** Science literacy/achievement (PISA/TIMSS science PVs and domain scores).
 
@@ -200,7 +200,7 @@
 
 ## Teacher_Efficacy_Workforce
 
-**Examples:** Teacher Knowledge Survey (TKS) 2024, a module within TALIS administered to lower | TALIS 2018 teacher and principal questionnaire | measurement invariance in large-scale cross-cultural surveys (PISA, TALIS, PIAAC
+**Examples:** Teacher Knowledge Survey (TKS) 2024, a module within TALIS administered to lower | associations between routine intensity and workforce skill proxies (including nu | TALIS 2018 teacher and principal questionnaire
 
 **Definition:** TALIS/PISA teacher workforce constructs: instructional and classroom-management efficacy (ECM/ESE), job satisfaction, intention to quit, cognitive activation (COGAC), PLC, and organisational innovativeness — process drivers distinct from student achievement.
 
@@ -212,13 +212,13 @@
 
 ## Theoretical_and_Meta_Synthesis
 
-**Examples:** 83% of between-school variance and 33% of between-student variance achievement | content-domain expansion (e achievement | attitudes toward authoritarianism achievement
+**Examples:** Primary study outcome (heuristic migration) | egalitarian attitudes achievement | content-domain expansion (e achievement
 
 **Definition:** Non-empirical synthesis rows: systematic reviews, methodology/policy discourse, heuristic migration placeholders, and literature-level outcomes without student-level effect-size targets — isolated from empirical achievement/motivation boxes for RAG.
 
 ## Uncategorized_Contextual
 
-**Examples:** how countries could adapt questionnaire wording using <NRC NOTE:> and <Internati | with an optional computational thinking (CT) domain achievement | that the original four-process framework could not be scaled into four separate
+**Examples:** CIL achievement | with an optional computational thinking (CT) domain achievement | how countries could adapt questionnaire wording using <NRC NOTE:> and <Internati
 
 **Definition:** Context-specific label that could not be aligned after primary + smart-domain rules; requires manual mapping for RAG retrieval.
 
