@@ -17,7 +17,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT))
 
 from src.extractors.gpt_extractor import GPTExtractor
-from src.schemas.models import validate_public_article_json
+from src.schemas.models import ILSAArticleMetadata
 
 DEFAULT_JSON_DIR = PROJECT_ROOT / "outputs" / "articles" / "json"
 
@@ -25,10 +25,9 @@ DEFAULT_JSON_DIR = PROJECT_ROOT / "outputs" / "articles" / "json"
 def resanitize_file(path: Path) -> dict:
     raw = json.loads(path.read_text(encoding="utf-8"))
     sanitized = GPTExtractor._sanitize(raw)
-    # On-disk shape: {"metadata": ..., "data": ...}; validate full root after sanitize.
-    model = validate_public_article_json(sanitized)
+    model = ILSAArticleMetadata.model_validate(sanitized)
     GPTExtractor._post_process_model(model)
-    validate_public_article_json(model.model_dump(mode="json"))
+    ILSAArticleMetadata.model_validate(model.model_dump(mode="json"))
     return model.model_dump(mode="json")
 
 
@@ -41,11 +40,6 @@ def main() -> None:
         help=f"Directory with article JSON files (default: {DEFAULT_JSON_DIR})",
     )
     parser.add_argument(
-        "--recursive",
-        action="store_true",
-        help="Process all *.json under --json-dir recursively (e.g. outputs/IEA)",
-    )
-    parser.add_argument(
         "files",
         nargs="*",
         help="Optional specific JSON paths; default processes all in --json-dir",
@@ -55,10 +49,7 @@ def main() -> None:
     if args.files:
         paths = [Path(p) for p in args.files]
     else:
-        if args.recursive:
-            paths = sorted(args.json_dir.rglob("*.json"))
-        else:
-            paths = sorted(args.json_dir.glob("*.json"))
+        paths = sorted(args.json_dir.glob("*.json"))
 
     if not paths:
         print(f"No JSON files found in {args.json_dir}")
@@ -69,15 +60,14 @@ def main() -> None:
         try:
             out = resanitize_file(path)
             path.write_text(
-                json.dumps(out, indent=2, ensure_ascii=False) + "\n",
+                json.dumps(out, indent=2, ensure_ascii=False),
                 encoding="utf-8",
             )
             title = (out.get("metadata") or {}).get("title") or "(null)"
             n_conf = len((out.get("data") or {}).get("confounders_identified") or [])
-            n_mf = len((out.get("data") or {}).get("main_findings") or [])
             print(f"OK  {path.name}")
             print(f"    title: {title[:80]}")
-            print(f"    confounders: {n_conf} | main_findings: {n_mf}")
+            print(f"    confounders: {n_conf}")
             ok += 1
         except Exception as exc:
             print(f"FAIL {path.name}: {exc}")
