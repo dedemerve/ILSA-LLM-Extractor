@@ -45,11 +45,14 @@ Requires: project `.venv` or system Python with `requirements.txt` installed.
 | 2 | `find_missing_main_findings.py --json-dir outputs --recursive --fix` | Filled legacy/empty `main_findings` |
 | 3 | `build_tabular_dataset.py` | `outputs/ILSA_Meta_Analysis_Dataset*.xlsx` |
 | 4 | `build_structured_meta_analysis.py` | `outputs/ILSA_Structured_Meta_Analysis.xlsx` |
-| 5 | `build_canonical_taxonomy.py` | `outputs/taxonomy_map.json`, `knowledge_synthesis.csv` |
+| 5 | `build_canonical_taxonomy.py` | `outputs/taxonomy_map.json`, `knowledge_synthesis.csv`, `Canonical_View` sheet |
 | 6 | `build_semantic_knowledge_base_v2.py --version v4` | `final_knowledge_synthesis_v4.csv`, codebook |
-| 7 | `generate_academic_synthesis.py` | `academic_synthesis_report_tr.md` |
-| 8 | `pytest` (confounders, doi, main_findings) | Must pass before git |
-| 9 | `_batch_git_add_outputs.sh` + commit + push | Remote sync |
+| 7 | `build_analytical_master.py` | `outputs/ILSA_Analytical_Meta_Analysis_Master.xlsx` |
+| 8 | `generate_academic_synthesis.py` | `academic_synthesis_report_tr.md` |
+| 9 | `pytest` (confounders, doi, main_findings) | Must pass before git |
+| 10 | `_batch_git_add_outputs.sh` + commit + push | Remote sync |
+
+**Optional (Phase 0 — not in default pipeline):** `init_phase0_verification_sheets.py` adds Sheets 5–7 when you are ready for verification/inventory work.
 
 ## Git rules
 
