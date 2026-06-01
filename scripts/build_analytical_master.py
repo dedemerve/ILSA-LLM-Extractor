@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import json
 import re
+import sys
 from collections import Counter, defaultdict
 from pathlib import Path
 from typing import Iterable
@@ -20,6 +21,9 @@ from typing import Iterable
 import pandas as pd
 
 ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(ROOT))
+
+from src.enrichment.excel_workbook_format import format_analytical_workbook
 SRC = ROOT / "outputs" / "ILSA_Meta_Analysis_Dataset_CLEAN.xlsx"
 DST = ROOT / "outputs" / "ILSA_Analytical_Meta_Analysis_Master.xlsx"
 TAXONOMY_JSON = ROOT / "outputs" / "policy_domain_taxonomy.json"
@@ -490,30 +494,7 @@ def _write_workbook(
         policy.to_excel(xw, sheet_name="Policy_Insights", index=False)
         taxonomy.to_excel(xw, sheet_name="_Policy_Taxonomy_Map", index=False)
 
-    # Add Excel Tables (so Pivot/Slicer "just works")
-    from openpyxl import load_workbook
-    from openpyxl.utils import get_column_letter
-    from openpyxl.worksheet.table import Table, TableStyleInfo
-
-    wb = load_workbook(DST)
-    for sheet_name, table_name in (
-        ("Study_Details", "tbl_Study"),
-        ("Empirical_Findings", "tbl_Findings"),
-        ("Policy_Insights", "tbl_Policy"),
-        ("_Policy_Taxonomy_Map", "tbl_Taxonomy"),
-    ):
-        ws = wb[sheet_name]
-        if ws.max_row < 2 or ws.max_column < 1:
-            continue
-        ref = f"A1:{get_column_letter(ws.max_column)}{ws.max_row}"
-        t = Table(displayName=table_name, ref=ref)
-        t.tableStyleInfo = TableStyleInfo(
-            name="TableStyleMedium2",
-            showRowStripes=True,
-            showColumnStripes=False,
-        )
-        ws.add_table(t)
-    wb.save(DST)
+    format_analytical_workbook(DST)
 
 
 def main() -> None:

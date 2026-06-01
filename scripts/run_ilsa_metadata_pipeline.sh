@@ -48,6 +48,7 @@ if [[ "$GIT_ONLY" -eq 0 ]]; then
   run_step "$PYTHON" scripts/build_structured_meta_analysis.py
   run_step "$PYTHON" scripts/build_canonical_taxonomy.py
   run_step "$PYTHON" scripts/build_semantic_knowledge_base_v2.py --version v4
+  run_step "$PYTHON" scripts/build_analytical_master.py
   run_step "$PYTHON" scripts/generate_academic_synthesis.py
   run_step "$PYTHON" -m pytest \
     tests/red_team_confounders_static.py \

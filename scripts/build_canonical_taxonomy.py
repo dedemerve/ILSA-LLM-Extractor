@@ -28,6 +28,7 @@ from src.enrichment.canonical_taxonomy import (
     build_taxonomy_maps,
     write_taxonomy_artifacts,
 )
+from src.enrichment.excel_workbook_format import format_clean_workbook
 
 DEFAULT_CLEAN = PROJECT_ROOT / "outputs" / "ILSA_Meta_Analysis_Dataset_CLEAN.xlsx"
 DEFAULT_OUTPUTS = PROJECT_ROOT / "outputs"
@@ -95,6 +96,7 @@ def main() -> None:
 
     canonical_view = build_canonical_view(master, findings, confounders)
     _append_sheet_to_workbook(xlsx, "Canonical_View", canonical_view)
+    format_clean_workbook(xlsx)
 
     n_cat = len(taxonomy_map.get("canonical_categories", {}))
     n_mapped = len(flat_map)

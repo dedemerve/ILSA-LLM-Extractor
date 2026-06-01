@@ -35,9 +35,9 @@ from src.enrichment.academic_taxonomy import (
     apply_academic_taxonomy,
     assign_document_class,
     build_analysis_dashboard,
-    taxonomy_validation_lists,
     write_classification_audit_log,
 )
+from src.enrichment.excel_workbook_format import format_clean_workbook
 from src.schemas.models import validate_public_article_json
 
 DEFAULT_OUTPUTS_DIR = PROJECT_ROOT / "outputs"
@@ -705,60 +705,6 @@ def read_excel_dataset(xlsx_path: Path) -> tuple[pd.DataFrame, pd.DataFrame, pd.
     return master, findings, confounders
 
 
-def _apply_excel_filter_dropdowns(xlsx_path: Path) -> None:
-    """Attach list validations for taxonomy columns (Excel filter dropdowns)."""
-    from openpyxl import load_workbook
-    from openpyxl.utils import get_column_letter
-    from openpyxl.worksheet.datavalidation import DataValidation
-
-    lists = taxonomy_validation_lists()
-    sheet_columns: dict[str, list[str]] = {
-        "1_Articles_Master": [
-            "study_filter_type",
-            "ml_family",
-            "pv_filter_label",
-            "md_filter_label",
-            "weights_filter",
-        ],
-        "2_Main_Findings": [
-            "study_filter_type",
-            "target_domain",
-            "target_dimension",
-        ],
-        "3_Confounders": [
-            "study_filter_type",
-            "predictor_level",
-            "predictor_category",
-        ],
-    }
-
-    wb = load_workbook(xlsx_path)
-    for sheet_name, cols in sheet_columns.items():
-        if sheet_name not in wb.sheetnames:
-            continue
-        ws = wb[sheet_name]
-        if ws.max_row < 2:
-            continue
-        header = {ws.cell(1, c).value: c for c in range(1, ws.max_column + 1)}
-        for col_name in cols:
-            if col_name not in lists or col_name not in header:
-                continue
-            col_idx = header[col_name]
-            col_letter = get_column_letter(col_idx)
-            quoted = ",".join(lists[col_name])
-            dv = DataValidation(
-                type="list",
-                formula1=f'"{quoted}"',
-                allow_blank=True,
-                showErrorMessage=True,
-                errorTitle="Invalid filter value",
-                error="Choose a value from the controlled vocabulary list.",
-            )
-            dv.add(f"{col_letter}2:{col_letter}{ws.max_row}")
-            ws.add_data_validation(dv)
-    wb.save(xlsx_path)
-
-
 def write_clean_excel(
     df_master: pd.DataFrame,
     df_findings: pd.DataFrame,
@@ -785,7 +731,15 @@ def write_clean_excel(
         df_confounders.to_excel(writer, sheet_name="3_Confounders", index=False)
 
     if add_dropdowns:
-        _apply_excel_filter_dropdowns(output_path)
+        format_clean_workbook(
+            output_path,
+            only_sheets=(
+                "0_Dashboard_Analysis_Control",
+                "1_Articles_Master",
+                "2_Main_Findings",
+                "3_Confounders",
+            ),
+        )
 
 
 def build_clean_dataset(

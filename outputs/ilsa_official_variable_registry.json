@@ -1,0 +1,107 @@
+{
+  "$schema": "https://ilsa-llm.local/schemas/variable_registry/v1.0.0",
+  "registry_version": "1.0.0-phase0",
+  "last_updated": "2026-05-31T12:00:00Z",
+  "maintainer": "ILSA-LLM Pipeline",
+  "status": "PHASE0_TEMPLATE — no microdata scan executed",
+  "isa_programs": ["PISA", "TIMSS", "PIRLS", "ICCS", "ICILS", "PIAAC", "TALIS"],
+  "variables": {
+    "PISA_ESCS": {
+      "registry_key": "PISA_ESCS",
+      "canonical_variable": "SES",
+      "isa": ["PISA"],
+      "cycles": [2000, 2003, 2006, 2009, 2012, 2015, 2018, 2022],
+      "construct_definition": "Index of economic, social and cultural status; standardized across OECD countries with mean 0 and SD 1 in reference population.",
+      "official_codes": [
+        {
+          "cycle": 2012,
+          "primary": "ESCS",
+          "alternates": ["ESCS2"],
+          "file_id_resolution": {
+            "file_role": "student",
+            "file_mask": "CY6_*STU*"
+          }
+        }
+      ],
+      "components": [
+        {"registry_key": "PISA_HISEI", "official_code": "HISEI", "definition": "Highest occupational status (ISEI) of parents"},
+        {"registry_key": "PISA_HOMEPOS", "official_code": "HOMEPOS", "definition": "Family wealth (home possessions index)"},
+        {"registry_key": "PISA_PARED", "official_code": "PARED", "definition": "Highest parental education (years)"}
+      ],
+      "aliases": ["socio-economic status", "socioeconomic background", "SES", "economic social cultural status"],
+      "role": "predictor",
+      "measurement_level": "scale",
+      "file_mask": ["CY*_MS_CMB_STU_*", "CY*_STU_*"],
+      "file_role": "student",
+      "missing_value_policy": "ILSA_standard_missing_codes",
+      "verification_allowed_checks": ["descriptive", "weighted_mean", "correlation_direction", "regression_coefficient_sign"],
+      "provenance": {
+        "source": "PISA 2012 Technical Report — ESCS construction",
+        "catalog_rule_id": "RULE_VAR_ESCS_PISA",
+        "approved_date": "2026-05-31",
+        "confidence_tier": "A_codebook"
+      },
+      "confidence_tier": "A_codebook"
+    },
+    "PISA_MATH_ACHIEVEMENT_PV": {
+      "registry_key": "PISA_MATH_ACHIEVEMENT_PV",
+      "canonical_variable": "Math_Achievement",
+      "isa": ["PISA"],
+      "cycles": [2012],
+      "construct_definition": "Mathematics achievement proficiency; latent trait represented by 10 PV draws per student.",
+      "role": "outcome_pv",
+      "measurement_level": "scale",
+      "pv_set_ref": "PISA_PV_MATH_C6",
+      "verification_note": "Default verification engine applies Rubin pooling; never use single PV without explicit pv_draw_used_by_paper."
+    }
+  },
+  "pv_sets": {
+    "PISA_PV_MATH_C6": {
+      "pv_set_key": "PISA_PV_MATH_C6",
+      "isa": "PISA",
+      "cycle": 2012,
+      "domain": "math",
+      "variable_names": [
+        "PV1MATH", "PV2MATH", "PV3MATH", "PV4MATH", "PV5MATH",
+        "PV6MATH", "PV7MATH", "PV8MATH", "PV9MATH", "PV10MATH"
+      ],
+      "n_draws": 10,
+      "scale_metric": "PISA mathematics proficiency scale (mean 500, SD 100, OECD 2003 reference)",
+      "pooling_rule": "rubin_rules",
+      "rubin_constraints": {
+        "m": 10,
+        "combine_point_estimates": "average_of_m_estimates",
+        "combine_variance": "within_plus_between_imputation_variance",
+        "minimum_valid_draws": 5,
+        "formula_reference": "Rubin (1987); OECD PISA Data Analysis Manual",
+        "never_pool_across_domains": true,
+        "never_average_without_variance_adjustment": true
+      },
+      "linked_registry_outcome": "PISA_MATH_ACHIEVEMENT_PV",
+      "provenance": {
+        "source": "PISA 2012 Database Manual — Plausible Values",
+        "confidence_tier": "A_codebook"
+      }
+    }
+  },
+  "weight_profiles": {
+    "PISA_STUDENT_WGT_C6": {
+      "profile_key": "PISA_STUDENT_WGT_C6",
+      "isa": "PISA",
+      "cycle": 2012,
+      "primary_weight": "W_FSTUWT",
+      "replicate_prefix": "W_FSTR",
+      "n_replicates": 80,
+      "weight_interpretation": "Final student weight incorporating school and student components",
+      "file_role": "student"
+    }
+  },
+  "alias_index": {
+    "escs": "PISA_ESCS",
+    "socio-economic status": "PISA_ESCS",
+    "ses": "PISA_ESCS",
+    "mathematics achievement": "PISA_MATH_ACHIEVEMENT_PV",
+    "math achievement": "PISA_MATH_ACHIEVEMENT_PV",
+    "pv1math": "PISA_MATH_ACHIEVEMENT_PV"
+  }
+}
