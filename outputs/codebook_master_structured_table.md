@@ -49,9 +49,9 @@ Each row represents one source document. Contains bibliographic metadata, method
 | `replicate_weights_used` | float | Whether replicate weights (jackknife or Balanced Repeated Replication) were used for variance estimation. These adjust standard errors for the multi-stage cluster sampling structure common to all ILSA programs. | `1.0` = yes; `0.0` = no; `NaN` = not determinable |
 | `weight_variable_name` | string | Name of the weight variable used. Standard ILSA identifiers include `W_FSTUWT` (PISA), `TOTWGT`, `TOTWGTC`, `TOTWGTS`, `TOTWGTT` (TIMSS/PIRLS/ICCS). | e.g., `W_FSTUWT`, `TOTWGTC` |
 | `weight_fields_interpretation` | string | Narrative description of how sampling weights were applied or interpreted in the study context. | Free text |
-| `plausible_values_handling` | string | Method used to handle plausible values (PVs) — the multiply-imputed latent proficiency scores in ILSA datasets that account for measurement uncertainty in cognitive assessments. Best practice requires pooling all PVs using Rubin's combination rules. | `rubin_rules`, `average_pv`, `irt_theta`, `wle`, `not_applicable`, `not_reported` |
-| `missing_data_handling` | string | Strategy used to handle missing item or background questionnaire data. | `listwise_deletion`, `pairwise_deletion`, `multiple_imputation`, `mean_imputation`, `not_reported` |
-| `handling_not_reported_explanation` | string | Contextual note when weight usage or missing data handling could not be determined. Distinguishes genuine non-reporting from non-applicability. | Free text |
+| `plausible_values_handling` | string | Method used to handle plausible values (PVs) — multiply-imputed latent proficiency scores in ILSA cognitive assessments. See **Special codes** below for `not_applicable` vs `not_reported`. | `rubin_rules`, `average_pv`, `single_pv`, `all_pv`, `irt_theta`, `wle`, `mitml`, `not_applicable`, `not_reported` |
+| `missing_data_handling` | string | Strategy for missing item or background questionnaire data in the study's analysis. See **Special codes** below. | `listwise_deletion`, `pairwise_deletion`, `multiple_imputation`, `mean_imputation`, `single_imputation`, `knn_imputation`, `not_reported` |
+| `handling_not_reported_explanation` | string | Required when PV or missing-data fields are `not_reported` or `not_applicable`: 2–3 sentences explaining *why* (reporting gap vs document type). | Free text |
 | `null_fields_interpretation` | string | Explanation of why certain schema fields are empty for a given document — for example, because the document is a technical report without an ML modeling component, or because only front matter was available during extraction. Supports corpus quality auditing. | Free text |
 
 ### Sample Descriptors
@@ -89,6 +89,39 @@ Controlled-vocabulary columns optimized for use as Excel column filters, PivotTa
 | `pv_filter_label` | string | Human-readable label for `plausible_values_handling`, formatted for filter display. | `Pooled PVs (Rubin Rules)`, `Average PVs`, `Single PV Draw`, `WLE / IRT Theta`, `Not Applicable (Framework)`, `Not Reported` |
 | `md_filter_label` | string | Human-readable label for `missing_data_handling`, formatted for filter display. | `Listwise Deletion`, `Pairwise Deletion`, `Multiple Imputation`, `Mean Imputation`, `Single Imputation`, `KNN Imputation`, `Not Reported` |
 | `weights_filter` | string | Simplified weight usage flag for one-click filtering. | `True`, `False`, `Unknown` |
+
+### Special codes: `not_applicable` vs `not_reported` (and Excel sentinels)
+
+These are **controlled vocabulary codes**, not missing cells. They record *why* a methodological field has no analytic value — the pipeline does not invent Rubin rules or imputation when the source text does not support it.
+
+| Code | Field(s) | Meaning | Typical document |
+|------|----------|---------|------------------|
+| **`not_applicable`** | `plausible_values_handling` | The document does **not** perform achievement analysis using ILSA plausible values (no PV-based outcome modeling). | Technical report, user guide, framework, encyclopedia, questionnaire supplement, many descriptive national reports |
+| **`not_reported`** | `missing_data_handling` (and rarely `plausible_values_handling`) | The study may be empirical, but authors **did not state** the strategy clearly enough to code (or extraction could not resolve it). | Peer-reviewed papers with sparse methods sections |
+| **`rubin_rules`**, `multiple_imputation`, etc. | Either field | Authors **explicitly reported** the method; coded from the PDF text. | Empirical ILSA ML / multilevel studies |
+
+**Important distinction (JSON and Excel):**
+
+- **`not_applicable`** = “This question does not apply to this document type” (e.g. no achievement PV analysis in a PIRLS User Guide supplement).
+- **`not_reported`** = “This question applies, but the paper did not report it (or it could not be extracted).”
+
+Filter labels mirror this logic:
+
+| Raw code | `pv_filter_label` | `md_filter_label` |
+|----------|-------------------|-------------------|
+| `not_applicable` | `Not Applicable (Framework)` | — |
+| `not_reported` | `Not Reported` | `Not Reported` |
+
+**Excel-only sentinels** (relational sheets, not JSON enum values) use a different convention:
+
+| Sentinel | Meaning |
+|----------|---------|
+| `N/A: Technical Report` | Row belongs to a technical/framework document; empirical finding fields are intentionally inactive |
+| `N/A: Descriptive Report` | Descriptive national/international report without ML outcome modeling |
+| `Not Reported by Authors` | Empirical document; authors did not report that specific field |
+| `Not Reported` | Generic absence on a non-critical column |
+
+Audit columns: `handling_not_reported_explanation` and `null_fields_interpretation` (JSON) carry the narrative reason when codes are `not_*`. See also `docs/json_field_reference_tr.md` for per-field JSON definitions.
 
 ---
 
