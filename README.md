@@ -150,10 +150,10 @@ ILSA-LLM-Extractor/
 If you use this pipeline or dataset in your research, please cite:
 
 ```bibtex
-@dataset{dede2025ilsa,
-  author    = {Dede, Merve and Cetinkaya, Ekrem},
+@dataset{dede_cetinkaya_2026_ilsa,
+  author    = {Dede, Merve and {\c{C}}etinkaya, Ekrem},
   title     = {ILSA LLM Extractor Dataset},
-  year      = {2025},
+  year      = {2026},
   publisher = {Hugging Face},
   url       = {https://huggingface.co/datasets/dedemerve/ILSA-LLM-Extractor-Dataset}
 }
