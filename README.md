@@ -6,7 +6,7 @@
   
   International Large-Scale Assessments produce thousands of technical reports, policy briefs, and research publications annually. Manually extracting structured metadata from this volume of documents is time-consuming and error-prone. This pipeline automates the process by combining PDF text extraction, structured prompting, and LLM-based inference to produce a clean, queryable dataset.
   
-  The pipeline achieved **99.2% classification accuracy** across 1,680 documents spanning six major ILSA programs.
+  The pipeline achieved **99.2% classification accuracy** across 1,680 peer-reviewed articles using data from IEA (TIMSS, PIRLS, ICCS) and OECD (PISA, TALIS, PIAAC) assessments.
   
   ## Dataset
   
@@ -21,8 +21,6 @@
   | `meta_analysis` | Core metadata extracted from ILSA documents | 36 |
   | `knowledge_synthesis` | Synthesized knowledge across assessments | 174 |
   | `codebook` | Variable definitions and descriptions | 39 |
-  | `semantic_synthesis` | Method-variable-effect relations for RAG retrieval | 174 |
-  | `variable_registry` | Official ILSA variable registry | 1 |
   | `policy_taxonomy` | Policy domain taxonomy across assessments | 31 |
   
   ## Pipeline Architecture
