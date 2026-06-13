@@ -14,13 +14,14 @@
   
   [https://huggingface.co/datasets/dedemerve/ILSA-LLM-Extractor-Dataset](https://huggingface.co/datasets/dedemerve/ILSA-LLM-Extractor-Dataset)
   
-  The dataset includes six subsets:
+  The dataset includes five subsets:
   
   | Subset | Description | Rows |
   |--------|-------------|------|
   | `meta_analysis` | Core metadata extracted from ILSA documents | 36 |
   | `knowledge_synthesis` | Synthesized knowledge across assessments | 174 |
   | `codebook` | Variable definitions and descriptions | 39 |
+  | `semantic_synthesis` | Method-variable-effect relations for RAG retrieval | 174 |
   | `policy_taxonomy` | Policy domain taxonomy across assessments | 31 |
   
   ## Pipeline Architecture
@@ -62,7 +63,7 @@
   - **Text Extraction:** PyMuPDF extracts raw text from PDF documents while preserving structural elements such as headings, tables, and metadata blocks.
   - **Schema Definition:** Pydantic models in `src/schemas/models.py` define the `ILSAArticleMetadata` schema, enforcing type safety and validation on all extracted fields.
   - **LLM Extraction:** OpenAI GPT models process chunked text and return structured JSON conforming to the schema. Prompts are versioned and stored under `prompts/`.
-  - **Storage Layer:** `StorageManager` in `ilsa_pipeline/utils/storage.py` handles output to JSON, Parquet, and SQLite formats with normalization across six relational tables.
+  - **Storage Layer:** `StorageManager` in `ilsa_pipeline/utils/storage.py` handles output to JSON, Parquet, and SQLite formats with normalization across five relational tables.
   - **Resume Support:** Failed extractions are flagged with a sentinel prefix in `data.outcome_summary`, enabling targeted retry via `--resume`.
   
   ## Coverage
