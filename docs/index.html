@@ -1,0 +1,1643 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>A Schema-Guided LLM Framework for Evidence Extraction and Systematic Synthesis in Large-Scale Assessment Research</title>
+  <meta name="description" content="Open research infrastructure for ILSA evidence synthesis. 1,266 documents, 11,862 structured records, schema-constrained LLM extraction, RAG knowledge agent — PISA, TIMSS, PIRLS, TALIS, ICILS, ICCS, PIAAC." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:      #fafaf8;
+      --bg2:     #f2f0eb;
+      --ink:     #1a1a2e;
+      --ink2:    #4a4a6a;
+      --ink3:    #8888aa;
+      --coral:   #e8533a;
+      --teal:    #0d9488;
+      --amber:   #d97706;
+      --violet:  #7c3aed;
+      --border:  #e2e0d8;
+      --radius:  14px;
+      --mono:    'JetBrains Mono', monospace;
+      --display: 'Space Grotesk', sans-serif;
+      --body:    'Inter', sans-serif;
+    }
+
+    body { font-family: var(--body); background: var(--bg); color: var(--ink); line-height: 1.7; font-size: 16px; }
+    a { color: var(--teal); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .container { max-width: 860px; margin: 0 auto; padding: 0 28px; }
+
+    /* NAV */
+    nav {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(250,250,248,.96); backdrop-filter: blur(14px);
+      border-bottom: 1px solid var(--border); padding: 12px 0;
+    }
+    .nav-inner { max-width: 860px; margin: 0 auto; padding: 0 28px; display: flex; align-items: center; justify-content: space-between; }
+    .nav-logo { font-family: var(--display); font-weight: 700; font-size: 14px; color: var(--ink); letter-spacing: -0.01em; }
+    .nav-logo span { color: var(--coral); }
+    .nav-links { display: flex; gap: 20px; font-size: 13px; font-weight: 500; flex-wrap: wrap; }
+    .nav-links a { color: var(--ink2); }
+    .nav-links a:hover { color: var(--ink); text-decoration: none; }
+
+    /* HAMBURGER */
+    .hamburger { display: none; flex-direction: column; gap: 5px; cursor: pointer; padding: 4px; background: none; border: none; }
+    .hamburger span { display: block; width: 22px; height: 2px; background: var(--ink); border-radius: 2px; transition: all .2s; }
+    .hamburger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+    .hamburger.open span:nth-child(2) { opacity: 0; }
+    .hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+    .mobile-drawer {
+      display: none; position: fixed; inset: 0; z-index: 99;
+    }
+    .mobile-drawer.open { display: block; }
+    .drawer-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,.35); }
+    .drawer-panel {
+      position: absolute; top: 0; right: 0; bottom: 0; width: 220px;
+      background: #fff; padding: 60px 28px 28px;
+      display: flex; flex-direction: column; gap: 8px;
+      box-shadow: -4px 0 24px rgba(0,0,0,.12);
+    }
+    .drawer-panel a { font-size: 15px; font-weight: 600; color: var(--ink2); padding: 8px 0; border-bottom: 1px solid var(--border); text-decoration: none; }
+    .drawer-panel a:hover { color: var(--ink); }
+
+
+    /* HERO TRUST STRIP + METRIC GRID */
+    .hero-trust-strip {
+      display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+    .trust-chip {
+      display: inline-flex; align-items: center; gap: 5px;
+      font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
+      border-radius: 999px; padding: 5px 13px; white-space: nowrap;
+    }
+    .trust-chip.audit {
+      color: var(--teal); background: #f0fdfa; border: 1px solid #99f6e4;
+    }
+    .trust-chip.conf {
+      color: var(--ink3); background: var(--bg2); border: 1px solid var(--border);
+    }
+    .hero-metric-grid {
+      display: flex; flex-direction: column; gap: 0;
+      margin-bottom: 20px;
+      border: 1px solid var(--border); border-radius: var(--radius);
+      background: #fff; overflow: hidden;
+      box-shadow: 0 2px 12px rgba(0,0,0,.04);
+    }
+    .hero-metric {
+      display: flex; align-items: center; gap: 20px;
+      padding: 18px 22px; border-bottom: 1px solid var(--border);
+      position: relative;
+    }
+    .hero-metric.scope {
+      display: flex; flex-direction: column; gap: 6px;
+      padding: 16px 22px; border-bottom: none;
+      background: var(--bg2);
+    }
+    .hero-metric.primary::before, .hero-metric.secondary::before {
+      content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px;
+    }
+    .hero-metric.primary::before  { background: var(--coral); }
+    .hero-metric.secondary::before { background: var(--teal); }
+    .hm-num {
+      font-family: var(--display); font-weight: 700; letter-spacing: -0.04em;
+      line-height: 1; min-width: 90px; flex-shrink: 0;
+    }
+    .hero-metric.primary   .hm-num { font-size: clamp(34px, 5vw, 54px); color: var(--coral); }
+    .hero-metric.secondary .hm-num { font-size: clamp(26px, 4vw, 42px); color: var(--teal); }
+    .hm-right { display: flex; flex-direction: column; gap: 3px; }
+    .hm-title { font-size: 15px; font-weight: 700; color: var(--ink); letter-spacing: -0.01em; }
+    .hm-sub   { font-size: 12px; color: var(--ink3); font-weight: 500; }
+    /* Hero badges */
+    .hero-badges { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+    .hero-badge { font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; border-radius: 999px; padding: 5px 13px; white-space: nowrap; display: inline-flex; align-items: center; gap: 5px; }
+    .hero-badge.infra { color: var(--teal); background: #f0fdfa; border: 1px solid #99f6e4; }
+    .hero-badge.data  { color: var(--violet); background: rgba(124,58,237,.06); border: 1px solid rgba(124,58,237,.2); }
+    .hero-badge.cc    { color: var(--amber); background: rgba(217,119,6,.06); border: 1px solid rgba(217,119,6,.2); }
+    /* Hero metrics row */
+    .hero-metrics-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 24px 0 20px; }
+    @media (max-width: 600px) { .hero-metrics-row { grid-template-columns: repeat(2, 1fr); } }
+    .hero-metric-pill { background: #fff; border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; text-align: center; }
+    .hmp-num { font-family: var(--display); font-weight: 700; font-size: clamp(22px, 3vw, 30px); letter-spacing: -0.04em; line-height: 1; }
+    .hmp-num.coral  { color: var(--coral); }
+    .hmp-num.teal   { color: var(--teal); }
+    .hmp-num.violet { color: var(--violet); }
+    .hmp-num.amber  { color: var(--amber); }
+    .hmp-label { font-size: 11px; font-weight: 600; color: var(--ink3); margin-top: 4px; letter-spacing: .03em; }
+    /* Program chips */
+    .hero-program-chips { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; margin-bottom: 24px; }
+    @media (max-width: 640px) { .hero-program-chips { grid-template-columns: repeat(4, 1fr); } }
+    @media (max-width: 400px) { .hero-program-chips { grid-template-columns: repeat(2, 1fr); } }
+    .hpc {
+      font-size: 11px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase;
+      padding: 8px 0; border-radius: 10px; border: 1.5px solid transparent;
+      text-align: center; display: block;
+    }
+    .hpc[data-p="PISA"]  { background: rgba(220,38,38,.12);  color: #dc2626; border-color: rgba(220,38,38,.35); }
+    .hpc[data-p="TIMSS"] { background: rgba(234,88,12,.12);  color: #ea580c; border-color: rgba(234,88,12,.35); }
+    .hpc[data-p="PIRLS"] { background: rgba(37,99,235,.12);  color: #2563eb; border-color: rgba(37,99,235,.35); }
+    .hpc[data-p="TALIS"] { background: rgba(5,150,105,.12);  color: #059669; border-color: rgba(5,150,105,.35); }
+    .hpc[data-p="ICILS"] { background: rgba(124,58,237,.12); color: #7c3aed; border-color: rgba(124,58,237,.35); }
+    .hpc[data-p="ICCS"]  { background: rgba(8,145,178,.12);  color: #0891b2; border-color: rgba(8,145,178,.35); }
+    .hpc[data-p="PIAAC"] { background: rgba(168,85,247,.12); color: #a855f7; border-color: rgba(168,85,247,.35); }
+    /* End CTA section */
+    .end-cta-section { background: linear-gradient(160deg, #fff 0%, var(--bg2) 100%); border-top: 1px solid var(--border); padding: 56px 0 48px; text-align: center; }
+    .end-cta-section h2 { font-family: var(--display); font-size: clamp(20px, 3vw, 28px); font-weight: 700; letter-spacing: -0.03em; margin-bottom: 10px; }
+    .end-cta-section p { font-size: 15px; color: var(--ink2); margin-bottom: 28px; }
+    .end-cta-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; max-width: 520px; margin: 0 auto; }
+    @media (max-width: 480px) { .end-cta-grid { grid-template-columns: 1fr; } }
+    .end-cta-btn { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 14px 20px; border-radius: var(--radius); font-size: 13px; font-weight: 600; text-decoration: none; transition: opacity .15s; }
+    .end-cta-btn:hover { opacity: .85; text-decoration: none; }
+    .end-cta-btn.primary { background: var(--teal); color: #fff; }
+    .end-cta-btn.secondary { background: #fff; color: var(--ink); border: 1px solid var(--border); }
+    /* Nav active */
+    .nav-links a.nav-active { color: var(--teal); font-weight: 600; }
+
+    /* HERO */
+    #hero { padding: 56px 0 44px; border-bottom: 1px solid var(--border); background: linear-gradient(160deg, #fff 0%, var(--bg) 70%); }
+
+
+
+    h1 {
+      font-family: var(--display);
+      font-size: clamp(22px, 3vw, 36px);
+      font-weight: 700; line-height: 1.2; letter-spacing: -0.03em;
+      color: var(--ink); margin-bottom: 20px;
+    }
+
+    .rq-box {
+      background: #fff; border: 1px solid var(--border);
+      border-left: 3px solid var(--teal);
+      border-radius: 0 var(--radius) var(--radius) 0;
+      padding: 14px 18px; margin-bottom: 18px;
+    }
+    .rq-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .09em; color: var(--teal); margin-bottom: 4px; }
+    .rq-text  { font-size: 14px; color: var(--ink); line-height: 1.6; font-weight: 500; }
+
+    .problem-stmt {
+      font-size: 14px; color: var(--ink2);
+      margin-bottom: 20px; line-height: 1.65;
+      padding-left: 14px; border-left: 3px solid var(--border);
+      font-style: italic;
+    }
+
+    .authors-line { font-size: 15px; color: var(--ink2); margin-bottom: 24px; font-weight: 500; letter-spacing: -0.01em; }
+    .authors-line span { color: var(--ink); font-weight: 700; }
+    .authors-line a { color: var(--ink); font-weight: 700; text-decoration: none; border-bottom: 1.5px solid var(--border); transition: border-color .15s; }
+    .authors-line a:hover { border-color: var(--ink); }
+
+    /* Buttons */
+    .btn-row { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 36px; }
+    .btn { display: inline-flex; align-items: center; gap: 7px; padding: 9px 20px; border-radius: 999px; font-size: 13px; font-weight: 600; border: 1.5px solid transparent; transition: all 0.16s; cursor: pointer; text-decoration: none; }
+    .btn svg { width: 16px; height: 16px; flex-shrink: 0; }
+    .btn-hf { background: #fff; color: var(--ink); border-color: var(--border); box-shadow: 0 1px 3px rgba(0,0,0,.06); }
+    .btn-hf:hover { border-color: var(--ink2); text-decoration: none; }
+    .btn-gh { background: #fff; color: var(--ink); border-color: var(--border); box-shadow: 0 1px 3px rgba(0,0,0,.06); }
+    .btn-gh:hover { border-color: var(--ink2); text-decoration: none; }
+    .btn-preprint { background: #fff; color: var(--ink3); border-color: var(--border); box-shadow: 0 1px 3px rgba(0,0,0,.06); opacity: .55; cursor: default; pointer-events: none; }
+
+    /* Audience tabs */
+    .audience-tabs { margin-bottom: 24px; }
+    .tab-buttons { display: flex; gap: 0; border-bottom: 2px solid var(--border); margin-bottom: 0; }
+    .tab-btn {
+      padding: 10px 18px; font-size: 11px; font-weight: 700; letter-spacing: .08em;
+      text-transform: uppercase; color: var(--ink3); background: none; border: none;
+      cursor: pointer; position: relative; transition: color .15s;
+    }
+    .tab-btn::after {
+      content: ''; position: absolute; bottom: -2px; left: 0; right: 0; height: 2px;
+      background: var(--teal); transform: scaleX(0); transition: transform .2s;
+    }
+    .tab-btn.active { color: var(--ink); }
+    .tab-btn.active::after { transform: scaleX(1); }
+    .tab-btn:hover:not(.active) { color: var(--ink2); }
+    .tab-panels { }
+    .tab-panel {
+      display: none; opacity: 0; padding: 16px 0 4px;
+      transition: opacity .25s;
+    }
+    .tab-panel.active { display: block; }
+    .tab-panel.fade-in { opacity: 1; }
+    .tab-search-bar {
+      display: flex; align-items: center; gap: 12px;
+      background: #fff; border: 1.5px solid var(--border);
+      border-radius: 12px; padding: 14px 16px;
+      box-shadow: 0 2px 12px rgba(0,0,0,.06);
+      transition: border-color .2s, box-shadow .2s;
+    }
+    .tab-search-bar:hover { border-color: var(--teal); box-shadow: 0 2px 16px rgba(13,148,136,.12); }
+    .tsb-icon { flex-shrink: 0; width: 18px; height: 18px; color: var(--ink3); }
+    .tsb-text { flex: 1; font-size: 15px; font-style: italic; color: var(--ink2); line-height: 1.4; }
+    .tsb-enter {
+      flex-shrink: 0; font-size: 11px; font-weight: 700; color: var(--ink3);
+      background: var(--bg); border: 1px solid var(--border);
+      border-radius: 5px; padding: 2px 6px; font-style: normal; letter-spacing: .02em;
+    }
+    .tab-query {
+      font-size: 14px; color: var(--ink); font-style: italic; line-height: 1.6;
+      padding: 14px 18px; background: #fff; border: 1px solid var(--border);
+      border-left: 3px solid var(--teal); border-radius: 0 var(--radius) var(--radius) 0;
+    }
+    .tab-query-label { font-size: 10px; font-weight: 700; letter-spacing: .09em; color: var(--teal); text-transform: uppercase; margin-bottom: 5px; }
+
+    /* Stats story */
+    .stats-story { font-size: 13px; color: var(--ink3); margin-top: 14px; line-height: 1.65; font-style: italic; text-align: center; }
+
+    /* Stats — dark panel */
+    .stats-wrap { border-radius: var(--radius); overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,.10); }
+    .dedup-flow {
+      display: flex; align-items: center; justify-content: center; gap: 0;
+      background: var(--ink); padding: 28px 20px;
+    }
+    .dedup-step { text-align: center; flex: 1; max-width: 240px; }
+    .dedup-num { font-family: var(--display); font-size: 38px; font-weight: 700; letter-spacing: -0.04em; line-height: 1; margin-bottom: 6px; }
+    .dedup-lbl { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .1em; color: rgba(255,255,255,.45); }
+    .dedup-arrow { color: rgba(255,255,255,.25); font-size: 20px; padding: 0 20px; flex-shrink: 0; }
+    .stats-breakdown {
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      border: 1px solid var(--border); border-top: none;
+      background: #fff;
+    }
+    .stat-mini { padding: 20px 16px; text-align: center; border-right: 1px solid var(--border); position: relative; }
+    .stat-mini:last-child { border-right: none; }
+    .stat-mini::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; }
+    .stat-mini:nth-child(1)::before { background: var(--teal); }
+    .stat-mini:nth-child(2)::before { background: var(--coral); }
+    .stat-mini:nth-child(3)::before { background: var(--amber); }
+    .stat-mini-num { font-family: var(--display); font-size: 26px; font-weight: 700; letter-spacing: -0.03em; color: var(--ink); }
+    .stat-mini-lbl { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--ink3); margin-top: 4px; }
+
+
+    /* HERO STAT LEAD */
+    .hero-stats-lead { margin-bottom: 28px; }
+    .hero-lead-row { display: flex; align-items: center; flex-wrap: wrap; gap: 0; }
+    .hero-stat-big { display: inline-flex; flex-direction: column; }
+    .hero-big-num { font-family: var(--display); font-size: clamp(44px, 7vw, 80px); font-weight: 700; letter-spacing: -0.04em; line-height: 1; }
+    .hero-big-num.coral { color: var(--coral); }
+    .hero-big-num.teal  { color: var(--teal); }
+    .hero-big-label { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: .1em; color: var(--ink3); margin-top: 4px; }
+    .hero-lead-sep { font-size: 40px; color: var(--border); margin: 0 24px; line-height: 1; padding-bottom: 8px; }
+    .hero-scope { font-size: 15px; color: var(--ink2); margin-top: 14px; line-height: 1.65; font-weight: 400; }
+
+
+    /* PIPELINE INFOGRAPHIC */
+    .pipeline-infographic {
+      background: var(--ink); border-radius: var(--radius);
+      padding: 28px 24px 24px; margin-bottom: 24px;
+      overflow: hidden;
+    }
+    .pi-header {
+      display: flex; align-items: baseline; gap: 12px; margin-bottom: 24px;
+    }
+    .pi-eyebrow {
+      font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .14em;
+      color: rgba(255,255,255,.35);
+    }
+    .pi-subtitle {
+      font-size: 10px; color: rgba(255,255,255,.2); letter-spacing: .06em;
+    }
+
+    /* Flow row */
+    .pi-flow {
+      display: grid;
+      grid-template-columns: 1fr 20px 1fr 20px 1fr 20px 1fr;
+      gap: 0; align-items: stretch;
+    }
+    @media (max-width: 700px) {
+      .pi-flow {
+        grid-template-columns: 1fr;
+        gap: 0;
+      }
+      .pi-chevron { transform: rotate(90deg); justify-content: center; padding: 4px 0; }
+    }
+
+    /* Stage card */
+    .pi-card {
+      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(255,255,255,.09);
+      border-radius: 12px; padding: 18px 16px;
+      display: flex; flex-direction: column; gap: 10px;
+      position: relative; overflow: hidden;
+      transition: background .18s;
+    }
+    .pi-card:hover { background: rgba(255,255,255,.07); }
+    .pi-card::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    }
+    .pi-card[data-c="coral"]::before  { background: linear-gradient(90deg, #e8533a, #fb7a63); }
+    .pi-card[data-c="amber"]::before  { background: linear-gradient(90deg, #d97706, #fdba74); }
+    .pi-card[data-c="teal"]::before   { background: linear-gradient(90deg, #0d9488, #5eead4); }
+    .pi-card[data-c="violet"]::before { background: linear-gradient(90deg, #7c3aed, #c4b5fd); }
+
+    .pi-stage-tag {
+      font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .12em;
+      color: rgba(255,255,255,.3); line-height: 1.2;
+    }
+
+    .pi-num-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .pi-num {
+      font-family: var(--display); font-weight: 700; letter-spacing: -0.04em;
+      line-height: 1; font-size: clamp(28px, 4vw, 38px);
+    }
+    .pi-num.coral  { color: #fb7a63; }
+    .pi-num.amber  { color: #fdba74; }
+    .pi-num.teal   { color: #5eead4; }
+    .pi-num.violet { color: #c4b5fd; }
+
+    .pi-plus-badge {
+      display: inline-flex; align-items: center;
+      font-size: 10px; font-weight: 700; letter-spacing: .04em;
+      background: rgba(34,197,94,.15); border: 1px solid rgba(34,197,94,.3);
+      color: #86efac; border-radius: 6px; padding: 3px 8px;
+      white-space: nowrap;
+    }
+
+    .pi-card-desc {
+      font-size: 11px; color: rgba(255,255,255,.38);
+      line-height: 1.55; flex: 1;
+    }
+
+    .pi-badges {
+      display: flex; flex-wrap: wrap; gap: 5px; margin-top: auto;
+    }
+    .pi-badge {
+      font-size: 10px; font-weight: 600; font-family: var(--mono);
+      color: rgba(255,255,255,.4);
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.1);
+      border-radius: 5px; padding: 2px 7px;
+      white-space: nowrap;
+    }
+
+    .pi-outcome {
+      display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;
+      margin: 20px 0 4px; padding: 14px 18px;
+      background: rgba(124,58,237,.06); border: 1px solid rgba(124,58,237,.18);
+      border-radius: 10px;
+    }
+    .pi-outcome-label {
+      font-size: 10px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase;
+      color: var(--violet); flex-shrink: 0;
+    }
+    .pi-outcome-text { font-size: 13px; color: var(--ink2); line-height: 1.5; }
+    /* Chevron connector */
+    .pi-chevron {
+      display: flex; align-items: center; justify-content: center;
+      color: rgba(255,255,255,.15); flex-shrink: 0;
+    }
+    .pi-chevron svg { width: 14px; height: 14px; }
+
+    /* PIPELINE TIER BADGES */
+    .pipeline-tier { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: center; margin: 4px 0; }
+    .ptier-badge { background: var(--bg2); border: 1px solid var(--border); border-radius: 20px; padding: 5px 14px; font-size: 11px; font-weight: 700; color: var(--ink2); font-family: var(--mono); }
+    .ptier-badge.t1 { background:#fff1ee; border-color:#fca89a; color:var(--coral); }
+    .ptier-badge.t2 { background:#f0fdf9; border-color:#99f6e4; color:var(--teal); }
+    .ptier-badge.t3 { background:#faf5ff; border-color:#d8b4fe; color:var(--violet); }
+
+    /* VALIDATION METRICS */
+    .val-coverage-card {
+      margin-top: 16px; border: 1px solid var(--border); border-radius: var(--radius);
+      background: #fff; overflow: hidden;
+    }
+    .val-coverage-header {
+      padding: 10px 18px; background: var(--bg2);
+      font-size: 10px; font-weight: 800; letter-spacing: .09em; text-transform: uppercase;
+      color: var(--ink3);
+    }
+    .val-coverage-body { display: flex; gap: 0; }
+    .val-coverage-left {
+      flex: 1; padding: 16px 18px; display: flex; flex-direction: column; gap: 8px;
+    }
+    .val-coverage-item {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 13px; color: var(--ink2);
+    }
+    .val-coverage-item svg { width: 14px; height: 14px; flex-shrink: 0; color: var(--teal); }
+    .val-coverage-right {
+      width: 220px; padding: 16px 18px; display: flex; flex-direction: column;
+      gap: 12px; justify-content: center;
+    }
+    .val-coverage-stat { display: flex; flex-direction: column; gap: 1px; }
+    .vcr-num {
+      font-family: var(--display); font-size: 26px; font-weight: 700;
+      letter-spacing: -0.04em; color: var(--teal); line-height: 1;
+    }
+    .vcr-label { font-size: 11px; color: var(--ink3); font-weight: 500; }
+    @media (max-width: 520px) {
+      .val-coverage-body { flex-direction: column; }
+      .val-coverage-right { width: auto; border-top: 1px solid var(--border); }
+    }
+    .val-anchor-card {
+      display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+      margin: 20px 0 0; padding: 12px 16px;
+      background: rgba(13,148,136,.05); border: 1px solid rgba(13,148,136,.2);
+      border-radius: 10px;
+    }
+    .val-anchor-num {
+      font-family: var(--display); font-size: 34px; font-weight: 700;
+      letter-spacing: -0.04em; color: var(--teal); line-height: 1; flex-shrink: 0;
+    }
+    .val-anchor-detail { display: flex; flex-direction: column; gap: 2px; }
+    .val-anchor-label { font-size: 13px; font-weight: 700; color: var(--ink); }
+    .val-anchor-sub { font-size: 11px; color: var(--ink3); line-height: 1.4; }
+    .val-metrics-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 14px; }
+    @media (max-width: 560px) { .val-metrics-grid { grid-template-columns: 1fr; } }
+    .val-metric-card { background: #fff; border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 20px; position: relative; overflow: hidden; }
+    .val-metric-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--teal); }
+    .val-metric-card.amber::before { background: var(--amber); }
+    .val-metric-card.violet::before { background: var(--violet); }
+    .val-metric-card.coral::before { background: var(--coral); }
+    .val-metric-card.teal::before  { background: var(--teal); }
+    .vmc-num { font-family: var(--display); font-size: 36px; font-weight: 700; letter-spacing: -0.04em; color: var(--teal); line-height: 1; }
+    .vmc-num.amber  { color: var(--amber); }
+    .vmc-num.violet { color: var(--violet); }
+    .vmc-num.coral  { color: var(--coral); }
+    .vmc-num.teal   { color: var(--teal); }
+    .vmc-label { font-size: 12px; font-weight: 700; color: var(--ink); margin: 4px 0 2px; }
+    .vmc-sub { font-size: 11px; color: var(--ink3); line-height: 1.5; }
+    .field-acc-table { width: 100%; font-size: 12px; border-collapse: collapse; margin-top: 10px; }
+    .field-acc-table td { padding: 4px 0; color: var(--ink2); }
+    .field-acc-table td:last-child { text-align: right; font-weight: 700; font-family: var(--display); color: var(--ink); }
+    .acc-bar-wrap { width: 100%; background: var(--bg2); border-radius: 4px; height: 4px; margin-top: 2px; }
+    .acc-bar { height: 4px; border-radius: 4px; background: var(--teal); }
+
+    /* DEMO SOURCE TAGS */
+    .src-tag { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 4px; vertical-align: middle; margin: 0 2px; font-family: var(--mono); }
+    .src-kb { background: rgba(13,148,136,.15); color: #5eead4; border: 1px solid rgba(13,148,136,.25); }
+    .src-md { background: rgba(124,58,237,.15); color: #c4b5fd; border: 1px solid rgba(124,58,237,.25); }
+    .doi-cite { font-size: 10px; color: rgba(255,255,255,.35); font-family: var(--mono); margin: 0 4px; }
+    .demo-cite-block { margin-top: 12px; padding: 10px 12px; background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.08); border-radius: 8px; }
+    .demo-cite-title { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: rgba(255,255,255,.3); margin-bottom: 6px; }
+    .demo-cite-entry { font-size: 11px; color: rgba(255,255,255,.45); line-height: 1.7; }
+    .demo-cite-entry strong { color: rgba(255,255,255,.6); font-weight: 600; }
+
+    /* DEDUP EXTENDED FLOW */
+    .dedup-flow-ext { background: var(--ink); padding: 24px 20px; display: flex; flex-direction: column; align-items: center; gap: 0; }
+    .dedup-row { display: flex; align-items: center; justify-content: center; gap: 0; width: 100%; }
+    .dedup-mini-step { text-align: center; min-width: 120px; }
+    .dedup-mini-num { font-family: var(--display); font-size: 28px; font-weight: 700; letter-spacing: -0.04em; line-height: 1; margin-bottom: 4px; }
+    .dedup-mini-lbl { font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: .1em; color: rgba(255,255,255,.4); }
+    .dedup-mini-arrow { color: rgba(255,255,255,.2); font-size: 18px; padding: 0 10px; flex-shrink: 0; }
+    .dedup-plus-row { display: flex; align-items: center; justify-content: center; gap: 12px; padding: 6px 0; }
+    .dedup-plus-badge { font-size: 11px; font-weight: 700; color: rgba(255,255,255,.35); background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.1); border-radius: 20px; padding: 3px 12px; font-family: var(--mono); }
+    .dedup-divider { width: 1px; height: 20px; background: rgba(255,255,255,.1); }
+
+    /* SECTIONS */
+    section { padding: 60px 0; border-bottom: 1px solid var(--border); }
+    section:last-of-type { border-bottom: none; }
+    .section-eyebrow { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink3); margin-bottom: 8px; }
+    h2 { font-family: var(--display); font-size: 26px; font-weight: 700; letter-spacing: -0.02em; color: var(--ink); margin-bottom: 16px; }
+    p { color: var(--ink2); margin-bottom: 14px; }
+    p:last-child { margin-bottom: 0; }
+
+    /* Abstract */
+    .abstract-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; margin-top: 20px; }
+    @media (max-width: 640px) { .abstract-grid { grid-template-columns: 1fr; } }
+    .abstract-card { background: #fff; border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; }
+    .abstract-card-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; margin-bottom: 8px; }
+    .abstract-card p { font-size: 13px; line-height: 1.65; }
+    .lbl-problem { color: var(--coral); }
+    .lbl-approach { color: var(--teal); }
+    .lbl-outcome  { color: var(--violet); }
+
+    .domain-contrib {
+      margin-top: 20px; background: linear-gradient(135deg, #f0fdf4, #fff);
+      border: 1px solid #86efac; border-radius: var(--radius); padding: 18px 22px;
+    }
+    .domain-contrib p { font-size: 14px; color: var(--ink); font-weight: 500; line-height: 1.6; margin: 0; }
+    .domain-contrib p em { color: var(--teal); font-style: normal; font-weight: 600; }
+
+    /* CONTRIBUTIONS */
+    .contrib-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 6px; }
+    @media (max-width: 560px) { .contrib-grid { grid-template-columns: 1fr; } }
+    .contrib-card { background: #fff; border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; transition: box-shadow .16s, transform .16s; }
+    .contrib-card:hover { box-shadow: 0 6px 20px rgba(0,0,0,.06); transform: translateY(-2px); }
+    .contrib-num { font-family: var(--display); font-size: 30px; font-weight: 700; line-height: 1; margin-bottom: 8px; opacity: .12; }
+    .contrib-title { font-size: 14px; font-weight: 700; color: var(--ink); margin-bottom: 4px; }
+    .contrib-text  { font-size: 13px; color: var(--ink2); line-height: 1.6; }
+    .contrib-stat  { display: inline-block; margin-top: 8px; font-size: 11px; font-weight: 600; color: var(--teal); background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 999px; padding: 2px 10px; }
+
+    .why-llm-card {
+      grid-column: 1 / -1;
+      background: linear-gradient(135deg, #faf5ff, #fff);
+      border: 1px solid #e9d5ff; border-radius: var(--radius); padding: 22px;
+    }
+    .why-llm-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 14px; }
+    @media (max-width: 600px) { .why-llm-grid { grid-template-columns: 1fr 1fr; } }
+    .why-item { background: rgba(124,58,237,.06); border: 1px solid #e9d5ff; border-radius: 10px; padding: 12px; }
+    .why-item-title { font-size: 12px; font-weight: 700; color: var(--violet); margin-bottom: 3px; }
+    .why-item-text  { font-size: 11px; color: var(--ink2); line-height: 1.5; }
+
+    /* PIPELINE */
+    .pipeline-visual {
+      background: #fff; border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 24px; margin-bottom: 20px; overflow-x: auto;
+    }
+    .pipeline-flow { display: flex; flex-direction: column; align-items: center; gap: 0; }
+    .pf-row { display: flex; align-items: center; gap: 10px; width: 100%; justify-content: center; flex-wrap: wrap; }
+    .pf-box {
+      background: var(--bg2); border: 1px solid var(--border); border-radius: 10px;
+      padding: 9px 16px; font-size: 12px; font-weight: 600; color: var(--ink2);
+      text-align: center; white-space: nowrap;
+    }
+    .pf-box.s1 { background: #fff1ee; border-color: #fca89a; color: var(--coral); }
+    .pf-box.s2 { background: #f0fdfa; border-color: #99f6e4; color: var(--teal); }
+    .pf-box.s3 { background: #faf5ff; border-color: #d8b4fe; color: var(--violet); }
+    .pf-down { display: flex; justify-content: center; padding: 5px 0; color: var(--ink3); font-size: 18px; }
+
+    .stage-card { display: grid; grid-template-columns: 60px 1fr; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin-bottom: 12px; background: #fff; transition: box-shadow .16s; }
+    .stage-card:hover { box-shadow: 0 4px 18px rgba(0,0,0,.06); }
+    .stage-sidebar { display: flex; align-items: center; justify-content: center; font-family: var(--display); font-size: 20px; font-weight: 700; color: #fff; min-height: 90px; }
+    .s1c { background: var(--coral); } .s2c { background: var(--teal); } .s3c { background: var(--violet); }
+    .stage-body  { padding: 18px 22px; }
+    .stage-title { font-size: 13px; font-weight: 700; color: var(--ink); margin-bottom: 4px; }
+    .stage-desc  { font-size: 13px; color: var(--ink2); line-height: 1.6; }
+    .stage-highlight { font-size: 12px; color: var(--teal); font-weight: 600; margin-top: 8px; }
+    .tag-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+    .tag { background: var(--bg2); border: 1px solid var(--border); border-radius: 6px; padding: 2px 8px; font-size: 11px; font-weight: 500; color: var(--ink2); font-family: var(--mono); }
+
+    .hallucination-box {
+      background: linear-gradient(135deg, #fff7ed, #fff); border: 1px solid #fed7aa;
+      border-radius: var(--radius); padding: 20px; margin-top: 4px;
+    }
+    .hallucination-box h3 { font-family: var(--display); font-size: 14px; font-weight: 700; color: var(--amber); margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+    .hall-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    @media (max-width: 480px) { .hall-grid { grid-template-columns: 1fr; } }
+    .hall-item { background: rgba(217,119,6,.06); border: 1px solid #fed7aa; border-radius: 8px; padding: 12px 14px; font-size: 12px; color: var(--ink2); line-height: 1.5; }
+    .hall-item strong { display: block; font-weight: 700; color: var(--ink); margin-bottom: 3px; }
+    .hall-item::before { content: none; }
+    .hall-item-wide { grid-column: 1 / -1; background: rgba(13,148,136,.06); border-color: rgba(13,148,136,.25); }
+
+    /* VALIDATION */
+    .validation-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 8px; }
+    @media (max-width: 560px) { .validation-grid { grid-template-columns: 1fr; } }
+    .val-card { background: #fff; border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; }
+    .val-title { font-size: 14px; font-weight: 700; color: var(--ink); margin-bottom: 6px; }
+    .val-text  { font-size: 13px; color: var(--ink2); line-height: 1.6; }
+    .val-num   { font-family: var(--display); font-size: 28px; font-weight: 700; letter-spacing: -0.03em; margin-bottom: 2px; }
+
+    .metric-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 16px; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; background: #fff; }
+    .metric-table th { background: var(--bg2); color: var(--ink3); font-size: 11px; text-transform: uppercase; letter-spacing: .07em; padding: 10px 16px; text-align: left; border-bottom: 1px solid var(--border); font-weight: 600; }
+    .metric-table td { padding: 10px 16px; border-bottom: 1px solid var(--border); color: var(--ink2); font-size: 13px; }
+    .metric-table td:nth-child(2) { font-family: var(--display); font-weight: 700; color: var(--ink); }
+    .metric-table td:nth-child(3) { font-size: 12px; color: var(--ink3); }
+    .metric-table tr:last-child td { border-bottom: none; }
+    .metric-note { font-size: 12px; color: var(--ink3); margin-top: 8px; font-style: italic; }
+
+    /* DATASET */
+    .data-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 16px; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; background: #fff; box-shadow: 0 1px 6px rgba(0,0,0,.04); }
+    .data-table th { background: var(--bg2); color: var(--ink3); font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: .07em; padding: 11px 16px; text-align: left; border-bottom: 1px solid var(--border); }
+    .data-table td { padding: 11px 16px; border-bottom: 1px solid var(--border); color: var(--ink2); }
+    .data-table td:first-child { font-family: var(--mono); color: var(--teal); font-size: 12px; }
+    .data-table td:nth-child(2) { font-weight: 700; color: var(--ink); font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .data-table tr:last-child td { border-bottom: none; }
+    .data-table tbody tr:hover td { background: var(--bg2); }
+    .ds-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 20px; }
+    @media (max-width: 600px) { .ds-cards { grid-template-columns: 1fr; } }
+    .ds-card { background: #fff; border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; }
+    .ds-card-num { font-size: 28px; font-weight: 800; color: var(--teal); font-variant-numeric: tabular-nums; line-height: 1; margin-bottom: 4px; }
+    .ds-card-label { font-size: 12px; font-weight: 700; color: var(--ink); margin-bottom: 6px; }
+    .ds-card-desc { font-size: 11.5px; color: var(--ink3); line-height: 1.5; }
+
+    .json-block { background: var(--ink); border-radius: var(--radius); overflow: hidden; margin-top: 20px; }
+    .json-bar { background: rgba(255,255,255,.07); padding: 8px 16px; display: flex; align-items: center; gap: 6px; font-size: 11px; color: #8892a4; }
+    .json-dot { width: 9px; height: 9px; border-radius: 50%; }
+    .jd1 { background: #ff5f57; } .jd2 { background: #febc2e; } .jd3 { background: #28c840; }
+    .json-code { padding: 12px 20px; font-family: var(--mono); font-size: 12px; color: #a8b3c8; line-height: 1.55; white-space: pre; overflow-x: auto; }
+    .jk { color: #7dd3fc; } .jv { color: #86efac; } .js { color: #fda4af; }
+
+    .license-row { display: flex; align-items: center; gap: 10px; margin-top: 16px; font-size: 13px; color: var(--ink3); }
+    .license-badge { display: inline-flex; align-items: center; gap: 6px; background: var(--bg2); border: 1px solid var(--border); border-radius: 999px; padding: 4px 12px; font-size: 12px; font-weight: 600; color: var(--ink2); }
+
+    /* DEMO */
+    .demo-shell {
+      background: var(--ink); border-radius: var(--radius); overflow: hidden;
+      box-shadow: 0 8px 32px rgba(0,0,0,.18);
+    }
+    .demo-topbar {
+      background: rgba(255,255,255,.07); padding: 12px 20px;
+      display: flex; align-items: center; gap: 8px;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+    }
+    .demo-dot { width: 11px; height: 11px; border-radius: 50%; }
+    .dd1 { background: #ff5f57; } .dd2 { background: #febc2e; } .dd3 { background: #28c840; }
+    .demo-title { font-size: 12px; color: rgba(255,255,255,.4); margin-left: 6px; font-family: var(--mono); }
+    .demo-body { padding: 20px; }
+    .demo-pills { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+    .demo-pill {
+      padding: 7px 14px; border-radius: 999px; font-size: 12px; font-weight: 600;
+      cursor: pointer; border: 1px solid rgba(255,255,255,.15);
+      color: rgba(255,255,255,.65); background: rgba(255,255,255,.06);
+      transition: all .14s; font-family: var(--body);
+    }
+    .demo-pill:hover { border-color: rgba(255,255,255,.35); color: #fff; background: rgba(255,255,255,.12); }
+    .demo-pill.active { border-color: var(--teal); color: #5eead4; background: rgba(13,148,136,.15); }
+    .demo-output {
+      background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.1);
+      border-radius: 10px; padding: 16px 18px; min-height: 130px;
+    }
+    .demo-output-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .09em; color: rgba(255,255,255,.3); margin-bottom: 10px; }
+    .demo-response { font-size: 13px; color: #c8d3e8; line-height: 1.7; display: none; }
+    .demo-response.visible { display: block; }
+    .demo-response strong { color: #5eead4; font-weight: 600; }
+    .demo-response em { color: #fda4af; font-style: normal; font-size: 11px; }
+    .demo-badge { display: inline-flex; align-items: center; gap: 5px; margin-top: 10px; font-size: 11px; color: rgba(255,255,255,.3); }
+    .demo-badge::before { content: ''; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #28c840; }
+
+    /* USE CASES */
+    .usecase-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 8px; }
+    @media (max-width: 600px) { .usecase-grid { grid-template-columns: 1fr; } }
+    .usecase-card { background: #fff; border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; }
+    .usecase-icon  { margin-bottom: 12px; line-height: 1; }
+    .usecase-role  { font-size: 13px; font-weight: 700; color: var(--ink); margin-bottom: 6px; }
+    .usecase-items { list-style: none; font-size: 12px; color: var(--ink2); line-height: 1.8; }
+    .usecase-items li::before { content: "→ "; color: var(--teal); font-weight: 700; }
+
+    /* UNCERTAINTY BOX */
+    .uncertainty-box { background: #fafaf8; border: 1px solid var(--border); border-left: 3px solid var(--ink3); border-radius: var(--radius); padding: 18px 20px; }
+    .uncertainty-title { font-size: 13px; font-weight: 700; color: var(--ink2); display: flex; align-items: center; gap: 7px; margin-bottom: 14px; }
+    .failure-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    @media (max-width: 600px) { .failure-grid { grid-template-columns: 1fr; } }
+    .failure-item { background: #fff; border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; }
+    .failure-label { font-size: 12px; font-weight: 700; color: var(--ink); margin-bottom: 4px; }
+    .failure-text { font-size: 12px; color: var(--ink2); line-height: 1.55; }
+
+    /* LIMITATIONS */
+    .limit-list { margin-top: 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    @media (max-width: 560px) { .limit-list { grid-template-columns: 1fr; } }
+    .limit-item { background: #fff; border: 1px solid var(--border); border-left: 3px solid var(--amber); border-radius: var(--radius); padding: 12px 14px; }
+    .limit-item.limit-neutral { border-left-color: var(--border); }
+    .limit-title { font-size: 13px; font-weight: 700; color: var(--ink); margin-bottom: 3px; }
+    .limit-text  { font-size: 12px; color: var(--ink2); line-height: 1.55; }
+
+    /* CITATION */
+    .bibtex-wrap { background: var(--ink); border-radius: var(--radius); overflow: hidden; position: relative; margin-top: 14px; }
+    .bibtex-bar  { background: rgba(255,255,255,.07); padding: 9px 16px; display: flex; align-items: center; gap: 6px; }
+    .bibtex-dot  { width: 10px; height: 10px; border-radius: 50%; }
+    .bd1 { background: #ff5f57; } .bd2 { background: #febc2e; } .bd3 { background: #28c840; }
+    .bibtex-block { padding: 16px 20px; font-family: var(--mono); font-size: 12px; color: #a8b3c8; line-height: 1.8; white-space: pre; overflow-x: auto; }
+    .copy-btn { position: absolute; top: 9px; right: 14px; background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.15); border-radius: 7px; color: #a8b3c8; font-size: 11px; padding: 4px 12px; cursor: pointer; font-family: var(--body); transition: all .16s; }
+    .copy-btn:hover { background: rgba(255,255,255,.18); color: #fff; }
+    .apa-block { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 20px; font-size: 13px; color: var(--ink2); line-height: 1.7; margin-top: 10px; }
+    .cite-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--ink3); margin-bottom: 6px; }
+
+    /* FOOTER */
+    footer { background: var(--bg2); border-top: 1px solid var(--border); padding: 32px 0 28px; font-size: 13px; color: var(--ink3); }
+    .footer-inner { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: start; }
+    @media (max-width: 560px) { .footer-inner { grid-template-columns: 1fr; gap: 20px; text-align: center; } }
+    .footer-left {}
+    .footer-built { font-size: 14px; font-weight: 600; color: var(--ink); margin-bottom: 6px; font-family: var(--display); letter-spacing: -0.01em; }
+    .footer-mission { font-size: 12px; color: var(--ink3); line-height: 1.6; margin-bottom: 10px; max-width: 320px; }
+    .footer-tagline { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 11px; color: var(--ink3); }
+    .footer-tagline-sep { color: var(--border); }
+    .footer-right { display: flex; flex-direction: column; gap: 8px; align-items: flex-end; }
+    @media (max-width: 560px) { .footer-right { align-items: center; } }
+    .footer-links { display: flex; flex-direction: column; gap: 6px; align-items: flex-end; }
+    @media (max-width: 560px) { .footer-links { align-items: center; } }
+    footer a { color: var(--ink3); }
+    footer a:hover { color: var(--ink); }
+
+    /* RESPONSIVE */
+    @media (max-width: 640px) {
+      .stage-card { grid-template-columns: 48px 1fr; }
+      .stage-sidebar { font-size: 16px; min-height: auto; }
+      .nav-links { display: none; }
+      .hamburger { display: flex; }
+      h1 { font-size: 22px; }
+      .hall-grid { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 380px) {
+      .dedup-flow { grid-template-columns: 1fr; }
+      .dedup-arrow { display: none; }
+      .stats-breakdown { grid-template-columns: 1fr; }
+      .stat-mini:not(:last-child) { border-right: none; border-bottom: 1px solid var(--border); }
+    }
+
+    /* Stage Accordion */
+    .stage-accordion { display: flex; flex-direction: column; gap: 8px; margin: 28px 0; }
+    .sa-item { border: 1px solid var(--border); border-radius: 12px; overflow: hidden; background: var(--surface); }
+    .sa-header {
+      width: 100%; display: flex; align-items: center; gap: 14px; padding: 16px 20px;
+      background: none; border: none; cursor: pointer; text-align: left;
+      color: var(--text); transition: background .15s;
+    }
+    .sa-header:hover { background: rgba(0,0,0,.03); }
+    .sa-num {
+      flex-shrink: 0; width: 32px; height: 32px; border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; font-weight: 700; color: #fff;
+    }
+    .s1c { background: linear-gradient(135deg,#e8533a,#fb7a63); }
+    .s2c { background: linear-gradient(135deg,#0d9488,#5eead4); }
+    .s3c { background: linear-gradient(135deg,#7c3aed,#c4b5fd); }
+    .sa-title { font-weight: 600; font-size: 15px; flex: 1; }
+    .sa-tags { display: flex; gap: 6px; flex-wrap: wrap; }
+    .sa-chevron { flex-shrink: 0; width: 18px; height: 18px; color: var(--text-muted); transition: transform .25s; }
+    .sa-item.open .sa-chevron { transform: rotate(180deg); }
+    .sa-body { padding: 0 20px 0; max-height: 0; overflow: hidden; transition: max-height .3s ease, padding .3s ease; }
+    .sa-item.open .sa-body { padding: 0 20px 18px; max-height: 600px; }
+    .sa-body p { margin: 0 0 10px; font-size: 14px; color: var(--text-secondary); line-height: 1.6; }
+    .sa-body p:last-child { margin-bottom: 0; }
+    .sa-body .tag-row { margin-top: 10px; }
+    .sa-audit-box {
+      display: flex; align-items: center; gap: 16px; margin-top: 14px;
+      padding: 12px 16px; border-radius: 10px;
+      background: rgba(13,148,136,.07); border: 1px solid rgba(13,148,136,.2);
+    }
+    .sa-audit-num {
+      font-family: var(--display); font-size: 38px; font-weight: 700;
+      color: var(--teal); letter-spacing: -0.04em; line-height: 1; flex-shrink: 0;
+    }
+    .sa-audit-detail { display: flex; flex-direction: column; gap: 3px; }
+    .sa-audit-label { font-size: 13px; font-weight: 700; color: var(--ink); }
+    .sa-audit-sub { font-size: 11px; color: var(--ink3); line-height: 1.4; }
+
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-inner">
+    <div class="nav-logo">ILSA <span>LLM</span> Extractor</div>
+    <div class="nav-links" id="navLinks">
+      <a href="#abstract">Abstract</a>
+      <a href="#pipeline">Pipeline</a>
+      <a href="#validation">Validation</a>
+      <a href="#dataset">Dataset</a>
+      <a href="#demo">Demo</a>
+      <a href="#usecases">Use Cases</a>
+      <a href="#limitations">Limitations</a>
+      <a href="#citation">Cite</a>
+    </div>
+    <button class="hamburger" id="hamburger" aria-label="Open menu">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</nav>
+
+<!-- MOBILE DRAWER -->
+<div class="mobile-drawer" id="mobileDrawer">
+  <div class="drawer-backdrop" id="drawerBackdrop"></div>
+  <div class="drawer-panel">
+    <a href="#abstract" class="drawer-link">Abstract</a>
+    <a href="#pipeline" class="drawer-link">Pipeline</a>
+    <a href="#validation" class="drawer-link">Validation</a>
+    <a href="#dataset" class="drawer-link">Dataset</a>
+    <a href="#demo" class="drawer-link">Demo</a>
+    <a href="#usecases" class="drawer-link">Use Cases</a>
+    <a href="#limitations" class="drawer-link">Limitations</a>
+    <a href="#citation" class="drawer-link">Cite</a>
+  </div>
+</div>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="container">
+
+    <!-- Badges -->
+    <div class="hero-badges">
+      <span class="hero-badge infra">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+        Research Infrastructure
+      </span>
+      <span class="hero-badge data">Open Dataset</span>
+      <span class="hero-badge cc">CC BY 4.0</span>
+    </div>
+
+    <!-- Title -->
+    <h1>ILSA Knowledge Infrastructure</h1>
+    <p style="font-size:15px;color:var(--ink2);margin:-10px 0 24px;line-height:1.6;max-width:620px;">A schema-guided framework that transforms fragmented international large-scale assessment literature into a searchable evidence infrastructure.</p>
+
+    <!-- 4 key metrics -->
+    <div class="hero-metrics-row">
+      <div class="hero-metric-pill">
+        <div class="hmp-num coral">1,266</div>
+        <div class="hmp-label">Studies</div>
+      </div>
+      <div class="hero-metric-pill">
+        <div class="hmp-num teal">11,862</div>
+        <div class="hmp-label">Records</div>
+      </div>
+      <div class="hero-metric-pill">
+        <div class="hmp-num violet">130</div>
+        <div class="hmp-label">Audited</div>
+      </div>
+      <div class="hero-metric-pill">
+        <div class="hmp-num amber">96%</div>
+        <div class="hmp-label">Alignment</div>
+      </div>
+    </div>
+
+    <!-- Program chips -->
+    <div class="hero-program-chips">
+      <span class="hpc" data-p="PISA">PISA</span>
+      <span class="hpc" data-p="TIMSS">TIMSS</span>
+      <span class="hpc" data-p="PIRLS">PIRLS</span>
+      <span class="hpc" data-p="TALIS">TALIS</span>
+      <span class="hpc" data-p="ICILS">ICILS</span>
+      <span class="hpc" data-p="ICCS">ICCS</span>
+      <span class="hpc" data-p="PIAAC">PIAAC</span>
+    </div>
+
+    <div class="rq-box">
+      <div class="rq-label">Research Question</div>
+      <div class="rq-text">Can large language models transform fragmented international large-scale assessment literature into a reliable, structured knowledge base for evidence-informed educational research?</div>
+    </div>
+
+    <!-- Audience tabs -->
+    <div class="audience-tabs">
+      <div class="tab-buttons">
+        <button class="tab-btn active" onclick="switchTab(0, this)">For Researchers</button>
+        <button class="tab-btn" onclick="switchTab(1, this)">For Data Scientists</button>
+        <button class="tab-btn" onclick="switchTab(2, this)">For Policymakers</button>
+      </div>
+      <div class="tab-panels">
+        <div class="tab-panel active" id="tab-0">
+          <div class="tab-search-bar">
+            <svg class="tsb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <span class="tsb-text">Discover the most common predictors of mathematics achievement across PISA studies</span>
+            <span class="tsb-enter">↵</span>
+          </div>
+        </div>
+        <div class="tab-panel" id="tab-1">
+          <div class="tab-search-bar">
+            <svg class="tsb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <span class="tsb-text">Which ML methods are most used in TIMSS studies with correct plausible value handling?</span>
+            <span class="tsb-enter">↵</span>
+          </div>
+        </div>
+        <div class="tab-panel" id="tab-2">
+          <div class="tab-search-bar">
+            <svg class="tsb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <span class="tsb-text">What does prior TIMSS evidence say about teacher quality and student outcomes?</span>
+            <span class="tsb-enter">↵</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <p class="authors-line">
+      <a href="https://dedemerve.github.io" target="_blank" rel="noopener">Merve Dede</a> &nbsp;&amp;&nbsp; <a href="https://ekrcet.com/" target="_blank" rel="noopener">Ekrem Çetinkaya</a>
+    </p>
+
+    <div class="btn-row">
+      <a class="btn btn-hf" href="https://huggingface.co/datasets/dedemerve/ILSA-LLM-Extractor-Dataset" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="11" fill="#FFD21E"/><ellipse cx="12" cy="13" rx="7" ry="6" fill="#FF9D00"/><ellipse cx="12" cy="13" rx="6" ry="5" fill="#FFD21E"/><ellipse cx="9.2" cy="10.5" rx="1.2" ry="1.4" fill="#1a1a1a"/><ellipse cx="14.8" cy="10.5" rx="1.2" ry="1.4" fill="#1a1a1a"/><circle cx="9.6" cy="10.1" r="0.4" fill="#fff"/><circle cx="15.2" cy="10.1" r="0.4" fill="#fff"/><path d="M8.5 14.5 Q12 17.5 15.5 14.5" stroke="#1a1a1a" stroke-width="1.2" fill="none" stroke-linecap="round"/><ellipse cx="4.5" cy="15" rx="2.5" ry="1.8" fill="#FFD21E" transform="rotate(-20 4.5 15)"/><ellipse cx="19.5" cy="15" rx="2.5" ry="1.8" fill="#FFD21E" transform="rotate(20 19.5 15)"/></svg>
+        Explore Dataset
+      </a>
+      <a class="btn btn-teal" href="#demo" style="background:var(--teal);color:#fff;border-color:var(--teal);">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="15" height="15"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        Launch Research Assistant
+      </a>
+    </div>
+
+
+
+  </div>
+</section>
+
+<!-- ABSTRACT -->
+<section id="abstract">
+  <div class="container">
+    <div class="section-eyebrow">Abstract</div>
+    <h2>Abstract</h2>
+    <p>International Large-Scale Assessments have generated thousands of studies across PISA, TIMSS, PIRLS, TALIS, PIAAC, ICILS, and ICCS. Yet methodological knowledge remains fragmented across publications, making systematic evidence synthesis, methodological comparison, and cumulative knowledge building increasingly difficult.</p>
+    <div class="abstract-grid">
+      <div class="abstract-card">
+        <div class="abstract-card-label lbl-problem">Problem</div>
+        <p>Thousands of ILSA studies contain valuable methodological and analytical evidence, yet this knowledge remains scattered across publications, countries, assessment cycles, and research traditions. Researchers often spend weeks reviewing literature before beginning a new analysis.</p>
+      </div>
+      <div class="abstract-card">
+        <div class="abstract-card-label lbl-approach">Approach</div>
+        <p>A multi-stage AI pipeline extracts methodological evidence, standardizes terminology, and links findings into a structured knowledge base, transforming heterogeneous ILSA literature into a searchable research infrastructure.</p>
+      </div>
+      <div class="abstract-card">
+        <div class="abstract-card-label lbl-outcome">Research Infrastructure</div>
+        <p>11,862 structured records across 1,266 documents — enabling cumulative evidence synthesis across fragmented ILSA literature. The framework provides evidence-informed analytical guidance for researchers beginning new ILSA analyses.</p>
+      </div>
+    </div>
+    <div class="domain-contrib">
+      <p><em>Core contribution:</em> This project establishes a reusable knowledge infrastructure for International Large-Scale Assessment research, transforming 1,266 studies into 11,862 structured records that support evidence synthesis, methodological discovery, and AI-assisted research at scale.</p>
+    </div>
+  </div>
+</section>
+
+<!-- CONTRIBUTIONS -->
+<section id="contributions">
+  <div class="container">
+    <div class="section-eyebrow">Contributions</div>
+    <h2>Research contributions</h2>
+    <div class="contrib-grid">
+      <div class="contrib-card">
+        <div class="contrib-num">01</div>
+        <div class="contrib-title">Methodology-Aware Knowledge Extraction</div>
+        <div class="contrib-text">A structured extraction framework designed specifically for ILSA research captures methodological decisions, analytical practices, plausible value handling, sampling weights, and study characteristics in a standardized format.</div>
+        <span class="contrib-stat">9 field categories · 7 assessment programs</span>
+      </div>
+      <div class="contrib-card">
+        <div class="contrib-num">02</div>
+        <div class="contrib-title">Large-Scale Literature Transformation</div>
+        <div class="contrib-text">A multi-stage AI workflow transforms heterogeneous ILSA literature into a structured evidence base through extraction, standardization, and knowledge integration.</div>
+        <span class="contrib-stat">1,266 studies · 11,862 records</span>
+      </div>
+      <div class="contrib-card">
+        <div class="contrib-num">03</div>
+        <div class="contrib-title">Open ILSA Knowledge Base</div>
+        <div class="contrib-text">An openly accessible structured knowledge resource spanning multiple international assessment programs, enabling cross-study methodological synthesis and evidence discovery at scale.</div>
+        <span class="contrib-stat">CC BY 4.0 · Parquet · JSON</span>
+      </div>
+      <div class="contrib-card">
+        <div class="contrib-num">04</div>
+        <div class="contrib-title">Evidence-Grounded Research Assistant</div>
+        <div class="contrib-text">A citation-grounded research assistant capable of answering methodological questions, identifying relevant studies, suggesting analytical approaches, and supporting evidence-informed ILSA research.</div>
+        <span class="contrib-stat">Citation-grounded · Evidence-based · Searchable</span>
+      </div>
+
+      <!-- Why structured knowledge card — full width -->
+      <div class="why-llm-card">
+        <div class="contrib-title" style="color:var(--violet);margin-bottom:4px;font-size:15px;">Why a Structured Knowledge Infrastructure Was Needed</div>
+        <div class="contrib-text">ILSA studies differ substantially in terminology, reporting practices, analytical design, and methodological transparency. These differences make large-scale evidence synthesis difficult using conventional manual review or rule-based extraction approaches. A structured AI-assisted extraction framework enables methodological information to be represented consistently across studies.</div>
+        <div class="why-llm-grid">
+          <div class="why-item">
+            <div class="why-item-title">Heterogeneous reporting</div>
+            <div class="why-item-text">Studies report findings, variables, and methodological decisions using highly diverse formats, making direct comparison and synthesis difficult.</div>
+          </div>
+          <div class="why-item">
+            <div class="why-item-title">Non-standard descriptions</div>
+            <div class="why-item-text">Similar analytical methods are often described using different terminology, creating challenges for systematic evidence aggregation.</div>
+          </div>
+          <div class="why-item">
+            <div class="why-item-title">Terminology variation</div>
+            <div class="why-item-text">ESCS, HISEI, and PARED refer to overlapping constructs across programs — consistent interpretation requires contextual understanding at the study level.</div>
+          </div>
+          <div class="why-item">
+            <div class="why-item-title">Context-dependent extraction</div>
+            <div class="why-item-text">Critical methodological decisions, such as plausible value handling or sampling-weight usage, often require interpretation within the broader analytical context.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PIPELINE -->
+<section id="pipeline">
+  <div class="container">
+    <div class="section-eyebrow">Methods</div>
+    <h2>Four-stage pipeline</h2>
+
+
+    <div class="pipeline-infographic">
+      <div class="pi-header">
+        <span class="pi-eyebrow">Data Pipeline</span>
+        <span class="pi-subtitle">Transparent Processing Hierarchy · 4 Stages</span>
+      </div>
+
+      <div class="pi-flow">
+
+        <!-- Stage 01 -->
+        <div class="pi-card" data-c="coral">
+          <div class="pi-stage-tag">STAGE 01<br>CORPUS CONSTRUCTION</div>
+          <div class="pi-num coral">1,624</div>
+          <div class="pi-card-desc">Peer-reviewed ILSA publications retrieved from four institutional databases</div>
+          <div class="pi-badges">
+            <span class="pi-badge">IEA · 308</span>
+            <span class="pi-badge">OECD · 591</span>
+            <span class="pi-badge">Scopus · 423</span>
+            <span class="pi-badge">WoS · 302</span>
+          </div>
+        </div>
+
+        <div class="pi-chevron">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+        </div>
+
+        <!-- Stage 02 -->
+        <div class="pi-card" data-c="amber">
+          <div class="pi-stage-tag">STAGE 02<br>DEDUPLICATION</div>
+          <div class="pi-num amber">1,266</div>
+          <div class="pi-card-desc">Unique publications after DOI matching and normalized title/author comparison</div>
+          <div class="pi-badges">
+            <span class="pi-badge">DOI matching</span>
+            <span class="pi-badge">Title normalization</span>
+          </div>
+        </div>
+
+        <div class="pi-chevron">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+        </div>
+
+        <!-- Stage 03 -->
+        <div class="pi-card" data-c="teal">
+          <div class="pi-stage-tag">STAGE 03<br>HUMAN VALIDATION</div>
+          <div class="pi-num teal">130</div>
+          <div class="pi-card-desc">Articles manually read and audited from the 1,266 — field-by-field verification against source PDFs</div>
+          <div class="pi-badges">
+            <span class="pi-badge">~10% stratified sample</span>
+            <span class="pi-badge">96% alignment</span>
+            <span class="pi-badge">94% pass rate</span>
+          </div>
+        </div>
+
+        <div class="pi-chevron">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+        </div>
+
+        <!-- Stage 04 -->
+        <div class="pi-card" data-c="violet">
+          <div class="pi-stage-tag">STAGE 04<br>KNOWLEDGE INFRASTRUCTURE</div>
+          <div class="pi-num violet">11,862</div>
+          <div class="pi-card-desc">Structured methodological evidence transformed into 11,862 linked records supporting evidence synthesis, methodological discovery, and AI-assisted research.</div>
+          <div class="pi-badges">
+            <span class="pi-badge">1,266 studies</span>
+            <span class="pi-badge">11,862 records</span>
+            <span class="pi-badge">7 assessment programs</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="pi-outcome">
+      <span class="pi-outcome-label">Outcome</span>
+      <span class="pi-outcome-text">A reusable evidence infrastructure supporting systematic literature synthesis, methodological guidance, and AI-assisted ILSA research.</span>
+    </div>
+
+    <div class="stage-accordion">
+
+      <!-- Stage 1 -->
+      <div class="sa-item open" id="sa-1">
+        <button class="sa-header" onclick="toggleStage('sa-1')" aria-expanded="true">
+          <span class="sa-num s1c">1</span>
+          <span class="sa-title">Literature-to-Knowledge Transformation</span>
+          <span class="sa-tags">
+            <span class="tag">1,266 studies</span>
+            <span class="tag">11,862 records</span>
+            <span class="tag">Schema validated</span>
+          </span>
+          <svg class="sa-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="sa-body">
+          <p><strong>Corpus Construction —</strong> Literature was collected from four major sources and deduplicated using DOI matching and metadata normalization, yielding 1,266 unique ILSA-related publications.</p>
+          <p><strong>Structured Extraction —</strong> A schema-constrained extraction framework transformed the corpus into 11,862 structured methodological records suitable for large-scale evidence synthesis.</p>
+        </div>
+      </div>
+
+      <!-- Stage 2 -->
+      <div class="sa-item" id="sa-2">
+        <button class="sa-header" onclick="toggleStage('sa-2')" aria-expanded="false">
+          <span class="sa-num s2c">2</span>
+          <span class="sa-title">Semantic Harmonization</span>
+          <span class="sa-tags">
+            <span class="tag">Terminology mapping</span>
+            <span class="tag">SES standardization</span>
+            <span class="tag">Human-in-the-loop</span>
+          </span>
+          <svg class="sa-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="sa-body">
+          <p>Equivalent analytical methods and variable definitions were aligned across studies using domain-informed terminology mapping. A domain expert adjudicates ambiguous cases and validates semantic consistency across the full knowledge base.</p>
+          <div class="sa-audit-box">
+            <div class="sa-audit-num">130</div>
+            <div class="sa-audit-detail">
+              <span class="sa-audit-label">Manually audited articles</span>
+              <span class="sa-audit-sub">~10% stratified sample · 96% mean alignment</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Stage 3 -->
+      <div class="sa-item" id="sa-3">
+        <button class="sa-header" onclick="toggleStage('sa-3')" aria-expanded="false">
+          <span class="sa-num s3c">3</span>
+          <span class="sa-title">Research Intelligence Agent</span>
+          <span class="sa-tags">
+            <span class="tag">Evidence retrieval</span>
+            <span class="tag">Variable guidance</span>
+            <span class="tag">Citation-supported</span>
+          </span>
+          <svg class="sa-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="sa-body">
+          <p>Researchers can query prior ILSA evidence, identify relevant variables, discover methodological precedents, generate evidence-grounded hypotheses, and obtain citation-supported analytical recommendations — all grounded in the structured knowledge base.</p>
+          <div class="tag-row"><span class="tag">Study discovery</span><span class="tag">Hypothesis generation</span><span class="tag">Methodological guidance</span></div>
+        </div>
+      </div>
+
+    </div>
+
+
+    <!-- Evidence Quality Controls -->
+    <div class="hallucination-box">
+      <h3>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        Evidence Quality and Reliability
+      </h3>
+      <div class="hall-grid">
+        <div class="hall-item"><strong>Controlled Methodological Vocabulary</strong><br>Standardized schema constraints ensure methodological information is extracted using a consistent vocabulary across all studies.</div>
+        <div class="hall-item"><strong>Completeness Validation</strong><br>Every record must satisfy predefined completeness criteria before entering the knowledge base. Incomplete records are rejected at the point of creation.</div>
+        <div class="hall-item hall-item-wide"><strong>Human Expert Audit</strong><br>130 articles were manually reviewed field-by-field against source PDFs by a domain expert. Ambiguities were resolved and schema vocabulary iteratively tightened across audit rounds — yielding 96% semantic alignment.</div>
+        <div class="hall-item"><strong>Author-Reported Findings Preserved</strong><br>Findings are extracted directly from author-reported conclusions. The system does not infer or reinterpret outcomes.</div>
+        <div class="hall-item"><strong>Evidence-Bounded Responses</strong><br>The research assistant generates responses only from retrieved, indexed records in the knowledge base — unsupported claims are structurally impossible.</div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- VALIDATION -->
+<section id="validation">
+  <div class="container">
+    <div class="section-eyebrow">Validation</div>
+    <h2>Validation Results</h2>
+    <p>To evaluate extraction quality, a stratified sample of 130 publications (~10% of the corpus) was manually audited against the original source documents. Validation focused on methodological accuracy, semantic consistency, source attribution, and fabrication detection.</p>
+
+    <!-- Human validation anchor card -->
+    <div class="val-anchor-card">
+      <div class="val-anchor-num">130</div>
+      <div class="val-anchor-detail">
+        <div class="val-anchor-label">Human Validation</div>
+        <div class="val-anchor-sub">130 publications manually audited · ~10% stratified sample</div>
+      </div>
+    </div>
+
+    <div class="val-metrics-grid">
+      <div class="val-metric-card">
+        <div class="vmc-num">96%</div>
+        <div class="vmc-label">Mean Alignment Score</div>
+        <div class="vmc-sub">Average field-level semantic agreement between extracted records and source publications during expert verification.</div>
+      </div>
+      <div class="val-metric-card amber">
+        <div class="vmc-num amber">17/18</div>
+        <div class="vmc-label">Validation Scenarios Passed</div>
+        <div class="vmc-sub">Only one failure case was detected and corrected during audit — a causal language drift in one Korea-context record.</div>
+      </div>
+      <div class="val-metric-card violet">
+        <div class="vmc-num violet">100%</div>
+        <div class="vmc-label">Source Attribution Accuracy</div>
+        <div class="vmc-sub">All 1,266 records carry validated source database tags with zero misattribution detected in the audited sample.</div>
+      </div>
+      <div class="val-metric-card teal">
+        <div class="vmc-num teal">Zero</div>
+        <div class="vmc-label">Critical Fabrication Errors</div>
+        <div class="vmc-sub">No fabricated DOIs, program labels, or method families detected. Minor semantic drift confined to causal-language edge cases only.</div>
+      </div>
+    </div>
+
+    <!-- Validation Coverage summary -->
+    <div class="val-coverage-card">
+      <div class="val-coverage-header">Validation Coverage</div>
+      <div class="val-coverage-body">
+        <div class="val-coverage-left">
+          <div class="val-coverage-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+            ILSA program identification
+          </div>
+          <div class="val-coverage-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+            Analytical method classification
+          </div>
+          <div class="val-coverage-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+            Sampling weight usage
+          </div>
+          <div class="val-coverage-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+            Plausible value handling
+          </div>
+          <div class="val-coverage-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+            Source attribution
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Dataset limitations -->
+    <div class="uncertainty-box" style="margin-top:16px;">
+      <div class="uncertainty-title">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        Dataset limitations
+      </div>
+      <div class="failure-grid">
+        <div class="failure-item">
+          <div class="failure-label">Informal method descriptions</div>
+          <div class="failure-text">Studies reporting "a machine learning approach" without naming the algorithm are assigned to the closest schema category; the Iterative Semantic Alignment audit flagged and resolved the majority of such cases.</div>
+        </div>
+        <div class="failure-item">
+          <div class="failure-label">Effect size heterogeneity</div>
+          <div class="failure-text">ILSA studies rarely report standardized effect sizes. Extracted effect direction (Positive / Negative / Null) reflects the author-reported conclusion, not a model inference.</div>
+        </div>
+        <div class="failure-item">
+          <div class="failure-label">Scope of qualitative validation</div>
+          <div class="failure-text">Validation is qualitative and expert-driven. The dataset is best used as a structured synthesis instrument — individual records should be verified against source publications for high-stakes decisions.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- DATASET -->
+<section id="dataset">
+  <div class="container">
+    <div class="section-eyebrow">Data</div>
+    <h2>Open dataset</h2>
+    <p>11,862 structured records from 1,266 studies across PISA, TIMSS, PIRLS, TALIS, PIAAC, ICILS, and ICCS — released under CC BY 4.0 and hosted on HuggingFace in Parquet format. The full extraction pipeline is available on GitHub.</p>
+
+    <div class="ds-cards">
+      <div class="ds-card">
+        <div class="ds-card-num">1,266</div>
+        <div class="ds-card-label">Studies</div>
+        <div class="ds-card-desc">One record per publication — ILSA program, methodology, country coverage, and primary finding.</div>
+      </div>
+      <div class="ds-card">
+        <div class="ds-card-num">2,128</div>
+        <div class="ds-card-label">Key Findings</div>
+        <div class="ds-card-desc">Effect sizes, top predictors, and outcome variables extracted from each study.</div>
+      </div>
+      <div class="ds-card">
+        <div class="ds-card-num">8,336</div>
+        <div class="ds-card-label">Covariates</div>
+        <div class="ds-card-desc">Controlled variables and confounders reported by study authors, linked to each finding.</div>
+      </div>
+    </div>
+
+    <div class="json-block">
+      <div class="json-bar">
+        <span class="json-dot jd1"></span><span class="json-dot jd2"></span><span class="json-dot jd3"></span>
+        <span style="margin-left:6px;">Example record — articles_master</span>
+      </div>
+      <div class="json-code"><span class="jk">"doi"</span>: <span class="js">"10.1016/j.learninstr.2023.101800"</span>,
+<span class="jk">"ilsa_program"</span>: <span class="js">"PISA"</span>,
+<span class="jk">"ml_family"</span>: <span class="js">"Tree-Based / Ensemble Learning"</span>,
+<span class="jk">"sampling_weight_used"</span>: <span class="jv">true</span>,
+<span class="jk">"plausible_values_handling"</span>: <span class="js">"Correctly applied (5 PVs pooled)"</span>,
+<span class="jk">"pv_correct"</span>: <span class="jv">true</span>,
+<span class="jk">"countries_json"</span>: <span class="js">["Turkey", "Germany", "Japan"]</span>,
+<span class="jk">"primary_finding"</span>: <span class="js">"Socioeconomic status (SES) and prior academic achievement strongly predict mathematics outcomes across cycles, with school-level resources acting as a critical moderator."</span></div>
+    </div>
+
+    <div class="license-row">
+      <span class="license-badge">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+        CC BY 4.0
+      </span>
+      <span>Licensed under Creative Commons Attribution 4.0 International.</span>
+    </div>
+
+    <div style="margin-top:16px;">
+      <a class="btn btn-hf" href="https://huggingface.co/datasets/dedemerve/ILSA-LLM-Extractor-Dataset" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="11" fill="#FFD21E"/><ellipse cx="12" cy="13" rx="7" ry="6" fill="#FF9D00"/><ellipse cx="12" cy="13" rx="6" ry="5" fill="#FFD21E"/><ellipse cx="9.2" cy="10.5" rx="1.2" ry="1.4" fill="#1a1a1a"/><ellipse cx="14.8" cy="10.5" rx="1.2" ry="1.4" fill="#1a1a1a"/><circle cx="9.6" cy="10.1" r="0.4" fill="#fff"/><circle cx="15.2" cy="10.1" r="0.4" fill="#fff"/><path d="M8.5 14.5 Q12 17.5 15.5 14.5" stroke="#1a1a1a" stroke-width="1.2" fill="none" stroke-linecap="round"/><ellipse cx="4.5" cy="15" rx="2.5" ry="1.8" fill="#FFD21E" transform="rotate(-20 4.5 15)"/><ellipse cx="19.5" cy="15" rx="2.5" ry="1.8" fill="#FFD21E" transform="rotate(20 19.5 15)"/></svg>
+        Explore on HuggingFace
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- INTERACTIVE DEMO -->
+<section id="demo">
+  <div class="container">
+    <div class="section-eyebrow">Interactive Demo</div>
+    <h2>Ask the ILSA Knowledge Base</h2>
+    <p>The RAG agent retrieves evidence from 1,266 documents (11,862 structured records) and generates evidence-grounded analytical suggestions. Select an example query to see a representative response with source attribution.</p>
+
+    <div class="demo-shell">
+      <div class="demo-topbar">
+        <span class="demo-dot dd1"></span>
+        <span class="demo-dot dd2"></span>
+        <span class="demo-dot dd3"></span>
+        <span class="demo-title">ILSA Knowledge Base · RAG Agent</span>
+      </div>
+      <div class="demo-body">
+        <div class="demo-pills">
+          <button class="demo-pill active" onclick="showDemo(0, this)">What predicts math achievement in PISA?</button>
+          <button class="demo-pill" onclick="showDemo(1, this)">Which ML methods are most used in TIMSS?</button>
+          <button class="demo-pill" onclick="showDemo(2, this)">How should I handle plausible values?</button>
+          <button class="demo-pill" onclick="showDemo(3, this)">Common confounders in PIRLS studies?</button>
+        </div>
+        <div class="demo-output">
+          <div class="demo-output-label">Agent Response · <span class="src-tag src-kb">KB</span> 1,266 studies &nbsp;·&nbsp; 130 validated</div>
+
+          <div class="demo-response visible" id="demo-0">
+            Across <strong>PISA studies</strong> <span class="src-tag src-kb">KB · n=412</span>, the most consistently reported predictors of mathematics achievement are:
+            <br><br>
+            <strong>1. SES / ESCS</strong> — reported in 78% of studies as a top predictor. <span class="src-tag src-kb">KB</span> Most studies use the PISA ESCS composite; note that HISEI and PARED are subcomponents and should not be entered simultaneously.
+            <br><strong>2. Prior academic performance</strong> — where available (longitudinal designs), dominates variance explained. <span class="src-tag src-kb">KB</span>
+            <br><strong>3. School-level variables</strong> — school SES, resource availability, and urbanicity consistently moderate individual effects in multilevel models. <span class="src-tag src-kb">KB</span>
+            <div class="demo-cite-block">
+              <div class="demo-cite-title">Retrieved sources</div>
+              <div class="demo-cite-entry"><strong>Xu et al. (2021)</strong> <span class="doi-cite">10.1016/j.learninstr.2021.101510</span> <span class="src-tag src-kb">KB</span></div>
+              <div class="demo-cite-entry"><strong>Areepattamannil (2014)</strong> <span class="doi-cite">10.1007/s10763-013-9479-5</span> <span class="src-tag src-kb">KB</span></div>
+              <div class="demo-cite-entry"><strong>Agasisti &amp; Longobardi (2017)</strong> <span class="doi-cite">10.1080/09243453.2016.1222830</span> <span class="src-tag src-kb">KB</span></div>
+              <div class="demo-cite-entry" style="color:rgba(255,255,255,.25);font-size:10px;">+ 409 additional records from knowledge base</div>
+            </div>
+            <div class="demo-badge">Responses are generated from retrieved evidence and should be independently verified.</div>
+          </div>
+
+          <div class="demo-response" id="demo-1">
+            Among <strong>TIMSS studies</strong> <span class="src-tag src-kb">KB · n=218</span>, the most frequently applied ML method families are:
+            <br><br>
+            <strong>1. Tree-Based / Ensemble (41%)</strong> <span class="src-tag src-kb">KB</span> — Random Forest and XGBoost dominate; typically used for variable importance ranking.
+            <br><strong>2. Regression-Based (33%)</strong> <span class="src-tag src-kb">KB</span> — Linear regression and logistic regression remain common baselines, especially in multilevel specifications.
+            <br><strong>3. Neural Networks (14%)</strong> <span class="src-tag src-kb">KB</span> — Increasing after 2018; often used for cross-country prediction tasks.
+            <br><br>
+            Note: <strong>only 38% of TIMSS ML studies</strong> in the knowledge base correctly applied sampling weights — a critical methodological gap.
+            <div class="demo-cite-block">
+              <div class="demo-cite-title">Retrieved sources</div>
+              <div class="demo-cite-entry"><strong>Sirin (2005)</strong> <span class="doi-cite">10.3102/00346543075003417</span> <span class="src-tag src-kb">KB</span></div>
+              <div class="demo-cite-entry"><strong>Zhao et al. (2020)</strong> <span class="doi-cite">10.1007/s10648-020-09535-x</span> <span class="src-tag src-kb">KB</span></div>
+              <div class="demo-cite-entry"><strong>TIMSS Technical Reports (2019)</strong> <span class="doi-cite">IEA Database</span> <span class="src-tag src-md">SURVEY</span></div>
+              <div class="demo-cite-entry" style="color:rgba(255,255,255,.25);font-size:10px;">+ 215 additional records from knowledge base</div>
+            </div>
+            <div class="demo-badge">Responses are generated from retrieved evidence and should be independently verified.</div>
+          </div>
+
+          <div class="demo-response" id="demo-2">
+            Based on <strong>1,266 studies</strong> <span class="src-tag src-kb">KB</span> and OECD technical documentation <span class="src-tag src-md">SURVEY</span>, plausible value (PV) handling is the most common methodological error in ILSA research:
+            <br><br>
+            <strong>pv_correct = true</strong> in only <strong>~61% of KB studies</strong>. Common errors: using only the first PV, averaging across PVs before analysis (incorrect), and ignoring PV-specific variance estimation.
+            <br><br>
+            <strong>Recommended approach:</strong> Run your analysis 5–10 times across all plausible values, pool point estimates using Rubin's rules, and combine sampling error with imputation variance. The <code style="font-family:var(--mono);font-size:11px;background:rgba(255,255,255,.1);padding:1px 5px;border-radius:3px;">BIFIEsurvey</code> or <code style="font-family:var(--mono);font-size:11px;background:rgba(255,255,255,.1);padding:1px 5px;border-radius:3px;">survey</code> R packages implement this correctly.
+            <div class="demo-cite-block">
+              <div class="demo-cite-title">Retrieved sources</div>
+              <div class="demo-cite-entry"><strong>OECD PISA Technical Standards (2022)</strong> <span class="src-tag src-md">SURVEY</span></div>
+              <div class="demo-cite-entry"><strong>von Davier et al. (2021)</strong> <span class="doi-cite">10.1007/978-3-030-53636-8</span> <span class="src-tag src-md">SURVEY</span></div>
+              <div class="demo-cite-entry"><strong>KB audit results</strong> — 130-record stratified sample <span class="src-tag src-kb">KB</span></div>
+            </div>
+            <div class="demo-badge">Responses are generated from retrieved evidence and should be independently verified.</div>
+          </div>
+
+          <div class="demo-response" id="demo-3">
+            In <strong>PIRLS studies</strong> <span class="src-tag src-kb">KB · n=94</span>, the most frequently controlled confounders are:
+            <br><br>
+            <strong>1. Home literacy environment</strong> <span class="src-tag src-kb">KB</span> — books in home, reading materials, parental reading habits; present in 71% of PIRLS studies.
+            <br><strong>2. Language spoken at home</strong> <span class="src-tag src-kb">KB</span> — especially relevant in multilingual country samples; controlled in 58% of studies.
+            <br><strong>3. Early childhood education</strong> <span class="src-tag src-kb">KB</span> — years of preschool attendance consistently reduces residual variance in reading models.
+            <br><strong>4. Teacher characteristics</strong> <span class="src-tag src-kb">KB</span> — experience, professional development, and instructional time; important at school level.
+            <div class="demo-cite-block">
+              <div class="demo-cite-title">Retrieved sources</div>
+              <div class="demo-cite-entry"><strong>PIRLS 2021 International Results</strong> <span class="src-tag src-md">SURVEY</span></div>
+              <div class="demo-cite-entry"><strong>Stoet &amp; Geary (2015)</strong> <span class="doi-cite">10.1177/0956797614548444</span> <span class="src-tag src-kb">KB</span></div>
+              <div class="demo-cite-entry"><strong>Toropova et al. (2021)</strong> <span class="doi-cite">10.1016/j.tate.2020.103298</span> <span class="src-tag src-kb">KB</span></div>
+              <div class="demo-cite-entry" style="color:rgba(255,255,255,.25);font-size:10px;">+ 91 additional records from knowledge base</div>
+            </div>
+            <div class="demo-badge">Responses are generated from retrieved evidence and should be independently verified.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- USE CASES -->
+<section id="usecases">
+  <div class="container">
+    <div class="section-eyebrow">Use Cases</div>
+    <h2>Who benefits from this dataset</h2>
+    <div class="usecase-grid">
+      <div class="usecase-card">
+        <div class="usecase-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--teal)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18"/></svg>
+        </div>
+        <div class="usecase-role">Researchers</div>
+        <ul class="usecase-items">
+          <li>Query which factors predict reading scores across 20 years of PISA data</li>
+          <li>See how plausible values were handled across hundreds of TIMSS studies — instantly</li>
+          <li>Spot methodological gaps before designing your next study</li>
+        </ul>
+      </div>
+      <div class="usecase-card">
+        <div class="usecase-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--violet)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/><path d="M2 12h3M19 12h3M12 2v3M12 19v3"/></svg>
+        </div>
+        <div class="usecase-role">Policymakers</div>
+        <ul class="usecase-items">
+          <li>Find which student background factors consistently predict low performance across countries</li>
+          <li>See what the last decade of ILSA research says about a specific policy lever</li>
+          <li>Build evidence-based briefings without manually reading hundreds of studies</li>
+        </ul>
+      </div>
+      <div class="usecase-card">
+        <div class="usecase-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--coral)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        </div>
+        <div class="usecase-role">Data Scientists</div>
+        <ul class="usecase-items">
+          <li>Access 11,862 structured records in a single, analysis-ready Parquet file</li>
+          <li>Build or test retrieval systems on a real-world academic corpus</li>
+          <li>Reproduce or extend the extraction pipeline using the open-source code</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- LIMITATIONS -->
+<section id="limitations">
+  <div class="container">
+    <div class="section-eyebrow">Limitations</div>
+    <h2>Known limitations</h2>
+    <div class="limit-list">
+      <div class="limit-item">
+        <div class="limit-title">English-language bias</div>
+        <div class="limit-text">The corpus is restricted to English-language publications, excluding potentially relevant studies in other languages. This may under-represent research from non-English-speaking ILSA participant countries.</div>
+      </div>
+      <div class="limit-item">
+        <div class="limit-title">Publication bias</div>
+        <div class="limit-text">The dataset reflects the academic literature available in four institutional databases, which may over-represent statistically significant findings and under-represent null results.</div>
+      </div>
+      <div class="limit-item limit-neutral">
+        <div class="limit-title">Extraction uncertainty</div>
+        <div class="limit-text">Automated extraction may introduce errors in complex or ambiguous methodological descriptions. Individual records should be verified against source publications for high-stakes decisions.</div>
+      </div>
+      <div class="limit-item limit-neutral">
+        <div class="limit-title">Temporal coverage</div>
+        <div class="limit-text">Coverage reflects studies indexed in the four databases at collection time. Newly published studies require re-running the pipeline to be included in the knowledge base.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CITATION -->
+<section id="citation">
+  <div class="container">
+    <div class="section-eyebrow">Citation</div>
+    <h2>Cite this work</h2>
+    <p>If you use this dataset or pipeline in your research, please cite:</p>
+
+    <div class="cite-label">BibTeX</div>
+    <div class="bibtex-wrap">
+      <div class="bibtex-bar"><span class="bibtex-dot bd1"></span><span class="bibtex-dot bd2"></span><span class="bibtex-dot bd3"></span></div>
+      <div class="bibtex-block" id="bibtex">@article{dede-cetinkaya2026schema,
+  title  = {A Schema-Guided {LLM} Framework for Evidence Extraction
+            and Systematic Synthesis in Large-Scale Assessment Research},
+  author = {Dede, Merve and {\c{C}}etinkaya, Ekrem},
+  year   = {2026},
+  note   = {Manuscript under review}
+}</div>
+      <button class="copy-btn" onclick="copyBib()">Copy</button>
+    </div>
+  </div>
+</section>
+
+<!-- END CTA -->
+<section class="end-cta-section">
+  <div class="container">
+    <h2>Explore the Infrastructure</h2>
+    <p>Open access — everything is freely available for research, teaching, and reuse.</p>
+    <div class="end-cta-grid">
+      <a class="end-cta-btn primary" href="#demo">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        Launch Research Assistant
+      </a>
+      <a class="end-cta-btn secondary" href="https://huggingface.co/datasets/dedemerve/ILSA-LLM-Extractor-Dataset" target="_blank" rel="noopener">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Browse Dataset
+      </a>
+      <a class="end-cta-btn secondary" href="https://github.com/dedemerve/ILSA-LLM-Extractor" target="_blank" rel="noopener">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5C5.73.5.5 5.73.5 12c0 5.08 3.29 9.38 7.86 10.9.58.1.79-.25.79-.55v-1.93c-3.2.7-3.87-1.54-3.87-1.54-.52-1.33-1.28-1.68-1.28-1.68-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.18 1.76 1.18 1.02 1.75 2.68 1.24 3.33.95.1-.74.4-1.24.72-1.53-2.55-.29-5.23-1.28-5.23-5.68 0-1.25.45-2.28 1.18-3.08-.12-.29-.51-1.46.11-3.04 0 0 .96-.31 3.15 1.18a10.96 10.96 0 012.87-.39c.97 0 1.95.13 2.87.39 2.18-1.49 3.14-1.18 3.14-1.18.62 1.58.23 2.75.11 3.04.74.8 1.18 1.83 1.18 3.08 0 4.41-2.69 5.38-5.25 5.67.41.35.78 1.05.78 2.12v3.14c0 .3.2.66.8.55A10.51 10.51 0 0023.5 12C23.5 5.73 18.27.5 12 .5z"/></svg>
+        View GitHub Repository
+      </a>
+      <a class="end-cta-btn secondary" href="#validation">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+        Read Validation Results
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="container">
+    <div class="footer-inner">
+      <div class="footer-left">
+        <div class="footer-built">Built by <a href="https://dedemerve.github.io" target="_blank" rel="noopener" style="color:var(--ink);border-bottom:1.5px solid var(--border);">Merve Dede</a> &amp; <a href="https://ekrcet.com/" target="_blank" rel="noopener" style="color:var(--ink);border-bottom:1.5px solid var(--border);">Ekrem Çetinkaya</a></div>
+        <div class="footer-mission">Open infrastructure for evidence-informed large-scale assessment research.</div>
+        <div class="footer-tagline">
+          <span>Open Dataset</span>
+          <span class="footer-tagline-sep">·</span>
+          <span>Open Source</span>
+          <span class="footer-tagline-sep">·</span>
+          <span>CC BY 4.0</span>
+          <span class="footer-tagline-sep">·</span>
+          <span>2026</span>
+        </div>
+      </div>
+      <div class="footer-right">
+        <div class="footer-links">
+          <a href="https://github.com/dedemerve/ILSA-LLM-Extractor" target="_blank" rel="noopener">GitHub Repository</a>
+          <a href="https://huggingface.co/datasets/dedemerve/ILSA-LLM-Extractor-Dataset" target="_blank" rel="noopener">HuggingFace Dataset</a>
+          <a href="#" style="color:var(--ink3);cursor:default;">Preprint (coming soon)</a>
+          <a href="#validation">Validation Report</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // Hamburger / mobile drawer
+  const hamburger = document.getElementById('hamburger');
+  const drawer = document.getElementById('mobileDrawer');
+  const backdrop = document.getElementById('drawerBackdrop');
+
+  function openDrawer() { drawer.classList.add('open'); hamburger.classList.add('open'); }
+  function closeDrawer() { drawer.classList.remove('open'); hamburger.classList.remove('open'); }
+
+  hamburger.addEventListener('click', () => drawer.classList.contains('open') ? closeDrawer() : openDrawer());
+  backdrop.addEventListener('click', closeDrawer);
+  document.querySelectorAll('.drawer-link').forEach(a => a.addEventListener('click', closeDrawer));
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDrawer(); });
+
+  // Tab → demo index map: researcher=0, data scientist=1, policymaker=3
+  const TAB_TO_DEMO = [0, 1, 3];
+  // Demo → tab index map (approximate)
+  const DEMO_TO_TAB = [0, 1, null, 2];
+
+  function _activateDemo(idx) {
+    document.querySelectorAll('.demo-response').forEach(r => r.classList.remove('visible'));
+    document.querySelectorAll('.demo-pill').forEach(p => p.classList.remove('active'));
+    const resp = document.getElementById('demo-' + idx);
+    if (resp) resp.classList.add('visible');
+    const pills = document.querySelectorAll('.demo-pill');
+    if (pills[idx]) pills[idx].classList.add('active');
+  }
+
+  function _activateTab(tabIdx) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => { p.classList.remove('active', 'fade-in'); });
+    const btns = document.querySelectorAll('.tab-btn');
+    if (btns[tabIdx]) btns[tabIdx].classList.add('active');
+    const panel = document.getElementById('tab-' + tabIdx);
+    if (panel) {
+      panel.classList.add('active');
+      requestAnimationFrame(() => panel.classList.add('fade-in'));
+    }
+  }
+
+  function switchTab(tabIdx, el) {
+    _activateTab(tabIdx);
+    _activateDemo(TAB_TO_DEMO[tabIdx]);
+  }
+
+  function showDemo(idx, el) {
+    _activateDemo(idx);
+    const tabIdx = DEMO_TO_TAB[idx];
+    if (tabIdx !== null && tabIdx !== undefined) _activateTab(tabIdx);
+  }
+
+  // Init first tab fade-in
+  requestAnimationFrame(() => { const p = document.getElementById('tab-0'); if(p) p.classList.add('fade-in'); });
+
+  function copyBib() {
+    const text = document.getElementById('bibtex').textContent.trim();
+    navigator.clipboard.writeText(text).then(() => {
+      const btn = document.querySelector('.copy-btn');
+      btn.textContent = 'Copied!';
+      setTimeout(() => btn.textContent = 'Copy', 2000);
+    });
+  }
+
+  // Scroll-spy: highlight active nav link
+  const navAnchors = document.querySelectorAll('#navLinks a[href^="#"]');
+  const sections = Array.from(navAnchors).map(a => document.querySelector(a.getAttribute('href'))).filter(Boolean);
+  function updateActiveNav() {
+    const scrollY = window.scrollY + 80;
+    let current = sections[0];
+    sections.forEach(s => { if (s.offsetTop <= scrollY) current = s; });
+    navAnchors.forEach(a => {
+      a.classList.toggle('nav-active', a.getAttribute('href') === '#' + current.id);
+    });
+  }
+  window.addEventListener('scroll', updateActiveNav, { passive: true });
+  updateActiveNav();
+</script>
+
+  <script>
+    function toggleStage(id) {
+      const item = document.getElementById(id);
+      const isOpen = item.classList.contains('open');
+      // Close all
+      document.querySelectorAll('.sa-item').forEach(el => {
+        el.classList.remove('open');
+        el.querySelector('.sa-header').setAttribute('aria-expanded', 'false');
+      });
+      // Open clicked if it was closed
+      if (!isOpen) {
+        item.classList.add('open');
+        item.querySelector('.sa-header').setAttribute('aria-expanded', 'true');
+      }
+    }
+  </script>
+</body>
+</html>
