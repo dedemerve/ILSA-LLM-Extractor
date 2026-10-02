@@ -25,6 +25,7 @@ Literatür ağırlığı eşlemesi (M1):
 Çıktılar:
   outputs/stage4/loco_results.csv      — fold × model metrikleri
   outputs/stage4/loco_predictions.csv  — her tahmin satırı
+  outputs/stage4/shap_values.csv       — M1 SHAP global önem (program × domain × özellik)
 """
 
 from __future__ import annotations
@@ -39,12 +40,19 @@ from scipy import stats
 from sklearn.linear_model import RidgeCV
 from sklearn.preprocessing import StandardScaler
 
+try:
+    import shap as _shap
+    _SHAP_AVAILABLE = True
+except ImportError:
+    _SHAP_AVAILABLE = False
+
 PROJECT_ROOT  = Path(__file__).resolve().parents[1]
 STAGE4_DIR    = PROJECT_ROOT / "outputs" / "stage4"
 ESTIMATES_CSV = STAGE4_DIR / "country_estimates.csv"
 WEIGHTS_CSV   = STAGE4_DIR / "predictor_weights.csv"
 OUT_RESULTS   = STAGE4_DIR / "loco_results.csv"
 OUT_PREDS     = STAGE4_DIR / "loco_predictions.csv"
+OUT_SHAP      = STAGE4_DIR / "shap_values.csv"
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s  %(message)s")
 log = logging.getLogger(__name__)
@@ -231,14 +239,20 @@ def fit_ridge(
     y_train: np.ndarray,
     X_test: np.ndarray,
     lit_weights: np.ndarray | None = None,
-) -> np.ndarray:
-    """Ridge (CV alpha) ile eğit ve test tahminini döndür.
+) -> tuple[np.ndarray, RidgeCV, StandardScaler, np.ndarray, np.ndarray]:
+    """Ridge (CV alpha) ile eğit; tahmin ve eğitim artifaktlarını döndür.
 
     lit_weights: M1 için her özelliğe uygulanacak sqrt(w_j) ölçekleme vektörü.
     None ise M0 (ölçekleme yok).
+
+    Döndürür:
+        y_pred       — test tahminleri
+        model        — eğitilmiş RidgeCV
+        scaler       — fit edilmiş StandardScaler
+        scale        — uygulanan sqrt(w_j) vektörü (M0 için np.ones)
+        col_means    — NaN imputation için train sütun ortalamaları
     """
     scaler = StandardScaler()
-    # NaN'ları sütun ortalamasıyla doldur (çapraz-program özellikler eksik olabilir)
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", RuntimeWarning)
         col_means = np.nanmean(X_train, axis=0)
@@ -250,17 +264,43 @@ def fit_ridge(
     X_te = scaler.transform(X_test)
 
     if lit_weights is not None:
-        # M1: özellik ölçekleme — X * sqrt(w_j)
         scale = np.sqrt(np.clip(lit_weights, 1e-6, None))
-        X_tr  = X_tr * scale
-        X_te  = X_te * scale
+    else:
+        scale = np.ones(X_tr.shape[1])
+
+    X_tr = X_tr * scale
+    X_te = X_te * scale
 
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         model = RidgeCV(alphas=ALPHA_GRID, cv=min(5, len(y_train)))
         model.fit(X_tr, y_train)
 
-    return model.predict(X_te)
+    return model.predict(X_te), model, scaler, scale, col_means
+
+
+def compute_shap_values(
+    model: RidgeCV,
+    scaler: StandardScaler,
+    scale: np.ndarray,
+    col_means: np.ndarray,
+    X_test_raw: np.ndarray,
+) -> np.ndarray:
+    """M1 Ridge modeli için SHAP değerlerini hesapla (LinearExplainer).
+
+    Dönüş: shape (n_test, n_features) — her gözlem için özellik bazlı SHAP
+    """
+    if not _SHAP_AVAILABLE:
+        return np.full((X_test_raw.shape[0], X_test_raw.shape[1]), np.nan)
+
+    X_imp   = np.where(np.isnan(X_test_raw), col_means, X_test_raw)
+    X_scaled = scaler.transform(X_imp) * scale
+
+    # LinearExplainer: arka plan = sıfır vektör (standartlaştırılmış uzayda ortalama)
+    background = np.zeros((1, X_scaled.shape[1]))
+    explainer  = _shap.LinearExplainer(model, background, feature_perturbation="interventional")
+    shap_vals  = explainer.shap_values(X_scaled)
+    return np.array(shap_vals)
 
 
 # ---------------------------------------------------------------------------
@@ -285,6 +325,7 @@ def run_loco(
 
     results_rows: list[dict] = []
     pred_rows:    list[dict] = []
+    shap_rows:    list[dict] = []
 
     # Her (program, domain) kombinasyonu için ayrı LOCO
     for (prog, dom), grp in est.groupby(["program", "domain"]):
@@ -311,6 +352,7 @@ def run_loco(
         fold_preds: dict[str, list] = {
             "M0": [], "M1": [], "M2": [], "y_true": [], "countries": []
         }
+        shap_accumulator: list[np.ndarray] = []  # fold SHAP değerleri (M1)
 
         for i, test_cycle in enumerate(cycles):
             train_cycles = [c for c in cycles if c < test_cycle]
@@ -326,9 +368,14 @@ def run_loco(
                 continue
 
             # M0
-            y_m0 = fit_ridge(X_tr, y_tr, X_te, lit_weights=None)
+            y_m0, _, _, _, _ = fit_ridge(X_tr, y_tr, X_te, lit_weights=None)
             # M1
-            y_m1 = fit_ridge(X_tr, y_tr, X_te, lit_weights=lit_w_vec)
+            y_m1, m1_model, m1_scaler, m1_scale, m1_means = fit_ridge(
+                X_tr, y_tr, X_te, lit_weights=lit_w_vec
+            )
+            # SHAP (M1)
+            shap_fold = compute_shap_values(m1_model, m1_scaler, m1_scale, m1_means, X_te)
+            shap_accumulator.append(shap_fold)
             # M2: lag-1 (persistence)
             lag_cycle = max(train_cycles)
             lag_df    = panel[panel["cycle"] == lag_cycle].set_index("country_iso3")
@@ -391,11 +438,31 @@ def run_loco(
                     "DM_stat": round(dm_stat, 4), "DM_p": round(dm_p, 4),
                 })
 
+        # SHAP global önem (M1): fold SHAP'larını birleştir, mean |SHAP| hesapla
+        if shap_accumulator and not all(np.all(np.isnan(s)) for s in shap_accumulator):
+            all_shap = np.vstack(shap_accumulator)          # (toplam_gözlem, n_feat)
+            mean_abs_shap = np.nanmean(np.abs(all_shap), axis=0)
+            for feat_name, importance in zip(all_feature_cols, mean_abs_shap):
+                shap_rows.append({
+                    "program": prog,
+                    "domain": dom,
+                    "feature": feat_name,
+                    "mean_abs_shap": round(float(importance), 6),
+                })
+            log.info("  SHAP hesaplandı: %d özellik", len(all_feature_cols))
+
     results_df = pd.DataFrame(results_rows)
     preds_df   = pd.DataFrame(pred_rows)
 
+    shap_df = pd.DataFrame(shap_rows)
+
     results_df.to_csv(OUT_RESULTS, index=False)
     preds_df.to_csv(OUT_PREDS,    index=False)
+    if not shap_df.empty:
+        shap_df.to_csv(OUT_SHAP, index=False)
+        log.info("Kaydedildi: %s  (%d satır)", OUT_SHAP, len(shap_df))
+    elif not _SHAP_AVAILABLE:
+        log.warning("SHAP paketi yüklü değil; shap_values.csv oluşturulmadı.")
 
     log.info("Kaydedildi: %s  (%d satır)", OUT_RESULTS, len(results_df))
     log.info("Kaydedildi: %s  (%d satır)", OUT_PREDS,   len(preds_df))
