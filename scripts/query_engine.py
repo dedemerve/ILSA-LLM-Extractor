@@ -336,7 +336,7 @@ def answer_with_llm(question: str, context: str) -> str | None:
 
     client = OpenAI(api_key=api_key)
     resp = client.chat.completions.create(
-        model=os.environ.get("ILSA_RAG_MODEL", "gpt-4o-mini"),
+        model=os.environ.get("ILSA_RAG_MODEL", "gpt-4o-mini-2024-07-18"),
         messages=[
             {"role": "system", "content": SYSTEM_PROMPT},
             {
