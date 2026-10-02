@@ -2,7 +2,7 @@
 """
 ILSA Semantic Knowledge Base — vector index and RAG query engine.
 
-Indexes outputs/final_knowledge_synthesis_v4.csv into ChromaDB with Metadata_Filter_Flag
+Indexes outputs/final_knowledge_synthesis.csv into ChromaDB with Metadata_Filter_Flag
 for filtered retrieval. Answers queries using retrieved synthesis rows (LLM optional).
 
 Usage:
@@ -26,9 +26,9 @@ import pandas as pd
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT))
 
-DEFAULT_SYNTHESIS = PROJECT_ROOT / "outputs" / "final_knowledge_synthesis_v4.csv"
+DEFAULT_SYNTHESIS = PROJECT_ROOT / "outputs" / "final_knowledge_synthesis.csv"
 DEFAULT_PERSIST = PROJECT_ROOT / "outputs" / "chroma_ilsa_synthesis"
-COLLECTION_NAME = "ilsa_knowledge_synthesis_v4"
+COLLECTION_NAME = "ilsa_knowledge_synthesis"
 
 SYSTEM_PROMPT = """Sen bir eğitim araştırmacısı ve ILSA meta-analiz uzmanısın.
 

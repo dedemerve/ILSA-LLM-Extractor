@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Rule-based academic prose from final_knowledge_synthesis_v4.csv (no LLM / no API).
+Rule-based academic prose from final_knowledge_synthesis.csv (no LLM / no API).
 
 Reads the pre-aggregated matrix (Canonical_Method × Canonical_Variable ×
 Aggregate_Effect_Trend × Study_Count) and emits template-bound Turkish sentences
@@ -30,7 +30,7 @@ from src.enrichment.canonical_taxonomy import (  # noqa: E402
     THEORETICAL_META_SYNTHESIS,
 )
 
-DEFAULT_CSV = PROJECT_ROOT / "outputs" / "final_knowledge_synthesis_v4.csv"
+DEFAULT_CSV = PROJECT_ROOT / "outputs" / "final_knowledge_synthesis.csv"
 DEFAULT_OUT_SENTENCES = PROJECT_ROOT / "outputs" / "academic_synthesis_sentences.csv"
 DEFAULT_OUT_REPORT = PROJECT_ROOT / "outputs" / "academic_synthesis_report_tr.md"
 
@@ -143,10 +143,10 @@ def build_grouped_report(df: pd.DataFrame, *, lang: str = "tr") -> str:
     )
     lines.append(title)
     lines.append(
-        "_Her cümle `final_knowledge_synthesis_v4.csv` içindeki Study_Count değerinden "
+        "_Her cümle `final_knowledge_synthesis.csv` içindeki Study_Count değerinden "
         "türetilmiştir; LLM kullanılmamıştır._\n"
         if lang == "tr"
-        else "_Each sentence is derived from Study_Count in `final_knowledge_synthesis_v4.csv`; "
+        else "_Each sentence is derived from Study_Count in `final_knowledge_synthesis.csv`; "
         "no LLM was used._\n"
     )
 
