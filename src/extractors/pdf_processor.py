@@ -132,7 +132,7 @@ def detect_sections(raw_text: str) -> dict[str, tuple[int, int]]:
     return boundaries
 
 
-MAX_CHARS = 400_000  # ~100k tokens; keeps total under gpt-4o's 128k context limit
+MAX_CHARS = 400_000  # ~100k tokens; fits within gpt-5.4-nano context window
 
 
 def build_extraction_text(

@@ -1677,7 +1677,7 @@ def _backfill_total_students_from_extracted_text(
             sd["total_students"] = value
             return
 
-MODEL_NAME = "gpt-5.4-nano"
+MODEL_NAME = "gpt-5.4-nano-2026-03-17"
 PRICE_INPUT_PER_1M = 2.50
 PRICE_OUTPUT_PER_1M = 10.00
 
