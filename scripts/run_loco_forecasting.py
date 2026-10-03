@@ -3,7 +3,7 @@
 Stage 4 — Modül 3: LOCO Forecasting (M0 / M1 / M2)
 
 Modeller:
-  M0  — Ridge (veri güdümlü): lag özellikleri, literatür ağırlığı yok
+  M0  — Ridge (veri güdüimlü): lag özellikleri, literatür ağırlığı yok
   M1  — Ridge (literatür bilgili): özellikler sqrt(w_j) ile ölçeklenir
   M2  — Persistence: son gözlenen cycle ortalamasını tahmin olarak kullan
 
@@ -13,7 +13,7 @@ Temporal doğrulama:
 
 Özellik seti:
   Her (program, domain) için, test cycle'ından önceki en son
-  gözlemlenen ülke ortalaması (lag-1 özelliği).
+  gözlenen ülke ortalaması (lag-1 özelliği).
   Çapraz-program özellikleri: aynı domain'deki diğer programların
   lag-1 ortalamaları (program × domain çiftleri).
 
@@ -98,7 +98,7 @@ def spearman_r(y_true: np.ndarray, y_pred: np.ndarray) -> float:
 def diebold_mariano(e1: np.ndarray, e2: np.ndarray) -> tuple[float, float]:
     """Harvey-Leybourne-Newbold düzeltmeli Diebold-Mariano testi.
 
-    H0: M1 ve M2 eşit tahmin gücü.  e1=M1 hataları, e2=M2 hataları.
+    H0: M1 ve M2 eşit tahmin gücu.  e1=M1 hataları, e2=M2 hataları.
     Döndürür: (DM istatistiği, p değeri)
     """
     d = e1 ** 2 - e2 ** 2
@@ -177,7 +177,7 @@ def build_xy(
 
     Her satır bir ülkeyi temsil eder.
     X özelliği: train_cycles'ın sonuncusundaki değer (lag-1).
-    y hedef: test_cycle'daki değer.
+    y hedef: test_cycle'ındaki değer.
     """
     lag_cycle = max(train_cycles)
 
@@ -205,7 +205,6 @@ def build_xy(
             continue
         X_tr = prev_df.loc[common_tr, feature_cols].values.astype(float)
         y_tr = curr_df.loc[common_tr, target_col].values.astype(float)
-        # Hedef NaN olan satırları kaldır; özellik NaN'ları fit_ridge içinde doldurulur
         mask = ~np.isnan(y_tr)
         if mask.sum() == 0:
             continue
@@ -218,7 +217,6 @@ def build_xy(
     X_train = np.vstack(X_train_list)
     y_train = np.concatenate(y_train_list)
 
-    # Test: lag_cycle → test_cycle (hedef NaN olanları kaldır)
     mask_test = ~np.isnan(y_target)
     X_test  = X_lag[mask_test]
     y_test  = y_target[mask_test]
@@ -296,7 +294,6 @@ def compute_shap_values(
     X_imp   = np.where(np.isnan(X_test_raw), col_means, X_test_raw)
     X_scaled = scaler.transform(X_imp) * scale
 
-    # LinearExplainer: arka plan = sıfır vektör (standartlaştırılmış uzayda ortalama)
     background = np.zeros((1, X_scaled.shape[1]))
     explainer  = _shap.LinearExplainer(model, background, feature_perturbation="interventional")
     shap_vals  = explainer.shap_values(X_scaled)
@@ -327,7 +324,6 @@ def run_loco(
     pred_rows:    list[dict] = []
     shap_rows:    list[dict] = []
 
-    # Her (program, domain) kombinasyonu için ayrı LOCO
     for (prog, dom), grp in est.groupby(["program", "domain"]):
         target_col = make_feature_key(prog, dom)
         if target_col not in panel.columns:
@@ -340,7 +336,6 @@ def run_loco(
 
         log.info("LOCO → %s %s  (%d cycle)", prog, dom, len(cycles))
 
-        # Literatür ağırlığı: bu program–domain için w_j
         var_name   = _DOMAIN_TO_VAR.get((prog, dom))
         w_domain   = weights.get(var_name, 0.5) if var_name else 0.5
         lit_w_vec  = np.array([
@@ -352,7 +347,7 @@ def run_loco(
         fold_preds: dict[str, list] = {
             "M0": [], "M1": [], "M2": [], "y_true": [], "countries": []
         }
-        shap_accumulator: list[np.ndarray] = []  # fold SHAP değerleri (M1)
+        shap_accumulator: list[np.ndarray] = []
 
         for i, test_cycle in enumerate(cycles):
             train_cycles = [c for c in cycles if c < test_cycle]
@@ -367,16 +362,13 @@ def run_loco(
                 log.warning("  Fold %d (%d): yetersiz veri", i, test_cycle)
                 continue
 
-            # M0
             y_m0, _, _, _, _ = fit_ridge(X_tr, y_tr, X_te, lit_weights=None)
-            # M1
             y_m1, m1_model, m1_scaler, m1_scale, m1_means = fit_ridge(
                 X_tr, y_tr, X_te, lit_weights=lit_w_vec
             )
-            # SHAP (M1)
             shap_fold = compute_shap_values(m1_model, m1_scaler, m1_scale, m1_means, X_te)
             shap_accumulator.append(shap_fold)
-            # M2: lag-1 (persistence)
+
             lag_cycle = max(train_cycles)
             lag_df    = panel[panel["cycle"] == lag_cycle].set_index("country_iso3")
             common_c  = countries
@@ -389,7 +381,6 @@ def run_loco(
             fold_preds["y_true"].append(y_te)
             fold_preds["countries"].append(common_c)
 
-            # Fold metrikleri
             for model_name, y_pred in [("M0", y_m0), ("M1", y_m1), ("M2", y_m2)]:
                 valid = ~np.isnan(y_pred)
                 if valid.sum() < 2:
@@ -406,7 +397,6 @@ def run_loco(
                     "Spearman": round(spearman_r(yt, yp), 4),
                 })
 
-            # Tahmin satırları
             for j, cnt in enumerate(common_c):
                 pred_rows.append({
                     "program": prog, "domain": dom,
@@ -418,7 +408,6 @@ def run_loco(
                     "y_M2":   round(float(y_m2[j]) if not np.isnan(y_m2[j]) else float("nan"), 4),
                 })
 
-        # Program-domain geneli Diebold-Mariano (M1 vs M2)
         if fold_preds["y_true"]:
             all_true = np.concatenate(fold_preds["y_true"])
             all_m1   = np.concatenate(fold_preds["M1"])
@@ -438,9 +427,8 @@ def run_loco(
                     "DM_stat": round(dm_stat, 4), "DM_p": round(dm_p, 4),
                 })
 
-        # SHAP global önem (M1): fold SHAP'larını birleştir, mean |SHAP| hesapla
         if shap_accumulator and not all(np.all(np.isnan(s)) for s in shap_accumulator):
-            all_shap = np.vstack(shap_accumulator)          # (toplam_gözlem, n_feat)
+            all_shap = np.vstack(shap_accumulator)
             mean_abs_shap = np.nanmean(np.abs(all_shap), axis=0)
             for feat_name, importance in zip(all_feature_cols, mean_abs_shap):
                 shap_rows.append({
@@ -453,8 +441,7 @@ def run_loco(
 
     results_df = pd.DataFrame(results_rows)
     preds_df   = pd.DataFrame(pred_rows)
-
-    shap_df = pd.DataFrame(shap_rows)
+    shap_df    = pd.DataFrame(shap_rows)
 
     results_df.to_csv(OUT_RESULTS, index=False)
     preds_df.to_csv(OUT_PREDS,    index=False)
@@ -462,7 +449,7 @@ def run_loco(
         shap_df.to_csv(OUT_SHAP, index=False)
         log.info("Kaydedildi: %s  (%d satır)", OUT_SHAP, len(shap_df))
     elif not _SHAP_AVAILABLE:
-        log.warning("SHAP paketi yüklü değil; shap_values.csv oluşturulmadı.")
+        log.warning("SHAP paketi yüкlü değil; shap_values.csv oluşturulmadı.")
 
     log.info("Kaydedildi: %s  (%d satır)", OUT_RESULTS, len(results_df))
     log.info("Kaydedildi: %s  (%d satır)", OUT_PREDS,   len(preds_df))
