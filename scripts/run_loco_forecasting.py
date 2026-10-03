@@ -359,8 +359,56 @@ def run_loco(
                 panel, all_feature_cols, target_col,
                 train_cycles, test_cycle,
             )
+
+            # M2: lag-1 (persistence) — her zaman hesaplanabilir
+            lag_cycle = max(train_cycles)
+            lag_df    = panel[panel["cycle"] == lag_cycle].set_index("country_iso3")
+
             if X_tr is None or len(y_tr) < 3:
-                log.warning("  Fold %d (%d): yetersiz veri", i, test_cycle)
+                # Ridge eğitimi için yetersiz veri; sadece M2 kaydedilir
+                # (tek train cycle durumu: ör. PISA 2022)
+                log.warning("  Fold %d (%d): M0/M1 atlandı (yetersiz train), M2 kaydediliyor", i, test_cycle)
+                target_df = panel[panel["cycle"] == test_cycle].set_index("country_iso3")
+                lag_df_   = panel[panel["cycle"] == lag_cycle].set_index("country_iso3")
+                common_c_ = lag_df_.index.intersection(target_df.index)
+                if len(common_c_) == 0:
+                    continue
+                y_te_  = target_df.loc[common_c_, target_col].values.astype(float)
+                mask_  = ~np.isnan(y_te_)
+                if mask_.sum() < 2:
+                    continue
+                common_c_ = common_c_[mask_]
+                y_te_  = y_te_[mask_]
+                y_m2_  = lag_df_.loc[common_c_, target_col].values.astype(float) \
+                         if target_col in lag_df_.columns else np.full(len(y_te_), np.nan)
+                fold_preds["M0"].append(np.full(len(y_te_), np.nan))
+                fold_preds["M1"].append(np.full(len(y_te_), np.nan))
+                fold_preds["M2"].append(y_m2_)
+                fold_preds["y_true"].append(y_te_)
+                fold_preds["countries"].append(common_c_)
+                valid_m2 = ~np.isnan(y_m2_)
+                if valid_m2.sum() >= 2:
+                    yt_, yp_ = y_te_[valid_m2], y_m2_[valid_m2]
+                    results_rows.append({
+                        "program": prog, "domain": dom,
+                        "test_cycle": test_cycle,
+                        "n_train": 0, "n_test": int(valid_m2.sum()),
+                        "model": "M2",
+                        "RMSE": round(rmse(yt_, yp_), 4),
+                        "MAE":  round(mae(yt_, yp_), 4),
+                        "R2":   round(r2(yt_, yp_), 4),
+                        "Spearman": round(spearman_r(yt_, yp_), 4),
+                    })
+                for j, cnt in enumerate(common_c_):
+                    pred_rows.append({
+                        "program": prog, "domain": dom,
+                        "test_cycle": test_cycle,
+                        "country_iso3": cnt,
+                        "y_true": round(float(y_te_[j]), 4),
+                        "y_M0":  float("nan"),
+                        "y_M1":  float("nan"),
+                        "y_M2":  round(float(y_m2_[j]) if not np.isnan(y_m2_[j]) else float("nan"), 4),
+                    })
                 continue
 
             # M0
@@ -373,8 +421,6 @@ def run_loco(
             shap_fold = compute_shap_values(m1_model, m1_scaler, m1_scale, m1_means, X_te)
             shap_accumulator.append(shap_fold)
             # M2: lag-1 (persistence)
-            lag_cycle = max(train_cycles)
-            lag_df    = panel[panel["cycle"] == lag_cycle].set_index("country_iso3")
             common_c  = countries
             y_m2 = lag_df.loc[common_c, target_col].values.astype(float) \
                    if target_col in lag_df.columns else np.full(len(y_te), np.nan)
