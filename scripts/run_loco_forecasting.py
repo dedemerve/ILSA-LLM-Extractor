@@ -48,11 +48,19 @@ except ImportError:
 
 PROJECT_ROOT  = Path(__file__).resolve().parents[1]
 STAGE4_DIR    = PROJECT_ROOT / "outputs" / "stage4"
-ESTIMATES_CSV = STAGE4_DIR / "country_estimates.csv"
-WEIGHTS_CSV   = STAGE4_DIR / "predictor_weights.csv"
-OUT_RESULTS   = STAGE4_DIR / "loco_results.csv"
-OUT_PREDS     = STAGE4_DIR / "loco_predictions.csv"
-OUT_SHAP      = STAGE4_DIR / "shap_values.csv"
+STAGE5_DIR    = PROJECT_ROOT / "outputs" / "stage5"
+# enriched_panel varsa onu kullan, yoksa eski country_estimates'e düş
+_ENRICHED     = STAGE5_DIR / "enriched_panel.csv"
+_ESTIMATES    = STAGE4_DIR / "country_estimates.csv"
+ESTIMATES_CSV = _ENRICHED if _ENRICHED.exists() else _ESTIMATES
+# v2 ağırlıklar varsa onu kullan, yoksa v1'e düş
+_WEIGHTS_V2   = STAGE5_DIR / "predictor_weights_v2.csv"
+_WEIGHTS_V1   = STAGE4_DIR / "predictor_weights.csv"
+WEIGHTS_CSV   = _WEIGHTS_V2 if _WEIGHTS_V2.exists() else _WEIGHTS_V1
+_OUT_DIR    = STAGE5_DIR if (_ENRICHED.exists() or _WEIGHTS_V2.exists()) else STAGE4_DIR
+OUT_RESULTS = _OUT_DIR / "loco_results.csv"
+OUT_PREDS   = _OUT_DIR / "loco_predictions.csv"
+OUT_SHAP    = _OUT_DIR / "shap_values.csv"
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s  %(message)s")
 log = logging.getLogger(__name__)
@@ -134,7 +142,9 @@ def load_data() -> tuple[pd.DataFrame, dict[str, float]]:
     est["domain"]       = est["domain"].str.lower()
 
     wdf = pd.read_csv(WEIGHTS_CSV)
-    weights: dict[str, float] = dict(zip(wdf["variable"], wdf["w_norm"]))
+    # v2: feature_name sütunu; v1: variable sütunu
+    key_col = "feature_name" if "feature_name" in wdf.columns else "variable"
+    weights: dict[str, float] = dict(zip(wdf[key_col], wdf["w_norm"]))
 
     return est, weights
 
@@ -146,9 +156,19 @@ def make_feature_key(program: str, domain: str) -> str:
 def build_panel(est: pd.DataFrame) -> pd.DataFrame:
     """Uzun formatı geniş (pivot) panele dönüştür.
 
-    Her satır bir (country_iso3, cycle) çiftini temsil eder.
-    Sütunlar: program_domain ortalamaları.
+    enriched_panel: score sütunları + lag_ kovaryat sütunları zaten geniş formda gelir.
+    country_estimates (eski format): mean + program + domain → pivot gerekir.
     """
+    # enriched_panel: lag_ sütunu varsa zaten pivot'lu
+    if any(c.startswith("lag_") for c in est.columns):
+        # Skor sütunları: PISA_mathematics vb. — program_domain adlı tüm sayısal sütunlar
+        non_feat = {"country_iso3", "cycle", "program", "domain"}
+        pivot = est.drop(columns=[c for c in ("program", "domain") if c in est.columns],
+                         errors="ignore") \
+                   .groupby(["country_iso3", "cycle"]).first().reset_index()
+        return pivot
+
+    # Eski format: mean + feat_key pivot
     est["feat_key"] = est.apply(
         lambda r: make_feature_key(r["program"], r["domain"]), axis=1
     )
@@ -339,11 +359,20 @@ def run_loco(
 
         var_name   = _DOMAIN_TO_VAR.get((prog, dom))
         w_domain   = weights.get(var_name, 0.5) if var_name else 0.5
-        lit_w_vec  = np.array([
-            weights.get(_DOMAIN_TO_VAR.get(
-                (f.split("_")[0], "_".join(f.split("_")[1:])), f), 0.5)
-            for f in all_feature_cols
-        ])
+
+        def _feat_weight(f: str) -> float:
+            # lag_ESCS → lookup ESCS in v2 weights
+            if f.startswith("lag_"):
+                return weights.get(f[4:], 0.5)
+            # PISA_mathematics → lookup via _DOMAIN_TO_VAR
+            parts = f.split("_", 1)
+            if len(parts) == 2:
+                var = _DOMAIN_TO_VAR.get((parts[0], parts[1]))
+                if var:
+                    return weights.get(var, 0.5)
+            return weights.get(f, 0.5)
+
+        lit_w_vec = np.array([_feat_weight(f) for f in all_feature_cols])
 
         fold_preds: dict[str, list] = {
             "M0": [], "M1": [], "M2": [], "y_true": [], "countries": []
