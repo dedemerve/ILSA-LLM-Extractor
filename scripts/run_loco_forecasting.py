@@ -294,6 +294,7 @@ def compute_shap_values(
     X_imp   = np.where(np.isnan(X_test_raw), col_means, X_test_raw)
     X_scaled = scaler.transform(X_imp) * scale
 
+    # LinearExplainer: arka plan = sıfır vektör (standartlaştırılmış uzayda ortalama)
     background = np.zeros((1, X_scaled.shape[1]))
     explainer  = _shap.LinearExplainer(model, background, feature_perturbation="interventional")
     shap_vals  = explainer.shap_values(X_scaled)
@@ -347,7 +348,7 @@ def run_loco(
         fold_preds: dict[str, list] = {
             "M0": [], "M1": [], "M2": [], "y_true": [], "countries": []
         }
-        shap_accumulator: list[np.ndarray] = []
+        shap_accumulator: list[np.ndarray] = []  # fold SHAP değerleri (M1)
 
         for i, test_cycle in enumerate(cycles):
             train_cycles = [c for c in cycles if c < test_cycle]
@@ -362,13 +363,16 @@ def run_loco(
                 log.warning("  Fold %d (%d): yetersiz veri", i, test_cycle)
                 continue
 
+            # M0
             y_m0, _, _, _, _ = fit_ridge(X_tr, y_tr, X_te, lit_weights=None)
+            # M1
             y_m1, m1_model, m1_scaler, m1_scale, m1_means = fit_ridge(
                 X_tr, y_tr, X_te, lit_weights=lit_w_vec
             )
+            # SHAP (M1)
             shap_fold = compute_shap_values(m1_model, m1_scaler, m1_scale, m1_means, X_te)
             shap_accumulator.append(shap_fold)
-
+            # M2: lag-1 (persistence)
             lag_cycle = max(train_cycles)
             lag_df    = panel[panel["cycle"] == lag_cycle].set_index("country_iso3")
             common_c  = countries
@@ -427,8 +431,9 @@ def run_loco(
                     "DM_stat": round(dm_stat, 4), "DM_p": round(dm_p, 4),
                 })
 
+        # SHAP global önem (M1): fold SHAP'larını birleştir, mean |SHAP| hesapla
         if shap_accumulator and not all(np.all(np.isnan(s)) for s in shap_accumulator):
-            all_shap = np.vstack(shap_accumulator)
+            all_shap = np.vstack(shap_accumulator)          # (toplam_gözlem, n_feat)
             mean_abs_shap = np.nanmean(np.abs(all_shap), axis=0)
             for feat_name, importance in zip(all_feature_cols, mean_abs_shap):
                 shap_rows.append({
@@ -443,13 +448,15 @@ def run_loco(
     preds_df   = pd.DataFrame(pred_rows)
     shap_df    = pd.DataFrame(shap_rows)
 
+    shap_df = pd.DataFrame(shap_rows)
+
     results_df.to_csv(OUT_RESULTS, index=False)
     preds_df.to_csv(OUT_PREDS,    index=False)
     if not shap_df.empty:
         shap_df.to_csv(OUT_SHAP, index=False)
         log.info("Kaydedildi: %s  (%d satır)", OUT_SHAP, len(shap_df))
     elif not _SHAP_AVAILABLE:
-        log.warning("SHAP paketi yüкlü değil; shap_values.csv oluşturulmadı.")
+        log.warning("SHAP paketi yüklü değil; shap_values.csv oluşturulmadı.")
 
     log.info("Kaydedildi: %s  (%d satır)", OUT_RESULTS, len(results_df))
     log.info("Kaydedildi: %s  (%d satır)", OUT_PREDS,   len(preds_df))
