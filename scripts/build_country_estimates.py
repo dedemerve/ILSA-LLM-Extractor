@@ -78,10 +78,10 @@ CATALOG: list[CycleSpec] = [
     # ── PISA (tek uluslararası SAV) ───────────────────────────────────────
     CycleSpec("PISA", 2015, "mathematics",
         str(ILSA_BASE / "PISA Datasets/PISA 2015 Data"
-            "/PUF_SPSS_COMBINED_CM2_STU_QQQ_COG_QTM_SCH_TCH/CY6_MS_CM2_STU_QQQ.sav"),
+            "/PUF_SPSS_COMBINED_CMB_STU_QQQ/CY6_MS_CMB_STU_QQQ.sav"),
         "CNT", "W_FSTUWT",
         [f"PV{i}MATH" for i in range(1, 11)],
-        "W_FSTR", (1, 80), "BRR_FAY"),
+        "W_FSTURWT", (1, 80), "BRR_FAY"),
 
     # PISA 2018 ana student dosyası (CY07_MSU_STU_QQQ) indirmede eksik kalmış;
     # dosya temin edildiğinde buraya tam yolu ekle ve satırın başındaki # kaldır.
@@ -89,20 +89,20 @@ CATALOG: list[CycleSpec] = [
     #     str(ILSA_BASE / "PISA Datasets/PISA 2018 Data/CY07_MSU_STU_QQQ.sav"),
     #     "CNT", "W_FSTUWT",
     #     [f"PV{i}MATH" for i in range(1, 11)],
-    #     "W_FSTR", (1, 80), "BRR_FAY"),
+    #     "W_FSTURWT", (1, 80), "BRR_FAY"),
 
     CycleSpec("PISA", 2022, "mathematics",
         str(ILSA_BASE / "PISA Datasets/PISA 2022 Data"
             "/School questionnaire data file (CY08MSP_STU_QQQ).SAV"),  # noqa: E501 — klasör adı parantez içeriyor
         "CNT", "W_FSTUWT",
         [f"PV{i}MATH" for i in range(1, 11)],
-        "W_FSTR", (1, 80), "BRR_FAY"),
+        "W_FSTURWT", (1, 80), "BRR_FAY"),
 
     CycleSpec("PISA", 2025, "mathematics",
-        str(Path("/Users/mrved/Downloads/CY09_MS_STU_TT_PUF.sav")),
+        str(ILSA_BASE / "PISA Datasets/PISA 2025 Data/CY09_MS_STU_PUF.sav"),
         "CNT", "W_FSTUWT",
         [f"PV{i}MATH" for i in range(1, 11)],
-        "W_FSTR", (1, 80), "BRR_FAY"),
+        "W_FSTURWT", (1, 80), "BRR_FAY"),
 ]
 
 MULTI_CATALOG: list[MultiFileCycleSpec] = [
@@ -350,7 +350,9 @@ def single_pv_estimate(
 # ---------------------------------------------------------------------------
 
 def load_sav(path: str, needed_cols: list[str]) -> pd.DataFrame:
-    for enc in ("utf-8", "latin-1", "cp1252"):
+    # PISA SAV'larında CNT string ISO3 kodu içeriyor; value_formats=False yeterli.
+    # cp1252 önce: latin-1 bazı dosyalarda başarısız oluyor.
+    for enc in ("utf-8", "cp1252", "latin-1", "iso-8859-1"):
         try:
             df, _ = pyreadstat.read_sav(
                 path, usecols=needed_cols,
@@ -438,11 +440,15 @@ def process_cycle_multi(spec: MultiFileCycleSpec) -> list[dict]:
     log.info("→ %s %d  (%d ülke dosyası)", spec.program, spec.cycle, len(files))
 
     frames = []
+    country_from_file: dict[int, str] = {}  # frame index → ISO3 (dosya adından)
     for fpath in files:
         try:
             df_c, _ = pyreadstat.read_sav(
                 str(fpath), apply_value_formats=False,
             )
+            # Ülke kodunu dosya adından çıkar: BSGQATm6.sav → QAT
+            iso3 = fpath.stem[3:6].upper()
+            df_c["_country_iso3_fn"] = iso3
             frames.append(df_c)
         except Exception as exc:
             log.warning("   Okunamadı %s: %s", fpath.name, exc)
@@ -467,10 +473,10 @@ def process_cycle_multi(spec: MultiFileCycleSpec) -> list[dict]:
     jk_cols = [c for c in ("JKZONE", "JKREP") if c in df.columns] \
               if spec.method == "JRR_ZONES" else []
 
-    # Sadece ihtiyaç duyulan sütunları tut (sırayı koruyarak unique)
+    # Sadece ihtiyaç duyulan sütunları tut
     seen: set[str] = set()
     keep_vars: list[str] = []
-    for c in ([spec.country_var, spec.weight_var]
+    for c in (["_country_iso3_fn", spec.weight_var]
               + list(spec.pv_vars) + rep_cols + jk_cols):
         if c not in seen:
             seen.add(c)
@@ -478,25 +484,18 @@ def process_cycle_multi(spec: MultiFileCycleSpec) -> list[dict]:
     keep = [c for c in keep_vars if c in df.columns]
     df   = df[keep].copy()
 
-    # Ülke değişkenini normalize et
-    if spec.country_var not in df.columns:
-        log.error("   Ülke değişkeni bulunamadı: %s", spec.country_var)
-        return []
-
-    df[spec.country_var] = df[spec.country_var].astype(str).str.strip()
-    countries = df[spec.country_var].unique()
-
     # Eksik PV kontrolü
     pv_available = [p for p in spec.pv_vars if p in df.columns]
     if not pv_available:
         log.error("   PV değişkenleri bulunamadı: %s", spec.pv_vars)
         return []
 
+    countries = df["_country_iso3_fn"].unique()
     rows = []
     for cnt in sorted(countries):
-        sub = df[df[spec.country_var] == cnt]
+        sub = df[df["_country_iso3_fn"] == cnt]
         est = estimate_country_generic(
-            sub, spec.country_var, spec.weight_var,
+            sub, "_country_iso3_fn", spec.weight_var,
             pv_available, spec.method, rep_cols,
         )
         if est is None:
@@ -577,6 +576,9 @@ def build_estimates(programs: list[str] | None = None) -> pd.DataFrame:
         all_rows.extend(rows)
 
     df = pd.DataFrame(all_rows)
+    for col in ("mean", "se", "ci_lo", "ci_hi"):
+        if col in df.columns:
+            df[col] = df[col].round(4)
     out = OUTPUT_DIR / "country_estimates.csv"
     df.to_csv(out, index=False)
     log.info("Kaydedildi: %s  (%d satır)", out, len(df))
