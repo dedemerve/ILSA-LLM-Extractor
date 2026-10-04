@@ -41,29 +41,26 @@ OUT_DIR      = PROJECT_ROOT / "outputs" / "stage5"
 RIDGE_ALPHAS = [0.01, 0.1, 1.0, 10.0, 100.0, 1000.0]
 MIN_TRAIN_N  = 10
 
-# Literature weight: construct-specific granular scores
-# Kaynaklar: Sirin (2005) SES meta-analysis; Mullis et al. TIMSS/PIRLS frameworks;
-#             Wigfield & Eccles belongingness literature; OECD PISA theoretical framework
-# Tier A → 0.75–1.0 range; Tier B → 0.40–0.60
+# Literature weight: W_j_forecast — corpus-based priority
+# Kaynak: build_literature_priority.py → outputs/stage5/literature_priority.csv
+# W_j = geometric_mean(w_F, w_P, w_C, w_N) × w_E, forecastability-filtered
+# 132 makale / 530 evidence satırı / FAZ 4 (2026-10-04)
 CONSTRUCT_LIT_WEIGHT = {
-    # Tier A — strong consensus
-    "SES_COMPOSITE":                  1.00,  # PISA ESCS: strongest meta-analytic support
-    "PARENTAL_EDUCATION":             0.95,  # consistently 2nd strongest predictor
-    "HOME_RESOURCES":                 0.85,  # home educational resources; well supported
-    "SCHOOL_BELONGING":               0.80,  # Goodenow 1993; Willms 2003; robust
-    # Tier B — moderate support
-    "HOME_LITERACY_ACTIVITIES":       0.55,  # Mullis PIRLS; moderate effect sizes
-    "ICT_HOME_ACCESS":                0.40,  # mixed evidence; context-dependent
-    "ICT_SCHOOL_ACCESS":              0.40,  # mixed evidence; context-dependent
-    # TALIS constructs
-    "TEACHER_SELF_EFFICACY_CLS_MGMT": 0.70,
-    "TEACHER_SELF_EFFICACY_INSTRUCTION": 0.70,
-    "TEACHER_SELF_EFFICACY_ENGAGEMENT": 0.65,
-    "DISCIPLINARY_CLIMATE":           0.75,
-    "PROF_COLLABORATION":             0.55,
-    "JOB_SATISFACTION_ENVIRONMENT":   0.50,
-    "JOB_SATISFACTION_PROFESSION":    0.50,
-    "EFFECTIVE_PD":                   0.60,
+    "SES_COMPOSITE":                   1.0000,  # 54 studies; highest diversity
+    "TEACHER_SELF_EFFICACY_CLS_MGMT":  0.8543,  # 21 studies; 6-program diversity
+    "HOME_RESOURCES":                  0.7175,  # 19 studies; 3 programs
+    "SCHOOL_BELONGING":                0.6185,  # 27 studies; 2 programs (PISA-dominant)
+    "ICT_HOME_ACCESS":                 0.5370,  # 15 studies
+    "DISCIPLINARY_CLIMATE":            0.4910,  # 17 studies; direction inconsistency noted
+    "PARENTAL_EDUCATION":              0.4559,  # 7 studies — lower than prior estimate
+    "TEACHER_SELF_EFFICACY_INSTRUCTION": 0.8543,  # same corpus as CLS_MGMT
+    "TEACHER_SELF_EFFICACY_ENGAGEMENT": 0.8543,
+    "ICT_SCHOOL_ACCESS":               0.2818,  # 3 studies
+    "EFFECTIVE_PD":                    0.2547,  # 3 studies
+    "HOME_LITERACY_ACTIVITIES":        0.1029,  # 1 study (PIRLS-specific)
+    "JOB_SATISFACTION_ENVIRONMENT":    0.0894,
+    "JOB_SATISFACTION_PROFESSION":     0.0894,  # 1 study
+    "PROF_COLLABORATION":              0.2547,  # no direct corpus entry; proxy = EFFECTIVE_PD
 }
 # lag_Y: temporal persistence — not a substantive literature construct
 LAG_Y_LIT_WEIGHT = 1.00   # used in full alignment only; excluded from lit alignment

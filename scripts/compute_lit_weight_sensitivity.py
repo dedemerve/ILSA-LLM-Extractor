@@ -89,8 +89,8 @@ _raw_fd = {k: W_FREQ.get(k, 0.25) * _diversity.get(k, 0.25) for k in W_FREQ}
 _max_fd = max(_raw_fd.values())
 W_FREQ_DIV = {k: round(v / _max_fd, 4) for k, v in _raw_fd.items()}
 
-# C. Composite priority — mevcut spec (Sirin 2005 + OECD framework)
-W_COMPOSITE = {
+# C. Prior composite — Sirin 2005 + OECD framework (pre-corpus estimate)
+W_COMPOSITE_PRIOR = {
     "SES_COMPOSITE":                  1.00,
     "PARENTAL_EDUCATION":             0.95,
     "HOME_RESOURCES":                 0.85,
@@ -108,10 +108,31 @@ W_COMPOSITE = {
     "EFFECTIVE_PD":                   0.60,
 }
 
+# D. W_j — corpus-based priority from build_literature_priority.py
+# outputs/stage5/literature_priority.csv (FAZ 4, 132 articles, 2026-10-04)
+W_CORPUS = {
+    "SES_COMPOSITE":                   1.0000,
+    "TEACHER_SELF_EFFICACY_CLS_MGMT":  0.8543,
+    "HOME_RESOURCES":                  0.7175,
+    "SCHOOL_BELONGING":                0.6185,
+    "ICT_HOME_ACCESS":                 0.5370,
+    "DISCIPLINARY_CLIMATE":            0.4910,
+    "PARENTAL_EDUCATION":              0.4559,
+    "TEACHER_SELF_EFFICACY_INSTRUCTION": 0.8543,
+    "TEACHER_SELF_EFFICACY_ENGAGEMENT": 0.8543,
+    "ICT_SCHOOL_ACCESS":               0.2818,
+    "EFFECTIVE_PD":                    0.2547,
+    "HOME_LITERACY_ACTIVITIES":        0.1029,
+    "JOB_SATISFACTION_ENVIRONMENT":    0.0894,
+    "JOB_SATISFACTION_PROFESSION":     0.0894,
+    "PROF_COLLABORATION":              0.2547,
+}
+
 SPECS = {
-    "w_F":   W_FREQ,
-    "w_FD":  W_FREQ_DIV,
-    "w_FDC": W_COMPOSITE,
+    "w_F":    W_FREQ,
+    "w_FD":   W_FREQ_DIV,
+    "w_FDC":  W_COMPOSITE_PRIOR,
+    "w_Wj":   W_CORPUS,       # corpus-based — primary spec
 }
 
 CYCLE_ORDER = {
