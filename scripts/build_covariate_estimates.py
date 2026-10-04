@@ -99,6 +99,13 @@ SPECS: list[CovSpec] = [
         encoding_hint="iso-8859-1",
     ),
     # TIMSS G8 — çoklu dosya
+    # 2023: country_col="CTY" (ISO3 doğrudan), önceki döngüler "_COUNTRY_ISO3_FN"
+    CovSpec("TIMSS", 2023,
+        variables=["BSDGEDUP"],          # ITSEX kaldırıldı (MUST FIX #2)
+        filepath=None,
+        glob_dir=str(TIMSS_BASE / "TIMSS2023_IDB_SPSS_G8"),
+        glob_prefix="bsg", country_col="CTY", weight_col="TOTWGT",
+    ),
     CovSpec("TIMSS", 2019,
         variables=["ITSEX", "BSDGEDUP", "BSDG07", "BSDG08"],
         filepath=None,
@@ -299,6 +306,16 @@ def main():
         return
 
     df = pd.DataFrame(all_records)
+
+    # PISA 2003/2009 TXT parser çıktısını birleştir (build_pisa_txt_covariates.py)
+    early_csv = OUT_CSV.parent / "covariate_estimates_pisa_early.csv"
+    if early_csv.exists():
+        early = pd.read_csv(early_csv)
+        early = early.rename(columns={"n_students": "n_total"})
+        early["se"] = float("nan")
+        df = pd.concat([df, early], ignore_index=True)
+        log.info("PISA 2003/2009 TXT covariates eklendi: %d satır", len(early))
+
     df.to_csv(OUT_CSV, index=False)
     log.info("\nKaydedildi: %s (%d satır)", OUT_CSV, len(df))
     log.info("Özet:")
