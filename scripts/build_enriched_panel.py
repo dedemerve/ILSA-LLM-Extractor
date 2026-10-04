@@ -41,7 +41,7 @@ log = logging.getLogger(__name__)
 COVARIATE_VARS = {
     "PISA":    ["ESCS", "HOMEPOS", "BELONG", "ICTAVHOM", "ICTAVSCH"],
     "TIMSS":   ["BSDGEDUP"],
-    "TIMSS_G4":["BSDGEDUP"],
+    "TIMSS_G4":["ASDHEDUP"],
     "PIRLS":   ["ASDHEDUP", "ASDHELA"],
 }
 
@@ -114,7 +114,7 @@ def main():
     all_panels = []
     for prog in programs:
         prog_est = est[est["program"] == prog].copy()
-        cov_prog = "PISA" if prog == "PISA" else ("PIRLS" if prog == "PIRLS" else "TIMSS")
+        cov_prog = prog  # her program kendi kovaryatını kullanır
         cov_wide = pivot_covariates(cov, cov_prog)
         cov_cols = [c for c in COVARIATE_VARS.get(cov_prog, []) if c in (cov_wide.columns if not cov_wide.empty else [])]
 
