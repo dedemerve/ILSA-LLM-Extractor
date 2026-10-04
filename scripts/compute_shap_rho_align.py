@@ -172,7 +172,7 @@ def main():
                 columns={"target_country":"country","target_cycle":"cycle","value":"Y"})
 
             intra = v2[
-                (v2["feature_source"] == "intra_program_lag") &
+                (v2["feature_source"].isin(["intra_program_lag", "cross_program_lag"])) &
                 (v2["target_program"] == prog)
             ][["target_country","target_cycle","canonical_construct","value"]].rename(
                 columns={"target_country":"country","target_cycle":"cycle",

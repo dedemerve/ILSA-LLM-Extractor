@@ -418,6 +418,14 @@ _ILSA_TO_CANONICAL: dict[str, str] = {
     "ASDHELB": "PARENTAL_EDU",
 
     # ----------------------------------------------------------------
+    # TALIS contextual predictors (2015/2019/2022 target cycles)
+    # talis_covariate_estimates already stores TALIS_2013→target_2015 lag
+    "SECLSS":   "TEACHER_QUALITY",   # TALIS self-efficacy cls mgmt → W_j=0.8543
+    "TCDISCS":  "DISCLIMA",          # TALIS disciplinary climate → W_j=0.4910
+    "TEFFPROS": "EFFPD",             # TALIS effective PD → W_j=0.2547
+    "TJSPROS":  "JOB_SAT_PROF",      # TALIS job satisfaction profession → W_j=0.0894
+
+    # ----------------------------------------------------------------
     # NOT FORECASTABLE (B): ILSA'da var ama lag geçmişi yetersiz
     # ICTAVHOM/ICTAVSCH: yalnızca 2025 cycle'da mevcut → lag 2022=NaN
     # → X_train her zaman NaN; post-build_xy filter tarafından düşürülür
