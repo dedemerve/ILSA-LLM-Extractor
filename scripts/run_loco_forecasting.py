@@ -398,29 +398,39 @@ def compute_shap_values(
 # Karşılığı olmayan değişkenler 1.0 alır (bilgi yokluğu ≠ orta kanıt).
 # ---------------------------------------------------------------------------
 _ILSA_TO_CANONICAL: dict[str, str] = {
-    # PISA — OECD teknik dok. ESCS = ebeveyn meslek+eğitim+ev kaynakları composite
-    "ESCS":       "ESCS",
-    # PISA — HOMEPOS ev kaynakları indeksi (ESCS'den bağımsız alt bileşen)
-    "HOMEPOS":    "HOMEPOS",
-    # PISA — BELONG okul aidiyet indeksi (−: düşük aidiyet, +: yüksek)
-    "BELONG":     "BELONG",
-    # PISA — ICTAVHOM/ICTAVSCH farklı domain ama r=0.876 → aynı canonical
-    # Not: yalnızca 2025 cycle'dan itibaren var; 2015/2022'de NaN → modele az giriyor
-    "ICTAVHOM":   "ICT_INDEX",
-    "ICTAVSCH":   "ICT_INDEX",
-    # TIMSS — BSDGEDUP 1=üniversite üstü … 6=ilkokul altı (TERSİ ölçek)
-    # Yüksek değer = düşük ebeveyn eğitimi → beklenen β < 0; doğrulama: ortalama 2–3 band
-    "BSDGEDUP":   "PARENTAL_EDU",
-    # TIMSS — ITSEX 1=kız 2=erkek; her cycle ~1.50 → cinsiyet dengesi proxy'i
-    # Gerçek gender gap ölçümü değil; M1 ağırlığı = GENDER_GAP literatüründen geliyor
-    # Sınırlılık: ülke içi varyans ~0; ağırlık etkisi ihmal edilebilir
-    "ITSEX":      "GENDER_GAP",
-    # PIRLS — ASDHEDUP ebeveyn eğitimi (BSDGEDUP ile aynı ters ölçek yapısı)
-    "ASDHEDUP":   "PARENTAL_EDU",
-    # PIRLS — ASDHELA ev dili değişkeni; PARENTAL_EDU'ya zayıf proxy
-    # Eğer gelecekte ayrı canonical oluşturulursa buradan güncellenecek
-    "ASDHELA":    "PARENTAL_EDU",
-    "ASDHELB":    "PARENTAL_EDU",
+    # ----------------------------------------------------------------
+    # FORECASTABLE (A): yeterli lag geçmişi mevcut
+    # ----------------------------------------------------------------
+    # PISA — ESCS = ebeveyn meslek+eğitim+ev kaynakları composite (OECD dok.)
+    "ESCS":    "ESCS",
+    # PISA — HOMEPOS ev kaynakları indeksi; ESCS ile r>0.7 → Ridge ile kontrol edilir
+    "HOMEPOS": "HOMEPOS",
+    # PISA — BELONG okul aidiyet indeksi; düşük SD (~0.21) ama anlamlı varyasyon var
+    "BELONG":  "BELONG",
+    # TIMSS G8 — BSDGEDUP TERSİ ölçek (1=yüksek eğitim, 6=düşük); β < 0 beklenir
+    "BSDGEDUP":"PARENTAL_EDU",
+    "BSDG07":  "PARENTAL_EDU",
+    "BSDG08":  "PARENTAL_EDU",
+    # PIRLS — ASDHEDUP aynı ters ölçek yapısı (BSDGEDUP ile karşılaştırılabilir)
+    "ASDHEDUP":"PARENTAL_EDU",
+    # PIRLS — ASDHELA ev dili; ebeveyn eğitim seviyesinin zayıf proxy'i
+    "ASDHELA": "PARENTAL_EDU",
+    "ASDHELB": "PARENTAL_EDU",
+
+    # ----------------------------------------------------------------
+    # NOT FORECASTABLE (B): ILSA'da var ama lag geçmişi yetersiz
+    # ICTAVHOM/ICTAVSCH: yalnızca 2025 cycle'da mevcut → lag 2022=NaN
+    # → X_train her zaman NaN; post-build_xy filter tarafından düşürülür
+    # Bu değişkenler coverage tablosunda "temporal" olarak işaretlenir.
+    # Buraya mapping EKLEME — model davranışını etkilememeli.
+    # ----------------------------------------------------------------
+
+    # ----------------------------------------------------------------
+    # NOT FORECASTABLE (C): semantik eşleşme geçersiz
+    # ITSEX (1=kız, 2=erkek) → ülke ortalaması her cycle ~1.50, SD<0.03
+    # Gender gap ölçmüyor; GENDER_GAP için ayrı achievement gap hesabı gerekir.
+    # Buraya mapping EKLEME.
+    # ----------------------------------------------------------------
 }
 
 # ---------------------------------------------------------------------------
@@ -807,26 +817,41 @@ def predict_forward(
 
 def _print_literature_coverage() -> None:
     """Literatür predictor'larının forecasting'e transfer tablosunu basar.
-    Reviewer sorusuna yanıt: hangi extracted predictor modele girdi, hangisi giremedi?
+
+    Üç durum (reviewer taksonomisi):
+      A — Forecastable: ILSA ölçümü var ve yeterli lag geçmişi var
+      B — Temporal gap: ILSA ölçümü var ama lag geçmişi yetersiz
+      C — No measure:   ILSA'da uyumlu country-level ölçüm yok
     """
     weights_path = _OUT_DIR.parent / "predictor_weights_v2.csv"
     if not weights_path.exists():
         return
     w = pd.read_csv(weights_path)
 
-    # ILSA'da mevcut canonical construct'lar
-    available_in_ilsa = set(_ILSA_TO_CANONICAL.values())
+    # A — forecastable canonical construct'lar (mapping'te var)
+    forecastable_features = set(_ILSA_TO_CANONICAL.values())
+
+    # B — ILSA'da var ama lag geçmişi yetersiz (temporal)
+    temporal_gap = {"ICT_INDEX"}   # ICTAVHOM/ICTAVSCH yalnızca 2025'te var
+
+    def _status(feature: str) -> str:
+        if feature in forecastable_features:
+            return "A — forecastable"
+        if feature in temporal_gap:
+            return "B — temporal gap (lag eksik)"
+        return "C — no compatible measure"
 
     print("\n=== Literatür → Tahmin Transferi (Coverage) ===")
-    print(f"{'Canonical Predictor':<22} {'Feature':<16} {'w_norm':>7}  {'Durumu'}")
-    print("-" * 68)
+    print(f"{'Canonical Predictor':<22} {'Feature':<16} {'w_norm':>7}  Durum")
+    print("-" * 75)
     for _, row in w.iterrows():
-        feature = row["feature_name"]
-        status = "MODELDE" if feature in available_in_ilsa else "veri yok"
-        print(f"  {row['predictor_canonical']:<20} {feature:<16} {row['w_norm']:>7.4f}  {status}")
-    used   = sum(1 for _, r in w.iterrows() if r["feature_name"] in available_in_ilsa)
-    unused = len(w) - used
-    print(f"\nModele giren: {used}/{len(w)}  |  ILSA verisi olmayan: {unused}/{len(w)}")
+        status = _status(row["feature_name"])
+        print(f"  {row['predictor_canonical']:<20} {row['feature_name']:<16} {row['w_norm']:>7.4f}  {status}")
+
+    n_fore = sum(1 for _, r in w.iterrows() if _status(r["feature_name"]).startswith("A"))
+    n_temp = sum(1 for _, r in w.iterrows() if _status(r["feature_name"]).startswith("B"))
+    n_none = sum(1 for _, r in w.iterrows() if _status(r["feature_name"]).startswith("C"))
+    print(f"\nA (forecastable): {n_fore}  |  B (temporal): {n_temp}  |  C (no measure): {n_none}  |  Total: {len(w)}")
 
 
 def print_summary(results_df: pd.DataFrame) -> None:
