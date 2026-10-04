@@ -391,19 +391,51 @@ def compute_shap_values(
 
 
 # ---------------------------------------------------------------------------
+# ILSA değişkeni → canonical predictor eşleştirme tablosu
+# Kaynak: predictor_weights_v2.csv'deki feature_name sütunuyla eşleşir.
+# Buradaki map, ILSA mikroveri değişken adını (lag_ prefix'i olmadan)
+# literatür ağırlık tablosundaki feature_name'e çevirir.
+# Karşılığı olmayan değişkenler 1.0 alır (bilgi yokluğu ≠ orta kanıt).
+# ---------------------------------------------------------------------------
+_ILSA_TO_CANONICAL: dict[str, str] = {
+    # PISA
+    "ESCS":       "ESCS",
+    "HOMEPOS":    "HOMEPOS",
+    "BELONG":     "BELONG",
+    "ICTAVHOM":   "ICT_INDEX",
+    "ICTAVSCH":   "ICT_INDEX",
+    # TIMSS
+    "BSDGEDUP":   "PARENTAL_EDU",
+    "ITSEX":      "GENDER_GAP",
+    "BSDG07":     "PARENTAL_EDU",
+    "BSDG08":     "PARENTAL_EDU",
+    # PIRLS
+    "ASDHEDUP":   "PARENTAL_EDU",
+    "ASDHELA":    "PARENTAL_EDU",
+    "ASDHELB":    "PARENTAL_EDU",
+}
+
+# ---------------------------------------------------------------------------
 # Literatür ağırlık eşlemesi
 # ---------------------------------------------------------------------------
 
 def _feat_weight(f: str, feature_list: list[str], weights: dict[str, float] | None = None) -> float:
     """Özellik adından M1 literatür ağırlığını döndürür.
 
-    lag_ESCS  → v2 weights['ESCS']          (kovaryat)
-    PISA_math → 1.0                          (skor omurgası, tam ağırlık)
+    lag_ESCS    → _ILSA_TO_CANONICAL['ESCS'] → weights['ESCS']
+    lag_ITSEX   → _ILSA_TO_CANONICAL['ITSEX'] → weights['GENDER_GAP']
+    PISA_math   → 1.0  (skor omurgası)
+
+    Bilinmeyen kovaryat → 1.0 (kanıt yokluğu, "orta kanıt" değil)
     """
     if weights is None:
         return 1.0
     if f.startswith("lag_"):
-        return weights.get(f[4:], 0.5)
+        raw_name   = f[4:]                              # lag_ önekini kaldır
+        canonical  = _ILSA_TO_CANONICAL.get(raw_name)  # semantik eşleştirme
+        if canonical is None:
+            return 1.0   # eşleşme yok → etkisiz bırak (0.5 gibi keyfi değer değil)
+        return weights.get(canonical, 1.0)
     return 1.0
 
 
@@ -444,7 +476,8 @@ def run_loco(
         log.info("LOCO → %s %s  (%d cycle)", prog, dom, len(cycles))
 
         var_name   = _DOMAIN_TO_VAR.get((prog, dom))
-        w_domain   = weights.get(var_name, 0.5) if var_name else 0.5
+        # Kanıt yokluğu → 1.0 (nötr); 0.5 gibi keyfi "orta kanıt" değil
+        w_domain   = weights.get(var_name, 1.0) if var_name else 1.0
 
         fold_preds: dict[str, list] = {
             "M0": [], "M1": [], "M2": [], "M3": [], "y_true": [], "countries": []
@@ -764,6 +797,30 @@ def predict_forward(
 # Özet tablo
 # ---------------------------------------------------------------------------
 
+def _print_literature_coverage() -> None:
+    """Literatür predictor'larının forecasting'e transfer tablosunu basar.
+    Reviewer sorusuna yanıt: hangi extracted predictor modele girdi, hangisi giremedi?
+    """
+    weights_path = _OUT_DIR.parent / "predictor_weights_v2.csv"
+    if not weights_path.exists():
+        return
+    w = pd.read_csv(weights_path)
+
+    # ILSA'da mevcut canonical construct'lar
+    available_in_ilsa = set(_ILSA_TO_CANONICAL.values())
+
+    print("\n=== Literatür → Tahmin Transferi (Coverage) ===")
+    print(f"{'Canonical Predictor':<22} {'Feature':<16} {'w_norm':>7}  {'Durumu'}")
+    print("-" * 68)
+    for _, row in w.iterrows():
+        feature = row["feature_name"]
+        status = "MODELDE" if feature in available_in_ilsa else "veri yok"
+        print(f"  {row['predictor_canonical']:<20} {feature:<16} {row['w_norm']:>7.4f}  {status}")
+    used   = sum(1 for _, r in w.iterrows() if r["feature_name"] in available_in_ilsa)
+    unused = len(w) - used
+    print(f"\nModele giren: {used}/{len(w)}  |  ILSA verisi olmayan: {unused}/{len(w)}")
+
+
 def print_summary(results_df: pd.DataFrame) -> None:
     if results_df.empty or "model" not in results_df.columns:
         print("Sonuç yok.")
@@ -789,6 +846,9 @@ def print_summary(results_df: pd.DataFrame) -> None:
         print("\n=== Diebold-Mariano Testi ===")
         print(dm_rows[["program", "domain", "model", "n_test", "DM_stat", "DM_p"]]
               .to_string(index=False))
+
+    # Literature coverage tablosu (reviewer için)
+    _print_literature_coverage()
 
 
 # ---------------------------------------------------------------------------
