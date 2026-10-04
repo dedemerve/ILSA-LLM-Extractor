@@ -398,19 +398,27 @@ def compute_shap_values(
 # Karşılığı olmayan değişkenler 1.0 alır (bilgi yokluğu ≠ orta kanıt).
 # ---------------------------------------------------------------------------
 _ILSA_TO_CANONICAL: dict[str, str] = {
-    # PISA
+    # PISA — OECD teknik dok. ESCS = ebeveyn meslek+eğitim+ev kaynakları composite
     "ESCS":       "ESCS",
+    # PISA — HOMEPOS ev kaynakları indeksi (ESCS'den bağımsız alt bileşen)
     "HOMEPOS":    "HOMEPOS",
+    # PISA — BELONG okul aidiyet indeksi (−: düşük aidiyet, +: yüksek)
     "BELONG":     "BELONG",
+    # PISA — ICTAVHOM/ICTAVSCH farklı domain ama r=0.876 → aynı canonical
+    # Not: yalnızca 2025 cycle'dan itibaren var; 2015/2022'de NaN → modele az giriyor
     "ICTAVHOM":   "ICT_INDEX",
     "ICTAVSCH":   "ICT_INDEX",
-    # TIMSS
+    # TIMSS — BSDGEDUP 1=üniversite üstü … 6=ilkokul altı (TERSİ ölçek)
+    # Yüksek değer = düşük ebeveyn eğitimi → beklenen β < 0; doğrulama: ortalama 2–3 band
     "BSDGEDUP":   "PARENTAL_EDU",
+    # TIMSS — ITSEX 1=kız 2=erkek; her cycle ~1.50 → cinsiyet dengesi proxy'i
+    # Gerçek gender gap ölçümü değil; M1 ağırlığı = GENDER_GAP literatüründen geliyor
+    # Sınırlılık: ülke içi varyans ~0; ağırlık etkisi ihmal edilebilir
     "ITSEX":      "GENDER_GAP",
-    "BSDG07":     "PARENTAL_EDU",
-    "BSDG08":     "PARENTAL_EDU",
-    # PIRLS
+    # PIRLS — ASDHEDUP ebeveyn eğitimi (BSDGEDUP ile aynı ters ölçek yapısı)
     "ASDHEDUP":   "PARENTAL_EDU",
+    # PIRLS — ASDHELA ev dili değişkeni; PARENTAL_EDU'ya zayıf proxy
+    # Eğer gelecekte ayrı canonical oluşturulursa buradan güncellenecek
     "ASDHELA":    "PARENTAL_EDU",
     "ASDHELB":    "PARENTAL_EDU",
 }
