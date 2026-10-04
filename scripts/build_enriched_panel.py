@@ -108,6 +108,14 @@ def main():
     cov["program"]     = cov["program"].str.upper()
     cov["country_iso3"] = cov["country_iso3"].str.strip()
 
+    # Benchmark/alt-ulusal katılımcıları filtrele (sayı içeren veya 3 harf olmayan ISO3)
+    valid_mask = est["country_iso3"].apply(lambda x: str(x).isalpha() and len(str(x)) == 3)
+    n_bench = (~valid_mask).sum()
+    if n_bench:
+        bench = est.loc[~valid_mask, "country_iso3"].unique().tolist()
+        log.info("Benchmark katılımcılar filtrelendi (%d satır): %s", n_bench, sorted(bench))
+    est = est[valid_mask].copy()
+
     programs = est["program"].unique()
     log.info("Programlar: %s", list(programs))
 
