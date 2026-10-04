@@ -63,8 +63,6 @@ OUT_PREDS   = _OUT_DIR / "loco_predictions.csv"
 OUT_SHAP    = _OUT_DIR / "shap_values.csv"
 OUT_FWD     = _OUT_DIR / "forward_predictions.csv"
 
-# Kovaryat sütunlarının minimum doluluk oranı (fold başına)
-MIN_FILL_RATE = 0.50
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s  %(message)s")
 log = logging.getLogger(__name__)
@@ -190,6 +188,30 @@ def build_panel(est: pd.DataFrame) -> pd.DataFrame:
 # Özellik matrisini LOCO fold için hazırla
 # ---------------------------------------------------------------------------
 
+def _make_X(
+    score_df: pd.DataFrame,
+    cov_df: pd.DataFrame,
+    countries: pd.Index,
+    score_cols: list[str],
+    cov_cols: list[str],
+) -> np.ndarray:
+    """Skor özelliklerini score_df'den, kovaryat özelliklerini cov_df'den al.
+
+    Tasarım gereği: lag_ESCS_t = ESCS_{t-1} enriched_panel'de t satırında saklanır.
+    Dolayısıyla Y_t tahmini için:
+      - skor özellikleri (lag-1 başarı) → t-1 satırından
+      - kovaryat özellikleri (lag_ESCS vb.) → t satırından (orada t-1 değeri var)
+    """
+    parts: list[np.ndarray] = []
+    if score_cols:
+        parts.append(score_df.loc[countries, score_cols].values.astype(float))
+    if cov_cols:
+        parts.append(cov_df.loc[countries, cov_cols].values.astype(float))
+    if not parts:
+        return np.empty((len(countries), 0))
+    return np.hstack(parts)
+
+
 def build_xy(
     panel: pd.DataFrame,
     feature_cols: list[str],
@@ -199,12 +221,17 @@ def build_xy(
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, pd.Index]:
     """Train ve test matrislerini oluşturur.
 
-    Her satır bir ülkeyi temsil eder.
-    X özelliği: train_cycles'ın sonuncusundaki değer (lag-1).
-    y hedef: test_cycle'ındaki değer.
+    Özellik kaynağı:
+      - Skor özellikleri (PISA_mathematics vb.): lag döngüsünden (prev_cycle)
+      - Kovaryat özellikleri (lag_ESCS vb.): hedef döngüden (curr_cycle)
+        → çünkü enriched_panel'de lag_ESCS_t = ESCS_{t-1}
+    Bu ayrım, eğitim çiftlerinde kovaryatın "iki döngü gerisi" yerine
+    "bir döngü gerisi"nden gelmesini sağlar.
     """
-    lag_cycle = max(train_cycles)
+    score_cols = [f for f in feature_cols if not f.startswith("lag_")]
+    cov_cols   = [f for f in feature_cols if f.startswith("lag_")]
 
+    lag_cycle = max(train_cycles)
     lag_df    = panel[panel["cycle"] == lag_cycle].set_index("country_iso3")
     target_df = panel[panel["cycle"] == test_cycle].set_index("country_iso3")
 
@@ -212,22 +239,31 @@ def build_xy(
     if len(common) == 0:
         return None, None, None, None, None
 
-    X_lag    = lag_df.loc[common, feature_cols].values.astype(float)
+    # Test X: skor özellikleri lag_cycle'dan, kovaryat özellikleri test_cycle'dan
+    avail_score = [c for c in score_cols if c in lag_df.columns]
+    avail_cov   = [c for c in cov_cols   if c in target_df.columns]
+    X_lag    = _make_X(lag_df, target_df, common, avail_score, avail_cov)
     y_target = target_df.loc[common, target_col].values.astype(float)
 
-    # Train: her train cycle için (lag = önceki cycle)
+    # Efektif feature sırası: avail_score + avail_cov (caller'la tutarlı olsun)
+    eff_feature_cols = avail_score + avail_cov
+
+    # Train: her eğitim çifti (prev_cycle → curr_cycle)
     X_train_list, y_train_list = [], []
     sorted_train = sorted(train_cycles)
     for i, tc in enumerate(sorted_train):
         if i == 0:
-            continue  # ilk cycle için lag yok
-        prev_cycle = sorted_train[i - 1]
-        prev_df = panel[panel["cycle"] == prev_cycle].set_index("country_iso3")
+            continue  # ilk cycle için önceki yok
+        prev_c  = sorted_train[i - 1]
+        prev_df = panel[panel["cycle"] == prev_c].set_index("country_iso3")
         curr_df = panel[panel["cycle"] == tc].set_index("country_iso3")
         common_tr = prev_df.index.intersection(curr_df.index)
         if len(common_tr) == 0:
             continue
-        X_tr = prev_df.loc[common_tr, feature_cols].values.astype(float)
+        # Kovaryat: curr_df'den → lag_ESCS_tc = ESCS_{prev_c} ✓
+        avail_score_tr = [c for c in score_cols if c in prev_df.columns]
+        avail_cov_tr   = [c for c in cov_cols   if c in curr_df.columns]
+        X_tr = _make_X(prev_df, curr_df, common_tr, avail_score_tr, avail_cov_tr)
         y_tr = curr_df.loc[common_tr, target_col].values.astype(float)
         mask = ~np.isnan(y_tr)
         if mask.sum() == 0:
@@ -242,8 +278,8 @@ def build_xy(
     y_train = np.concatenate(y_train_list)
 
     mask_test = ~np.isnan(y_target)
-    X_test  = X_lag[mask_test]
-    y_test  = y_target[mask_test]
+    X_test         = X_lag[mask_test]
+    y_test         = y_target[mask_test]
     countries_test = common[mask_test]
 
     if len(X_train) == 0 or len(X_test) == 0:
@@ -423,16 +459,33 @@ def run_loco(
             lag_cycle = max(train_cycles)
             lag_df    = panel[panel["cycle"] == lag_cycle].set_index("country_iso3")
 
-            # Per-fold kovaryat filtresi: eğitim setinde %50 altı dolu lag_ özelliği düşür
-            train_data   = panel[panel["cycle"].isin(train_cycles)]
-            fill_rates   = train_data[all_feature_cols].notna().mean()
-            fold_feat    = [f for f in all_feature_cols
-                            if not f.startswith("lag_") or fill_rates[f] >= MIN_FILL_RATE]
-            fold_lit_w   = np.array([_feat_weight(f, fold_feat, weights) for f in fold_feat])
-
-            X_tr, y_tr, X_te, y_te, countries = build_xy(
-                panel, fold_feat, target_col, train_cycles, test_cycle,
+            # Tüm özelliklerle build_xy çağır; sonra X_tr üzerinde tamamen NaN olan
+            # lag sütunlarını eле — bu katmanda filtrelemek metodolojik olarak doğru:
+            # doluluk oranını yalnızca bu fold'un gerçek eğitim matrisinden oku,
+            # tüm program satırlarına göre değil.
+            X_tr_full, y_tr, X_te_full, y_te, countries = build_xy(
+                panel, all_feature_cols, target_col, train_cycles, test_cycle,
             )
+
+            if X_tr_full is not None:
+                # Eğitim matrisinde tamamen NaN olan lag_ sütunları bu fold için gerçekten yok
+                col_any_filled = np.array([
+                    True if not f.startswith("lag_") else np.any(~np.isnan(X_tr_full[:, i]))
+                    for i, f in enumerate(all_feature_cols)
+                ])
+                fold_feat = [f for f, ok in zip(all_feature_cols, col_any_filled) if ok]
+                keep_idx  = [i for i, ok in enumerate(col_any_filled) if ok]
+                X_tr = X_tr_full[:, keep_idx]
+                X_te = X_te_full[:, keep_idx]
+                dropped = [f for f, ok in zip(all_feature_cols, col_any_filled) if not ok]
+                if dropped:
+                    log.debug("  Fold %d: tamamen NaN lag sütunlar atıldı: %s", i, dropped)
+            else:
+                fold_feat = all_feature_cols
+                X_tr = X_tr_full
+                X_te = X_te_full
+
+            fold_lit_w = np.array([_feat_weight(f, fold_feat, weights) for f in fold_feat])
 
             if X_tr is None or len(y_tr) < 3:
                 log.warning("  Fold %d (%d): M0/M1/M3 atlandı (yetersiz train), M2 kaydediliyor", i, test_cycle)
@@ -631,13 +684,11 @@ def predict_forward(
         gaps = [cycles[k] - cycles[k-1] for k in range(1, len(cycles))]
         next_cycle = last_cycle + int(round(sum(gaps) / len(gaps)))
 
-        # Kovaryat filtresi: tüm tarihe göre
-        fill_rates = panel[panel["cycle"].isin(cycles)][all_feature_cols].notna().mean()
-        fold_feat  = [f for f in all_feature_cols
-                      if not f.startswith("lag_") or fill_rates[f] >= MIN_FILL_RATE]
-        fold_lit_w = np.array([_feat_weight(f, fold_feat, weights) for f in fold_feat])
+        score_cols = [f for f in all_feature_cols if not f.startswith("lag_")]
+        cov_cols   = [f for f in all_feature_cols if f.startswith("lag_")]
 
-        # Tüm (lag, current) çiftlerini eğitim verisi yap
+        # Tüm (prev→curr) çiftlerini eğitim verisi yap
+        # Skor özellikleri prev_df'den, kovaryatlar curr_df'den (lag_ESCS_t = ESCS_{t-1})
         X_tr_list, y_tr_list = [], []
         for k in range(1, len(cycles)):
             prev_df = panel[panel["cycle"] == cycles[k-1]].set_index("country_iso3")
@@ -645,9 +696,11 @@ def predict_forward(
             common  = prev_df.index.intersection(curr_df.index)
             if len(common) == 0:
                 continue
-            X_k = prev_df.loc[common, fold_feat].values.astype(float)
-            y_k = curr_df.loc[common, target_col].values.astype(float)
-            mask = ~np.isnan(y_k)
+            av_sc = [c for c in score_cols if c in prev_df.columns]
+            av_cv = [c for c in cov_cols   if c in curr_df.columns]
+            X_k   = _make_X(prev_df, curr_df, common, av_sc, av_cv)
+            y_k   = curr_df.loc[common, target_col].values.astype(float)
+            mask  = ~np.isnan(y_k)
             if mask.sum() == 0:
                 continue
             X_tr_list.append(X_k[mask])
@@ -655,19 +708,35 @@ def predict_forward(
 
         if not X_tr_list:
             continue
-        X_train = np.vstack(X_tr_list)
-        y_train = np.concatenate(y_tr_list)
+        X_train_full = np.vstack(X_tr_list)
+        y_train      = np.concatenate(y_tr_list)
 
-        last_df = panel[panel["cycle"] == last_cycle].set_index("country_iso3")
+        # Test X: skor last_cycle'dan, kovaryat "next_cycle" yoksa last_cycle'dan
+        # (ileri tahmin için bir sonraki döngünün kovaryatı yok; last_cycle'ın lag_'ı kullanılır)
+        last_df   = panel[panel["cycle"] == last_cycle].set_index("country_iso3")
         countries = last_df.index
-        X_test   = last_df[fold_feat].values.astype(float)
+        av_sc_t   = [c for c in score_cols if c in last_df.columns]
+        av_cv_t   = [c for c in cov_cols   if c in last_df.columns]
+        X_test_full = _make_X(last_df, last_df, countries, av_sc_t, av_cv_t)
+        fold_feat   = av_sc_t + av_cv_t
 
-        if len(X_train) < 3 or len(X_test) == 0:
+        if len(X_train_full) < 3 or len(X_test_full) == 0:
             continue
 
+        # Eğitim matrisinde tamamen NaN olan lag sütunlarını at
+        col_ok   = np.array([
+            True if not f.startswith("lag_") else np.any(~np.isnan(X_train_full[:, i]))
+            for i, f in enumerate(fold_feat)
+        ])
+        fwd_feat = [f for f, ok in zip(fold_feat, col_ok) if ok]
+        keep_idx = [i for i, ok in enumerate(col_ok) if ok]
+        X_train  = X_train_full[:, keep_idx]
+        X_test   = X_test_full[:,  keep_idx]
+        fwd_lit_w = np.array([_feat_weight(f, fwd_feat, weights) for f in fwd_feat])
+
         y_m0, _, _, _, _   = fit_ridge(X_train, y_train, X_test, lit_weights=None)
-        y_m1, _, _, _, _   = fit_ridge(X_train, y_train, X_test, lit_weights=fold_lit_w)
-        y_m3               = _fit_ar1(X_train, y_train, X_test, fold_feat, target_col)
+        y_m1, _, _, _, _   = fit_ridge(X_train, y_train, X_test, lit_weights=fwd_lit_w)
+        y_m3               = _fit_ar1(X_train, y_train, X_test, fwd_feat, target_col)
 
         for j, cnt in enumerate(countries):
             last_score = float(last_df.loc[cnt, target_col]) \
