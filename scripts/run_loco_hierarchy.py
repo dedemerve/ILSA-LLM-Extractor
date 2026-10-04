@@ -171,8 +171,9 @@ def run_loco(v2: pd.DataFrame, xwalk: pd.DataFrame,
     if target_programs is None:
         target_programs = ["PISA", "TIMSS", "TIMSS_G4", "PIRLS"]
 
-    # Tier lookup
+    # Tier lookup — lag_Y crosswalk'ta yok; literature unanimously supports prior achievement → A
     tier_map = dict(zip(xwalk["canonical_construct"], xwalk["tier"]))
+    tier_map["lag_Y"] = "A"
 
     # Her program × domain için cycle sırası
     CYCLE_ORDER = {
