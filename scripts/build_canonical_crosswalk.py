@@ -298,12 +298,50 @@ ROWS = [
 COLUMNS = [
     "program", "cycle_availability", "raw_variable", "canonical_construct",
     "level", "direction", "direction_note", "weight_type", "pv_structure",
-    "forecast_role", "tier", "cross_cycle_comparable", "notes",
+    "forecast_role", "tier", "cross_cycle_comparable",
+    "direction_original", "direction_canonical", "transformation",
+    "notes",
 ]
 
 
+# ── Transformation meta tablosu ──────────────────────────────────────────────
+# (program, raw_variable): (direction_original, direction_canonical, transformation)
+# transformation seçenekleri:
+#   "none"       → değer olduğu gibi kullanılır (positif yönlü)
+#   "negate"     → value * -1 (ordinal ters skala; yüksek kod = kötü)
+#   "drop_near_zero_variance" → ülkeler arası varyans çok düşük; predictor olarak kullanılamaz
+#   "rename_only" → değer korunur; sadece değişken adı değişti (ICILS S_BASEFF→S_GENEFF)
+
+TRANSFORM_META = {
+    ("TIMSS",    "BSDGEDUP"):  ("-", "+", "negate"),
+    ("TIMSS_G4", "ASDHEDUP"):  ("-", "+", "negate"),
+    ("PIRLS",    "ASDHEDUP"):  ("-", "+", "negate"),
+    ("PIRLS",    "ASDHELA"):   ("-", "+", "negate"),
+    ("TALIS",    "TCDISCS"):   ("-", "+", "negate"),
+    # T3DISC (2018): uluslararası kalibrasyon → ülkeler arası varyans ~0 → kullanılamaz
+    ("TALIS",    "T3DISC"):    ("+", "+", "drop_near_zero_variance"),
+    # ICILS rename: S_BASEFF → S_GENEFF (2018+); değer korunur
+    ("ICILS",    "S_BASEFF"):  ("+", "+", "rename_only"),
+    # PISA, diğer TALIS, ICILS, PIAAC → dönüşüm yok
+}
+
+
 def main():
-    df = pd.DataFrame(ROWS, columns=COLUMNS)
+    # ROWS'da 13 alan: COLUMNS'un transformation öncesi versiyonu
+    base_cols = [c for c in COLUMNS if c not in ("direction_original","direction_canonical","transformation")]
+    df = pd.DataFrame(ROWS, columns=base_cols)
+
+    # Transformation meta ekle
+    df["direction_original"]  = df.apply(
+        lambda r: TRANSFORM_META.get((r["program"], r["raw_variable"]), (r["direction"], r["direction"], "none"))[0], axis=1)
+    df["direction_canonical"] = df.apply(
+        lambda r: TRANSFORM_META.get((r["program"], r["raw_variable"]), (r["direction"], r["direction"], "none"))[1], axis=1)
+    df["transformation"] = df.apply(
+        lambda r: TRANSFORM_META.get((r["program"], r["raw_variable"]), (r["direction"], r["direction"], "none"))[2], axis=1)
+
+    # Sütun sırası: notes en sona
+    notes_col = df.pop("notes")
+    df["notes"] = notes_col
 
     # Duplicate key kontrolü
     dup = df.duplicated(subset=["program", "raw_variable"])
