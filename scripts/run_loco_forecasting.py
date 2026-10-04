@@ -37,7 +37,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 from scipy import stats
-from sklearn.linear_model import RidgeCV
+from sklearn.linear_model import RidgeCV, LinearRegression
 from sklearn.preprocessing import StandardScaler
 
 try:
@@ -61,6 +61,10 @@ _OUT_DIR    = STAGE5_DIR if (_ENRICHED.exists() or _WEIGHTS_V2.exists()) else ST
 OUT_RESULTS = _OUT_DIR / "loco_results.csv"
 OUT_PREDS   = _OUT_DIR / "loco_predictions.csv"
 OUT_SHAP    = _OUT_DIR / "shap_values.csv"
+OUT_FWD     = _OUT_DIR / "forward_predictions.csv"
+
+# Kovaryat sütunlarının minimum doluluk oranı (fold başına)
+MIN_FILL_RATE = 0.50
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s  %(message)s")
 log = logging.getLogger(__name__)
@@ -297,6 +301,35 @@ def fit_ridge(
     return model.predict(X_te), model, scaler, scale, col_means
 
 
+def _fit_ar1(
+    X_train: np.ndarray,
+    y_train: np.ndarray,
+    X_test: np.ndarray,
+    feature_cols: list[str],
+    target_col: str,
+) -> np.ndarray:
+    """M3: Pooled AR(1) — yalnızca hedef alanın kendi lag'ı ile OLS.
+
+    Hedef sütun özellik listesinde yoksa (çapraz-program fold) NaN döndürür.
+    """
+    if target_col not in feature_cols:
+        return np.full(X_test.shape[0], np.nan)
+    idx = feature_cols.index(target_col)
+    x_tr = X_train[:, idx:idx+1]
+    x_te = X_test[:,  idx:idx+1]
+    # NaN impute
+    col_mean = float(np.nanmean(x_tr)) if np.any(~np.isnan(x_tr)) else 0.0
+    x_tr = np.where(np.isnan(x_tr), col_mean, x_tr)
+    x_te = np.where(np.isnan(x_te), col_mean, x_te)
+    mask = ~np.isnan(y_train)
+    if mask.sum() < 2:
+        return np.full(X_test.shape[0], np.nan)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        m = LinearRegression().fit(x_tr[mask], y_train[mask])
+    return m.predict(x_te)
+
+
 def compute_shap_values(
     model: RidgeCV,
     scaler: StandardScaler,
@@ -319,6 +352,23 @@ def compute_shap_values(
     explainer  = _shap.LinearExplainer(model, background, feature_perturbation="interventional")
     shap_vals  = explainer.shap_values(X_scaled)
     return np.array(shap_vals)
+
+
+# ---------------------------------------------------------------------------
+# Literatür ağırlık eşlemesi
+# ---------------------------------------------------------------------------
+
+def _feat_weight(f: str, feature_list: list[str], weights: dict[str, float] | None = None) -> float:
+    """Özellik adından M1 literatür ağırlığını döndürür.
+
+    lag_ESCS  → v2 weights['ESCS']          (kovaryat)
+    PISA_math → 1.0                          (skor omurgası, tam ağırlık)
+    """
+    if weights is None:
+        return 1.0
+    if f.startswith("lag_"):
+        return weights.get(f[4:], 0.5)
+    return 1.0
 
 
 # ---------------------------------------------------------------------------
@@ -360,43 +410,32 @@ def run_loco(
         var_name   = _DOMAIN_TO_VAR.get((prog, dom))
         w_domain   = weights.get(var_name, 0.5) if var_name else 0.5
 
-        def _feat_weight(f: str) -> float:
-            # lag_ESCS → lookup ESCS in v2 weights
-            if f.startswith("lag_"):
-                return weights.get(f[4:], 0.5)
-            # PISA_mathematics → lookup via _DOMAIN_TO_VAR
-            parts = f.split("_", 1)
-            if len(parts) == 2:
-                var = _DOMAIN_TO_VAR.get((parts[0], parts[1]))
-                if var:
-                    return weights.get(var, 0.5)
-            return weights.get(f, 0.5)
-
-        lit_w_vec = np.array([_feat_weight(f) for f in all_feature_cols])
-
         fold_preds: dict[str, list] = {
-            "M0": [], "M1": [], "M2": [], "y_true": [], "countries": []
+            "M0": [], "M1": [], "M2": [], "M3": [], "y_true": [], "countries": []
         }
-        shap_accumulator: list[np.ndarray] = []  # fold SHAP değerleri (M1)
+        shap_accumulator: list[np.ndarray] = []
 
         for i, test_cycle in enumerate(cycles):
             train_cycles = [c for c in cycles if c < test_cycle]
             if not train_cycles:
                 continue
 
-            X_tr, y_tr, X_te, y_te, countries = build_xy(
-                panel, all_feature_cols, target_col,
-                train_cycles, test_cycle,
-            )
-
-            # M2: lag-1 (persistence) — her zaman hesaplanabilir
             lag_cycle = max(train_cycles)
             lag_df    = panel[panel["cycle"] == lag_cycle].set_index("country_iso3")
 
+            # Per-fold kovaryat filtresi: eğitim setinde %50 altı dolu lag_ özelliği düşür
+            train_data   = panel[panel["cycle"].isin(train_cycles)]
+            fill_rates   = train_data[all_feature_cols].notna().mean()
+            fold_feat    = [f for f in all_feature_cols
+                            if not f.startswith("lag_") or fill_rates[f] >= MIN_FILL_RATE]
+            fold_lit_w   = np.array([_feat_weight(f, fold_feat, weights) for f in fold_feat])
+
+            X_tr, y_tr, X_te, y_te, countries = build_xy(
+                panel, fold_feat, target_col, train_cycles, test_cycle,
+            )
+
             if X_tr is None or len(y_tr) < 3:
-                # Ridge eğitimi için yetersiz veri; sadece M2 kaydedilir
-                # (tek train cycle durumu: ör. PISA 2022)
-                log.warning("  Fold %d (%d): M0/M1 atlandı (yetersiz train), M2 kaydediliyor", i, test_cycle)
+                log.warning("  Fold %d (%d): M0/M1/M3 atlandı (yetersiz train), M2 kaydediliyor", i, test_cycle)
                 target_df = panel[panel["cycle"] == test_cycle].set_index("country_iso3")
                 lag_df_   = panel[panel["cycle"] == lag_cycle].set_index("country_iso3")
                 common_c_ = lag_df_.index.intersection(target_df.index)
@@ -410,8 +449,8 @@ def run_loco(
                 y_te_  = y_te_[mask_]
                 y_m2_  = lag_df_.loc[common_c_, target_col].values.astype(float) \
                          if target_col in lag_df_.columns else np.full(len(y_te_), np.nan)
-                fold_preds["M0"].append(np.full(len(y_te_), np.nan))
-                fold_preds["M1"].append(np.full(len(y_te_), np.nan))
+                for fp in ["M0", "M1", "M3"]:
+                    fold_preds[fp].append(np.full(len(y_te_), np.nan))
                 fold_preds["M2"].append(y_m2_)
                 fold_preds["y_true"].append(y_te_)
                 fold_preds["countries"].append(common_c_)
@@ -420,47 +459,46 @@ def run_loco(
                     yt_, yp_ = y_te_[valid_m2], y_m2_[valid_m2]
                     results_rows.append({
                         "program": prog, "domain": dom,
-                        "test_cycle": test_cycle,
-                        "n_train": 0, "n_test": int(valid_m2.sum()),
+                        "test_cycle": test_cycle, "n_train": 0, "n_test": int(valid_m2.sum()),
                         "model": "M2",
-                        "RMSE": round(rmse(yt_, yp_), 4),
-                        "MAE":  round(mae(yt_, yp_), 4),
-                        "R2":   round(r2(yt_, yp_), 4),
-                        "Spearman": round(spearman_r(yt_, yp_), 4),
+                        "RMSE": round(rmse(yt_, yp_), 4), "MAE": round(mae(yt_, yp_), 4),
+                        "R2":   round(r2(yt_, yp_), 4),   "Spearman": round(spearman_r(yt_, yp_), 4),
                     })
                 for j, cnt in enumerate(common_c_):
                     pred_rows.append({
-                        "program": prog, "domain": dom,
-                        "test_cycle": test_cycle,
+                        "program": prog, "domain": dom, "test_cycle": test_cycle,
                         "country_iso3": cnt,
                         "y_true": round(float(y_te_[j]), 4),
-                        "y_M0":  float("nan"),
-                        "y_M1":  float("nan"),
-                        "y_M2":  round(float(y_m2_[j]) if not np.isnan(y_m2_[j]) else float("nan"), 4),
+                        "y_M0": float("nan"), "y_M1": float("nan"), "y_M3": float("nan"),
+                        "y_M2": round(float(y_m2_[j]) if not np.isnan(y_m2_[j]) else float("nan"), 4),
                     })
                 continue
 
-            # M0
+            # M0: literatür ağırlığı yok
             y_m0, _, _, _, _ = fit_ridge(X_tr, y_tr, X_te, lit_weights=None)
-            # M1
+            # M1: literatür ağırlıklı (skor=1.0, kovaryat=v2)
             y_m1, m1_model, m1_scaler, m1_scale, m1_means = fit_ridge(
-                X_tr, y_tr, X_te, lit_weights=lit_w_vec
+                X_tr, y_tr, X_te, lit_weights=fold_lit_w
             )
-            # SHAP (M1)
-            shap_fold = compute_shap_values(m1_model, m1_scaler, m1_scale, m1_means, X_te)
-            shap_accumulator.append(shap_fold)
-            # M2: lag-1 (persistence)
-            common_c  = countries
+            # M2: persistence (lag-1)
+            common_c = countries
             y_m2 = lag_df.loc[common_c, target_col].values.astype(float) \
                    if target_col in lag_df.columns else np.full(len(y_te), np.nan)
+            # M3: AR(1) pooled — yalnızca hedef alan lag ile OLS
+            y_m3 = _fit_ar1(X_tr, y_tr, X_te, fold_feat, target_col)
+
+            # SHAP (M1)
+            shap_fold = compute_shap_values(m1_model, m1_scaler, m1_scale, m1_means, X_te)
+            shap_accumulator.append((shap_fold, fold_feat))
 
             fold_preds["M0"].append(y_m0)
             fold_preds["M1"].append(y_m1)
             fold_preds["M2"].append(y_m2)
+            fold_preds["M3"].append(y_m3)
             fold_preds["y_true"].append(y_te)
             fold_preds["countries"].append(common_c)
 
-            for model_name, y_pred in [("M0", y_m0), ("M1", y_m1), ("M2", y_m2)]:
+            for model_name, y_pred in [("M0", y_m0), ("M1", y_m1), ("M2", y_m2), ("M3", y_m3)]:
                 valid = ~np.isnan(y_pred)
                 if valid.sum() < 2:
                     continue
@@ -470,54 +508,76 @@ def run_loco(
                     "test_cycle": test_cycle,
                     "n_train": len(y_tr), "n_test": len(yt),
                     "model": model_name,
-                    "RMSE": round(rmse(yt, yp), 4),
-                    "MAE":  round(mae(yt, yp), 4),
-                    "R2":   round(r2(yt, yp), 4),
-                    "Spearman": round(spearman_r(yt, yp), 4),
+                    "RMSE": round(rmse(yt, yp), 4), "MAE": round(mae(yt, yp), 4),
+                    "R2":   round(r2(yt, yp), 4),   "Spearman": round(spearman_r(yt, yp), 4),
+                    "n_features": len(fold_feat),
                 })
 
             for j, cnt in enumerate(common_c):
                 pred_rows.append({
-                    "program": prog, "domain": dom,
-                    "test_cycle": test_cycle,
+                    "program": prog, "domain": dom, "test_cycle": test_cycle,
                     "country_iso3": cnt,
                     "y_true": round(float(y_te[j]), 4),
-                    "y_M0":   round(float(y_m0[j]), 4),
-                    "y_M1":   round(float(y_m1[j]), 4),
-                    "y_M2":   round(float(y_m2[j]) if not np.isnan(y_m2[j]) else float("nan"), 4),
+                    "y_M0":  round(float(y_m0[j]), 4),
+                    "y_M1":  round(float(y_m1[j]), 4),
+                    "y_M2":  round(float(y_m2[j]) if not np.isnan(y_m2[j]) else float("nan"), 4),
+                    "y_M3":  round(float(y_m3[j]) if not np.isnan(y_m3[j]) else float("nan"), 4),
                 })
 
         if fold_preds["y_true"]:
             all_true = np.concatenate(fold_preds["y_true"])
             all_m1   = np.concatenate(fold_preds["M1"])
             all_m2   = np.concatenate(fold_preds["M2"])
+            # DM: M1 vs M2
             valid = ~(np.isnan(all_m1) | np.isnan(all_m2))
             if valid.sum() >= 3:
-                e1 = (all_true[valid] - all_m1[valid])
-                e2 = (all_true[valid] - all_m2[valid])
-                dm_stat, dm_p = diebold_mariano(e1, e2)
+                dm_stat, dm_p = diebold_mariano(
+                    all_true[valid] - all_m1[valid],
+                    all_true[valid] - all_m2[valid],
+                )
                 log.info("  DM(M1 vs M2): stat=%.3f  p=%.3f", dm_stat, dm_p)
                 results_rows.append({
                     "program": prog, "domain": dom,
                     "test_cycle": "ALL", "n_train": None, "n_test": int(valid.sum()),
-                    "model": "DM_M1vM2",
-                    "RMSE": None, "MAE": None, "R2": None,
-                    "Spearman": None,
-                    "DM_stat": round(dm_stat, 4), "DM_p": round(dm_p, 4),
+                    "model": "DM_M1vM2", "RMSE": None, "MAE": None, "R2": None,
+                    "Spearman": None, "DM_stat": round(dm_stat, 4), "DM_p": round(dm_p, 4),
+                })
+            # DM: M1 vs M3
+            all_m3 = np.concatenate(fold_preds["M3"])
+            valid3 = ~(np.isnan(all_m1) | np.isnan(all_m3))
+            if valid3.sum() >= 3:
+                dm3_stat, dm3_p = diebold_mariano(
+                    all_true[valid3] - all_m1[valid3],
+                    all_true[valid3] - all_m3[valid3],
+                )
+                log.info("  DM(M1 vs M3): stat=%.3f  p=%.3f", dm3_stat, dm3_p)
+                results_rows.append({
+                    "program": prog, "domain": dom,
+                    "test_cycle": "ALL", "n_train": None, "n_test": int(valid3.sum()),
+                    "model": "DM_M1vM3", "RMSE": None, "MAE": None, "R2": None,
+                    "Spearman": None, "DM_stat": round(dm3_stat, 4), "DM_p": round(dm3_p, 4),
                 })
 
-        # SHAP global önem (M1): fold SHAP'larını birleştir, mean |SHAP| hesapla
-        if shap_accumulator and not all(np.all(np.isnan(s)) for s in shap_accumulator):
-            all_shap = np.vstack(shap_accumulator)          # (toplam_gözlem, n_feat)
-            mean_abs_shap = np.nanmean(np.abs(all_shap), axis=0)
-            for feat_name, importance in zip(all_feature_cols, mean_abs_shap):
-                shap_rows.append({
-                    "program": prog,
-                    "domain": dom,
-                    "feature": feat_name,
-                    "mean_abs_shap": round(float(importance), 6),
-                })
-            log.info("  SHAP hesaplandı: %d özellik", len(all_feature_cols))
+        # SHAP global önem (M1): fold bazlı birleştirme
+        if shap_accumulator:
+            # fold'larda farklı özellik seti olabilir → ortak sütunları hizala
+            all_shap_rows: list[dict] = []
+            for shap_arr, feat_list in shap_accumulator:
+                if np.all(np.isnan(shap_arr)):
+                    continue
+                for obs_idx in range(shap_arr.shape[0]):
+                    for fi, fn in enumerate(feat_list):
+                        all_shap_rows.append({"feature": fn, "val": abs(float(shap_arr[obs_idx, fi]))})
+            if all_shap_rows:
+                shap_agg = (pd.DataFrame(all_shap_rows)
+                            .groupby("feature")["val"].mean().reset_index())
+                for _, row in shap_agg.iterrows():
+                    shap_rows.append({
+                        "program": prog, "domain": dom,
+                        "feature": row["feature"],
+                        "mean_abs_shap": round(float(row["val"]), 6),
+                    })
+                log.info("  SHAP hesaplandı: %d özellik", len(shap_agg))
 
     results_df = pd.DataFrame(results_rows)
     preds_df   = pd.DataFrame(pred_rows)
@@ -540,6 +600,98 @@ def run_loco(
 
 
 # ---------------------------------------------------------------------------
+# İleri tahmin (tüm geçmiş → sonraki döngü)
+# ---------------------------------------------------------------------------
+
+def predict_forward(
+    programs: list[str] | None = None,
+    domains:  list[str] | None = None,
+) -> pd.DataFrame:
+    """Tüm tarihsel veriye fit edip bir sonraki döngüyü tahmin eder."""
+    est, weights = load_data()
+    if programs:
+        est = est[est["program"].isin([p.upper() for p in programs])]
+    if domains:
+        est = est[est["domain"].isin([d.lower() for d in domains])]
+
+    panel = build_panel(est)
+    all_feature_cols = [c for c in panel.columns if c not in ("country_iso3", "cycle")]
+
+    fwd_rows: list[dict] = []
+
+    for (prog, dom), grp in est.groupby(["program", "domain"]):
+        target_col = make_feature_key(prog, dom)
+        if target_col not in panel.columns:
+            continue
+        cycles = sorted(grp["cycle"].unique())
+        if len(cycles) < 2:
+            continue
+
+        last_cycle = cycles[-1]
+        gaps = [cycles[k] - cycles[k-1] for k in range(1, len(cycles))]
+        next_cycle = last_cycle + int(round(sum(gaps) / len(gaps)))
+
+        # Kovaryat filtresi: tüm tarihe göre
+        fill_rates = panel[panel["cycle"].isin(cycles)][all_feature_cols].notna().mean()
+        fold_feat  = [f for f in all_feature_cols
+                      if not f.startswith("lag_") or fill_rates[f] >= MIN_FILL_RATE]
+        fold_lit_w = np.array([_feat_weight(f, fold_feat, weights) for f in fold_feat])
+
+        # Tüm (lag, current) çiftlerini eğitim verisi yap
+        X_tr_list, y_tr_list = [], []
+        for k in range(1, len(cycles)):
+            prev_df = panel[panel["cycle"] == cycles[k-1]].set_index("country_iso3")
+            curr_df = panel[panel["cycle"] == cycles[k]].set_index("country_iso3")
+            common  = prev_df.index.intersection(curr_df.index)
+            if len(common) == 0:
+                continue
+            X_k = prev_df.loc[common, fold_feat].values.astype(float)
+            y_k = curr_df.loc[common, target_col].values.astype(float)
+            mask = ~np.isnan(y_k)
+            if mask.sum() == 0:
+                continue
+            X_tr_list.append(X_k[mask])
+            y_tr_list.append(y_k[mask])
+
+        if not X_tr_list:
+            continue
+        X_train = np.vstack(X_tr_list)
+        y_train = np.concatenate(y_tr_list)
+
+        last_df = panel[panel["cycle"] == last_cycle].set_index("country_iso3")
+        countries = last_df.index
+        X_test   = last_df[fold_feat].values.astype(float)
+
+        if len(X_train) < 3 or len(X_test) == 0:
+            continue
+
+        y_m0, _, _, _, _   = fit_ridge(X_train, y_train, X_test, lit_weights=None)
+        y_m1, _, _, _, _   = fit_ridge(X_train, y_train, X_test, lit_weights=fold_lit_w)
+        y_m3               = _fit_ar1(X_train, y_train, X_test, fold_feat, target_col)
+
+        for j, cnt in enumerate(countries):
+            last_score = float(last_df.loc[cnt, target_col]) \
+                         if target_col in last_df.columns else float("nan")
+            fwd_rows.append({
+                "program":          prog,
+                "domain":           dom,
+                "country_iso3":     cnt,
+                "last_cycle":       last_cycle,
+                "last_score":       round(last_score, 2),
+                "predicted_cycle":  next_cycle,
+                "y_M0":             round(float(y_m0[j]), 2),
+                "y_M1":             round(float(y_m1[j]), 2),
+                "y_M3":             round(float(y_m3[j]) if not np.isnan(y_m3[j]) else float("nan"), 2),
+            })
+        log.info("İleri tahmin: %s %s → %d  (%d ülke)", prog, dom, next_cycle, len(countries))
+
+    fwd_df = pd.DataFrame(fwd_rows)
+    fwd_df.to_csv(OUT_FWD, index=False)
+    log.info("Kaydedildi: %s  (%d satır)", OUT_FWD, len(fwd_df))
+    return fwd_df
+
+
+# ---------------------------------------------------------------------------
 # Özet tablo
 # ---------------------------------------------------------------------------
 
@@ -547,7 +699,7 @@ def print_summary(results_df: pd.DataFrame) -> None:
     if results_df.empty or "model" not in results_df.columns:
         print("Sonuç yok.")
         return
-    metric_rows = results_df[results_df["model"].isin(["M0", "M1", "M2"])].copy()
+    metric_rows = results_df[results_df["model"].isin(["M0", "M1", "M2", "M3"])].copy()
     if metric_rows.empty:
         print("Sonuç yok.")
         return
@@ -561,6 +713,13 @@ def print_summary(results_df: pd.DataFrame) -> None:
     )
     print("\n=== LOCO Sonuç Özeti (ortalama fold metrikleri) ===")
     print(summary.to_string(index=False))
+
+    # DM test özeti
+    dm_rows = results_df[results_df["model"].isin(["DM_M1vM2", "DM_M1vM3"])].copy()
+    if not dm_rows.empty:
+        print("\n=== Diebold-Mariano Testi ===")
+        print(dm_rows[["program", "domain", "model", "n_test", "DM_stat", "DM_p"]]
+              .to_string(index=False))
 
 
 # ---------------------------------------------------------------------------
@@ -576,3 +735,9 @@ if __name__ == "__main__":
 
     results, preds = run_loco(programs=args.programs, domains=args.domains)
     print_summary(results)
+
+    print("\n=== İleri Tahminler ===")
+    fwd = predict_forward(programs=args.programs, domains=args.domains)
+    if not fwd.empty:
+        print(fwd.groupby(["program", "domain"])[["predicted_cycle"]].first().to_string())
+        print(f"\nToplam {len(fwd)} ülke-alan tahmini → {OUT_FWD}")
