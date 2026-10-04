@@ -40,8 +40,8 @@ log = logging.getLogger(__name__)
 
 COVARIATE_VARS = {
     "PISA":    ["ESCS", "HOMEPOS", "BELONG", "ICTAVHOM", "ICTAVSCH"],
-    "TIMSS":   ["BSDGEDUP", "ITSEX"],
-    "TIMSS_G4":["BSDGEDUP", "ITSEX"],  # G4'te aynı değişken adı
+    "TIMSS":   ["BSDGEDUP"],
+    "TIMSS_G4":["BSDGEDUP"],
     "PIRLS":   ["ASDHEDUP", "ASDHELA"],
 }
 
