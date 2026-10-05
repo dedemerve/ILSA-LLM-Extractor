@@ -347,8 +347,8 @@ def build_pisa_2022_final() -> pd.DataFrame:
     out["model_version"] = MODEL_VERSION
     out["literature_weight_version"] = LIT_WEIGHT_VERSION
     out["note"] = (
-        "Historical OOS after panel expansion (WB published means for early cycles "
-        "+ existing microdata 2015/2022/2025). Ridge M0/M1 available."
+        "Historical OOS after panel expansion (PUBLISHED_WB 2000–2012; "
+        "BRR_FAY microdata 2015/2018/2022/2025). Ridge M0/M1 available."
     )
     return out.sort_values(["domain", "country"]).reset_index(drop=True)
 
@@ -487,7 +487,7 @@ def build_revision_log() -> pd.DataFrame:
             "new_specification": "PISA cycles={2000,2003,2006,2009,2012,2015,2018,2022,2025}",
             "researcher_decision": "accepted",
             "accepted_or_rejected": "accepted",
-            "reason": "Applied via ingest_pisa_published_means.py (PUBLISHED_WB); microdata BRR upgrade pending for 2018 SAV",
+            "reason": "Applied via ingest_pisa_published_means.py (PUBLISHED_WB 2000–2012) + ingest_pisa_2018_microdata.py (BRR_FAY 2018); 2015/2022/2025 already BRR",
             "validation_result": "pisa_2022_ridge_available",
             "commit_hash": "",
         },
@@ -655,7 +655,7 @@ def build_final_audit(fold_info: dict) -> pd.DataFrame:
         {"component": "pisa_2022_ridge", "status": "verified", "count": int((lp_2022["y_M0"].notna()).sum()),
          "source": "pisa_2022_forecast_vs_actual_final.csv",
          "validation": "y_M0/y_M1 non-null for test_cycle=2022",
-         "notes": "Panel expanded with PUBLISHED_WB 2000–2018; Ridge n_train≈326"},
+         "notes": "PUBLISHED_WB 2000–2012 + BRR_FAY 2015/2018/2022/2025; Ridge n_train≈326"},
         {"component": "temporal_leakage_pisa_2025_train", "status": "pass" if not leak else "FAIL",
          "count": 0, "source": "forecast_ledger training_cycles",
          "validation": "2025 not in training_cycles",

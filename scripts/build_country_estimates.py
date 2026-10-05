@@ -486,15 +486,27 @@ def load_sav(path: str, needed_cols: list[str]) -> pd.DataFrame:
 
 
 def get_rep_cols(df: pd.DataFrame, prefix: str, rep_range: tuple | None) -> list[str]:
+    """Resolve replicate-weight columns.
+
+    PISA OECD files use unpadded names (W_FSTURWT1..80); some exports use
+    zero-padded W_FSTURWT001. Prefer a format that yields the full expected set.
+    """
+    colnames = set(df.columns) if hasattr(df, "columns") else set(df)
     if rep_range:
         lo, hi = rep_range
-        cols = [f"{prefix}{i:03d}" for i in range(lo, hi + 1)]
-        # Sadece gerçekten var olanları döndür
-        present = [c for c in cols if c in df.columns]
-        if present:
-            return present
-    # Prefix ile başlayan tüm sütunlar
-    return sorted(c for c in df.columns if c.startswith(prefix))
+        expected = hi - lo + 1
+        best: list[str] = []
+        # Unpadded first (OECD PISA 2015+), then padded variants
+        for fmt in ("{prefix}{i}", "{prefix}{i:02d}", "{prefix}{i:03d}"):
+            cols = [fmt.format(prefix=prefix, i=i) for i in range(lo, hi + 1)]
+            present = [c for c in cols if c in colnames]
+            if len(present) == expected:
+                return present
+            if len(present) > len(best):
+                best = present
+        if best:
+            return best
+    return sorted(c for c in colnames if c.startswith(prefix))
 
 # ---------------------------------------------------------------------------
 # Tek cycle × tek ülke tahmini
@@ -654,12 +666,8 @@ def process_cycle(spec: CycleSpec) -> list[dict]:
         return []
 
     # Probe replicate naming without loading the full frame
-    if spec.rep_range:
-        lo, hi = spec.rep_range
-        cand = [f"{spec.rep_prefix}{i:03d}" for i in range(lo, hi + 1)]
-        rep_cols = [c for c in cand if c in colset]
-    else:
-        rep_cols = sorted(c for c in colset if c.startswith(spec.rep_prefix))
+    # (OECD PISA: W_FSTURWT1..80 unpadded; some exports zero-pad to 001)
+    rep_cols = get_rep_cols(colset, spec.rep_prefix, spec.rep_range)
 
     if not rep_cols:
         log.error("Replicate weight bulunamadı prefix=%s", spec.rep_prefix)
