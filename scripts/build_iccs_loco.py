@@ -137,16 +137,19 @@ COV_VARS: dict[int, dict[str, list[str]]] = {
     # SES: S_NISB is available in 2016/2022 but not 2009 → use only when available
     # PARENTAL_EDU: HISCED is 1-6 scale across all cycles (S_HISEI is 0-90, incompatible)
     2009: {
-        "SES_COMPOSITE":    ["S_NISB", "ISESCS"],
+        # 2009 IDB uses NISB (unstandardized); S_NISB and ISESCS don't exist in this release
+        "SES_COMPOSITE":    ["NISB", "S_NISB", "ISESCS"],
         "PARENTAL_EDUCATION": ["HISCED", "PARED"],
     },
     2016: {
         "SES_COMPOSITE":    ["S_NISB", "S_ECOB"],
-        "PARENTAL_EDUCATION": ["HISCED", "PARED"],
+        # 2016 IDB uses S_HISCED (standardized); plain HISCED doesn't exist
+        "PARENTAL_EDUCATION": ["S_HISCED", "HISCED", "PARED"],
     },
     2022: {
         "SES_COMPOSITE":    ["S_NISB", "S_ECOB"],
-        "PARENTAL_EDUCATION": ["HISCED"],
+        # 2022 IDB uses S_HISCED in ISG* background files
+        "PARENTAL_EDUCATION": ["S_HISCED", "HISCED"],
     },
 }
 
