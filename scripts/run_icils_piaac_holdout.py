@@ -143,23 +143,59 @@ def run_piaac_holdout(weights: dict) -> list[dict]:
 
         lit_w = np.array([_piaac_feat_weight(f) for f in feature_cols])
 
-        preds_m0, alpha_m0 = fit_ridge_holdout(X, y, X, lit_weights=None)
-        preds_m1, alpha_m1 = fit_ridge_holdout(X, y, X, lit_weights=lit_w)
+        # Leave-one-country-out on the single 2012→2017 transition (best available OOS)
+        countries = df["country_iso3"].tolist()
+        y_m0_loo = np.zeros(n)
+        y_m1_loo = np.zeros(n)
+        for i in range(n):
+            mask = np.ones(n, dtype=bool)
+            mask[i] = False
+            if mask.sum() < 3:
+                y_m0_loo[i] = y[i]
+                y_m1_loo[i] = y[i]
+                continue
+            preds_m0, _ = fit_ridge_holdout(
+                X[mask].copy(), y[mask], X[i : i + 1].copy(), lit_weights=None
+            )
+            preds_m1, _ = fit_ridge_holdout(
+                X[mask].copy(), y[mask], X[i : i + 1].copy(), lit_weights=lit_w
+            )
+            y_m0_loo[i] = preds_m0[0]
+            y_m1_loo[i] = preds_m1[0]
 
-        # Note: train=test here because only 1 transition → reported as in-sample diagnostic
-        mae_m0 = float(np.mean(np.abs(preds_m0 - y)))
-        mae_m1 = float(np.mean(np.abs(preds_m1 - y)))
+        mae_m0 = float(np.mean(np.abs(y_m0_loo - y)))
+        mae_m1 = float(np.mean(np.abs(y_m1_loo - y)))
 
-        log.info("  PIAAC %s: M0_MAE=%.4f M1_MAE=%.4f (in-sample, n=%d)", domain, mae_m0, mae_m1, n)
+        log.info(
+            "  PIAAC %s: LOOCV M0_MAE=%.4f M1_MAE=%.4f (n=%d countries, 2012→2017)",
+            domain, mae_m0, mae_m1, n,
+        )
+
+        pred_rows = []
+        for i, cnt in enumerate(countries):
+            pred_rows.append({
+                "program": "PIAAC",
+                "domain": domain,
+                "test_cycle": 2017,
+                "country_iso3": cnt,
+                "y_true": round(float(y[i]), 4),
+                "y_M0": round(float(y_m0_loo[i]), 4),
+                "y_M1": round(float(y_m1_loo[i]), 4),
+                "validation_design": "single_transition_LOOCV",
+            })
+        pred_df = pd.DataFrame(pred_rows)
+        out_pred = STAGE5_DIR / f"piaac_holdout_predictions_{domain}.csv"
+        pred_df.to_csv(out_pred, index=False)
+        log.info("Saved %s", out_pred.name)
 
         rows.append({
             "program": "PIAAC", "domain": domain,
             "train_cycles": "2012", "test_cycle": 2017,
             "n_overlap": n, "n_features": len(feature_cols),
-            "design": "single_transition_in_sample",
+            "design": "single_transition_LOOCV",
             "MAE_M0": round(mae_m0, 4), "MAE_M1": round(mae_m1, 4),
             "delta_MAE": round(mae_m1 - mae_m0, 4),
-            "note": "in-sample fit; not generalizable; diagnostic only",
+            "note": "LOOCV on 2012→2017 transition; only 2 PIAAC cycles — no forward forecast",
         })
     return rows
 

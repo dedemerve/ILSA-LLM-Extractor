@@ -60,6 +60,22 @@ CONSTRUCT_TO_FEATURE_ALIASES: dict[str, list[str]] = {
 }
 
 
+def load_construct_lit_weights() -> dict[str, float]:
+    """W_j_forecast by canonical construct (for SHAP / sensitivity)."""
+    lit_path = STAGE5 / "literature_priority.csv"
+    if not lit_path.exists():
+        return {}
+    lit = pd.read_csv(lit_path)
+    if "W_j_forecast" not in lit.columns:
+        return {}
+    out: dict[str, float] = {}
+    for _, row in lit.iterrows():
+        c = str(row["canonical_construct"])
+        w = float(row["W_j_forecast"]) if pd.notna(row["W_j_forecast"]) else 0.0
+        out[c] = w
+    return out
+
+
 def load_forecast_weights() -> dict[str, float]:
     """Unified W_j for M1 √W scaling.
 

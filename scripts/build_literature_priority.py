@@ -66,6 +66,8 @@ FORECASTABILITY = {
     "TEACHING_QUALITY":                 False,  # composite; no direct variable mapping
     "PRIOR_ACHIEVEMENT":                True,   # lag_Y — already in model
     "SCIENCE_INTEREST":                 False,
+    "CIVIC_KNOWLEDGE":                  True,   # ICCS outcome / lag
+    "AGE_GRADE":                        False,
 }
 
 # Evidence type uplift: predictive evidence > associative

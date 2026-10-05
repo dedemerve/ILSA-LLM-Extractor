@@ -45,93 +45,22 @@ OUT_DIR.mkdir(parents=True, exist_ok=True)
 
 # Tüm JSON kaynak dizinleri
 JSON_SOURCES = [
-    OUTPUTS_DIR / "ilsa_survey_articles" / "json",  # survey makaleleri (132)
-    OUTPUTS_DIR / "Scopus",                          # Scopus (423)
-    OUTPUTS_DIR / "Web of Science",                  # WoS (302)
+    OUTPUTS_DIR / "ilsa_survey_articles" / "json",
+    OUTPUTS_DIR / "Scopus",
+    OUTPUTS_DIR / "Web of Science",
+    OUTPUTS_DIR / "OECD",
+    OUTPUTS_DIR / "IEA",
 ]
+
+try:
+    from scripts.canonical_predictor_map import canonical_map
+except ImportError:
+    import sys
+    sys.path.insert(0, str(PROJECT_ROOT))
+    from scripts.canonical_predictor_map import canonical_map
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s  %(message)s")
 log = logging.getLogger(__name__)
-
-# ---------------------------------------------------------------------------
-# Canonical predictor taxonomy — ILSA forecasting'e uygun değişkenler
-# ---------------------------------------------------------------------------
-CANONICAL_PREDICTORS = {
-    # SES ailesi
-    "SES_COMPOSITE":      [
-        "escs", "ses", "socioeconomic", "socio-economic", "nisb", "s_nisb",
-        "immigrant background", "immigrant status", "immigration",
-    ],
-    "HOME_RESOURCES":     [
-        "homepos", "home resources", "hedres", "books at home", "cultural possessions",
-        "home educational resources", "educational resources at home",
-    ],
-    "PARENTAL_EDUCATION": [
-        "parental education", "misced", "fisced", "mother education", "father education",
-        "education level", "educational attainment", "parents’ emotional support",
-        "parental support", "hisced", "pared",
-    ],
-    # Motivasyon / tutum
-    "BELONGING":          ["belonging", "school belonging", "sense of belonging"],
-    "MOTIVATION":         [
-        "motivation", "intrinsic motivation", "student motivation",
-        "enjoyment", "interest", "expectancy for success", "future intentions",
-        "reading enjoyment", "value of science",
-    ],
-    "SELF_EFFICACY":      [
-        "self-efficacy", "self efficacy", "academic self", "self concept",
-        "self-concept", "teacher self-efficacy",
-    ],
-    "ANXIETY":            [
-        "anxiety", "test anxiety", "math anxiety", "student behavior stress", "stress",
-    ],
-    # Okul / öğretmen
-    "TEACHER_QUALITY":    [
-        "teacher quality", "teacher effectiveness", "instructional quality",
-        "teacher support", "teacher enthusiasm", "teacher feedback",
-        "teacher-directed instruction", "teacher collaboration",
-        "professional collaboration", "instructional support",
-    ],
-    "SCHOOL_CLIMATE":     [
-        "school climate", "disciplinary climate", "school environment",
-        "classroom climate", "bullying", "safety",
-    ],
-    "SCHOOL_RESOURCES":   [
-        "school resources", "infrastructure", "facilities",
-        "class size", "student-teacher ratio", "school type", "private tutoring",
-        "charter", "public/private",
-    ],
-    # Teknoloji
-    "ICT_ACCESS":         [
-        "ict", "computer", "internet access", "digital", "online chatting",
-        "technology use", "computer literacy",
-    ],
-    # Cinsiyet
-    "GENDER":             ["gender", "sex", "male", "female", "girls", "boys"],
-    # Öğretim
-    "INSTRUCTIONAL_TIME": [
-        "instructional time", "teaching time", "homework",
-        "weekly math learning time", "time on task", "learning time", "response time",
-    ],
-    # Çapraz-program/geçmiş başarı
-    "PRIOR_ACHIEVEMENT":  [
-        "prior achievement", "previous score", "lag", "past performance",
-        "grade repetition", "performance level", "score group",
-    ],
-    # Ülke düzeyi
-    "GDP_EXPENDITURE":    ["gdp", "expenditure", "education spending", "economic"],
-    # Demografi
-    "AGE_GRADE":          ["age", "grade level", "grade ("],
-}
-
-def canonical_map(predictor_str: str) -> str:
-    """Serbest metin predictor → canonical etiket"""
-    s = predictor_str.lower()
-    for canon, kws in CANONICAL_PREDICTORS.items():
-        if any(kw in s for kw in kws):
-            return canon
-    return "OTHER"
-
 
 # ---------------------------------------------------------------------------
 # LLM çağrısı

@@ -46,8 +46,8 @@ forward_predictions + per_country_accuracy
 | TIMSS G4 | LOCO (5 folds) | 2027 | Yes |
 | PIRLS | LOCO (3 folds) | 2026 | Yes |
 | ICCS | LOCO (1 fold: 2022, exploratory) | 2029 | Yes (9 countries) |
-| ICILS | Pooled hold-out (test=2023) | 2028 | Pending hold-out pred regen |
-| PIAAC | In-sample diagnostic only | — | — (not OOS-comparable) |
+| ICILS | Pooled hold-out (test=2023) | 2028 | Yes |
+| PIAAC | Single-transition LOOCV (2012→2017) | Blocked (2 cycles) | Yes (see `piaac_forward_status.csv`) |
 
 Models: **M0** Ridge (unweighted), **M1** Ridge (features × √W_j), plus persistence / AR(1) baselines in LOCO.
 
@@ -76,6 +76,9 @@ python scripts/generate_icils_forward_predictions.py
 
 # Accuracy table
 python scripts/build_per_country_accuracy.py
+
+# Full corpus refresh (OECD+IEA+Scopus+WoS+survey → evidence → W_j → accuracy)
+bash scripts/run_stage5_corpus_pipeline.sh
 ```
 
 ### Key Stage 5 outputs
@@ -122,12 +125,12 @@ Public structured outputs on HuggingFace:
 python scripts/upload_to_hf.py
 ```
 
-## What this repo does *not* claim
+## Corpus scope (explicit)
 
-- Scopus/WoS coverage is **not** the universe of all ILSA publications (2020–2026 AI/ML-focused queries).
-- OECD/IEA JSONs are extracted but **not** yet folded into the effect-size W_j path.
-- PIAAC MAEs are diagnostic; they are not cross-program LOCO-comparable.
-- ~67% of effect-size predictors currently map to `OTHER` — construct harmonization is ongoing.
+- On-disk corpus: **1,756** JSON records (OECD, IEA, Scopus, WoS, survey) — all flow through `build_evidence_matrix.py` and `augment_effect_sizes_from_corpus.py`.
+- Bibliographic queries for Scopus/WoS were AI/assessment-focused (2020–2026); expanding queries requires new PDF extraction.
+- PIAAC forward predictions require a third adult cycle; status file: `outputs/stage5/piaac_forward_status.csv`.
+- Construct mapping OTHER rate after unified map: **~7%** (`scripts/canonical_predictor_map.py`).
 
 ## License
 
