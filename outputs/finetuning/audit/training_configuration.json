@@ -1,0 +1,102 @@
+{
+  "_status": "TEMPLATE — not yet finalized; model selection blocked pending source-text availability",
+  "_date_created": "2026-10-05",
+  "_branch": "experiment/ilsa-domain-finetuning (to be created)",
+
+  "experiment_id": "ilsa-domain-finetuning-v1",
+  "experiment_version": "0.1.0-pre",
+
+  "base_model": {
+    "name": "TBD — evaluate: claude-sonnet-4-6, gpt-4o, gpt-4o-mini, Llama-3-8B",
+    "model_id": null,
+    "context_length": null,
+    "tokenizer": null,
+    "note": "Must match or exceed capability of current extraction baseline (gpt-4o or equivalent)"
+  },
+
+  "fine_tuning_method": {
+    "approach": "TBD — instruction fine-tuning (SFT) or LoRA/QLoRA depending on base model",
+    "framework": null,
+    "note": "Full supervised extraction fine-tuning requires source PDF texts (currently unavailable for 122/132 records)"
+  },
+
+  "training_data": {
+    "corpus": "ilsa_survey_articles",
+    "total_candidate_records": 132,
+    "gold_records": 64,
+    "needs_review_records": 48,
+    "excluded_records": 20,
+    "source_text_available": 10,
+    "version": "v1.0-2026-10-05",
+    "gold_standard_file": "outputs/finetuning/gold_standard.csv",
+    "split_design": "70/15/15 train/validation/test at article/DOI level",
+    "split_status": "BLOCKED — source texts required"
+  },
+
+  "hyperparameters": {
+    "epochs": null,
+    "learning_rate": null,
+    "batch_size": null,
+    "warmup_steps": null,
+    "weight_decay": null,
+    "gradient_clipping": null,
+    "random_seed": 42
+  },
+
+  "inference_settings": {
+    "temperature": 0.0,
+    "max_tokens": 4096,
+    "note": "Must match baseline extraction settings for fair comparison"
+  },
+
+  "training_task": {
+    "input": "source_document_text",
+    "output": "structured_json_per_ILSAArticleMetadata_schema",
+    "schema_version": "src/schemas/models.py ILSAArticleMetadata (frozen)",
+    "system_prompt": "Extract ILSA evidence according to the predefined schema. Return valid JSON only.",
+    "tier_1_fields": ["program", "cycle", "target_variable", "predictor", "canonical_construct", "direction", "effect_type"],
+    "tier_2_fields": ["performance_metrics", "standardized_conclusion", "ml_techniques"],
+    "tier_3_fields": ["plausible_values_handling", "student_weights_used", "replicate_weights_used", "missing_data_handling", "research_design_type"]
+  },
+
+  "evaluation_on_test_set": {
+    "metrics": ["field_level_exact_match", "precision", "recall", "f1_per_tier1_field", "canonical_mapping_accuracy", "json_schema_validity", "unsupported_inference_rate", "source_grounding_accuracy"],
+    "test_set_freeze_rule": "Test set evaluated ONLY after training configuration and model selection are frozen"
+  },
+
+  "leakage_prevention": {
+    "split_level": "article/study",
+    "no_doi_overlap": true,
+    "no_normalized_title_overlap": true,
+    "no_near_duplicate_overlap": true
+  },
+
+  "reproducibility": {
+    "git_commit": null,
+    "corpus_version": "v1.0-2026-10-05",
+    "evidence_matrix_version": "evidence_matrix_full_v2.csv",
+    "canonical_vocabulary_version": "expand_evidence_matrix.py RAW_TO_CANONICAL @ fix/stage5-dual-source-build-xy",
+    "w_formula_version": "predictor_weights_v3.csv (w_norm_v3)",
+    "forecasting_code_version": "scripts/validate_m1pd.py @ fix/stage5-dual-source-build-xy",
+    "validation_fold_version": "unified_panel.csv + 45-fold LOCO @ fix/stage5-dual-source-build-xy",
+    "training_date": null
+  },
+
+  "blocking_issues": [
+    {
+      "issue": "source_text_unavailable",
+      "description": "Only 10/132 survey article PDFs are present in data/. Cannot construct (source_text -> JSON) training pairs for 122 records.",
+      "resolution": "Audit PDF availability across all four source databases. Obtain PDFs where possible. Consider fallback: schema-only instruction fine-tuning using JSON targets without source text."
+    },
+    {
+      "issue": "schema_drift",
+      "description": "~37 records have non-Literal values in pv_handling/missing_data/research_design fields that do not match the current schema definition.",
+      "resolution": "Harmonize before labeling. Map rubin_rules→all_pvs, knn_imputation→multiple_imputation, predictive→cross_sectional, etc. Document mappings."
+    },
+    {
+      "issue": "no_base_model_selected",
+      "description": "Fine-tuning approach depends on available compute, API access, and comparison baseline model.",
+      "resolution": "Select base model. If using OpenAI fine-tuning API, requires JSONL format with messages array. If using open-source model, requires CUDA/MPS infrastructure."
+    }
+  ]
+}
