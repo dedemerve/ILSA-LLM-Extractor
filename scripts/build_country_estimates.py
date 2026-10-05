@@ -171,7 +171,7 @@ MULTI_CATALOG: list[MultiFileCycleSpec] = [
         "[Bb][Ss][Gg]*.sav", "IDCNTRY", "TOTWGT",
         [f"BSMMAT0{i}" for i in range(1, 6)], "", None, "JRR_ZONES"),
     MultiFileCycleSpec("TIMSS", 2023, "mathematics",
-        str(ILSA_BASE / "TIMSS Datasets/TIMSS Data/TIMSS2023_IDB_SPSS_G8/Data"),
+        str(ILSA_BASE / "TIMSS Datasets/TIMSS Data/TIMSS2023_IDB_SPSS_G8/2_Data Files/SPSS Data"),
         "[Bb][Ss][Gg]*.sav", "IDCNTRY", "TOTWGT",
         [f"BSMMAT0{i}" for i in range(1, 6)], "", None, "JRR_ZONES"),
 
@@ -205,7 +205,7 @@ MULTI_CATALOG: list[MultiFileCycleSpec] = [
         "[Bb][Ss][Gg]*.sav", "IDCNTRY", "TOTWGT",
         [f"BSSSCI0{i}" for i in range(1, 6)], "", None, "JRR_ZONES"),
     MultiFileCycleSpec("TIMSS", 2023, "science",
-        str(ILSA_BASE / "TIMSS Datasets/TIMSS Data/TIMSS2023_IDB_SPSS_G8/Data"),
+        str(ILSA_BASE / "TIMSS Datasets/TIMSS Data/TIMSS2023_IDB_SPSS_G8/2_Data Files/SPSS Data"),
         "[Bb][Ss][Gg]*.sav", "IDCNTRY", "TOTWGT",
         [f"BSSSCI0{i}" for i in range(1, 6)], "", None, "JRR_ZONES"),
 
@@ -235,7 +235,7 @@ MULTI_CATALOG: list[MultiFileCycleSpec] = [
         "[Aa][Ss][Gg]*.sav", "IDCNTRY", "TOTWGT",
         [f"ASMMAT0{i}" for i in range(1, 6)], "", None, "JRR_ZONES"),
     MultiFileCycleSpec("TIMSS_G4", 2023, "mathematics",
-        str(ILSA_BASE / "TIMSS Datasets/TIMSS Data/TIMSS2023_IDB_SPSS_G4/Data"),
+        str(ILSA_BASE / "TIMSS Datasets/TIMSS Data/TIMSS2023_IDB_SPSS_G4/2_Data Files/SPSS Data"),
         "[Aa][Ss][Gg]*.sav", "IDCNTRY", "TOTWGT",
         [f"ASMMAT0{i}" for i in range(1, 6)], "", None, "JRR_ZONES"),
 
@@ -265,7 +265,7 @@ MULTI_CATALOG: list[MultiFileCycleSpec] = [
         "[Aa][Ss][Gg]*.sav", "IDCNTRY", "TOTWGT",
         [f"ASSSCI0{i}" for i in range(1, 6)], "", None, "JRR_ZONES"),
     MultiFileCycleSpec("TIMSS_G4", 2023, "science",
-        str(ILSA_BASE / "TIMSS Datasets/TIMSS Data/TIMSS2023_IDB_SPSS_G4/Data"),
+        str(ILSA_BASE / "TIMSS Datasets/TIMSS Data/TIMSS2023_IDB_SPSS_G4/2_Data Files/SPSS Data"),
         "[Aa][Ss][Gg]*.sav", "IDCNTRY", "TOTWGT",
         [f"ASSSCI0{i}" for i in range(1, 6)], "", None, "JRR_ZONES"),
 

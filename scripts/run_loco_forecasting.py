@@ -391,19 +391,77 @@ def compute_shap_values(
 
 
 # ---------------------------------------------------------------------------
+# ILSA değişkeni → canonical predictor eşleştirme tablosu
+# Kaynak: predictor_weights_v2.csv'deki feature_name sütunuyla eşleşir.
+# Buradaki map, ILSA mikroveri değişken adını (lag_ prefix'i olmadan)
+# literatür ağırlık tablosundaki feature_name'e çevirir.
+# Karşılığı olmayan değişkenler 1.0 alır (bilgi yokluğu ≠ orta kanıt).
+# ---------------------------------------------------------------------------
+_ILSA_TO_CANONICAL: dict[str, str] = {
+    # ----------------------------------------------------------------
+    # FORECASTABLE (A): yeterli lag geçmişi mevcut
+    # ----------------------------------------------------------------
+    # PISA — ESCS = ebeveyn meslek+eğitim+ev kaynakları composite (OECD dok.)
+    "ESCS":    "ESCS",
+    # PISA — HOMEPOS ev kaynakları indeksi; ESCS ile r>0.7 → Ridge ile kontrol edilir
+    "HOMEPOS": "HOMEPOS",
+    # PISA — BELONG okul aidiyet indeksi; düşük SD (~0.21) ama anlamlı varyasyon var
+    "BELONG":  "BELONG",
+    # TIMSS G8 — BSDGEDUP TERSİ ölçek (1=yüksek eğitim, 6=düşük); β < 0 beklenir
+    "BSDGEDUP":"PARENTAL_EDU",
+    "BSDG07":  "PARENTAL_EDU",
+    "BSDG08":  "PARENTAL_EDU",
+    # PIRLS — ASDHEDUP aynı ters ölçek yapısı (BSDGEDUP ile karşılaştırılabilir)
+    "ASDHEDUP":"PARENTAL_EDU",
+    # PIRLS — ASDHELA ev dili; ebeveyn eğitim seviyesinin zayıf proxy'i
+    "ASDHELA": "PARENTAL_EDU",
+    "ASDHELB": "PARENTAL_EDU",
+
+    # ----------------------------------------------------------------
+    # TALIS contextual predictors (2015/2019/2022 target cycles)
+    # talis_covariate_estimates already stores TALIS_2013→target_2015 lag
+    "SECLSS":   "TEACHER_QUALITY",   # TALIS self-efficacy cls mgmt → W_j=0.8543
+    "TCDISCS":  "DISCLIMA",          # TALIS disciplinary climate → W_j=0.4910
+    "TEFFPROS": "EFFPD",             # TALIS effective PD → W_j=0.2547
+    "TJSPROS":  "JOB_SAT_PROF",      # TALIS job satisfaction profession → W_j=0.0894
+
+    # ----------------------------------------------------------------
+    # NOT FORECASTABLE (B): ILSA'da var ama lag geçmişi yetersiz
+    # ICTAVHOM/ICTAVSCH: yalnızca 2025 cycle'da mevcut → lag 2022=NaN
+    # → X_train her zaman NaN; post-build_xy filter tarafından düşürülür
+    # Bu değişkenler coverage tablosunda "temporal" olarak işaretlenir.
+    # Buraya mapping EKLEME — model davranışını etkilememeli.
+    # ----------------------------------------------------------------
+
+    # ----------------------------------------------------------------
+    # NOT FORECASTABLE (C): semantik eşleşme geçersiz
+    # ITSEX (1=kız, 2=erkek) → ülke ortalaması her cycle ~1.50, SD<0.03
+    # Gender gap ölçmüyor; GENDER_GAP için ayrı achievement gap hesabı gerekir.
+    # Buraya mapping EKLEME.
+    # ----------------------------------------------------------------
+}
+
+# ---------------------------------------------------------------------------
 # Literatür ağırlık eşlemesi
 # ---------------------------------------------------------------------------
 
 def _feat_weight(f: str, feature_list: list[str], weights: dict[str, float] | None = None) -> float:
     """Özellik adından M1 literatür ağırlığını döndürür.
 
-    lag_ESCS  → v2 weights['ESCS']          (kovaryat)
-    PISA_math → 1.0                          (skor omurgası, tam ağırlık)
+    lag_ESCS    → _ILSA_TO_CANONICAL['ESCS'] → weights['ESCS']
+    lag_ITSEX   → _ILSA_TO_CANONICAL['ITSEX'] → weights['GENDER_GAP']
+    PISA_math   → 1.0  (skor omurgası)
+
+    Bilinmeyen kovaryat → 1.0 (kanıt yokluğu, "orta kanıt" değil)
     """
     if weights is None:
         return 1.0
     if f.startswith("lag_"):
-        return weights.get(f[4:], 0.5)
+        raw_name   = f[4:]                              # lag_ önekini kaldır
+        canonical  = _ILSA_TO_CANONICAL.get(raw_name)  # semantik eşleştirme
+        if canonical is None:
+            return 1.0   # eşleşme yok → etkisiz bırak (0.5 gibi keyfi değer değil)
+        return weights.get(canonical, 1.0)
     return 1.0
 
 
@@ -444,10 +502,11 @@ def run_loco(
         log.info("LOCO → %s %s  (%d cycle)", prog, dom, len(cycles))
 
         var_name   = _DOMAIN_TO_VAR.get((prog, dom))
-        w_domain   = weights.get(var_name, 0.5) if var_name else 0.5
+        # Kanıt yokluğu → 1.0 (nötr); 0.5 gibi keyfi "orta kanıt" değil
+        w_domain   = weights.get(var_name, 1.0) if var_name else 1.0
 
         fold_preds: dict[str, list] = {
-            "M0": [], "M1": [], "M2": [], "M3": [], "y_true": [], "countries": []
+            "M0A": [], "M0": [], "M1": [], "M2": [], "M3": [], "y_true": [], "countries": []
         }
         shap_accumulator: list[np.ndarray] = []
 
@@ -502,7 +561,7 @@ def run_loco(
                 y_te_  = y_te_[mask_]
                 y_m2_  = lag_df_.loc[common_c_, target_col].values.astype(float) \
                          if target_col in lag_df_.columns else np.full(len(y_te_), np.nan)
-                for fp in ["M0", "M1", "M3"]:
+                for fp in ["M0A", "M0", "M1", "M3"]:
                     fold_preds[fp].append(np.full(len(y_te_), np.nan))
                 fold_preds["M2"].append(y_m2_)
                 fold_preds["y_true"].append(y_te_)
@@ -522,12 +581,24 @@ def run_loco(
                         "program": prog, "domain": dom, "test_cycle": test_cycle,
                         "country_iso3": cnt,
                         "y_true": round(float(y_te_[j]), 4),
-                        "y_M0": float("nan"), "y_M1": float("nan"), "y_M3": float("nan"),
+                        "y_M0A": float("nan"), "y_M0": float("nan"),
+                        "y_M1": float("nan"), "y_M3": float("nan"),
                         "y_M2": round(float(y_m2_[j]) if not np.isnan(y_m2_[j]) else float("nan"), 4),
                     })
                 continue
 
-            # M0: literatür ağırlığı yok
+            # Başarı (score) ve bağlam (lag_) özellik indeksleri
+            score_idx = [i for i, f in enumerate(fold_feat) if not f.startswith("lag_")]
+            X_tr_score = X_tr[:, score_idx] if score_idx else np.empty((X_tr.shape[0], 0))
+            X_te_score = X_te[:, score_idx] if score_idx else np.empty((X_te.shape[0], 0))
+
+            # M0A: yalnızca başarı özellikleri (bağlam yok)
+            if score_idx:
+                y_m0a, _, _, _, _ = fit_ridge(X_tr_score, y_tr, X_te_score, lit_weights=None)
+            else:
+                y_m0a = np.full(len(y_te), np.nan)
+
+            # M0: literatür ağırlığı yok (başarı + bağlam, ağırlıksız)
             y_m0, _, _, _, _ = fit_ridge(X_tr, y_tr, X_te, lit_weights=None)
             # M1: literatür ağırlıklı (skor=1.0, kovaryat=v2)
             y_m1, m1_model, m1_scaler, m1_scale, m1_means = fit_ridge(
@@ -544,6 +615,7 @@ def run_loco(
             shap_fold = compute_shap_values(m1_model, m1_scaler, m1_scale, m1_means, X_te)
             shap_accumulator.append((shap_fold, fold_feat))
 
+            fold_preds["M0A"].append(y_m0a)
             fold_preds["M0"].append(y_m0)
             fold_preds["M1"].append(y_m1)
             fold_preds["M2"].append(y_m2)
@@ -551,7 +623,7 @@ def run_loco(
             fold_preds["y_true"].append(y_te)
             fold_preds["countries"].append(common_c)
 
-            for model_name, y_pred in [("M0", y_m0), ("M1", y_m1), ("M2", y_m2), ("M3", y_m3)]:
+            for model_name, y_pred in [("M0A", y_m0a), ("M0", y_m0), ("M1", y_m1), ("M2", y_m2), ("M3", y_m3)]:
                 valid = ~np.isnan(y_pred)
                 if valid.sum() < 2:
                     continue
@@ -571,6 +643,7 @@ def run_loco(
                     "program": prog, "domain": dom, "test_cycle": test_cycle,
                     "country_iso3": cnt,
                     "y_true": round(float(y_te[j]), 4),
+                    "y_M0A": round(float(y_m0a[j]) if not np.isnan(y_m0a[j]) else float("nan"), 4),
                     "y_M0":  round(float(y_m0[j]), 4),
                     "y_M1":  round(float(y_m1[j]), 4),
                     "y_M2":  round(float(y_m2[j]) if not np.isnan(y_m2[j]) else float("nan"), 4),
@@ -594,6 +667,21 @@ def run_loco(
                     "test_cycle": "ALL", "n_train": None, "n_test": int(valid.sum()),
                     "model": "DM_M1vM2", "RMSE": None, "MAE": None, "R2": None,
                     "Spearman": None, "DM_stat": round(dm_stat, 4), "DM_p": round(dm_p, 4),
+                })
+            # DM: M0A vs M2 (bağlam katkısı kontrolü)
+            all_m0a = np.concatenate(fold_preds["M0A"])
+            valid_0a = ~(np.isnan(all_m0a) | np.isnan(all_m2))
+            if valid_0a.sum() >= 3:
+                dm0a_stat, dm0a_p = diebold_mariano(
+                    all_true[valid_0a] - all_m0a[valid_0a],
+                    all_true[valid_0a] - all_m2[valid_0a],
+                )
+                log.info("  DM(M0A vs M2): stat=%.3f  p=%.3f", dm0a_stat, dm0a_p)
+                results_rows.append({
+                    "program": prog, "domain": dom,
+                    "test_cycle": "ALL", "n_train": None, "n_test": int(valid_0a.sum()),
+                    "model": "DM_M0AvM2", "RMSE": None, "MAE": None, "R2": None,
+                    "Spearman": None, "DM_stat": round(dm0a_stat, 4), "DM_p": round(dm0a_p, 4),
                 })
             # DM: M1 vs M3
             all_m3 = np.concatenate(fold_preds["M3"])
@@ -764,11 +852,50 @@ def predict_forward(
 # Özet tablo
 # ---------------------------------------------------------------------------
 
+def _print_literature_coverage() -> None:
+    """Literatür predictor'larının forecasting'e transfer tablosunu basar.
+
+    Üç durum (reviewer taksonomisi):
+      A — Forecastable: ILSA ölçümü var ve yeterli lag geçmişi var
+      B — Temporal gap: ILSA ölçümü var ama lag geçmişi yetersiz
+      C — No measure:   ILSA'da uyumlu country-level ölçüm yok
+    """
+    weights_path = _OUT_DIR.parent / "predictor_weights_v2.csv"
+    if not weights_path.exists():
+        return
+    w = pd.read_csv(weights_path)
+
+    # A — forecastable canonical construct'lar (mapping'te var)
+    forecastable_features = set(_ILSA_TO_CANONICAL.values())
+
+    # B — ILSA'da var ama lag geçmişi yetersiz (temporal)
+    temporal_gap = {"ICT_INDEX"}   # ICTAVHOM/ICTAVSCH yalnızca 2025'te var
+
+    def _status(feature: str) -> str:
+        if feature in forecastable_features:
+            return "A — forecastable"
+        if feature in temporal_gap:
+            return "B — temporal gap (lag eksik)"
+        return "C — no compatible measure"
+
+    print("\n=== Literatür → Tahmin Transferi (Coverage) ===")
+    print(f"{'Canonical Predictor':<22} {'Feature':<16} {'w_norm':>7}  Durum")
+    print("-" * 75)
+    for _, row in w.iterrows():
+        status = _status(row["feature_name"])
+        print(f"  {row['predictor_canonical']:<20} {row['feature_name']:<16} {row['w_norm']:>7.4f}  {status}")
+
+    n_fore = sum(1 for _, r in w.iterrows() if _status(r["feature_name"]).startswith("A"))
+    n_temp = sum(1 for _, r in w.iterrows() if _status(r["feature_name"]).startswith("B"))
+    n_none = sum(1 for _, r in w.iterrows() if _status(r["feature_name"]).startswith("C"))
+    print(f"\nA (forecastable): {n_fore}  |  B (temporal): {n_temp}  |  C (no measure): {n_none}  |  Total: {len(w)}")
+
+
 def print_summary(results_df: pd.DataFrame) -> None:
     if results_df.empty or "model" not in results_df.columns:
         print("Sonuç yok.")
         return
-    metric_rows = results_df[results_df["model"].isin(["M0", "M1", "M2", "M3"])].copy()
+    metric_rows = results_df[results_df["model"].isin(["M0A", "M0", "M1", "M2", "M3"])].copy()
     if metric_rows.empty:
         print("Sonuç yok.")
         return
@@ -789,6 +916,9 @@ def print_summary(results_df: pd.DataFrame) -> None:
         print("\n=== Diebold-Mariano Testi ===")
         print(dm_rows[["program", "domain", "model", "n_test", "DM_stat", "DM_p"]]
               .to_string(index=False))
+
+    # Literature coverage tablosu (reviewer için)
+    _print_literature_coverage()
 
 
 # ---------------------------------------------------------------------------
