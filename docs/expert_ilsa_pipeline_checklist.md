@@ -40,11 +40,20 @@ PIAAC forward exclusion is explicit in `outputs/stage5/piaac_forward_status.csv`
 
 **Chaos / survey rationale:** ILSA scores emerge from many student–school–system
 parameters; literature + survey constructs are fused into `W_j` and lag covariates
-intentionally — see [`docs/ilsa_chaos_survey_rationale.md`](ilsa_chaos_survey_rationale.md).
+intentionally — see [`docs/ilsa_chaos_survey_rationale.md`](ilsa_chaos_survey_rationale.md)
+and [`docs/forecast_feedback_framework.md`](forecast_feedback_framework.md).
+
+**Forecast feedback layer (expert-supervised):**
+- `forecast_ledger.csv` — country-level forecast vs actual vs error
+- `forecast_error_analysis.csv` — diagnostics (incl. ΔMAE = MAE_M1 − MAE_M0)
+- `model_revision_log.csv` — researcher-controlled revision recommendations
+- `final_pipeline_audit.csv` — verified counts only
+- `pisa_2025_forecast_vs_actual_final.csv` — end-to-end PISA 2025 comparison
+- `corpus_provenance_summary.csv` — JSON / papers / evidence / W_j chain
 
 **PISA forecast vs actual:**
-- PISA **2025**: full M0/M1/M2 vs actual → `outputs/stage5/pisa_2025_forecast_vs_actual.csv`
-- PISA **2022**: actual exists; Ridge unavailable (thin history) → persistence-only file
+- PISA **2025**: full M0/M1/M2 vs actual → `pisa_2025_forecast_vs_actual_final.csv`
+- PISA **2022**: Ridge unavailable (n_train=0); persistence only — see revision REV-001
 
 ---
 

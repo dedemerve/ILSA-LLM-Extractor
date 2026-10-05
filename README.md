@@ -25,7 +25,14 @@ The root `requirements.txt` is the full dependency lockfile. For extraction only
 | 4 — Country estimates | Microdata → country means | `build_country_estimates.py`, `compute_predictor_weights.py` | `outputs/stage4/` |
 | **5 — Forecasting** | Evidence × panel × LOCO/forward | See Stage 5 below | **`outputs/stage5/` (source of truth)** |
 
-Expert task inventory and completion status: [`docs/expert_ilsa_pipeline_checklist.md`](docs/expert_ilsa_pipeline_checklist.md).
+Expert task inventory and completion status: [`docs/expert_ilsa_pipeline_checklist.md`](docs/expert_ilsa_pipeline_checklist.md).  
+Forecast feedback framework: [`docs/forecast_feedback_framework.md`](docs/forecast_feedback_framework.md).
+
+Rebuild ledger / error / audit artifacts:
+
+```bash
+python scripts/build_forecast_feedback_layer.py
+```
 
 ## Stage 5 — Literature-informed forecasting (current)
 
