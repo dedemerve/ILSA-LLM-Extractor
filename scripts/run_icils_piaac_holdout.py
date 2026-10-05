@@ -256,6 +256,25 @@ def run_icils_holdout(weights: dict) -> list[dict]:
     mae_m1 = float(np.mean(np.abs(preds_m1 - y_te)))
     log.info("  M0_MAE=%.4f  M1_MAE=%.4f  Δ=%.4f", mae_m0, mae_m1, mae_m1 - mae_m0)
 
+    # Per-country hold-out predictions (for per_country_accuracy rebuild)
+    test_countries = list(common_te[mask_te])
+    pred_rows = []
+    for j, cnt in enumerate(test_countries):
+        pred_rows.append({
+            "program": "ICILS",
+            "domain": "computer_literacy",
+            "test_cycle": test_cycle,
+            "country_iso3": cnt,
+            "y_true": round(float(y_te[j]), 4),
+            "y_M0": round(float(preds_m0[j]), 4),
+            "y_M1": round(float(preds_m1[j]), 4),
+            "validation_design": "pooled_train_holdout_test",
+        })
+    pred_df = pd.DataFrame(pred_rows)
+    pred_path = STAGE5_DIR / "icils_holdout_predictions.csv"
+    pred_df.to_csv(pred_path, index=False)
+    log.info("Saved %s (%d countries)", pred_path.name, len(pred_df))
+
     return [{
         "program": "ICILS", "domain": "computer_literacy",
         "train_cycles": "2013+2018 pooled", "test_cycle": 2023,

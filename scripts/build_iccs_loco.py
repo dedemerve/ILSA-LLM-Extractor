@@ -385,11 +385,14 @@ def run_iccs_loco(panel: pd.DataFrame, weights: dict) -> pd.DataFrame:
 
 
 # ---------------------------------------------------------------------------
-# 4. Forward predictions (2022→2027)
+# 4. Forward predictions (2022→2029; IEA announced ICCS 2029)
 # ---------------------------------------------------------------------------
 
+ICCS_NEXT_CYCLE = 2029
+
+
 def run_iccs_forward(panel: pd.DataFrame, weights: dict) -> pd.DataFrame:
-    """Train on all available pairs, predict next cycle (2027)."""
+    """Train on all available pairs, predict next cycle (ICCS 2029)."""
     target_col = "ICCS_civic_knowledge"
     all_feat   = [c for c in panel.columns
                   if c not in ("country_iso3", "cycle", "program", "domain")]
@@ -431,7 +434,7 @@ def run_iccs_forward(panel: pd.DataFrame, weights: dict) -> pd.DataFrame:
 
     # Test = last cycle countries → predict next cycle
     last_df   = panel[panel["cycle"] == last_cycle].set_index("country_iso3")
-    dummy_df  = last_df.copy()  # predict "2027" using last cycle values as lag
+    dummy_df  = last_df.copy()  # next-cycle covariates unavailable; reuse last lag
     countries = last_df.index.tolist()
     score_cols = [f for f in all_feat if not f.startswith("lag_") and f in last_df.columns]
     cov_cols   = [f for f in all_feat if f.startswith("lag_") and f in dummy_df.columns]
@@ -468,7 +471,7 @@ def run_iccs_forward(panel: pd.DataFrame, weights: dict) -> pd.DataFrame:
             "program": "ICCS", "domain": "civic_knowledge",
             "country_iso3": cnt, "last_cycle": last_cycle,
             "last_score": round(float(last_score), 4) if not np.isnan(last_score) else np.nan,
-            "predicted_cycle": 2027,
+            "predicted_cycle": ICCS_NEXT_CYCLE,
             "y_M0": round(float(y_m0[j]), 4),
             "y_M1": round(float(y_m1[j]), 4),
         })
@@ -500,10 +503,10 @@ def main():
     log.info("=== Step 3: LOCO forecasting ===")
     loco_res = run_iccs_loco(panel, weights)
 
-    log.info("=== Step 4: Forward predictions (→2027) ===")
+    log.info("=== Step 4: Forward predictions (→%d) ===", ICCS_NEXT_CYCLE)
     fwd = run_iccs_forward(panel, weights)
     if not fwd.empty:
-        print(f"\nForward predictions: {len(fwd)} countries → 2027")
+        print(f"\nForward predictions: {len(fwd)} countries → {ICCS_NEXT_CYCLE}")
         print(fwd[["country_iso3", "last_score", "y_M0", "y_M1"]].head(10).to_string(index=False))
 
 
