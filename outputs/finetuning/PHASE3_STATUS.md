@@ -2,7 +2,7 @@
 
 **Date:** 2026-10-05  
 **Branch:** experiment/ilsa-domain-finetuning  
-**Status:** PILOT COMPLETE — Full annotation IN PROGRESS
+**Status:** PILOT COMPLETE — Silver promotion COMPLETE — Full annotation IN PROGRESS
 
 ---
 
@@ -29,29 +29,34 @@ Construct a scientifically defensible human-verified gold-standard dataset from 
 
 | Pool | N | Notes |
 |------|--:|-------|
-| silver_verified_candidate | 341 | Source text + Tier-1/2 schema clean |
-| silver_text_manual_review | 236 | Source text + schema drift |
+| silver_verified_candidate | 526 | Source text + Tier-1/2 schema clean (341 original + 185 promoted) |
+| silver_text_manual_review | 51 | Source text + non-promotable schema drift (wle/irt_theta/knn) |
 | silver_only | 41 | No source text (all ilsa_survey) |
 | **Total evidence-bearing** | **618** | — |
 
-**Key finding:** 197 of the 236 manual-review records have HIGH-confidence normalizable PV drift (rubin_rules/average_pv/all_pv → all_pvs). Promoting these would expand the annotation candidate pool to ~538.
+**Promotion completed 2026-10-05:** 185 of 236 manual-review records promoted to silver_verified_candidate (HIGH-confidence PV drift: rubin_rules/average_pv/all_pv → all_pvs). 51 records with non-promotable drift (wle=14, irt_theta=4, knn=19, single_imputation+mixed=14) remain as silver_text_manual_review.
 
-**Silver ≠ gold. All 341 silver records are LLM-generated labels without human verification.**
+**Silver ≠ gold. All 526 silver records are LLM-generated labels without human verification.**
 
 ---
 
 ## 4. Manual Review Profile
 
-| Drift reason | N | Promotable? |
-|-------------|--:|:------------|
-| rubin_rules → all_pvs | 128 | HIGH confidence |
-| average_pv → all_pvs | 55 | HIGH confidence |
-| all_pv → all_pvs | 14 | HIGH confidence |
-| knn_imputation → multiple_imputation | 25 | MEDIUM |
-| wle → single_pv + flag | 14 | LOW |
-| irt_theta → single_pv + flag | 4 | LOW |
+| Drift reason | N | Promoted? |
+|-------------|--:|:----------|
+| rubin_rules → all_pvs (pure) | 123+3(combo) | YES — all promoted |
+| average_pv → all_pvs (pure) | 50+5(combo) | YES — all promoted |
+| all_pv → all_pvs (pure) | 12+2(combo) | YES — all promoted |
+| knn_imputation only | 19 | NO — MEDIUM confidence |
+| wle only | 14 | NO — LOW confidence |
+| irt_theta only | 4 | NO — LOW confidence |
+| rubin_rules + knn (combo) | 3 | NO — mixed |
+| average_pv + single_imputation (combo) | 3 | NO — mixed |
+| rubin_rules + single_imputation (combo) | 2 | NO — mixed |
+| average_pv + knn (combo) | 2 | NO — mixed |
+| all_pv + single/knn (combo) | 2 | NO — mixed |
 
-Recommend: promote 197 HIGH-confidence records to silver_verified_candidate before next annotation round.
+**185 records promoted 2026-10-05.** Remaining 51 require human review before promotion.
 
 ---
 
