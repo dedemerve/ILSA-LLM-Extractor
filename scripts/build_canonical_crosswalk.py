@@ -96,6 +96,56 @@ ROWS = [
      "primary_predictor", "B", "yes",
      "Ebeveynlerin okuma aktivitesi; 3 kategorili ters skala"),
 
+    # ── ICCS ──────────────────────────────────────────────────────────────────
+    ("ICCS", "2009", "NISB",
+     "SES_COMPOSITE", "student", "+",
+     "Higher=better national index of socioeconomic background",
+     "TOTWGT (JK2)", "none",
+     "primary_predictor", "A", "partial",
+     "2009 IDB uses unstandardized NISB; S_NISB/ISESCS absent in this release"),
+
+    ("ICCS", "2016/2022", "S_NISB",
+     "SES_COMPOSITE", "student", "+",
+     "Higher=better national SES index",
+     "TOTWGT (JK2)", "none",
+     "primary_predictor", "A", "yes",
+     "Preferred SES composite for ICCS 2016/2022"),
+
+    ("ICCS", "2016/2022", "S_ECOB",
+     "SES_COMPOSITE", "student", "+",
+     "Higher=better economic/cultural background index",
+     "TOTWGT (JK2)", "none",
+     "primary_predictor", "B", "partial",
+     "Fallback SES proxy when S_NISB missing"),
+
+    ("ICCS", "2009", "HISCED",
+     "PARENTAL_EDUCATION", "home", "+",
+     "Higher HISCED = higher parental education (ISCED-like)",
+     "TOTWGT (JK2)", "none",
+     "primary_predictor", "A", "partial",
+     "2009 parental education; positive direction (unlike TIMSS BSDGEDUP)"),
+
+    ("ICCS", "2016/2022", "S_HISCED",
+     "PARENTAL_EDUCATION", "home", "+",
+     "Higher S_HISCED = higher parental education",
+     "TOTWGT (JK2)", "none",
+     "primary_predictor", "A", "yes",
+     "Standardized parental education in ICCS 2016/2022 ISG files"),
+
+    ("ICCS", "2009/2016", "PARED",
+     "PARENTAL_EDUCATION", "home", "+",
+     "Higher=more parental education",
+     "TOTWGT (JK2)", "none",
+     "primary_predictor", "B", "partial",
+     "Legacy/fallback parental education label in some ICCS releases"),
+
+    ("ICCS", "2009/2016/2022", "PV1CIV/PV*CIV",
+     "CIVIC_KNOWLEDGE", "student", "+",
+     "Higher=better civic knowledge",
+     "TOTWGT (JK2)", "PV civic knowledge",
+     "outcome_and_predictor", "A", "yes",
+     "Primary ICCS outcome; used as lag score in LOCO/forward"),
+
     # ── TALIS 2013 ────────────────────────────────────────────────────────────
     ("TALIS", "2013", "SECLSS",
      "TEACHER_SELF_EFFICACY_CLS_MGMT", "teacher", "+",

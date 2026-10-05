@@ -35,7 +35,13 @@ OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 logging.basicConfig(level=logging.INFO, format="%(levelname)s  %(message)s")
 log = logging.getLogger(__name__)
 
-ILSA_BASE = Path("/Users/mrved/Desktop/ILSA Datasets")
+try:
+    from scripts.ilsa_common import microdata_root
+except ImportError:
+    sys.path.insert(0, str(PROJECT_ROOT))
+    from scripts.ilsa_common import microdata_root
+
+ILSA_BASE = microdata_root()
 
 # ---------------------------------------------------------------------------
 # Sabitler
