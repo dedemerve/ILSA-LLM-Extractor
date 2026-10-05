@@ -289,19 +289,21 @@ def run_icils_holdout(weights: dict) -> list[dict]:
 def icils_feat_weight(f: str, weights: dict) -> float:
     _ICILS_MAP = {
         "lag_SES_COMPOSITE":          "SES_COMPOSITE",
-        "lag_PARENTAL_EDUCATION":     "PARENTAL_EDU",
+        "lag_PARENTAL_EDUCATION":     "PARENTAL_EDUCATION",
         "lag_HOME_LITERACY_ACTIVITIES": "HOME_LITERACY_ACTIVITIES",
     }
     canonical = _ICILS_MAP.get(f)
     if canonical:
-        return weights.get(canonical, 1.0)
+        return weights.get(canonical, weights.get("PARENTAL_EDU", 1.0))
     return 1.0
 
 
 def main():
-    wdf = pd.read_csv(STAGE5_DIR / "predictor_weights_v2.csv")
-    key_col  = "feature_name" if "feature_name" in wdf.columns else "variable"
-    weights  = dict(zip(wdf[key_col], wdf["w_norm"]))
+    try:
+        from scripts.ilsa_common import load_forecast_weights
+    except ImportError:
+        from ilsa_common import load_forecast_weights
+    weights = load_forecast_weights()
 
     rows = []
     rows.extend(run_icils_holdout(weights))

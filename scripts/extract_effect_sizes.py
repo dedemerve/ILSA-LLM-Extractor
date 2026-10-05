@@ -58,28 +58,70 @@ log = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 CANONICAL_PREDICTORS = {
     # SES ailesi
-    "SES_COMPOSITE":      ["escs", "ses", "socioeconomic", "socio-economic"],
-    "HOME_RESOURCES":     ["homepos", "home resources", "hedres", "books at home", "cultural possessions"],
-    "PARENTAL_EDUCATION": ["parental education", "misced", "fisced", "mother education", "father education"],
+    "SES_COMPOSITE":      [
+        "escs", "ses", "socioeconomic", "socio-economic", "nisb", "s_nisb",
+        "immigrant background", "immigrant status", "immigration",
+    ],
+    "HOME_RESOURCES":     [
+        "homepos", "home resources", "hedres", "books at home", "cultural possessions",
+        "home educational resources", "educational resources at home",
+    ],
+    "PARENTAL_EDUCATION": [
+        "parental education", "misced", "fisced", "mother education", "father education",
+        "education level", "educational attainment", "parents’ emotional support",
+        "parental support", "hisced", "pared",
+    ],
     # Motivasyon / tutum
     "BELONGING":          ["belonging", "school belonging", "sense of belonging"],
-    "MOTIVATION":         ["motivation", "intrinsic motivation", "student motivation"],
-    "SELF_EFFICACY":      ["self-efficacy", "self efficacy", "academic self"],
-    "ANXIETY":            ["anxiety", "test anxiety", "math anxiety"],
+    "MOTIVATION":         [
+        "motivation", "intrinsic motivation", "student motivation",
+        "enjoyment", "interest", "expectancy for success", "future intentions",
+        "reading enjoyment", "value of science",
+    ],
+    "SELF_EFFICACY":      [
+        "self-efficacy", "self efficacy", "academic self", "self concept",
+        "self-concept", "teacher self-efficacy",
+    ],
+    "ANXIETY":            [
+        "anxiety", "test anxiety", "math anxiety", "student behavior stress", "stress",
+    ],
     # Okul / öğretmen
-    "TEACHER_QUALITY":    ["teacher quality", "teacher effectiveness", "instructional quality"],
-    "SCHOOL_CLIMATE":     ["school climate", "disciplinary climate", "school environment"],
-    "SCHOOL_RESOURCES":   ["school resources", "infrastructure", "facilities"],
+    "TEACHER_QUALITY":    [
+        "teacher quality", "teacher effectiveness", "instructional quality",
+        "teacher support", "teacher enthusiasm", "teacher feedback",
+        "teacher-directed instruction", "teacher collaboration",
+        "professional collaboration", "instructional support",
+    ],
+    "SCHOOL_CLIMATE":     [
+        "school climate", "disciplinary climate", "school environment",
+        "classroom climate", "bullying", "safety",
+    ],
+    "SCHOOL_RESOURCES":   [
+        "school resources", "infrastructure", "facilities",
+        "class size", "student-teacher ratio", "school type", "private tutoring",
+        "charter", "public/private",
+    ],
     # Teknoloji
-    "ICT_ACCESS":         ["ict", "computer", "internet access", "digital"],
+    "ICT_ACCESS":         [
+        "ict", "computer", "internet access", "digital", "online chatting",
+        "technology use", "computer literacy",
+    ],
     # Cinsiyet
     "GENDER":             ["gender", "sex", "male", "female", "girls", "boys"],
     # Öğretim
-    "INSTRUCTIONAL_TIME": ["instructional time", "teaching time", "homework"],
+    "INSTRUCTIONAL_TIME": [
+        "instructional time", "teaching time", "homework",
+        "weekly math learning time", "time on task", "learning time", "response time",
+    ],
     # Çapraz-program/geçmiş başarı
-    "PRIOR_ACHIEVEMENT":  ["prior achievement", "previous score", "lag", "past performance"],
+    "PRIOR_ACHIEVEMENT":  [
+        "prior achievement", "previous score", "lag", "past performance",
+        "grade repetition", "performance level", "score group",
+    ],
     # Ülke düzeyi
     "GDP_EXPENDITURE":    ["gdp", "expenditure", "education spending", "economic"],
+    # Demografi
+    "AGE_GRADE":          ["age", "grade level", "grade ("],
 }
 
 def canonical_map(predictor_str: str) -> str:

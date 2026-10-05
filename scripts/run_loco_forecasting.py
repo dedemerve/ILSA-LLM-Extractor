@@ -34,6 +34,13 @@ from sklearn.linear_model import RidgeCV, LinearRegression
 from sklearn.preprocessing import StandardScaler
 
 try:
+    from scripts.ilsa_common import load_forecast_weights
+except ImportError:
+    import sys
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+    from scripts.ilsa_common import load_forecast_weights
+
+try:
     import shap as _shap
     _SHAP_AVAILABLE = True
 except ImportError:
@@ -46,7 +53,7 @@ STAGE5_DIR    = PROJECT_ROOT / "outputs" / "stage5"
 _ENRICHED     = STAGE5_DIR / "enriched_panel.csv"
 _ESTIMATES    = STAGE4_DIR / "country_estimates.csv"
 ESTIMATES_CSV = _ENRICHED if _ENRICHED.exists() else _ESTIMATES
-# v2 ağırlıklar varsa onu kullan, yoksa v1'e düş
+# Unified W_j (literature_priority W_j_forecast + v2 aliases); CSV kept for audit
 _WEIGHTS_V2   = STAGE5_DIR / "predictor_weights_v2.csv"
 _WEIGHTS_V1   = STAGE4_DIR / "predictor_weights.csv"
 WEIGHTS_CSV   = _WEIGHTS_V2 if _WEIGHTS_V2.exists() else _WEIGHTS_V1
@@ -152,9 +159,11 @@ def load_data() -> tuple[pd.DataFrame, dict[str, float]]:
     est["domain"]       = est["domain"].str.lower()
 
     wdf = pd.read_csv(WEIGHTS_CSV)
-    # v2: feature_name sütunu; v1: variable sütunu
-    key_col = "feature_name" if "feature_name" in wdf.columns else "variable"
-    weights: dict[str, float] = dict(zip(wdf[key_col], wdf["w_norm"]))
+    # Prefer unified W_j_forecast aliases; fall back to CSV columns if empty
+    weights = load_forecast_weights()
+    if not weights:
+        key_col = "feature_name" if "feature_name" in wdf.columns else "variable"
+        weights = dict(zip(wdf[key_col], wdf["w_norm"]))
 
     return est, weights
 

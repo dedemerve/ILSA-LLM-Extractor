@@ -46,7 +46,12 @@ sys.path.insert(0, str(PROJECT_ROOT / "scripts"))
 import run_loco_forecasting as loco
 
 STAGE5_DIR = PROJECT_ROOT / "outputs" / "stage5"
-ICCS_BASE  = Path("/Users/mrved/Desktop/ILSA Datasets/ICCS Datasets")
+try:
+    from scripts.ilsa_common import microdata_root, load_forecast_weights
+except ImportError:
+    sys.path.insert(0, str(PROJECT_ROOT))
+    from scripts.ilsa_common import microdata_root, load_forecast_weights
+ICCS_BASE  = microdata_root() / "ICCS Datasets"
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s  %(message)s")
 log = logging.getLogger(__name__)
@@ -487,10 +492,8 @@ def run_iccs_forward(panel: pd.DataFrame, weights: dict) -> pd.DataFrame:
 # ---------------------------------------------------------------------------
 
 def main():
-    # Load weights
-    wdf = pd.read_csv(STAGE5_DIR / "predictor_weights_v2.csv")
-    key_col = "feature_name" if "feature_name" in wdf.columns else "variable"
-    weights: dict[str, float] = dict(zip(wdf[key_col], wdf["w_norm"]))
+    # Unified W_j (literature_priority W_j_forecast + aliases)
+    weights = load_forecast_weights()
 
     log.info("=== Step 1: Extract ICCS estimates ===")
     est = extract_iccs_estimates()
