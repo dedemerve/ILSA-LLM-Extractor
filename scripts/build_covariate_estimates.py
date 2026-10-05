@@ -99,6 +99,13 @@ SPECS: list[CovSpec] = [
         encoding_hint="iso-8859-1",
     ),
     # TIMSS G8 — çoklu dosya
+    # 2023: country_col="CTY" (ISO3 doğrudan), önceki döngüler "_COUNTRY_ISO3_FN"
+    CovSpec("TIMSS", 2023,
+        variables=["BSDGEDUP"],          # ITSEX kaldırıldı (MUST FIX #2)
+        filepath=None,
+        glob_dir=str(TIMSS_BASE / "TIMSS2023_IDB_SPSS_G8"),
+        glob_prefix="bsg", country_col="CTY", weight_col="TOTWGT",
+    ),
     CovSpec("TIMSS", 2019,
         variables=["ITSEX", "BSDGEDUP", "BSDG07", "BSDG08"],
         filepath=None,
@@ -129,21 +136,48 @@ SPECS: list[CovSpec] = [
         glob_dir=str(TIMSS_BASE / "TIMSS2003_IDB_SPSS_G8"),
         glob_prefix="BSG", country_col="_COUNTRY_ISO3_FN", weight_col="TOTWGT",
     ),
+    # TIMSS G4 — ev anketi (ASH) ebeveyn eğitimi
+    # 2023: CTY (ISO3 doğrudan); öncekiler: dosya adından çıkarılıyor (stem[3:6])
+    CovSpec("TIMSS_G4", 2023,
+        variables=["ASDHEDUP"],
+        filepath=None,
+        glob_dir=str(TIMSS_BASE / "TIMSS2023_IDB_SPSS_G4"),
+        glob_prefix="ASH", country_col="CTY", weight_col="TOTWGT",
+    ),
+    CovSpec("TIMSS_G4", 2019,
+        variables=["ASDHEDUP"],
+        filepath=None,
+        glob_dir=str(TIMSS_BASE / "TIMSS2019_IDB_SPSS_G4"),
+        glob_prefix="ASH", country_col="_COUNTRY_ISO3_FN", weight_col="TOTWGT",
+    ),
+    CovSpec("TIMSS_G4", 2015,
+        variables=["ASDHEDUP"],
+        filepath=None,
+        glob_dir=str(TIMSS_BASE / "TIMSS2015_IDB_SPSS_G4"),
+        glob_prefix="ASH", country_col="_COUNTRY_ISO3_FN", weight_col="TOTWGT",
+    ),
+    CovSpec("TIMSS_G4", 2011,
+        variables=["ASDHEDUP"],
+        filepath=None,
+        glob_dir=str(TIMSS_BASE / "TIMSS2011_IDB_SPSS_G4"),
+        glob_prefix="ASH", country_col="_COUNTRY_ISO3_FN", weight_col="TOTWGT",
+    ),
     # PIRLS G4 — ev anketi (ASH) ebeveyn eğitimi için
+    # ASDHELB tüm döngülerde yok — kaldırıldı (doğrulama: 2011/2016/2021)
     CovSpec("PIRLS", 2021,
-        variables=["ASDHEDUP", "ASDHELA", "ASDHELB"],
+        variables=["ASDHEDUP", "ASDHELA"],
         filepath=None,
         glob_dir=str(PIRLS_BASE / "PIRLS2021_IDB_SPSS"),
         glob_prefix="ASH", country_col="_COUNTRY_ISO3_FN", weight_col="TOTWGT",
     ),
     CovSpec("PIRLS", 2016,
-        variables=["ASDHEDUP", "ASDHELA", "ASDHELB"],
+        variables=["ASDHEDUP", "ASDHELA"],
         filepath=None,
         glob_dir=str(PIRLS_BASE / "PIRLS2016_IDB_SPSS"),
         glob_prefix="ASH", country_col="_COUNTRY_ISO3_FN", weight_col="TOTWGT",
     ),
     CovSpec("PIRLS", 2011,
-        variables=["ASDHEDUP", "ASDHELA", "ASDHELB"],
+        variables=["ASDHEDUP", "ASDHELA"],
         filepath=None,
         glob_dir=str(PIRLS_BASE / "PIRLS2011_IDB_SPSS"),
         glob_prefix="ASH", country_col="_COUNTRY_ISO3_FN", weight_col="TOTWGT",
@@ -299,6 +333,16 @@ def main():
         return
 
     df = pd.DataFrame(all_records)
+
+    # PISA 2003/2009 TXT parser çıktısını birleştir (build_pisa_txt_covariates.py)
+    early_csv = OUT_CSV.parent / "covariate_estimates_pisa_early.csv"
+    if early_csv.exists():
+        early = pd.read_csv(early_csv)
+        early = early.rename(columns={"n_students": "n_total"})
+        early["se"] = float("nan")
+        df = pd.concat([df, early], ignore_index=True)
+        log.info("PISA 2003/2009 TXT covariates eklendi: %d satır", len(early))
+
     df.to_csv(OUT_CSV, index=False)
     log.info("\nKaydedildi: %s (%d satır)", OUT_CSV, len(df))
     log.info("Özet:")

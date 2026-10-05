@@ -91,14 +91,21 @@ def compute_weights(df: pd.DataFrame) -> pd.DataFrame:
         C = directions.max() / total_dir if total_dir > 0 else 0.5
 
         # E_j: medyan etki büyüklüğü (normalize edilmemiş ham değer)
-        vals = grp["effect_value"].dropna()
+        # Yalnızca karşılaştırılabilir ölçekler: standardized_beta, r_correlation, √R²
+        # ML metrikleri (AUC, accuracy, F1) farklı ölçek aralığında olduğu için dışlanır
+        EXCLUDED_TYPES = {"accuracy", "auc", "f1", "f1_score"}
+        notna_mask = grp["effect_value"].notna()
+        type_mask = ~grp["effect_type"].str.lower().isin(EXCLUDED_TYPES)
+        valid_idx = notna_mask & type_mask
+        vals = grp.loc[valid_idx, "effect_value"]
         if len(vals) > 0:
-            # Standardize: R² → √R² (yaklaşık r), diğerleri mutlak değer
             abs_vals = vals.abs()
-            # R²: genellikle 0-1 arasında rapor edilir, r'ye dönüştür
-            r2_mask = grp.loc[grp["effect_value"].notna(), "effect_type"].str.lower() == "r2"
+            # R² → √R² (yaklaşık r'ye dönüştür)
+            r2_mask = grp.loc[valid_idx, "effect_type"].str.lower() == "r2"
             if r2_mask.any():
-                abs_vals.loc[r2_mask[r2_mask].index] = np.sqrt(abs_vals.loc[r2_mask[r2_mask].index])
+                abs_vals.loc[r2_mask[r2_mask].index] = np.sqrt(
+                    abs_vals.loc[r2_mask[r2_mask].index]
+                )
             E_raw = float(abs_vals.median())
         else:
             E_raw = np.nan
