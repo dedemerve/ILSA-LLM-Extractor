@@ -1,0 +1,2333 @@
+Computers and Education: Artificial Intelligence 8 (2025) 100375
+
+Contents lists available at ScienceDirect
+
+Computers and Education: Artificial Intelligence
+journal homepage: www.sciencedirect.com/journal/computers-and-education-artificial-intelligence
+
+Towards the implementation of automated scoring in international
+large-scale assessments: Scalability and quality control
+Ji Yoon Jung * , Lillian Tyack , Matthias von Davier
+Boston College, TIMSS & PIRLS International Study Center, United States
+
+A R T I C L E I N F O
+
+A B S T R A C T
+
+Keywords:
+Automated scoring
+Artificial intelligence
+Machine learning
+Natural language processing
+Machine translation
+TIMSS
+
+Even before the age of artificial intelligence, automated scoring received considerable attention in educational
+measurement. However, its application to constructed response (CR) items in international large-scale assessments (ILSAs) has remained a challenge, primarily due to the difficulty of handling multilingual responses
+spanning many languages. This study addresses this challenge by investigating two machine learning approaches
+— supervised and unsupervised learning — for scoring multilingual responses. We explored various scoring
+methods to assess three science CR items from TIMSS 2023 across all participating countries and 42 languages.
+The results showed that the supervised learning approach, particularly combining multiple machine translations
+with artificial neural networks (MMT_ANNs), showed comparable performance to human scoring. The
+MMT_ANN model demonstrated impressive accuracy, correctly classifying up to 94.88% of responses across all
+languages and countries. This remarkable performance can be attributed to MMT_ANNs providing more suitable
+translations at both individual response and language levels. Furthermore, MMT_ANNs consistently generated
+accurate scores for identical or borderline responses within and across countries. These findings indicate the
+potential of automated scoring as an accurate and cost-effective measure for quality control in ILSAs, reducing
+the need to hire additional human raters to ensure scoring reliability.
+
+1. Introduction
+Constructed response (CR) items are considered crucial in assessing
+students’ thinking and reasoning abilities (Bennett, 1991; Liu et al.,
+2011, 2014; Mao et al., 2018; McClellan, 2010). However, their use in
+international large-scale assessments (ILSAs) is often limited by the
+subjective and costly nature of human scoring (Braun et al., 1990).
+Consequently, multiple-choice (MC) items have become the predominant choice in ILSAs due to their reliability and amenability to rapid
+scoring (Livingston, 2009). In contrast, the human scoring of CR items
+includes constructing comprehensive scoring guides, recruiting and
+training human raters, and monitoring the scoring process to achieve
+high scoring reliability (Bennett, 1991; Bookbinder et al., 2024). Despite
+extensive training and monitoring, scoring inconsistencies and subjectivity persist due to rater effects, including severity, leniency, fatigue,
+and interpretation differences (Bejar, 2012; Myford & Wolfe, 2003;
+Wang & von Davier, 2014; Zhang, 2013). Moreover, the diverse language responses in ILSAs, which span over 60 countries, pose significant
+challenges in maintaining scoring standards across different languages
+
+and regions (Okubo et al., 2023). Automated scoring can be used to
+address these challenges and promote the broader use of CR items in
+ILSAs while reducing the time and cost associated with hiring additional
+human raters.
+There have been many efforts to implement the automated scoring of
+CR items across various assessments (Gilson et al., 2023; LaVoie et al.,
+2020; Liu et al., 2014; Lottridge et al., 2018; Shermis & Wilson, 2024).
+However, rapid advancements in artificial intelligence (AI), including
+machine learning and natural language processing (NLP), suggest the
+potential for extending automated scoring to multiple languages globally. Machine learning, particularly through artificial neural networks
+(ANNs), excels at automatically identifying patterns within data and is
+highly effective for classification and prediction tasks (El Naqa & Murphy, 2015; Kim, 2014; Surden, 2021). ANNs remove the need for
+labor-intensive manual feature selection, which was necessary in earlier
+machine scoring methods. Also, advances in machine translation (MT)
+and large language models (LLMs) have enabled swift and accurate
+translations across numerous languages. Google Translate and Meta’s AI
+model support over 100 languages, including many low-resource
+
+* Corresponding author.
+E-mail addresses: jiyoon.jung@bc.edu (J.Y. Jung), tyack@bc.edu (L. Tyack), vondavim@bc.edu (M. von Davier).
+https://doi.org/10.1016/j.caeai.2025.100375
+Received 13 August 2024; Received in revised form 15 January 2025; Accepted 24 January 2025
+Available online 27 January 2025
+2666-920X/© 2025 The Authors. Published by Elsevier Ltd. This is an open access article under the CC BY-NC-ND license (http://creativecommons.org/licenses/bync-nd/4.0/).
+
+J.Y. Jung et al.
+
+Computers and Education: Artificial Intelligence 8 (2025) 100375
+
+individually by their country’s NRCs and may assign different scores
+compared to their counterparts in other countries. Second, cross-country
+scoring reliability is assessed to ensure consistency across countries.
+English-written responses to a subset of CR items are evaluated by
+human raters who can score English responses from individual participating countries (Bookbinder et al., 2024). This process necessitates
+additional scoring exercises and demands considerable time and effort.
+Furthermore, when non-native English-speaking raters evaluate these
+English-written responses, varying interpretations may arise. To tackle
+these challenges, automated scoring holds promise as an efficient
+method for generating additional scores for all student responses in
+ILSAs because it can apply the same scoring rules across countries while
+costing less and running faster than human raters.
+Over the past five decades, numerous automated scoring engines for
+CR items have been developed with the progress in NLP methodologies
+(Chowdhary & Chowdhary, 2020) and machine learning algorithms
+(Alpaydin, 2020; Shalev-Shwartz & Ben-David, 2014). These approaches are primarily based on considerations that aim at mimicking
+human judgment in scoring open-ended responses. In the United States,
+states like West Virginia, Louisiana, and Utah employ automated scoring
+to score tens of millions of student responses (Johnson & McCaffrey,
+2023). Generally, states have found more advantages than drawbacks in
+automated scoring, though the transition has not always been seamless
+due to concerns around scoring errors. (Shermis & Lottridge, 2019).
+Moreover, testing companies have developed scoring engines for the
+operational scoring of millions of short or essay-length responses; some
+examples are ACT’s CRASE, Cambium’s Autoscore, the Educational
+Testing Service (ETS)’s e-rater, the Duolingo English Test, and Pearson’s
+Intelligent Essay Assessor. Specific to science items, ETS introduced the
+c-rater and c-rater-ML for scoring short written responses. Research
+suggests that both engines perform comparably to human scoring (Liu
+et al., 2016; Sukkarieh & Blackmore, 2009). Also, automated scoring
+models based on LLMs, such as ChatGPT, have shown impressive performance in scoring science items and student essays, although their
+performance depends on the prompting methods used (Lee et al., 2024;
+Tate et al., 2024).
+Despite the increasing use of automated scoring in assessments, its
+implementation is often confined to monolingual contexts. Most NLP
+research focuses on high-resource languages like English, which feature
+in over 60% of NLP papers published (Cieri et al., 2016; Mielke et al.,
+2019). LRLs such as Albanian, Kazakh, and Hindi receive less attention
+due to the scarcity of large, high-quality corpora. Given that ILSAs can
+include several dozens of languages, the shift to automated scoring in a
+multilingual context is necessary. However, applying automated scoring
+to written responses in ILSAs still needs to be explored, with only recent
+literature incorporating multiple languages. Shin et al. (2024) employed
+automated scoring to reading items using the Progress in International
+Reading Literacy Study (PIRLS) 2016 data across 14 languages. Likewise, Jung et al. (2024) applied automated scoring to six TIMSS 2019
+items using responses from six different languages. While both studies
+found that automated scoring could be applied across different languages effectively in ILSAs, the languages examined were only a fraction
+of those used in the PIRLS and TIMSS assessments. Therefore, this study
+used data from all TIMSS languages to advance the multilingual automated scoring research and further evidence the applicability of this
+validation approach across all participating countries in ILSAs.
+Recent advances in MT have significantly enhanced the feasibility of
+automated scoring for multilingual responses. The performance of MT
+significantly improved with the introduction of attention mechanisms in
+language models, which prioritize and focus on important inputs,
+mimicking the function of the human brain (Choi et al., 2018; Luong
+et al., 2015; Tu et al., 2016). Modern MT engines offer swift, accurate,
+and cost-effective translation, suggesting that translating non-English
+language responses into English and then proceeding with the subsequent analysis (i.e., automated scoring) in English can be a competitive
+strategy (Araújo et al., 2020; Arun & Srinagesh, 2020; Horbach et al.,
+
+languages (LRLs) (Caswell, 2022; META, 2022). LLMs such as OpenAI’s
+ChatGPT and Google’s Gemini serve various tasks beyond translation,
+such as text generation, prediction, and summarization (Bezirhan & von
+Davier, 2023; Jiao et al., 2023; Jin et al., 2024) ANNs, leveraging these
+advanced MT, could enhance the accuracy of multilingual response
+scoring in ILSAs while minimizing translation errors. Moreover, LLMs
+can provide translations that are tailored to specific questions and can
+generate both translations and corresponding scores simultaneously
+without requiring prior training. These advancements in AI can expand
+automated scoring capabilities across various languages and countries,
+while supporting human scoring validation.
+This study explored multiple automated scoring methods using three
+science items from the 2023 cycle of the Trends in International Mathematics and Science Study (TIMSS). We aimed to demonstrate that
+automated scoring of CR items can be consistently and accurately
+implemented across all participating countries in ILSAs. The results can
+be valuable evidence supporting the scalability of automated scoring in
+numerous countries. Also, we propose automated scoring as an extra
+quality control measure to ensure reliable scoring of CR items in ILSAs.
+We addressed the following research questions.
+1. Does automated scoring exhibit consistent and accurate performance
+across all participating countries and languages in TIMSS 2023?
+2. How can MT tools be effectively used to expand the scope of automated scoring?
+3. What causes discrepancies between human and automated scoring in
+a multilingual context?
+2. Background
+With the shift to computer-based testing, which incorporates a variety of technology-enhanced items, implementing automated scoring in
+ILSAs such as TIMSS has become increasingly important. TIMSS, a wellestablished international assessment of mathematics and science, is a
+crucial resource for over 60 countries to monitor and enhance their
+educational systems (Mullis et al., 2021). TIMSS 2023 shifted the
+assessment to a digital environment for all participating countries and
+included innovative items such as the Problem Solving and Inquiry (PSI)
+tasks. PSI items were designed to measure students’ higher-order
+mathematics, science, and critical thinking skills in real-world scenarios (Mullis et al., 2021). Similarly, the 2015 cycle of the Programme
+for International Student Assessment (PISA) adopted a computer-based
+platform as its primary mode of assessment and featured many interactive CR items (OECD, 2024). The increased use of CR items is
+encouraging, given their importance in assessing students’ reasoning
+and critical thinking through inquiry (Aldrich et al., 2024; Liu et al.,
+2011); CR items are believed to provide a more comprehensive understanding of student knowledge and thinking processes than MC items
+(Federer et al., 2015).
+However, scoring a substantial volume of multilingual responses in
+ILSAs remains challenging. Human scoring CR items demands significant time, effort, and labor and introduces subjectivity and inconsistency (Bejar, 2012). While ILSAs assess human scoring reliability within
+and across countries, it is not feasible to assess all CR items. First, TIMSS
+provides extensive training for human raters to ensure scoring consistency within countries. This training occurs either in English at TIMSS
+scoring training sessions or through National Research Coordinators
+(NRCs), who attend these sessions and subsequently deliver instruction
+and practice materials in the raters’ native languages. To assess
+inter-rater reliability within countries, two independent raters from the
+national scoring team are tasked with scoring a random sample of 200
+responses for each CR item (Bookbinder et al., 2024). However, this
+method has limitations, as only a select subset of responses is scored
+twice by independent raters, potentially leaving out responses that are
+challenging to score. Moreover, these estimates may not reflect consistency across countries and languages, given that raters are trained
+2
+
+J.Y. Jung et al.
+
+Computers and Education: Artificial Intelligence 8 (2025) 100375
+
+ChatGPT; in the following, we refer to these three applications as Google_ANNs, ChatGPT_ANNs, and MMT_ANNs, respectively. These three
+approaches are explained in more detail in the following section (3.2.1
+Machine Translation). Following MT, translated and native English responses were compiled, and training and testing were performed using
+ANNs via the Python scikit-learn package (Pedregosa et al., 2011). Fig. 1
+provides a workflow illustrating the supervised learning process.
+
+Table 1
+Languages included in the TIMSS 2023 dataset.
+Language
+
+#
+Versions
+
+Language
+
+#
+Versions
+
+Language
+
+#
+Versions
+
+Albanian
+Arabic
+Armenian
+Azerbaijani
+Basque
+Bokmal
+Bosnian
+Catalan
+Chinese
+Croatian
+Czech
+Danish
+Dutch
+English
+Finnish
+French
+
+3
+9
+1
+1
+1
+1
+1
+1
+3
+1
+1
+1
+2
+17
+1
+4
+
+Galician
+Georgian
+German
+Greek
+Hebrew
+Hungarian
+Irish
+Italian
+Japanese
+Karakalpak
+Kazakh
+Korean
+Latvian
+Lithuanian
+Macedonian
+Malay
+
+1
+1
+2
+1
+1
+2
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+
+Montenegrin
+Nynorsk
+Polish
+Portuguese
+Romanian
+Russian
+Serbian
+Slovak
+Slovene
+Spanish
+Swedish
+Turkish
+Uzbek
+Valencian
+​
+​
+
+1
+1
+2
+3
+1
+5
+2
+1
+1
+2
+2
+1
+1
+1
+​
+​
+
+3.2.1. Machine translation
+Google Translate. Google Translate automatically identifies the
+original language of the responses and translates them into English.
+However, there were instances where Google Translate provided the
+original language response instead of an English translation. Also, it
+sometimes provided meaningless transliteration, the process of
+phonetically converting the words of a language into a foreign script
+(Prabhakar & Pal, 2018); for instance, the Arabic response "‫"ﺍﻝﺝﻅﻱﺏﻱ‬
+was transliterated into "Al-Jazibi" or the misspelled Chinese response "地
+新影力" into "Dixin influence". The translated responses were considered
+untranslated if almost all of the words were the same as the original
+responses or if nearly all of the words were not in the English dictionary.
+The GradyAugmented dictionary from the qdapDictionaries (Rinker,
+2013) was used to identify untranslated responses, which were subsequently removed from the training and test sets.
+ChatGPT Translation. ChatGPT, or more generally, LLMs, can be
+used for machine translation as many of these models are trained on
+multilingual corpora (Jiao et al., 2023). To explore LLM capabilities, we
+utilized OpenAI’s ChatGPT for MT. Because of potential privacy concerns, we did not use any identifiable information with ChatGPT. The
+data was fed to the system anonymously without any context that could
+identify a respondent. We also set ChatGPT’s temperature to 0.2, where
+a lower temperature closer to 0 indicates a more focused task and reduces creativity (OpenAI, n.d.). Before translation with ChatGPT, we
+standardized the format of responses by replacing multiple blank spaces
+or tabs with a single space. We then instructed ChatGPT to translate
+non-English responses based on a step-by-step prompt. We offered the
+context (item stem), an example of the required format in JSON, and an
+example of the output. For instance, if the original response was "물이 필
+요하다", ChatGPT would generate an output like {"물이 필요하다": "It
+needs water"}.
+For untranslatable responses, ChatGPT was instructed to output
+"uncertain", as in the following meaningless example: {"뮤ㄹ필하다":
+"uncertain"}. This prevents ChatGPT from generating inaccurate translations or hallucinations for unclear or unrecognizable responses. Responses labeled "uncertain" underwent a re-translation process with a
+prompt specifically designed to translate potentially misspelled responses. Responses that remained "uncertain" after re-translation were
+categorized as non-translated and removed from the training and test
+sets.
+Multiple Machine Translation. Our MMT_ANN approach combined translations from Google Translate and ChatGPT. We determined
+the final MT engine for each language group by comparing humanmachine score agreements computed from Google-translated and
+ChatGPT-translated responses. Note that selecting the translation tool
+based on the training set and agreement with human scorers does not
+involve leaking information from the testing data into the selection.
+Also, since TIMSS does not yet use machine scoring operationally for
+written response items, human scores are available as a legitimate
+training target. The machine-human agreement is maximized in the way
+that quality control measures can be assured based on the best possible
+MT choice and prediction model. Finally, quality control measures could
+be taken if we found language samples that showed low agreement even
+after this best possible training. Following the best possible training,
+which maximizes the match between human and machine scores, we
+asked ourselves several questions to better understand what could be
+learned from country/language samples where agreement remained
+lower than expected. These questions were.
+
+2023). The current study explored the promise of combining automated
+scoring with MT to score all multilingual responses from a selection of
+TIMSS 2023 science items.
+3. Methods
+3.1. Dataset
+This study used three CR science items from TIMSS 2023. Items 1 and
+2 assessed Grade 4 knowledge of Physical Science and Life Science,
+respectively, while Item 3 assessed Grade 8 knowledge of Physics. The
+dataset encompassed all participating countries in TIMSS 2023, totaling
+52 countries for Items 1 and 2 and 40 countries for Item 3. Table 1 illustrates the distribution of 42 distinct languages in the dataset, with the
+number of language versions next to each entry. In TIMSS, each country
+team manages the translation of their unique materials. Thus, items
+administered in the same non-English language may have translation
+differences across countries (Ebbs et al., 2024). Each of the three items
+was scored dichotomously, with a score of 1 assigned to correct responses and a score of 0 to incorrect responses. The names of countries
+have been anonymized to respect privacy.
+Aberrant responses consisting solely of punctuations, numbers, single characters, or repetitive characters were considered meaningless and
+automatically received a machine score of 0. These responses were
+excluded from the automated scoring training and validation process.
+The remaining dataset was divided into training and test sets using an
+80:20% ratio across all countries. Table 2 presents the number of student
+responses automatically scored as incorrect (auto-scored) and those
+assigned to the training and test sets.
+3.2. Supervised learning
+Supervised learning uses previously human-labeled data to train
+ANNs. We investigated three distinct combinations of MT and ANN
+automated scoring using Google Translate only, translation with
+ChatGPT (i.e., gpt-turbo-0125) only, and a mix of Google Translate and
+
+Table 2
+Sample sizes for the auto-scored, training, and test sets.
+Item 1
+Item 2
+Item 3
+Average
+
+Auto-score
+
+Training
+
+Test
+
+Total
+
+314
+300
+688
+434
+
+32,166
+35,247
+25,556
+30,990
+
+8038
+8811
+6390
+7746
+
+40,518
+44,358
+32,634
+39,170
+
+3
+
+J.Y. Jung et al.
+
+Computers and Education: Artificial Intelligence 8 (2025) 100375
+
+Fig. 1. Flowchart of the supervised learning workflow.
+
+1. Is there an issue with MT for that language?
+2. Is there an issue with the Bag-of-Words (BOW) being very different
+for that set of translated responses?
+3. Is there an issue with a particular human scorer?
+4. Is there a more general issue with the scoring guide in that country/
+language sample?
+
+from MMT_ANNs consisted of a mixture of Google and ChatGPT translations, based on which translation was more suitable for individual
+language and response.
+3.2.2. Pre-processing, bag-of-words & ANNs
+The joint training set was generated by combining translated and
+native English responses. Identical pre-processing steps, BOW, and
+ANNs were applied to three sets of multilingual data obtained from
+Google Translate (Google_ANNs), ChatGPT (ChatGPT_ANNs), and MMT
+(MMT_ANNs). A set of pre-processing steps, including tokenization,
+lower-casing, spelling correction, and stemming, was applied. Misspelled words in the test set were corrected using a spelling correction
+dictionary extracted from the training set (Jung et al., 2022). Additionally, native English responses underwent an extra spelling correction using the pyspellchecker package (Barrus, 2022) in Python. This step
+was necessary because English responses contained more misspellings
+than translated non-English responses, which benefited from implicit
+spelling corrections applied through MT. This step cannot be controlled
+by comparing translations; different MT algorithms apply different
+levels of "tolerating" or "correcting" for misspellings so that even heavily
+misspelled terms may receive a translation that retains the intended
+meaning.
+After pre-processing, a BOW key feature matrix was created from the
+training set, retaining only words appearing in at least 0.05% of the
+responses. BOW representation was used to represent all translated and
+English responses using a common key feature matrix. For example, the
+sentence "It is wet" could be transformed into {"it", "is", "wet"}. Given that
+the selected CR items typically require brief responses containing a few
+words, including a keyword, using the BOW can be considered an
+effective method for scoring these types of short responses.
+
+These questions were useful for evaluating lower-than-expected
+human-machine agreement to understand where misalignment
+occurred, and thus answering the study’s third research question provided in the Introduction. For future operational use, other criteria could
+be used to select the tool for MMT_ANN, such as the number of untranslated responses and the similarity of the resulting vocabulary to the
+BOW of other languages.
+While Google Translate served as the default MT method for all
+languages, ChatGPT was used instead for languages where ChatGPTtranslated data yielded 2% or higher agreement with human scoring
+than Google-translated data. Once each language’s final MT tool was
+selected, we adjusted translations at the individual response level.
+Alternative MT could be employed for individual responses if the final
+MT provided inappropriate translations. For example, if Google Translate produced a translation identical to the original response or a
+translation where more than half of the words were in a non-English
+language (e.g., transliteration), then the translation was substituted
+with a ChatGPT translation. Conversely, if ChatGPT produced an "uncertain" label (could not translate the response) or meaningless output
+instead of an English translation, the translation was replaced with a
+Google translation. Responses that could not be translated by either
+method were filtered from the training and test sets and tallied to assess
+the overall success rate of translations. Consequently, the data generated
+4
+
+J.Y. Jung et al.
+
+Computers and Education: Artificial Intelligence 8 (2025) 100375
+
+Next, fully connected feed-forward neural networks (FNNs), a type of
+ANN, were implemented using the MLP classifier from the scikit-learn
+package (Pedregosa et al., 2011) in Python. FNNs were constructed with
+three layers: the input layer, the hidden layer, and the output layer
+(Sazli, 2006). The neurons in this model were interconnected only in the
+direction from input to output, without cyclic connections between the
+layers. Specifically, the BOW feature matrix extracted from the multilingual data was fed into the input layer, and then passed on to the
+output layer, which generates a machine score of 0 for incorrect responses and 1 for correct responses for test data. Our FNNs incorporate a
+single hidden layer for computational efficiency. The trained FNNs were
+then applied to the independent test set for evaluation.
+
+3.3.1. ChatGPT translation & scoring
+Before translation, we standardized the format of responses because
+ChatGPT is sensitive to input variations or repeated attempts at the same
+inquiry (Azaria et al., 2024). A series of preprocessing steps were
+implemented: punctuations such as forward slashes or brackets were
+removed, redundant blank spaces or tabs were replaced with a single
+space, and numbered lists of responses were converted into sentences.
+We set ChatGPT’s temperature to 0.2, as was done during MT in the
+supervised learning. Following these steps, we formatted translations
+and scores in JSON to ensure consistent output. Example outputs (e.g.,
+{"translated response": "Score: 1 or 0"}) and context (the item stem) were
+also incorporated into the prompt, as were scoring guides containing the
+criteria for awarding credit and example student responses.
+
+3.3. Unsupervised learning
+
+3.3.2. Majority scoring under fuzzy matching
+Students often use lexically similar but inexact keywords in their
+responses, which can lead to high frequencies of responses that are
+similar but not identical for some TIMSS items. This is particularly true
+for CR items that require only a brief phrase, specific keyword or concept
+as the correct answer. For example, the German word "schwerkraft",
+which means gravity, can be misspelled in several ways, including
+"schwergraft", "schverkraft", and "scherkraft". Similarly, for Danish, more
+than 30 misspelled variants of "tyngdekraft" (gravity) were observed,
+including "tøndekraften", "tyntekraften" and "tungdekraften". For this
+TIMSS item, ChatGPT occasionally provided inconsistent translations or
+scores for these lexically similar responses. However, these instances
+were rare and mainly affected misspelled words, where some misspelled
+variants would be incorrectly translated based on the given question. To
+ensure scoring consistency, we decided to group lexically similar
+
+Traditionally, unsupervised learning (UL) refers to leveraging machine learning algorithms to identify latent structures or patterns within
+unlabeled data; it does not require human-labeled data for training. In
+our study, we used LLMs for the same purpose, scoring responses as
+correct or incorrect without training on human-scored responses. To
+produce machine scores, we provided the LLMs with the item stems and
+scoring guides, which also included examples of correct and incorrect
+student responses. This context was included to allow the LLMs to provide reliable classifications for the student responses. We conducted our
+UL analysis using a two-step process: first, responses were translated and
+scored by ChatGPT, then majority scoring with fuzzy matching was
+applied to compensate for inconsistencies in ChatGPT performance.
+Fig. 2 shows the unsupervised learning workflow.
+
+Fig. 2. Flowchart of the unsupervised learning workflow.
+5
+
+J.Y. Jung et al.
+
+Computers and Education: Artificial Intelligence 8 (2025) 100375
+
+3.4.2. Distributional differences: mean & SMD
+Mean scores and SMD were calculated for individual countries per
+item. SMD, a commonly used measure in automated scoring (Lottridge
+et al., 2018; Williamson et al., 2012), represents the mean difference
+between human and machine scores divided by the pooled standard
+deviation. An SMD value of 0 indicates no difference between human
+and machine scores. Positive values indicate automated scoring yields a
+higher mean score, while negative values suggest the opposite. The
+absolute value of SMD should not exceed 0.15 (Williamson et al., 2012).
+SMD is computed as:
+
+responses in the original language and assign them the same score
+regardless of translation.
+Fuzzy matching was used to detect lexically similar (but not exactly
+matching) responses (Cayrol et al., 1982; Dubois et al., 1993). Fuzzy
+matching requires a prior criterion for the length of the text span to be
+matched. One criterion is edit distance, which is a metric representing
+the number of operations needed to transform one word into another,
+including replacements, insertions, or deletions (Levenshtein, 1966). In
+this study, responses within an edit distance of two from each of the top
+ten most frequently appearing unique responses were considered
+fuzzy-matched. For instance, misspelled variants like "schwergraft" and
+"schverkraft" would be grouped due to their lexical similarity to
+"schwerkraft," the most frequent word that represents a correct response
+in the German dataset for Item 1. Similarly, misspelled Danish words
+like "tøndekraften," "tyntekraften" and "tungdekraften" were regarded as
+equivalent to "tyngdekraft".
+Despite initially scoring all responses with ChatGPT, we adjusted the
+final machine score to ensure similar responses were scored consistently.
+Identical machine scores were given to the fuzzy-matched responses
+based on the majority scoring, which uses the "winning" class as the final
+score (Salminen et al., 2021). If more than half of the fuzzy-matched
+responses received a machine score of 1, then all corresponding responses were assigned a final machine score of 1(and vice versa). For
+example, about 85% of the fuzzy-matched responses for "schwerkraft" (e.
+g., "schwergraft" and "schverkraft") received a machine score of 1, while
+the remaining 15% (e.g., "schertraft" and "schwer kraft") received a machine score of 0. In this case, the final machine score for all
+fuzzy-matched responses (e.g., "schwergraft," "schverkraft," "schertraft"
+and "schwer kraft") was determined to be 1 based upon the majority score
+of 1 given to responses of "schwerkraft". This approach ensured consistent scoring for lexically similar but misspelled responses, overcoming
+the challenge of incorrect translation and improper scoring caused by
+spelling errors.
+
+XM − X H
+SMD = √̅̅̅̅̅̅̅̅̅̅̅̅̅̅
+2
+2
+SDM +SDH
+2
+
+Where XM is the machine mean score, XH is the human mean score, SD2M
+is the variance of the machine score, and SD2H is the variance of the
+human score.
+3.4.3. Agreement statistics: exact agreement (EA) & Cohen’s kappa
+EA is a widely used metric that evaluates the percentage of exact
+agreement between two independent scores (Alpaydin, 2020; Lim et al.,
+2000), as indicated by Both 0 (B0) and Both 1 (B1) in Table 3. We
+assessed EA values for both human-human scores and human-machine
+scores. Auto-scored responses were also considered when calculating
+final EA values.
+EA =
+
+Cohen’s kappa (κ) is a more stringent measure than EA as it assesses
+agreements beyond chance (Cohen, 1960). κ values range between − 1
+and 1, where 0 indicates agreement merely by chance. We adhered to
+the standards proposed by Landis and Koch (1977): values ≤ 0.00 are
+interpreted as poor, 0.00–0.20 as slight, 0.21–0.40 as fair, 0.41–0.60 as
+moderate, 0.61–0.80 as good, and 0.81–1.00 as very good agreement.
+
+3.4. Evaluation metrics
+
+κ=
+
+The performance of automated scoring was evaluated using various
+metrics: MT performance, mean scores, standardized mean score difference (SMD), exact agreement (EA), and Cohen’s kappa.
+
+4. Results
+4.1. Human scoring reliability
+Two independent human raters scored approximately 200 responses
+for each item per country in TIMSS 2023 to evaluate the consistency of
+human scoring for the CR items; the exact agreement (EA) between the
+two human scores was calculated. Overall, human scoring exhibited
+high reliability across all three items, with average EAs ranging between
+97.50% and 98.51%. Countries C03 on Item 2 (76.40%) and C22 on Item
+3 (83.92%) demonstrated relatively moderate EA.
+
+Table 3
+Confusion matrix in automated scoring.
+Human Score 0
+
+Human Score 1
+
+Both 0 (B0)
+Disagree (D2)
+
+Disagree (D1)
+Both 1 (B1)
+
+Po − Pc
+1 − Pc
+
+where Po is the percentage of observed agreement, while Pc is the percentage of agreement expected by chance.
+
+3.4.1. MT performance: untranslatable responses
+The percentage of untranslated responses across various MT methods
+was examined, aligning with prior studies discussing the importance of
+checking MT translatability (Fiederer & O’Brien, 2009; Uchimoto et al.,
+2005). Several causes could lead to untranslated responses in MT,
+including spelling errors, abbreviations, dialects/idiolects, and limited
+parallel data for LRLs. Given that our CR items required concise responses, the percentage of untranslated responses was considered a
+direct metric to evaluate MT performance.
+
+Machine Score 0
+Machine Score 1
+
+B0 + B1
+B0 + B1 + D1 + D2
+
+Table 4
+Number and percentage of untranslated responses across automated scoring methods.
+Google_ANNs
+Item 1
+Item 2
+Item 3
+Average
+
+ChatGPT_ANNs
+
+MMT_ANNs
+
+Unsupervised Learning
+
+n
+
+%
+
+n
+
+%
+
+n
+
+%
+
+n
+
+%
+
+1470
+767
+806
+1014
+
+3.66%
+1.74%
+2.52%
+2.64%
+
+464
+382
+690
+512
+
+1.15%
+0.87%
+2.16%
+1.39%
+
+318
+223
+360
+300
+
+0.79%
+0.51%
+1.13%
+0.81%
+
+792
+676
+308
+592
+
+1.97%
+1.53%
+0.96%
+1.49%
+
+6
+
+J.Y. Jung et al.
+
+Computers and Education: Artificial Intelligence 8 (2025) 100375
+
+Table 5
+Average mean scores and SMDs for automated scoring methods.
+Google_ANNs
+Item 1
+Item 2
+Item 3
+Average
+
+ChatGPT_ANNs
+
+MMT_ANNs
+
+Unsupervised Learning
+
+H
+
+M
+
+SMD
+
+H
+
+M
+
+SMD
+
+H
+
+M
+
+SMD
+
+H
+
+M
+
+SMD
+
+0.63
+0.58
+0.52
+0.58
+
+0.59
+0.57
+0.50
+0.55
+
+− 0.07
+− 0.04
+− 0.04
+− 0.05
+
+0.62
+0.59
+0.52
+0.58
+
+0.66
+0.57
+0.54
+0.59
+
+0.08
+− 0.02
+0.05
+0.04
+
+0.63
+0.58
+0.52
+0.58
+
+0.64
+0.57
+0.52
+0.58
+
+0.02
+− 0.02
+− 0.01
+0.00
+
+0.63
+0.59
+0.52
+0.58
+
+0.62
+0.60
+0.51
+0.58
+
+− 0.03
+0.03
+− 0.01
+0.00
+
+Notes. H = Human scoring; M = Automated scoring; SMD = Standardized mean score difference.
+
+4.2. Evaluation of automated scoring methods
+
+Table 7
+Number and percentage of final MT engines.
+
+4.2.1. MT performance: untranslated responses
+Table 4 displays the number and percentage of untranslated responses across various scoring methods. On average, MMT_ANNs
+exhibited the lowest rate of untranslated responses (0.81%), followed by
+ChatGPT_ANNs (1.39%), UL (1.49%), and Google_ANNs (2.64%).
+MMT_ANNs could translate almost all non-English responses by
+combining Google Translate and ChatGPT translations. Also, ChatGPT_ANNs and UL translated more responses than Google_ANNs, possibly
+due to ChatGPT’s context-based translation approach.
+
+Item 1
+Item 2
+Item 3
+Average
+
+Google Translate
+
+ChatGPT
+
+Total
+
+n
+
+%
+
+n
+
+%
+
+n
+
+%
+
+27
+30
+21
+26
+
+65.85%
+73.17%
+72.41%
+70.48%
+
+14
+11
+8
+11
+
+34.15%
+26.83%
+27.59%
+29.52%
+
+41
+41
+29
+37
+
+100%
+100%
+100%
+100%
+
+across items. MMT_ANNs selected the more suitable MT tool, Google
+Translate or ChatGPT, depending on the individual language groups and
+items. This strategic MT selection enhanced translation quality and
+yielded more accurate BOW feature representation. Table 7 presents the
+number and percentage of non-English languages that used Google
+Translate or ChatGPT as the ultimate MT engine. On average, approximately 70% of languages were assigned Google Translate as the final
+MT, whereas the remaining 30% were assigned ChatGPT, often
+including LRLs such as Armenian, Basque, Galician, or Macedonian.
+Furthermore, fine-tuning translations at the individual response level
+improved MT performance by reducing the percentage of untranslated
+responses. This adjustment was particularly beneficial for translating
+misspelled responses and LRL responses. For example, for Item 1, human
+raters scored the responses in Table 8 — Chinese, Turkish, Azerbaijani,
+and Armenian — as correct. The first two responses included spelling
+errors (according to the native speakers at the TIMSS & PIRLS International Study Center), and the last two were in LRL. Although Google
+Translate was initially selected as the MT option for the first three languages (Chinese, Turkish, and Armenian), MMT_ANNs transitioned from
+
+4.2.2. Distributional differences: mean & SMD
+Table 5 presents the average human and machine mean scores and
+SMDs for each scoring method for the test set (20% of the whole data).
+Human mean scores differed slightly for each scoring method because
+each method filters out a different number of untranslatable responses.
+While all four scoring methods exhibited average absolute SMDs below
+0.15 across the items, MMT_ANNs, and UL demonstrated the smallest
+average SMDs of 0. This result suggests that, on average, nearly identical
+mean scores were obtained between human and MMT_ANN scores, and
+human and UL scores.
+4.2.3. Agreement statistics: EA & kappa
+Table 6 displays the average EA and κ statistics for each scoring
+method for the test set. All four scoring methods exhibited high average
+EA and κ values across the items, exceeding 90% and 0.75, respectively.
+MMT_ANNs demonstrated the highest average EA (93.85%) and κ (0.87)
+values.
+After comparing the multiple scoring methods, we determined that
+MMT_ANNs consistently demonstrated the best performance. This
+method yielded the lowest average amount of untranslated responses,
+the lowest SMD values, and the highest EA and κ values. These values
+indicate that the MMT_ANNs perform most like human raters for the test
+set across items. Thus, we proceeded with a comprehensive examination
+of the MMT_ANNs’ results based on the aforementioned evaluation
+metrics, along with the misalignment analysis between human and
+automated scoring.
+
+Table 8
+Translation adjustment for misspelled or LRL responses.
+
+4.3. Comprehensive examination of MMT_ANNs
+
+Language
+
+Original Response
+
+Google
+Translate
+
+ChatGPT
+
+MMT_ANNs
+
+Chinese
+
+地新影力
+
+Gravity
+
+Gravity
+
+Turkish
+
+REÇEKİMİ KUVETİ
+
+Azerbaijani
+
+agirliq quvvesi
+
+Armenian
+
+ԾԱՆՐՈՒԹՅԱՆ
+ՈՒԺ ԿԱՄ
+ՏԻԵԶԵՐԱԿԱՆ
+ՁԳՈՂՈՒԹՅԱՆ
+ՈՒԺ
+
+Dixin
+influence
+Cuvet
+review
+agirliq
+quvvesi
+Gravity or
+cosmic
+gravity
+
+force of
+gravity
+gravitational
+force
+Uncertain
+
+force of
+gravity
+gravitational
+force
+Gravity or
+cosmic
+gravity
+
+4.3.1. MT performance: untranslated responses in MMT
+MMT_ANNs effectively translated most non-English responses into
+English, with less than 1% of responses left untranslated on average
+Table 6
+Average EA and Cohen’s kappa for automated scoring methods.
+Google_ANNs
+Item 1
+Item 2
+Item 3
+Average
+
+ChatGPT_ANNs
+
+MMT_ANNs
+
+Unsupervised Learning
+
+EA
+
+κ
+
+EA
+
+κ
+
+EA
+
+κ
+
+EA
+
+κ
+
+91.52%
+93.69%
+93.65%
+92.95%
+
+0.81
+0.86
+0.85
+0.84
+
+89.45%
+91.34%
+91.61%
+90.80%
+
+0.77
+0.81
+0.80
+0.79
+
+92.49%
+94.19%
+94.88%
+93.85%
+
+0.83
+0.87
+0.87
+0.86
+
+91.54%
+89.64%
+91.95%
+91.04%
+
+0.81
+0.77
+0.81
+0.80
+
+Note. EA = Exact agreement.
+7
+
+J.Y. Jung et al.
+
+Computers and Education: Artificial Intelligence 8 (2025) 100375
+
+Fig. 3. Distribution of human-machine mean scores for Item 1.
+
+Fig. 5. Distribution of human-machine mean scores for Item 3.
+
+assessed, absolute SMDs exceeded 0.15 in eight countries (15.38%) for
+Item 1, two countries (3.85%) for Item 2, and four countries (10%) for
+Item 3. These deviations are further described in section 4.4 Misalignment Analysis.
+4.3.3. Agreement statistics: EA & kappa
+Table 9 shows the country-by-item EA and κ values. While the majority of values fell within the preferred range, some instances of moderate EAs were noted in C23 for Item 1 (80.18%) and C03 for Item 2
+(79.17%). C33 for Item 1 had a notably low EA of 54.17% and a poor κ
+value of 0.17. C35 had a κ value of almost zero for Item 3 (κ = − 0.01)
+with an EA of 95.58%, indicating that the high agreement between the
+human rater and machine classifications was by chance. The poor
+agreements are further described in the following section (4.4
+Misalignment Analysis).
+4.4. Misalignment analysis
+Despite the impressive performance of MMT_ANNs, an average of 6%
+of the responses were misaligned with human scoring. The sources of
+misalignment between human and automated scoring were varied (see
+Table 10). We analyzed instances where at least one of the metrics (i.e.,
+mean score, SMD, EA, κ) flagged performance issues in MMT_ANNs
+compared to human scoring.
+First, we noticed that human scoring subjectivity or inconsistency is
+one crucial cause of the misalignment between human and automated
+scoring. According to the consultation with a native speaker at the ISC
+regarding C33 responses to Item 1 (EA = 54.17%, κ = 0.17), we learned
+that severe scoring contributed to the large discrepancy when
+comparing human and machine scores. It appears that the human raters
+scored responses containing outdated terms or indirect explanations of
+keywords as incorrect. In contrast, MMT_ANNs consistently classified
+these responses as correct. These responses accounted for 12 (22%) out
+of 55 misclassified responses in the test set.
+Next, we observed human scoring inconsistency even across the
+same language in different countries. For instance, for Item 1, human
+scoring displayed inconsistencies in evaluating identical Russian misspelled responses across five Russian-speaking countries: one country
+scored them as incorrect, while the others considered them as correct.
+Similarly, within three Chinese-speaking countries, discrepancies arose
+in scoring the same Chinese response that was a synonym for the
+keyword to Item 1; two countries marked this variation on the keyword
+as correct, whereas one country tended to not give the same response
+credit. This country was C23, which showed moderate EA (EA =
+
+Fig. 4. Distribution of human-machine mean scores for Item 2.
+
+Google to ChatGPT translation for these responses due to inappropriate
+translations where Google printed transliteration or original language
+responses instead of English. Also, despite ChatGPT being the primary
+MT tool for Azerbaijani, a few responses, like the last one in Table 8,
+utilized Google Translate when ChatGPT flagged it as "uncertain." The
+adjustment percentage for individual responses was notable for LRLs:
+15% (Item 1) and 9.34% (Item 3) of ChatGPT-translated responses in
+Azerbaijani were substituted with Google translations. Similarly, for
+Albanian and Kazakh, 8.00% (Item 1) and 6.68% (Item 1) of Googletranslated responses were replaced with ChatGPT-translated responses.
+4.3.2. Distributional differences: mean & SMD
+Figs. 3–5 illustrate the relationship between human and machine
+mean scores for all countries. Dots below the red diagonal indicate that
+human mean scores are higher than machine mean scores, while dots
+above the diagonal indicate the opposite. Across the three items, most
+dots are clustered around the diagonal, indicating that human and machine mean scores were generally very similar. High Pearson correlations were observed across all three items (ritem1 = 0.82; ritem2 = 0.98;
+ritem3 = 0.98). However, deviations were noted in several instances, such
+as C17, C27, and C33 for Item 1, C58 in Item 2, and C14 and C23 for Item
+3. These deviations were also reflected in the SMDs. Of the items
+8
+
+J.Y. Jung et al.
+
+Computers and Education: Artificial Intelligence 8 (2025) 100375
+
+Table 9
+Item-by-Country EA & Cohen's kappa from MMT_ANNs.
+EA
+
+κ
+
+Country
+
+Item 1
+
+Item 2
+
+C01
+C02
+C03
+C04
+C05
+C06
+C07
+C08
+C09
+C10
+C11
+C12
+C13
+C14
+C15
+C16
+C17
+C18
+C19
+C20
+C21
+C22
+C23
+C24
+C25
+C26
+C27
+C28
+C29
+C30
+C31
+C32
+C33
+C34
+C35
+C36
+C37
+C38
+C39
+C40
+C41
+C42
+C43
+C44
+C45
+C46
+C47
+C48
+C49
+C50
+C51
+C52
+C53
+C54
+C55
+C56
+C57
+C58
+C59
+Average
+
+84.62%
+95.55%
+80.52%
+96.82%
+
+94.12%
+93.91%
+79.17%
+94.19%
+
+​
+
+​
+
+92.86%
+94.21%
+93.10%
+97.89%
+96.88%
+94.90%
+91.51%
+95.58%
+
+Item 3
+
+95.29%
+​
+
+97.39%
+​
+
+99.07%
+81.65%
+96.82%
+97.35%
+​
+
+95.71%
+95.83%
+88.98%
+86.40%
+92.95%
+98.58%
+96.40%
+99.19%
+90.77%
+95.21%
+89.09%
+98.86%
+91.45%
+95.58%
+
+92.44%
+
+​
+
+95.51%
+
+97.37%
+
+​
+
+97.92%
+93.81%
+94.31%
+91.51%
+98.25%
+98.94%
+
+95.58%
+94.85%
+93.69%
+97.44%
+95.80%
+96.95%
+96.99%
+95.68%
+96.09%
+91.21%
+92.25%
+83.33%
+93.60%
+94.19%
+​
+​
+​
+
+86.47%
+99.23%
+98.19%
+96.05%
+92.00%
+​
+
+94.88%
+
+​
+
+0.86
+0.95
+0.88
+0.86
+0.77
+0.93
+0.74
+0.81
+0.94
+0.94
+0.84
+0.86
+0.77
+0.83
+
+0.93
+​
+
+0.98
+0.63
+0.93
+​
+​
+
+0.94
+​
+
+0.90
+0.92
+0.78
+0.71
+0.83
+0.97
+0.93
+0.98
+0.76
+0.89
+0.78
+0.97
+0.83
+​
+​
+
+− 0.01
+​
+
+0.98
+​
+
+0.92
+
+​
+
+0.82
+0.95
+0.92
+0.86
+0.90
+0.82
+
+​
+
+0.90
+​
+
+0.94
+
+​
+
+97.08%
+97.27%
+97.04%
+
+​
+
+0.85
+
+0.90
+
+​
+
+​
+
+93.14%
+97.94%
+94.04%
+94.71%
+91.23%
+97.71%
+87.10%
+91.18%
+97.67%
+98.00%
+93.68%
+93.22%
+89.52%
+92.49%
+
+​
+
+96.80%
+
+98.99%
+97.92%
+93.43%
+94.10%
+94.57%
+92.31%
+
+​
+
+​
+
+0.92
+
+​
+
+​
+
+93.20%
+97.93%
+96.58%
+93.53%
+95.97%
+92.48%
+
+​
+
+99.11%
+
+​
+
+​
+
+0.96
+0.85
+0.92
+0.79
+0.87
+0.87
+0.94
+0.84
+
+​
+
+​
+
+0.88
+0.90
+0.86
+
+​
+
+0.59
+0.79
+0.77
+0.90
+0.91
+0.68
+0.17
+0.82
+
+​
+
+0.89
+​
+
+0.92
+0.95
+0.88
+0.91
+0.84
+0.95
+0.83
+0.88
+0.92
+0.90
+0.94
+
+​
+
+​
+
+​
+
+​
+
+0.89
+0.87
+0.58
+0.95
+0.91
+0.89
+0.89
+0.86
+0.56
+0.97
+0.92
+
+​
+
+Item 3
+
+0.64
+0.93
+0.91
+0.85
+0.93
+0.81
+0.87
+0.87
+
+​
+
+​
+
+​
+
+95.96%
+
+0.84
+0.87
+0.86
+0.95
+0.94
+0.89
+0.81
+0.91
+
+​
+
+98.33%
+95.10%
+96.88%
+89.89%
+96.00%
+94.35%
+97.52%
+92.62%
+
+​
+
+​
+
+​
+
+​
+
+82.08%
+89.44%
+90.10%
+95.45%
+96.75%
+87.80%
+54.17%
+92.11%
+
+​
+
+95.47%
+95.42%
+93.10%
+
+96.83%
+97.50%
+94.20%
+95.54%
+92.03%
+98.12%
+91.87%
+94.02%
+96.67%
+95.80%
+96.99%
+
+​
+
+0.88
+0.88
+0.54
+0.87
+
+​
+
+​
+
+95.43%
+94.69%
+82.52%
+98.21%
+96.44%
+94.84%
+94.74%
+93.40%
+80.18%
+98.59%
+97.74%
+
+Item 2
+
+0.69
+0.90
+0.56
+0.90
+
+94.65%
+
+81.71%
+96.72%
+95.62%
+92.57%
+96.43%
+91.46%
+93.77%
+93.44%
+
+​
+
+Item 1
+
+​
+
+0.98
+0.96
+0.87
+0.87
+0.87
+0.84
+​
+
+​
+
+0.94
+0.94
+0.94
+0.96
+0.80
+0.89
+0.83
+0.96
+0.97
+
+​
+
+0.90
+0.89
+0.85
+0.87
+0.90
+0.93
+0.93
+0.91
+0.91
+0.82
+0.84
+0.63
+0.86
+0.87
+​
+​
+​
+
+​
+
+0.70
+0.98
+0.96
+0.91
+0.84
+0.87
+
+Table 10
+Sources of misalignment between human and automated scoring.
+Source
+
+Item
+
+Country
+
+Human Scoring Issue
+
+1
+
+C23
+​
+
+C33
+
+LRL
+
+C23
+​
+
+3
+
+Language
+Status
+
+Note
+A human rater scored certain responses differently from those in other same-language countries.
+A human rater scored older terms or indirect explanations of keywords as incorrect.
+A human rater scored certain responses differently from those in other same-language countries.
+A human rater scored certain responses differently from those in other same-language countries.
+(continued on next page)
+
+9
+
+J.Y. Jung et al.
+
+Computers and Education: Artificial Intelligence 8 (2025) 100375
+
+Table 10 (continued )
+Source
+
+Item
+
+Automated Scoring Issue
+
+1
+
+2
+
+Automated & Human
+Scoring Issue
+Other
+
+Country
+
+Language
+Status
+
+Note
+
+C48
+C03
+C17
+C27
+C29
+C45
+
+LRL
+LRL
+
+LRL
+
+A human rater scored lexically similar but misspelled responses as incorrect.
+ChatGPT provided hallucinated outputs for incorrect responses.
+Both Google and ChatGPT struggled to translate certain heavily misspelled responses.
+Google provided an alternative possible meaning for certain responses.
+ChatGPT provided hallucinated translations for incorrect responses.
+ChatGPT provided hallucinated translations for incorrect responses.
+
+C06
+
+LRL
+
+ChatGPT struggled to translate a certain word (keyword) into English.
+
+​
+​
+​
+
+C58
+
+LRL
+
+Google struggled to translate a certain word (keyword) into English.
+
+3
+1
+
+C14
+C32
+
+LRL
+LRL
+
+ChatGPT struggled to translate a certain word (keyword) into English.
+A human rater scored lexically similar but misspelled keywords as incorrect.
+
+2
+
+C03
+
+LRL
+
+Human raters scored some off-topic responses as correct and human-human agreement was notably low (EA =
+76.40%, κ = 0.39). Both Google and ChatGPT struggled to translate some of the responses.
+
+3
+
+C35
+
+LRL
+
+An extremely skewed distribution (low performance) was observed in the very small test set (n = 88).
+
+Note. LRL = Low-resource language.
+
+and countries, surpassing other automated scoring methods. The
+impressive performance of MMT_ANNs can be attributed to their
+adaptability in selecting more suitable translations at both the individual language and response levels. Our MMT method extended previous
+studies that found that combining multiple MT techniques could
+improve translation quality (Banik et al., 2019; Costa-Jussa & Fonollosa,
+2015). The need to integrate various MTs arises from the limitation of a
+single MT to achieve the desired level of accuracy (Kahlon & Singh,
+2023). In line with prior research, our MMT approach generally produced accurate translations for most languages used in the TIMSS 2023
+dataset and was particularly useful for addressing translation challenges
+in LRL responses. Moreover, the MMT method was accurate enough to
+generate a BOW feature matrix that could be used to score responses
+across 42 different languages and 52 countries.
+Automated scoring can handle the two primary challenges associated
+with human scoring: (1) subjectivity and inconsistency and (2) high
+costs. First, automated scoring enhances scoring consistency by applying
+the same scoring criteria to all responses. We observed inconsistencies in
+human scoring within and between countries, particularly for borderline
+responses that fall between "definitely correct" and "definitely incorrect"
+(Mitchell et al., 2002). Some borderline responses, such as older terms or
+heavily misspelled answers, were scored inaccurately or inconsistently
+by human raters. Even within countries sharing the same language,
+identical responses were occasionally assigned different scores. This
+inconsistency arises because, in practice, it is highly challenging for
+human raters to reach a unified scoring standard due to individual rater
+idiosyncrasies even with the extensive training required in TIMSS
+(Attali, 2014; Bejar, 2012). Moreover, TIMSS scoring guide translation is
+conducted by national representatives on a country-by-country basis,
+where two countries that share the same language could yield slightly
+different scoring guides and deliver different training to their human
+raters.
+In contrast, automated scoring classifies all responses consistently,
+including borderline cases, across countries and languages. For example,
+a response like "An unseen force brings objects down," which does not
+explicitly mention the keyword "gravity," might receive inconsistent
+scores from human raters based on their judgment while automated
+scoring would provide a consistent score every time. Moreover, automated scoring can help identify scoring variations across cycles when
+responses from past cycles are included. Human scoring for the same
+responses may vary even within the same countries across different
+cycles (e.g., TIMSS 2019; TIMSS 2023). These discrepancies can arise
+from factors such as the involvement of different human raters or
+changes in curriculum and standards. By consistently applying the same
+scoring rules to all responses, automated scoring can reveal these discrepancies and potentially provide valuable insights to participating
+
+80.18%, κ = 0.56); 18 (83%) out of 22 misclassified responses had been
+scored differently than in the other two Chinese speaking countries.
+While the exact reason for the scoring discrepancy is not known, there is
+the possibility that the response was included in the translation of the
+scoring guide for the other two countries but not C23, or potentially that
+the phrase was not familiar to the human raters in C23.
+Translation issues from MT were another source of misalignment.
+The causes of mistranslation were mainly related to (1) a variety of
+misspellings, (2) LRL responses, and (3) polysemy. First, many misspelled and non-existing words were an important cause of translation
+issues. Misspelled responses are often phonetically similar to correctly
+spelled words but are lexically different. As a result, Google Translate
+and ChatGPT usually provided incorrect translations for heavily misspelled responses (while human raters were instructed to ignore misspellings when scoring). For example, for Item 1, 25 (96%) out of 26
+misclassified responses in C17 contained significant misspellings. Our
+fuzzy matching approach did not address these misspelled responses
+because they deviated by more than two edit distances from the responses considered correct. ChatGPT occasionally generated hallucinated outputs when these responses were untranslatable. Hallucinations
+are realistic outputs generated by a machine, such as ChatGPT, that do
+not correspond to real-world input (Alkaissi & McFarlane, 2023).
+ChatGPT tended to produce hallucinations for significantly misspelled
+or unrecognizable LRL responses, which caused the "translated" responses to appear as correct answers regardless of the original response.
+For instance, for Item 1, 12 (80%) out of 15 misclassified responses in
+C03 and all 10 misclassified responses in C45 resulted from hallucinations, where the discrepancy in classifications came from human raters
+scoring the responses as incorrect but the ANNs giving them credit. Yet,
+given that Google Translate also struggled to translate these hallucinated cases, it is presumed that the translation difficulty might arise
+from misspellings or the challenge of translating LRL responses. Also,
+Google Translate sometimes provided another possible but
+context-irrelevant translation for keywords in cases where the original
+language had multiple possible meanings (i.e., polysemy). For example,
+for one item Google Translate translated the Italian word "gravità" as
+"severity" instead of "gravity".
+5. Discussion
+5.1. The potential of automated scoring in ILSAs
+The results suggest that automated scoring performs similarly to
+human scoring and demonstrates the potential of applying automated
+scoring of short CR items in ILSAs using MT. Specifically, MMT_ANNs
+consistently demonstrated highly accurate scoring across various items
+10
+
+J.Y. Jung et al.
+
+Computers and Education: Artificial Intelligence 8 (2025) 100375
+
+translations resulting from spelling errors. MT appears to have more
+difficulty translating heavily misspelled responses, especially for LRLs.
+Such inaccurate translations can introduce bias in favor or against
+certain groups or languages.
+However, with significant advances in NLP and LLM, we anticipate
+improvements in spelling correction and translation accuracy within the
+next year or so. The current race of big-tech companies and the grassroots activities around releasing new LLMs, on the one hand, and finetuning and adapting for specific tasks, on the other hand, will likely yield
+more capable models suitable for MT for virtually all languages represented online (NLLB Team, 2024). Recent studies have shown that
+finetuning LLMs such as GPT or Llama (META, 2024) for specific
+translation tasks noticeably improves translation performance and efficiency (Xu et al., 2024; Zan et al., 2024; Zhang et al., 2024; Zheng et al.,
+2024). These improvements are expected to reduce potential biases and
+errors when translating and automatically scoring multilingual responses in ILSAs. Furthermore, since tolerance for misspelled responses
+may vary among human raters, there is also potential for bias in human
+scoring due to misspellings that are treated differently from scorer to
+scorer. Therefore, automated scoring should focus on consistent and
+accurate assessment within and across countries rather than simply
+emulating human scoring.
+
+countries. Also, automated scoring substantially reduces the workload
+and costs associated with scoring large volumes of responses in ILSAs.
+With the availability of low-cost computing resources, automated
+scoring could be a resource-efficient approach to enhance scoring reliability, reducing the necessity for hiring second human raters.
+In summary, automated scoring can be a valuable and affordable
+additional quality control measure in ILSAs. Previous studies have
+shown that automated scoring can be used to monitor the quality and
+consistency of CR scoring (Shaw et al., 2020; Wang & von Davier, 2014;
+Williamson et al., 2012). Alongside traditional psychometric statistics
+such as item difficulty, discrimination, and differential item functioning,
+human-machine agreement statistics can be employed to monitor reliable scoring. Large discrepancies between human and automated
+scoring may offer valuable information for both types of scoring that
+would not have been identified otherwise. For instance, C33 had an
+unusually low performance for Item 1 compared to other countries,
+where the percentage of students answering the item correctly was much
+lower than the international average. The current inter-rater reliability
+evidence shows no apparent scoring issues (human-human agreement =
+96.50%). However, this study found that C33 had an unusually low
+human-machine agreement, prompting further investigation. This review, which may not have been conducted otherwise, revealed scoring
+by the human raters that was too strict. Therefore, the automated
+scoring validation not only pointed to a possible reason for the item’s
+unusual performance in C33, but it also reduced the amount of data that
+would need to be reviewed by an expert (i.e., providing only responses
+where the human rater and machine classifications did not match).
+Discrepancies in human-machine classifications could stem from
+human scoring issues due to rater effects or from translation issues.
+Further investigation of these discrepancies would be beneficial for
+either case. For human scoring issues, we might review the scoring guide
+to check if scoring for certain responses may be unclear. If problems with
+the individual countries’ scoring are suspected, country representatives
+could be asked to look at the data and reach out to their scoring team
+with questions. Finally, if scoring issues were found to be present and
+multiple sources of evidence (including low human-machine agreement)
+suggest that the item is not performing well as a result, ILSA experts
+could consider removing the data for that country. For machine scoring
+issues, misclassifications may indicate ways that the methods can be
+improved. Regarding translation issues, examining the probable causes
+of mis- or untranslated responses is crucial to refine the translation
+process in automated scoring for ILSAs. After fully implementing automated scoring for quality control, we can proceed to prepare for operational use by revisiting the methodologies.
+
+5.3. Future research
+Future researchers could explore alternative NLP techniques and
+sampling methodologies. First, sentence embedding could be investigated as an alternative to the BOW approach. Unlike the BOW, sentence
+embedding incorporates context and retains the overall meaning of responses (Reimers & Gurevych, 2019), which could improve ANN accuracy by retaining more of students’ written text. This approach could
+also expand the pool of items that can be validated to include CR items
+that elicit longer responses or responses with multiple synonyms.
+Another potential area of exploration could be data augmentation and
+varying the sample assignment distribution. In our study, only 20% of
+responses were used in the test set. However, augmenting existing student responses or using LLMs to provide additional student responses for
+training could increase the number of responses in the test set and, thus,
+the number of responses that could be double-scored operationally in
+ILSAs.
+Future research should also consider expanding the automated
+scoring methods by further investigating UL and/or incorporating
+multiple automated scoring engines into the validation process. First,
+our results suggested that while MMT_ANNs outperformed UL, UL still
+holds promise as a fast way to generate classifications without the need
+for training on human rater scores. UL demonstrated good performance
+across countries and languages and warrants further investigation. The
+approach could be particularly valuable in cases where potential scoring
+or translation issues exist within the training set. Consideration should
+also be given to expanding the validation method past a second set of
+classifications, instead of generating three or more sets of classifications
+using different scoring engines. Recently, Verga et al. (2024) explored
+evaluating automated scoring by comparing scores generated by a panel
+of small LLMs. They found that multiple sets of classifications by smaller
+models could be used in place of a single set of classifications from a
+large model (such as GPT-4) because it reduces bias in evaluation (e.g.,
+from prompt wording, formatting, hallucinations, etc.). There is the
+potential that multiple scoring engine classifications could help narrow
+down which item-country groups warranted further investigation,
+where only those with large disparities in agreement across most engines
+would be reviewed by experts.
+
+5.2. Limitations
+This study had three notable limitations. One limitation is that
+MMT_ANNs were based on the BOW, which ignores word order and
+context. The BOW approach limited which items could be selected for
+automated scoring: items with extended responses and those where the
+same words could be used in both correct and incorrect responses would
+not have been scored accurately. Another limitation is that the performance of ANNs relies heavily on the quality of the training set. If the
+training set contains improper human scoring or translation issues, it
+becomes challenging to build an accurate model (Chollet, 2021). Ideally,
+the training set should be cleaned before modeling. One option could be
+to use UL to classify responses in the training set and only use responses
+where both the human rater and UL scores match since they are more
+likely to be scored properly. Also, it is crucial to acknowledge that the
+performance of automated scoring relies on the quality of MT. Even with
+MMT, translations may still be improper or untranslatable depending on
+the extent of lexical variations (e.g., spelling errors) or the characteristics of the language. While human raters scored various misspelled responses as correct based on their interpretation of the intended words,
+automated scoring could classify them as incorrect due to inaccurate
+
+6. Conclusion
+This study provides evidence for the possible use of automated
+scoring as a quality control measure in ILSAs. Automated scoring could
+11
+
+J.Y. Jung et al.
+
+Computers and Education: Artificial Intelligence 8 (2025) 100375
+
+enhance scoring consistency, accuracy, and cost-effectiveness while
+mitigating the challenges associated with human scoring. Leveraging
+state-of-the-art MT contributed to building a unified scoring model that
+can reliably score responses across languages and countries. Because
+ILSA results inform educational policy changes for participating countries, it is vital that the measure be as accurate as possible. Ultimately,
+improving CR scoring in ILSAs through AI-based validation will lead to
+more precise changes in country-level education systems, and thus
+better student learning in the future.
+
+Braun, H. I., Bennett, R. E., Frye, D., & Soloway, E. (1990). Scoring constructed responses
+using expert systems. Journal of Educational Measurement, 27(2), 93–108. https://
+doi.org/10.1111/j.1745-3984.1990.tb00736.x
+Caswell, I. (2022). Google Translate learns 24 new languages. Google. https://blog.google/
+products/translate/24-new-languages/.
+Cayrol, M., Farreny, H., & Prade, H. (1982). Fuzzy pattern matching. Kybernetes, 11(2),
+103–116. https://doi.org/10.1108/eb005612
+Choi, H., Cho, K., & Bengio, Y. (2018). Fine-grained attention mechanism for neural
+machine translation. Neurocomputing, 284, 171–176. https://doi.org/10.1016/j.
+neucom.2018.01.007
+Chollet, F. (2021). Deep learning with Python. Simon and Schuster.
+Chowdhary, K., & Chowdhary, K. R. (2020). Natural language processing. Fundamentals
+of artificial intelligence, 603–649.
+Cieri, C., Maxwell, M., Strassel, S., & Tracey, J. (2016). Selection criteria for low resource
+language programs. In Proceedings of the tenth international conference on language
+resources and evaluation (pp. 4543–4549). https://aclanthology.org/L16-1720.pdf.
+Cohen, J. (1960). A coefficient of agreement for nominal scales. Educational and
+Psychological Measurement, 20(1), 37–46. https://doi.org/10.1177/
+001316446002000104
+Costa-Jussa, M. R., & Fonollosa, J. A. (2015). Latest trends in hybrid machine translation
+and its applications. Computer Speech & Language, 32(1), 3–10. https://doi.org/
+10.1016/j.csl.2014.11.001
+Dubois, D., Prade, H., & Testemale, C. (1993). Weighted fuzzy pattern matching. In
+Readings in fuzzy sets for intelligent systems (pp. 676–685). Morgan Kaufmann. https://
+doi.org/10.1016/B978-1-4832-1450-4.50073-0.
+Ebbs, D., Flicop, S., & St Louis, N. (2024). TIMSS systems and instrument verification. In
+M. von Davier, B. Fishbein, & A. Kennedy (Eds.), TIMSS 2023 technical report
+(methods and procedures) (pp. 5.1–5.23). Boston College: TIMSS & PIRLS
+International Study Center. https://doi.org/10.6017/lse.tpisc.timss.rs7618.
+El Naqa, I., & Murphy, M. J. (2015). What is machine learning? Springer International
+Publishing. https://link.springer.com/chapter/10.1007/978-3-319-18305-3_1.
+Federer, M. R., Nehm, R. H., Opfer, J. E., & Pearl, D. (2015). Using a constructedresponse instrument to explore the effects of item position and item features on the
+assessment of students’ written scientific explanations. Research in Science Education,
+45, 527–553. https://doi.org/10.1007/s11165-014-9435-9
+Fiederer, R., & O’Brien, S. (2009). Quality and machine translation: A realistic objective.
+The journal of Specialised translation, 11(11), 52–74. https://aclanthology.org/www.
+mt-archive.info/05/JOST-2009-Fiederer.pdf.
+Gilson, A., Safranek, C. W., Huang, T., Socrates, V., Chi, L., Taylor, R. A., & Chartash, D.
+(2023). How does ChatGPT perform on the United States medical licensing
+examination (USMLE)? The implications of large language models for medical
+education and knowledge assessment. JMIR Medical Education, 9(1), Article e45312.
+https://doi.org/10.2196/45312
+Horbach, A., Pehlke, J., Laarmann-Quante, R., & Ding, Y. (2023). Crosslingual content
+scoring in five languages using machine-translation and multilingual transformer
+models. International Journal of Artificial Intelligence in Education, 1–27. https://doi.
+org/10.1007/s40593-023-00370-1
+Jiao, W., Wang, W., Huang, J. T., Wang, X., & Tu, Z. (2023). Is ChatGPT a good
+translator? A preliminary study. arXiv preprint https://doi.org/10.48550/arXiv.2
+301.08745.
+Jin, H., Zhang, Y., Meng, D., Wang, J., & Tan, J. (2024). A comprehensive survey on
+process-oriented automatic text summarization with exploration of llm-based
+methods. arXiv preprint arXiv:2403.02901 https://doi.org/10.48550/arXiv.2403.02
+901.
+Johnson, M. S., & McCaffrey, D. F. (2023). Evaluating fairness of automated scoring in
+educational measurement. In V. Yaneva, & M. von Davier (Eds.), Advancing natural
+language processing in educational assessment (pp. 142–163). Routledge.
+Jung, J. Y., Tyack, L., & von Davier, M. (2022). Automated scoring of constructedresponse items using artificial neural networks in international large-scale
+assessment. Psychological Test and Assessment Modeling, 64(4), 471–494. https
+://www.psychologie-aktuell.com/fileadmin/Redaktion/Journale/ptam_2022-4/
+PTAM_2022-4_5.pdf.
+Jung, J. Y., Tyack, L., & von Davier, M. (2024). Combining machine translation and
+automated scoring in international large-scale assessments. Large-scale Assessments in
+Education, 12, 10. https://doi.org/10.1186/s40536-024-00199-7
+Kahlon, N. K., & Singh, W. (2023). Machine translation from text to sign language: A
+systematic review. Universal Access in the Information Society, 22(1). https://doi.org/
+10.1007/s10209-021-00823-1
+Kim, Y. (2014). Convolutional neural networks for sentence classification. arXiv preprint.
+https://doi.org/10.48550/arXiv.1408.5882
+Landis, J. R., & Koch, G. G. (1977). The measurement of observer agreement for
+categorical data. Biometrics, 159–174. https://doi.org/10.2307/2529310
+LaVoie, N., Parker, J., Legree, P. J., Ardison, S., & Kilcullen, R. N. (2020). Using latent
+semantic analysis to score short answer constructed responses: Automated scoring of
+the consequences test. Educational and Psychological Measurement, 80(2), 399–414.
+https://doi.org/10.1177/0013164419860575
+Lee, G. G., Latif, E., Wu, X., Liu, N., & Zhai, X. (2024). Applying large language models
+and chain-of-thought for automatic scoring. Computers and Education: Artificial
+Intelligence, 6, Article 100213. https://doi.org/10.1016/j.caeai.2024.100213
+Levenshtein, V. I. (1966). Binary codes capable of correcting deletions, insertions, and
+reversals. Soviet Physics - Doklady, 10, 707–710. https://nymity.ch/sybilhuntin
+g/pdf/Levenshtein1966a.pdf.
+Lim, T. S., Loh, W. Y., & Shih, Y. S. (2000). A comparison of prediction accuracy,
+complexity, and training time of thirty-three old and new classification algorithms.
+Machine Learning, 40, 203–228.
+
+CRediT authorship contribution statement
+Ji Yoon Jung: Writing – review & editing, Writing – original draft,
+Visualization, Software, Methodology, Conceptualization. Lillian
+Tyack: Writing – review & editing, Software, Data curation, Conceptualization. Matthias von Davier: Writing – review & editing, Supervision, Methodology, Conceptualization.
+Data availability
+The data used in this study are available upon reasonable request.
+Declaration of generative AI in scientific writing
+During the preparation of this work, the authors used ChatGPT to
+improve language and readability. After using this tool/service, the
+authors thoroughly reviewed and edited the content as needed. The
+authors take full responsibility for the content of the publication.
+Declaration of competing interest
+The authors declare that they have no known competing financial
+interests or personal relationships that could have appeared to influence
+the work reported in this paper.
+References
+Aldrich, C. E. A., Bookbinder, A., & Khorramdel, L. (2024). Developing the TIMSS
+mathematics and science achievement instruments. In M. von Davier, B. Fishbein, &
+A. Kennedy (Eds.), TIMSS 2023 technical report (methods and procedures) (pp.
+1.1–1.23). Boston College: TIMSS & PIRLS International Study Center. https://doi.
+org/10.6017/lse.tpisc.timss.rs3063.
+Alkaissi, H., & McFarlane, S. I. (2023). Artificial hallucinations in ChatGPT: Implications
+in scientific writing. Cureus, 15(2). https://doi.org/10.7759/cureus.35179
+Alpaydin, E. (2020). Introduction to machine learning. MIT press.
+Araújo, M., Pereira, A., & Benevenuto, F. (2020). A comparative study of machine
+translation for multilingual sentence-level sentiment analysis. Information Sciences,
+512, 1078–1102. https://doi.org/10.1016/j.ins.2019.10.031
+Arun, K., & Srinagesh, A. (2020). Multilingual Twitter sentiment analysis using machine
+learning. International Journal of Electrical and Computer Engineering, 10(6),
+5992–6000. https://doi.org/10.11591/ijece.v10i6.pp5992-6000
+Attali, Y. (2014). A ranking method for evaluating constructed responses. Educational and
+Psychological Measurement, 74(5), 795–808. https://doi.org/10.1177/
+0013164414527450
+Azaria, A., Azoulay, R., & Reches, S. (2024). ChatGPT is a remarkable tool—for experts.
+Data Intelligence, 6(1), 240–296. https://doi.org/10.1162/dint_a_00235
+Banik, D., Ekbal, A., Bhattacharyya, P., & Bhattacharyya, S. (2019). Assembling
+translations from multi-engine machine translation outputs. Applied Soft Computing,
+78, 230–239. https://doi.org/10.1016/j.asoc.2019.02.031
+Barrus, T. (2022). Pure Python spell checker based on work by peter norvig. https://pypi.
+org/project/pyspellchecker/.
+Bejar, I. I. (2012). Rater cognition: Implications for validity. Educational Measurement:
+Issues and Practice, 31(3), 2–9. https://doi.org/10.1111/j.1745-3992.2012.00238.x
+Bennett, R. E. (1991). On the meanings of constructed response. ETS Research Report
+Series, 1991(2). https://doi.org/10.1002/j.2333-8504.1991.tb01429.x. i-46.
+Bezirhan, U., & von Davier, M. (2023). Automated reading passage generation with
+OpenAI’s large language model. Computers and Education: Artificial Intelligence, 5,
+Article 100161. https://doi.org/10.1016/j.caeai.2023.100161
+Bookbinder, A., Tyack, L., Aldrich, C. E. A., Khorramdel, L., & Mao, T. (2024). Automated
+and human scoring in TIMSS. In M. von Davier, B. Fishbein, & A. Kennedy (Eds.),
+TIMSS 2023 technical report (methods and procedures) (pp. 7.1–7.18). Boston College:
+TIMSS & PIRLS International Study Center. https://doi.org/10.6017/lse.tpisc.timss.
+rs9125.
+
+12
+
+J.Y. Jung et al.
+
+Computers and Education: Artificial Intelligence 8 (2025) 100375
+Salminen, J., Kamel, A. M., Jung, S. G., & Jansen, B. (2021). The problem of majority
+voting in crowdsourcing with binary classes. The 19th European conference on
+computer-supported cooperative work. Switzerland: Remote via Internet & Zurich.
+https://dl.eusset.eu/bitstream/20.500.12015/4163/1/ecscw2021-n12.pdf.
+Sazli, M. H. (2006). A brief review of feed-forward neural networks. Communications
+Faculty of Sciences University of Ankara Series A2-A3 Physical Sciences and Engineering,
+50(1). https://doi.org/10.1501/commua1-2_0000000026
+Shalev-Shwartz, S., & Ben-David, S. (2014). Understanding machine learning: From theory
+to algorithms. Cambridge university press.
+Shaw, D., Bolender, B., & Meisner, R. (2020). Quality control for automated scoring in
+large-scale assessment. In D. Yan, A. A. Rupp, & P. W. Foltz (Eds.), Handbook of
+automated scoring: Theory into practice (pp. 241–262). Chapman and Hall/CRC.
+Shermis, M., & Lottridge, S. (2019). Communicating to the public about machine scoring:
+What works, what doesn’t. National Conference on Measurement in Education (NCME),
+Toronto, CA. https://www.cambiumassessment.com//media/project/cambium/cor
+porate/pdfs/cai-cambium-communicatingpublicmachinescoring-whitepaper.pdf.
+Shermis, M. D., & Wilson, J. (Eds.). (2024). The Routledge international handbook of
+automated essay evaluation. Taylor & Francis.
+Shin, H. J., Andersen, N., Horbach, A., Kim, E., Baik, J., & Zehner, F. (2024). Operational
+automatic scoring of text responses in 2016 ePIRLS: Performance and linguistic
+variance. https://www.iea.nl/sites/default/files/2024-04/Operational-Automat
+ic-Scoring-of-Text-Responses-ePIRLS.pdf.
+Sukkarieh, J. Z., & Blackmore, J. (2009). C-rater: Automatic content scoring for short
+constructed responses. The Florida Artificial Intelligence Research Society (FLAIRS)
+Conference. Sarasota, FL https://cdn.aaai.org/ocs/122/122-2394-1-PB.pdf.
+Surden, H. (2021). Machine learning and law: An overview. In D. Vogl (Ed.), Research
+handbook on big data law (pp. 171–184). Edward Elgar Publishing. https://doi.org/
+10.4337/9781788972826.
+Tate, T. P., Steiss, J., Bailey, D., Graham, S., Moon, Y., Ritchie, D., … Warschauer, M.
+(2024). Can AI provide useful holistic essay scoring? Computers and Education:
+Artificial Intelligence, 7, Article 100255. https://doi.org/10.1016/j.caeai.2024.10025
+Tu, Z., Lu, Z., Liu, Y., Liu, X., & Li, H. (2016). Modeling coverage for neural machine
+translation. arXiv preprint. https://doi.org/10.48550/arXiv.1601.04811
+Uchimoto, K., Hayashida, N., Ishida, T., & Isahara, H. (2005). Automatic rating of
+machine translatability. In Proceedings of machine translation summit X: Papers (pp.
+235–242). https://aclanthology.org/2005.mtsummit-papers.31/.
+Verga, P., Hofstatter, S., Althammer, S., Su, Y., Piktus, A., Arkhangorodsky, A., Xu, M.,
+White, N., & Lewis, P. (2024). Replacing judges with juries: Evaluating LLM
+generations with a panel of diverse models. arXiv preprint arXiv:2404.18796. htt
+ps://arxiv.org/abs/2404.18796.
+Wang, Z., & von Davier, A. A. (2014). Monitoring of scoring using the e-rater®
+automated scoring system and human raters on a writing test. ETS Research Report
+Series, 2014(1), 1–21.
+Williamson, D. M., Xi, X., & Breyer, F. J. (2012). A framework for evaluation and use of
+automated scoring. Educational Measurement: Issues and Practice, 31(1), 2–13.
+https://doi.org/10.1111/j.1745-3992.2011.00223.x
+Xu, H., Sharaf, A., Chen, Y., Tan, W., Shen, L., Van Durme, B., … Kim, Y. J. (2024).
+Contrastive preference optimization: Pushing the boundaries of llm performance in
+machine translation. arXiv preprint arXiv:2401.08417.
+Zan, C., Ding, L., Shen, L., Zhen, Y., Liu, W., & Tao, D. (2024). Building accurate
+translation-tailored LLMs with language aware instruction tuning. arXiv preprint
+arXiv:2403.14399.
+Zhang, M. (2013). Contrasting automated and human scoring of essays. R & D
+Connections, No. 21. Retrieved from https://www.ets.org/Media/Research/pdf/RD
+_Connections_21.pdf.
+Zhang, R., Han, J., Liu, C., Zhou, A., Lu, P., Qiao, Y., … Gao, P. (2024). LLaMA-adapter:
+Efficient fine-tuning of large language models with zero-initialized attention. In The
+twelfth international conference on learning representations.
+Zheng, J., Hong, H., Wang, X., Su, J., Liang, Y., & Wu, S. (2024). Fine-tuning large
+language models for domain-specific machine translation. arXiv preprint arXiv:
+2402.15061.
+
+Liu, O. L., Brew, C., Blackmore, J., Gerard, L., Madhok, J., & Linn, M. C. (2014).
+Automated scoring of constructed-response science items: Prospects and obstacles.
+Educational Measurement: Issues and Practice, 33(2), 19–28. https://doi.org/10.1111/
+emip.12028
+Liu, O. L., Lee, H. S., & Linn, M. C. (2011). Measuring knowledge integration: Validation
+of four-year assessments. Journal of Research in Science Teaching, 48(9), 1079–1107.
+https://doi.org/10.1002/tea.20441
+Liu, O. L., Rios, J. A., Heilman, M., Gerard, L., & Linn, M. C. (2016). Validation of
+automated scoring of science assessments. Journal of Research in Science Teaching, 53
+(2), 215–233. https://doi.org/10.1002/tea.21299
+Livingston, S. A. (2009). Constructed-response test questions: Why we use them; How we
+score them. R&D Connections. No. 11. Educational Testing Service. https://files.eric.
+ed.gov/fulltext/ED507802.pdf.
+Lottridge, S., Wood, S., & Shaw, D. (2018). The effectiveness of machine score-ability
+ratings in predicting automated scoring performance. Applied Measurement in
+Education, 31(3), 215–232. https://doi.org/10.1080/08957347.2018.1464452
+Luong, M. T., Pham, H., & Manning, C. D. (2015). Effective approaches to attentionbased neural machine translation. arXiv preprint. https://doi.org/10.48550/
+arXiv.1508.04025
+Mao, L., Liu, O. L., Roohr, K., Belur, V., Mulholland, M., Lee, H. S., & Pallant, A. (2018).
+Validation of automated scoring for a formative assessment that employs scientific
+argumentation. Educational Assessment, 23(2), 121–138. https://doi.org/10.1080/
+10627197.2018.1427570
+McClellan, C. A. (2010). Constructed-response scoring—doing it right. R & D Connections.
+No. 13. https://www.ets.org/Media/Research/pdf/RD_Connections13.pdf.
+META. (2022). New AI model translates 200 languages, making technology accessible to
+more people. https://about.fb.com/news/2022/07/new-meta-ai-model-translates200-languages-making-technology-more-accessible/.
+META. (2024). The future of AI: Built with Llama. https://ai.meta.com/blog/future-of-ai
+-built-with-llama/.
+Mielke, S. J., Cotterell, R., Gorman, K., Roark, B., & Eisner, J. (2019). What kind of
+language is hard to language-model?. arXiv preprint https://doi.org/10.4855
+0/arXiv.1906.04726.
+Mitchell, T., Russell, T., Broomhead, P., & Aldridge, N. (2002). Towards robust
+computerised marking of free-text responses. https://hdl.handle.net/2134/1884.
+Mullis, I. V. S., Martin, M. O., & von Davier, M. (Eds.). (2021). TIMSS 2023 Assessment
+Frameworks. Boston College, TIMSS & PIRLS International Study Center. Retrieved
+from, Website: https://timssandpirls.bc.edu/timss2023. TIMSS 2023 Assessment
+Frameworks—978-1-889938-57-8.
+Myford, C. M., & Wolfe, E. W. (2003). Detecting and measuring rater effects using manyfacet rasch measurement: Part I. Journal of Applied Measurement, 4(4), 386–422. http
+s://jimelwood.net/students/grips/tables_figures/myford_wolfe_2004.pdf.
+NLLB Team. (2024). Scaling neural machine translation to 200 languages. Nature.
+https://doi.org/10.1038/s41586-024-07335-x
+OECD. (2024). PISA 2025 science framework. https://pisa-framework.oecd.org/science
+-2025/assets/docs/PISA_2025_Science_Framework.pdf.
+Okubo, T., Houlden, W., Montuoro, P., Reinertsen, N., Tse, C. S., & Bastianic, T. (2023).
+AI scoring for international large-scale assessments using a deep learning model and
+multilingual data. OECD education working papers, No. 287. Paris: OECD Publishing.
+https://doi.org/10.1787/9918e1fb-en
+OpenAI. (n.d.). API REFERENCE. https://platform.openai.com/docs/api-reference/bac
+kward-compatibility.
+Pedregosa, F., Varoquaux, G., Gramfort, A., Michel, V., Thirion, B., Grisel, O., …
+Duchesnay, É. (2011). Scikit-learn: Machine learning in Python. The Journal of
+Machine Learning Research, 12, 2825–2830.
+Prabhakar, D. K., & Pal, S. (2018). Machine transliteration and transliterated text
+retrieval: A survey. Sādhanā, 43(6), 93. https://www.ias.ac.in/public/Volumes/s
+adh/043/06/0093.pdf.
+Reimers, N., & Gurevych, I. (2019). Sentence-BERT: Sentence Embeddings using Siamese
+BERT-Networks. arXiv preprint arXiv:1908.10084 https://fq.pkwyx.com/default/
+https://aclanthology.org/D19-1410.pdf.
+Rinker, T. W. (2013). qdapDictionaries: Dictionaries to accompany the qdap Package, 1.0.7.
+Buffalo, New York, USA: University at Buffalo. http://github.com/trinker/qdapDict
+ionaries.
+
+13
+
+

@@ -1,0 +1,3255 @@
+Multivariate Behavioral Research
+
+ISSN: 0027-3171 (Print) 1532-7906 (Online) Journal homepage: www.tandfonline.com/journals/hmbr20
+
+Random Forests Approach for Causal Inference
+with Clustered Observational Data
+Youmi Suk, Hyunseung Kang & Jee-Seon Kim
+To cite this article: Youmi Suk, Hyunseung Kang & Jee-Seon Kim (2021) Random Forests
+Approach for Causal Inference with Clustered Observational Data, Multivariate Behavioral
+Research, 56:6, 829-852, DOI: 10.1080/00273171.2020.1808437
+To link to this article: https://doi.org/10.1080/00273171.2020.1808437
+
+Published online: 28 Aug 2020.
+
+Submit your article to this journal
+
+Article views: 2271
+
+View related articles
+
+View Crossmark data
+
+Citing articles: 8 View citing articles
+
+Full Terms & Conditions of access and use can be found at
+https://www.tandfonline.com/action/journalInformation?journalCode=hmbr20
+
+MULTIVARIATE BEHAVIORAL RESEARCH
+2021, VOL. 56, NO. 6, 829–852
+https://doi.org/10.1080/00273171.2020.1808437
+
+Random Forests Approach for Causal Inference with Clustered
+Observational Data
+Youmi Suka
+
+, Hyunseung Kangb, and Jee-Seon Kima
+
+a
+
+Department of Educational Psychology, University of Wisconsin-Madison; bDepartment of Statistics, University of Wisconsin-Madison
+KEYWORDS
+
+ABSTRACT
+
+There is a growing interest in using machine learning (ML) methods for causal inference
+due to their (nearly) automatic and flexible ability to model key quantities such as the propensity score or the outcome model. Unfortunately, most ML methods for causal inference
+have been studied under single-level settings where all individuals are independent of each
+other and there is little work in using these methods with clustered or nested data, a common setting in education studies. This paper investigates using one particular ML method
+based on random forests known as Causal Forests to estimate treatment effects in multilevel
+observational data. We conduct simulation studies under different types of multilevel data,
+including two-level, three-level, and cross-classified data. Our simulation study shows that
+when the ML method is supplemented with estimated propensity scores from multilevel
+models that account for clustered/hierarchical structure, the modified ML method outperforms preexisting methods in a wide variety of settings. We conclude by estimating the
+effect of private math lessons in the Trends in International Mathematics and Science Study
+data, a large-scale educational assessment where students are nested within schools.
+
+Introduction
+In the social sciences, when studying treatment effects
+with observational data, study units are naturally clustered together. For example, in the Trends in
+International Mathematics and Science Study (TIMSS)
+and the Program for International Student Assessment
+(PISA), students, the study unit, are clustered/nested
+at the school level, and schools are clustered/nested at
+the country level; this type of data is known as threelevel data or, more broadly, multilevel/hierarchical
+data. In cross-classified data, students belong to two
+clusters simultaneously, say student’s cluster membership is defined by school and neighborhood
+(Raudenbush & Bryk, 2002). The goal of this paper is
+to estimate the average treatment effect (ATE) in
+multilevel observational data where the treatment is
+assigned at the unit level (e.g., students instead of
+schools or neighborhoods).
+Traditionally, the most popular way to estimate the
+ATE in clustered observational data is by multilevel
+propensity score methods (Hong & Raudenbush,
+2006; Kim & Seltzer, 2007; Steiner et al., 2012;
+Thoemmes & West, 2011). Briefly, a propensity score
+is a study unit’s conditional probability of receiving
+CONTACT Youmi Suk
+
+ysuk@wisc.edu
+
+ß 2020 Taylor & Francis Group, LLC
+
+Causal inference; machine
+learning methods;
+multilevel propensity score
+matching; multilevel
+observational data;
+hierarchical linear modeling
+
+treatment given observed pretreatment covariates
+(Rosenbaum & Rubin, 1983) and each study unit has
+a propensity score ranging from 0 to 1. Propensity
+score methods utilize propensity scores to balance
+covariates between treated and control groups by
+using matching, stratification, or weighting. Multilevel
+propensity score methods use propensity scores, but
+also account for the underlying clustered/hierarchical
+structure in multilevel data, typically by fitting a
+multilevel propensity score model; see Section 10 of
+Leite (2016) for details. If selection is strongly ignorable, i.e., the treatment assignment is as-if random
+conditional on observed pretreatment covariates, and
+the propensity score model is correctly specified, these
+aforementioned methods can consistently estimate the
+ATE. Also, propensity score methods can be combined with models for the outcome to form doubly
+robust estimators; these estimators are consistent for
+the ATE as long as either the propensity score model
+or the outcome model is correctly specified.
+Recently, using machine learning (ML) algorithms
+has become a popular way to estimate the ATE
+(Athey & Imbens, 2016; Chernozhukov et al., 2018;
+Hill, 2011; Keller et al., 2015; McCaffrey et al., 2004;
+
+Department of Educational Psychology, University of Wisconsin-Madison, Madison, WI 53706, USA.
+
+830
+
+Y. SUK ET AL.
+
+van der Laan et al., 2007; van der Laan & Rose, 2011;
+Westreich et al., 2010). An attractive feature of MLbased methods is that they flexibly and, in some cases,
+automatically estimate the propensity score model or
+the outcome regression model. However, many of
+these works focus on what we call single-level data
+settings where all study units are (1) independent of
+each other and (2) come from the same population; in
+short, the study units are assumed to be independent
+and identically distributed (i.i.d.). If the i.i.d. assumption is satisfied, many ML-based methods are consistent for the ATE. In contrast, if study units are
+clustered or nested, such as the students in the TIMSS
+data, the i.i.d. assumption no longer holds and there
+is no guarantee that these ML-based methods produce
+a consistent estimate for the ATE. Indeed, as highlighted by Carvalho et al. (2019), existing ML methods
+should be modified, say by using different tuning
+parameters or re-designing sampling splits, to respect
+the underlying clustering or hierarchical structure and
+to produce a more precise and consistent estimate of
+the treatment effect in multilevel data. However, it
+remains an open question as to how to exactly make
+such modifications for different kinds of ML methods.
+The goal of this paper is to study how to modify
+ML-based methods in order to estimate the ATE in
+multilevel observational data. We focus on one ML
+method based on random forests called Causal Forests
+(Athey et al., 2019; Wager & Athey, 2018) which is a
+popular ML-based method in causal inference. We
+consider three types of multilevel data: two-level,
+three-level, and cross-classified data. These settings, in
+general, violate the underlying assumptions that validate Causal Forests as a consistent and asymptotically
+Normal estimator of the ATE because of dependencies
+between subjects. We study three simple ways to
+modify Causal Forests in order to account for the
+underlying hierarchical structure. The first modification injects Causal Forests with propensity scores
+from a multilevel logistic regression. The second
+modification uses cluster labels that denote each level
+of the hierarchy and changes how sample splitting is
+done inside Causal Forests. The third modification
+combines the two modifications. We compare how
+well these modified ML methods perform compared
+to ML methods without any modifications, traditional
+multilevel propensity score methods, and doubly
+robust methods where the latter two use parametric
+multilevel models by measuring the absolute relative
+bias, standard deviation, and mean-squared error.
+Lastly, we demonstrate our findings by studying the
+
+effect of private math lessons on students’ math
+achievement scores from the 2015 Korea TIMSS data.
+Overall, we found that in a wide range of scenarios,
+the modified Causal Forests using an estimated propensity score from a multilevel logistic regression was
+competitive to doubly robust estimators with correctly
+specified propensity score and outcome regression
+models. Also, the modified Causal Forests had smaller
+mean-squared error than traditional multilevel propensity score methods or the original Causal Forests
+without any modifications. This phenomenon generally held true even when the multilevel propensity
+score model in the modified Causal Forest was moderately mis-specified. More broadly, we believe that
+our modifications of Causal Forests based on the
+multilevel propensity score can serve as a template to
+modify other ML-based methods in causal inference
+when they are used in observational studies with hierarchical/clustered structures.
+
+Causal inference with clustered
+observational data
+We use the Neyman-Rubin potential outcomes notation (Neyman, 1923; Rubin, 1974) and its extension to
+multilevel/clustered settings by Hong and Raudenbush
+(2006) to formalize causal effects. Suppose that there
+are N total individuals, indexed by ij where i indexes
+study units within a cluster and j indexes clusters. Let
+Zij denote the treatment assignment of individual i in
+cluster j, with Zij ¼ 1 representing a treated individual
+and Zij ¼ 0 representing an untreated individual; as
+noted earlier, this paper focuses on studies where the
+treatment is assigned at the individual level, not at the
+cluster level. Let Yij ð1Þ be the potential outcome if
+individual i in cluster j were to be treated (Zij ¼ 1)
+and let Yij ð0Þ be the potential outcome if individual i
+within cluster j were to be untreated (Zij ¼ 0). The
+observed outcome is Yij ¼ Zij Yij ð1Þ þ ð1  Zij ÞYij ð0Þ:
+We remark that the notation assumes the Stable Unit
+Treatment Value Assumption (SUTVA; Rubin, 1986);
+for more information on SUTVA in multilevel settings, see Hong and Raudenbush (2006, 2013). Finally,
+let X ij and W j denote individual-level and cluster-level
+pretreatment covariates, respectively. Individual-level
+covariates X ij are covariates whose values vary across
+individuals, say gender, age, and socioeconomic status,
+and cluster-level covariates W j are covariates whose
+values are the same among individuals in the same
+cluster, say school type and school climate. Typically,
+cluster-level covariates define the underlying clustering
+or hierarchical structure in multilevel data.
+
+MULTIVARIATE BEHAVIORAL RESEARCH
+
+The target estimand of interest is the ATE and is
+defined as the average linear contrast between two
+potential outcomes, i.e., s ¼ E½Yij ð1Þ  Yij ð0Þ: In a
+completely randomized experiment, the ATE can be
+estimated by taking the difference between the outcomes of treated and untreated groups. However, in
+observational studies, this approach may lead to bias
+because the treated and untreated groups are no longer similar with respect to their observed and unobserved covariates.
+The typical set of working assumptions for estimating the ATE in observational studies is as follows:
+Assumption 1 (Unconfoundness):
+Yij ð1Þ, Yij ð0Þ?Zij jX ij , W j
+Assumption 2 (Positivity):
+0 < eðX ij , W j Þ ¼ PrðZij ¼ 1jX ij , W j Þ < 1
+Here, ? represents independence between two random variables. In a nutshell, Assumptions 1 and 2
+state that conditional on the observed individual-level
+and cluster-level covariates X ij and W j , the treatment
+is as-if randomly assigned to each individual with
+non-zero probability. Assumptions 1 and 2 combined
+are often referred to as strong ignorability
+(Rosenbaum & Rubin, 1983). An important idea arising from Assumptions 1 and 2 is that the propensity
+score eðX ij , W j Þ is the coarsest balancing score
+(Rosenbaum & Rubin, 1983). Specifically, conditional
+on the propensity score, the distribution of pretreatment covariates is independent of treatment assignment, i.e., X ij , W j ?Zij jeðX ij , W j Þ, and the distribution
+of covariates is identical or “balanced” between the
+treated and untreated groups. This latter idea serves
+as the basis for propensity score methods where
+treated and untreated units are matched, weighed, or
+stratified based on their propensity scores. The next
+section reviews some of these propensity score methods for multilevel data.
+
+Methods of estimating the average treatment
+effect in multilevel data
+Multilevel propensity score methods via weighting
+Among various propensity score methods in multilevel data, weighting methods are one of the most frequently used in practice. Briefly, weighting methods
+use propensity scores as sampling weights to weigh
+the outcomes between treated and untreated groups in
+order to unbiasedly estimate the ATE (Lunceford &
+Davidian, 2004; Schafer & Kang, 2008; Stuart, 2010).
+The most well-known weighting method is the
+
+831
+
+inverse-propensity weighting (IPW) estimator, which
+is the weighted difference in the outcomes Yij of
+treated and untreated groups where the weights are
+the inverse of the estimated propensity scores:
+xIPW
+z, ij
+^s IPW
+
+z
+1z
+þ
+eðX ij , W j Þ 1  eðX ij , W j Þ
+1X
+1X
+¼
+Yij Zij xIPW
+Yij ð1  Zij ÞxIPW
+1, ij 
+0, ij
+N ij
+N ij
+¼
+
+(1)
+Hong and Hong (2009) proposed another weighting estimator called the marginal mean weighting
+through stratification (MMW-S). MMW-S estimator,
+like the IPW estimator, takes the weighted difference
+in outcome between treated and untreated groups.
+But MMW-S stratifies the propensity score into percentiles and uses sample frequencies within each stratum as weights. A bit more formally, consider the
+observed frequencies Ozs for each treatment status z 2
+f0, 1g in stratum s 2 f1, 2, :::, Sg defined by percentiles
+of eðX ij , W j Þ on the logit scale (or probability scale).
+Define the expected frequencies Ezs for each treatment
+status z in stratum s to be Ezs ¼ OðzÞ  OðsÞ =OðÞ ; the
+dots in the subscript () denote sums over z or s.
+Then, MMW-S weights are computed by dividing the
+expected frequencies by the observed frequencies,
+Ezs =Ozs , and the MMW-S estimator of the ATE is:
+
+8
+Ez1
+>
+>
+if eðX ij , W j Þ in stratum 1
+>
+>
+>
+< Oz1
+xMMWS
+¼ ...
+z, ij
+>
+>
+>
+EzS
+>
+>
+if eðX ij , W j Þin stratumS
+:
+OzS
+1X
+1X
+s^MMWS ¼
+Yij Zij xMMWS
+
+Yij ð1  Zij ÞxMMWS
+1, ij
+0, ij
+N ij
+N ij
+
+(2)
+
+The use of MMW-S requires researchers to choose
+the number of strata S. Hong (2010) suggested choosing S to be the minimal number of strata that achieves
+within-stratum covariate balance in at least 95% of the
+observed covariates. We follow this advice in our
+simulation and real data studies and use covariates’
+standardized mean and variance within strata as our
+measure of within-stratum balance; see the Appendix
+C for details.
+A key consideration in using weighting estimators
+in multilevel data is a model for the propensity score
+eðX ij , W j Þ: Broadly speaking, in two-level data, there
+are two main strategies for modeling the propensity
+score and estimating the ATE: a within-cluster strategy and an across-cluster strategy (Leite, 2016; Steiner
+et al., 2012). A within-cluster strategy estimates a
+
+832
+
+Y. SUK ET AL.
+
+propensity score model for each cluster with only
+individual-level covariates. Each propensity score
+model is trained using only study units within the
+cluster and is usually a logistic regression commonly
+found in single-level i.i.d. settings. Then, using one of
+the weighting estimators above, cluster-level treatment
+effects are computed and then aggregated to estimate
+the ATE. In contrast, an across-cluster strategy estimates a single joint propensity score model across all
+clusters. The joint propensity score model is typically
+a multilevel logistic regression with either randomeffects or fixed-effects; random-effects models usually
+have both individual-level and cluster-level covariates,
+whereas fixed-effects models have individual-level
+covariates and cluster-level dummy variables (Leite,
+2016; Steiner et al., 2012).
+Generally speaking, weighting estimators based on
+a propensity score model from a within-cluster strategy is more robust to biases from unmeasured clusterlevel covariates than those from an across-cluster
+strategy; one can make a joint propensity score more
+robust to unobserved cluster-level covariates by adding interaction terms between cluster labels and covariates. However, when there are strong selection
+processes at work or cluster sizes are small, overlap is
+hard to achieve with propensity score estimates based
+on a within-cluster strategy, and in such settings, an
+across-cluster strategy is preferred (Kim & Seltzer,
+2007; Steiner et al., 2012; Thoemmes & West, 2011).
+Given that the size of clusters in our real data is not
+large and a within-cluster strategy is often not feasible
+in these settings (Arpino & Mealli, 2011; Steiner et al.,
+2012), this paper uses an across-cluster strategy where
+a single joint propensity score model is estimated
+using a multilevel logistic regression model with random effects.
+Finally, we remark that there are other types of
+multilevel propensity score methods, such as two-stage
+matching (Rickles & Seltzer, 2014), preferential matching (Arpino & Cannas, 2016), and within-class matching (Kim & Steiner, 2015), and most multilevel
+propensity score methods are tailored for twolevel data.
+Doubly robust methods
+Doubly robust (DR) methods are estimators that provide consistent estimates of the ATE as long as the
+propensity score or the outcome model is correctly
+specified, but not necessarily both (Schafer & Kang,
+2008; Scharfstein et al., 1999). Here, we present a DR
+estimator based on fitting weighted outcome
+
+regression models for treated and untreated units, i.e.,
+E½Yij jX ij , W j , Zij ¼ z ¼ mz ðX ij , W j , bz Þ where bz is the
+parameter of the outcome regression function mz for
+treatment group z 2 f0, 1g, where the weights in the
+regression are from the IPW estimator or MMW-S
+estimator (Leite, 2016; Schafer & Kang, 2008).
+Specifically, the DR estimator based on weights from
+the IPW estimator is:
+X
+
+2
+^ IPW ¼ argmin
+b
+xIPW
+z, ij Yij  mz ðX ij , W j , bz Þ
+z
+bz
+ij, Zij ¼z
+1X
+^ IPW Þ
+^s DR IPW ¼
+m1 ðX ij , W j , b
+1
+N ij
+1X
+^ IPW Þ
+m0 ðX ij , W j , b
+(3)
+
+0
+N ij
+and the DR estimator based on weights from the
+MMW-S estimator is:
+^ MMWS ¼ argmin
+b
+z
+bz
+
+X
+
+ij, Zij ¼z
+
+^s DR MMWS ¼
+
+
+2
+xMMWS
+Yij  mz ðXij , W j , bz Þ
+z, ij
+
+1X
+^ MMWS Þ
+m1 ðXij , W j , b
+1
+N ij
+
+
+
+1X
+^ MMWS Þ
+m0 ðXij , W j , b
+0
+N ij
+
+(4)
+
+In multilevel settings, typical models for mz are
+random-effects or fixed-effects linear regression models. In this paper, we will use random-effects linear
+regression models for mz.
+Causal forests and modifications for
+multilevel data
+Recently, there is a growing trend in using flexible,
+non-parametric ML algorithms to estimate e or mz
+without having to specify the functional form of these
+models. For example, targeted maximum likelihood estimators of the ATE (van der Laan & Rose, 2011) often
+utilize an ensemble learner called SuperLearner (van der
+Laan et al., 2007), which combines different ML algorithms such as the Lasso, K-nearest matching, generalized additive models (GAMs), generalized linear models
+(GLMs), random forests, and multivariate adaptive
+regression splines (MARS), to flexibly estimate the propensity score and the outcome model. Causal Forests is
+another popular ML method for estimating the ATE as
+well as the conditional average treatment effect (CATE);
+we remark that averaging across unbiased estimates of
+the CATE leads to an unbiased estimator for the ATE.
+In this paper, we focus on Causal Forests and see how
+it performs in multilevel observational data.
+
+MULTIVARIATE BEHAVIORAL RESEARCH
+
+We briefly sketch out the details of the Causal Forest
+algorithm; see Wager and Athey (2018), Athey et al.
+(2019), and Athey and Wager (2019) for details. Let
+mðx, wÞ ¼ E½Yij jX ij ¼ x, W j ¼ w be the conditional
+mean of the outcome given a specific value of covariates
+^ ij ðx, wÞ be an estimate of this conditional
+x, w: Let m
+mean at x and w where the estimate does not use study
+unit ij’s data. Similarly, let e^ij ðx, wÞ be an estimate of
+the propensity score where the estimate does not use
+study unit ij’s data; these type of estimates are also
+known as out-of-bag leave-one-out estimates in ML. In
+the Causal Forests algorithm, the default estimates of
+^ ij ðx, wÞ and ^e ij ðx, wÞ are computed by a honest
+m
+random forest algorithm (see Procedure 1 in Wager
+and Athey (2018) for one example), although a consistent estimator with certain statistical properties will suffice; see Section 6.1.1 of Athey et al. (2019) for the
+exact conditions. For example, if the propensity score is
+known as in a completely randomized experiment, we
+can plug in the probability of treatment from the
+experimental design as ^e ij ðx, wÞ and this satisfies the
+aforementioned statistical properties. A Causal Forest
+estimator of the CATE at covariates x, w, denoted as
+^s ðx, wÞ, is essentially a weighted linear regression of
+~ ij ¼ Yij  m
+^ ij ðx, wÞ and a sinresidualized outcome Y
+~ ij ¼ Zij  e^ij ðx, wÞ and can
+gle residualized regressor Z
+be written as follows:
+P
+
+^s ðx, wÞ ¼
+
+m
+ij aij ðx, wÞðYij  ^
+P
+
+ij
+
+ðXij , W j ÞÞðZij  ^e ij ðXij , W j ÞÞ
+
+^
+ij aij ðx, wÞðZij  e
+
+ij
+
+ðXij , W j ÞÞ2
+(5)
+
+Here, 0  aij ðx, wÞ  1 weighs each data point ij’s
+contribution to ^s ðx, wÞ based on how far ij’s covariates, i.e., X ij , W j , are away from x, w: Roughly speaking, a high aij ðx, wÞ generally indicates that data point
+ij contributes a large portion to ^s ðx, wÞ, whereas a
+small aij ðx, wÞ generally indicates that data point ij
+contributes a small portion to ^s ðx, wÞ:
+Computing the weights aij ðx, wÞ is based on a
+modified recursive partitioning algorithm with
+~ ij , X ij , W j : Specifically, suppose we obtain B boot~ ij , Z
+Y
+strap replicates and let b ¼ 1, :::, B be one of those
+replicates. For each bth replicate, take a random subsample without replacement of size s from n total
+samples in the bth replicate. The algorithm randomly
+partitions the s subsampled data into two equallysized data, say subsets J 1 and J 2 : Using J 1 , the
+algorithm initializes a “parent” node P, which represents all the data in J 1 , and computes pseudo-outcomes qij for data in P
+
+833
+
+~
+~
+~
+~ ^
+~
+~
+qij ¼ D1
+P ðZ ij  Z P ÞðY ij  Y P  ðZ ij  Z P Þb P Þ,
+X
+1
+~ ij  Z
+~ P Þ2
+ðZ
+DP ¼
+Iðij 2 PÞ ij2P
+~ P represent averages of Y
+~ ij ,
+~ P and Z
+~ ij and Z
+Here, Y
+^
+respectively, among data in the parent node P and b
+P
+~ ij
+~ ij and Z
+represents a linear regression between Y
+among data points in P: It then uses standard
+Classification and Regression Trees (CART) (Breiman
+et al., 1984) with the psuedo-outcomes qij and covariates X ij , W j to find a partition of the parent node P
+into two non-overlapping children nodes C1 and C2
+such that the following argument is maximized
+P
+P
+2
+2
+ij2C1 qij
+ij2C2 qij
+P
+P
+þ
+argmaxC1 , C2
+ij2P Iðij 2 C1 Þ
+ij2P Iðij 2 C2 Þ
+Roughly speaking, the argmax above finds partitions
+C1 and C2 of P such that the variance of the pseudooutcomes within each partition is maximized. For
+example, if one of the covariates is sex (male or female),
+C1 may be study units who are female and C2 may be
+study units who are male. It may choose these partition
+based on sex if it maximizes the equation above. Once
+it finds a partition C1 , C2 , it relabels C1 as the parent P
+and repeats the procedure; it also does the same for the
+other child node C2 : The procedure stops after it
+reaches a stopping criterion and the final output is a
+partition of the covariate space that is represented as a
+binary tree. It then uses the other subset J 2 to count
+the proportion of data in J 2 that fall inside each of the
+terminal leaf nodes in the binary tree. This process is
+repeated across b ¼ 1, :::, B bootstrap replicates, constructing B trees. Given a set of covariates x, w, the
+algorithm evaluates aij, b ðx, wÞ, which is equal to one of
+aforementioned proportions if x, w belongs to the same
+leaf node as data point ij and 0 otherwise, for each
+bootstrap replicate. Finally,
+P it computes the weights
+aij ðx, wÞ as aij ðx, wÞ ¼ Bb¼1 aij, b ðx, wÞ=B: We remark
+that we can use the above recursive partitioning algorithm with bootstrap replicates to estimate the leave^ ij ðx, wÞ: For the
+one-out estimates e^ij ðx, wÞ and m
+interested reader, the entire procedure is implemented
+in the grf package in R (R Core Team, 2020); see
+Tibshirani et al. (2019) for a detailed vignette.
+Compared to parametric approaches in “Doubly
+robust methods”, Causal Forests is a nonparametric
+estimator that, under some assumptions, achieves consistency and asymptotic convergence to a pivotal
+Gaussian distribution. The latter is crucial as it allows
+for construction of p-values and confidence intervals.
+Unfortunately, these statistical properties only hold if
+the data is generated in an i.i.d. fashion. However,
+
+834
+
+Y. SUK ET AL.
+
+Table 1. A summary of simulation designs 1 and 2.
+Design 1
+Clustering structure
+Treatment effects
+Model complexity
+Model specification
+
+Two-level
+Three-level
+Cross-classified
+Constant
+Main effects
+Correct
+
+Design 2
+Two-level
+Cluster-specific
+Main effects and interactions
+Incorrect
+
+Causal Forests can be fine-tuned by changing various
+parameters such as cluster labels, the minimum node
+size of each tree, and a penalty for imbalanced splits,
+and we will modify these parameters to improve its
+performance in clustered data. Specifically, we study
+three modifications to Causal Forests:
+1.
+
+2.
+
+3.
+
+The first modification forces Causal Forests to use
+multilevel propensity scores discussed in “Multilevel
+propensity score methods via weighting” by the
+tuning parameter W.hat in the grf package. In
+other words, the estimator e^ij ðx, wÞ in (5) is based
+on a multilevel logistic regression model with random effect terms instead of the default regression
+forests estimator based on the aforementioned
+recursive partitioning algorithm. This modification
+allows Causal Forests to recognize clustering/hierarchical structure through the multilevel propensity
+score and adjusts its estimate of s^ðx, wÞ accordingly. The modification of this type is denoted as
+(Est.PS) in subsequent sections.
+The second modification follows a suggestion
+from Athey and Wager (2019) where we add cluster label information to define clusters and let
+Causal Forests “figure out” the rest of the clustering structure from the raw cluster labels; in software, this is achieved by using the parameter
+clusters in the grf package. The modification
+forces Causal Forests to draw random subsample
+of clusters (instead of individuals) and then run
+the algorithm above within the subsampled clusters. With this modification, the out-of-bag samples are defined as samples that are not in the
+random subsample of clusters drawn to train the
+tree. The modification of this type is denoted as
+(ID) in subsequent sections.
+The third modification combines the above two
+modifications and is denoted as (Est.PS þ ID) in
+subsequent sections.
+
+The next sections evaluate these modifications to
+Causal Forests through an extensive simulation study
+and a real data analysis.
+
+Simulation study
+We conducted a large-scale simulation study to assess
+the performance of methods in “Methods of estimating
+the average treatment effect in multilevel data”. Our
+simulation study can be broadly categorized into two
+designs and is summarized in Table 1. Design 1 assumes
+a constant treatment effect and generates data from
+three types of multilevel structures: two-level, threelevel, and cross-classified. Design 2 is limited to twolevel structures, but has varying treatment effects across
+clusters and mis-specifies the outcome and selection
+models to test the robustness of methods to model misspecification. For both designs, we compare the performance between the default Causal Forests without
+any modifications, the modified Causal Forests discussed above, and traditional multilevel propensity score
+and DR methods discussed in “Multilevel propensity
+score methods via weighting” and “Doubly robust
+methods”. In particular, under design 1, the IPW estimator, MMW-S estimator, and two DR estimators use
+correctly specified propensity score and outcome models and represent an ideal scenario whereby a careful
+investigator was nearly or completely successful in modeling. Based on asymptotic theory, the DR estimators
+should perform best under design 1. However, under
+design 2, these four estimators use mis-specified propensity score and outcome models with varying degrees
+of the model mis-specification and represent a more
+realistic scenario whereby a careful investigator, despite
+his/her best efforts, was partially successful in modeling.
+Under design 2, nonparametric methods like Causal
+Forests have the potential to show more promise in
+achieving better performance than traditional methods
+since ML methods flexibly and (nearly) automatically
+capture local structure and model a wider array of functional forms, including those that are used in traditional
+DR and non-DR methods.
+For all simulation designs, we repeated the simulation 1000 times. We evaluated the performance of
+each estimator by measuring the absolute relative bias
+(%), standard deviation (SD), and mean squared error
+(MSE) defined as follows.
+
+
+ 1 X
+1000
+ð^s m  sÞ
+
+Biasð%Þ ¼ 100  
+
+
+1000 m¼1
+s
+sﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃﬃ
+1
+000
+X
+1
+SD ¼
+ð^s m  ^sÞ2
+1000  1 m¼1
+MSE ¼
+
+1000
+1 X
+ð^s m  sÞ2
+1000 m¼1
+
+MULTIVARIATE BEHAVIORAL RESEARCH
+
+Here, ^s m , m ¼ 1, :::, 1000 is the m-th estimate of the
+ATE from 1000 simulations. Computer code for the
+simulation study is available in the supplemental
+materials and can also be found at the first author’s
+github repository.1
+Design 1 with two-level data
+The data generating model for two-level clustered data
+is stated below. The specific parameter values in the
+model were based on our empirical data from TIMSS.
+1.
+
+2.
+
+For each cluster j ¼ 1, :::, J, generate the total
+number of individuals in each cluster nj by drawing a number from a normal distribution with
+mean I and standard deviation sd and rounding it
+to the nearest integer.
+For each individual i ¼ 1, :::, nj in cluster j, generate cluster-level and individual-level covariates
+W j ¼ ðW1j , W2j Þ and X ij ¼ ðX1ij , X2ij Þ as follows.
+
+
+
+
+
+  
+
+0
+2 :2
+,
+0
+:2 2
+
+
+
+
+0:1W1j þ 0:05W2j þ j1j
+X1ij
+N
+,
+X2ij
+0:08W1j þ 0:1W2j þ j2j
+ 
+  
+
+j1j
+0
+1 0:1
+N
+,
+j2j
+0
+0:1 1
+W1j
+W2j
+
+N
+
+
+
+10 2
+2 15
+
+
+
+Individual-level covariates are functions of clusterlevel covariates W1j , W2j and random errors j1j , j2j :
+This type of model for the covariates reflects studies
+where cluster-level school characteristics impact students’ malleable characteristics. For example, it is
+plausible that students’ classroom behavior, motivation, grit, and/or goal orientations (i.e., individuallevel covariates X ij ) are affected by location of the
+school, school funding, schools’ vision or climate/culture (i.e., cluster-level covariates W j ). We remark that
+depending on the study at hand, X ij and W j can have
+different relationships, such as X ij and W j being independent of each other or W j being affected by X ij :
+3. Generate individual treatment status Zij from the
+following random-effects logistic propensity score
+model.
+logitðpij Þ ¼ 0 þ 0:1X1ij þ 0:03X2ij þ 0:16W1j
+þ0:08W2j þ Rj ,
+
+Rj  Nð0, 1Þ
+
+Zij  Bernoulliðpij Þ
+where pij is the propensity score for individual i in
+cluster j, and Rj is the random effect for cluster j with
+1
+
+https://github.com/youmisuk/multilevelCF.
+
+835
+
+mean of 0 and variance of 1. The intra-class correlation (ICC) is around 0.23.
+4.
+
+Generate the potential outcomes Yij ð1Þ, Yij ð0Þ and
+observed outcome Yij from a random-effects linear regression model.
+Yij ðzÞ ¼ 100 þ s  z þ 2X1ij þ 1X2ij þ 2W1j
+þ1:5W2j þ Uj þ ij
+Yij ¼ Zij Yij ð1Þ þ ð1  Zij ÞYij ð0Þ
+Uj  Nð0, 10Þ, ij  Nð0, 100Þ
+
+Here, Uj is the random effect for cluster j with mean
+of 0 and variance of 10, and ij is the random error
+for individual i in cluster j with mean of 0 and variance of 100. Also, the treatment effect is constant and
+set to s ¼ 2. The ICC is 0.1.
+Figure 1 summarizes the results. Each row category, denoted by (J, I(sd)), represents three sub-types
+of two-level data defined by the number of clusters J
+and the mean size of each cluster I along with its
+standard deviation sd. For example, the first row category is a two-level dataset with J ¼ 150 clusters and
+each cluster has, on average, 30 individuals with
+standard deviation of 2. In this condition, we
+observed that the two DR estimators had the smallest
+bias and MSE, and the MMW-S estimator had the
+largest bias and MSE. The performance of
+the MMW-S estimator was surprising given that it is
+the de-facto estimator for the ATE in multilevel
+data. In Appendix C, we computed MMW-S across
+different choices of S and show that MMW-S is sensitive to the choice of S, and the advice from Hong
+(2010) about choosing S may not be always ideal in
+our setup. Between Causal Forests and traditional
+methods, the performance of modified Causal Forests
+with multilevel propensity scores (CF þ Est.PS) generally lied somewhere in between DR estimators and
+non-DR estimators in terms of bias and MSE. But
+we observed the modified Causal Forests using
+multilevel propensity scores had the smallest MSE
+across all estimators when the mean size of clusters
+was greater than the number of clusters. Among
+Causal Forests with modifications, the modified
+Causal Forests using multilevel propensity scores had
+the smallest bias and variance. Also, providing explicit cluster labels (CF þ ID) did not improve the performance of Causal Forests. For instance, when the
+mean cluster size was larger than the number of
+clusters, Causal Forests with only cluster labels
+showed the worst performance across all estimators.
+However, Causal Forests using both multilevel
+
+836
+
+Y. SUK ET AL.
+
+Figure 1. Performance of ATE estimates in two-level data under design 1. (J, I(sd)) represent the number of clusters and the mean
+size of clusters and its standard deviation, respectively. IPW represents inverse-propensity weighting and MMW-S represents marginal mean weighting through stratification. DR IPW and DR MMW-S represent doubly robust estimators with IPW and MMW-S
+weights, respectively. CF represents Causal Forests without modification. CF þ Est.PS represents CF with propensity scores from a
+multilevel logistic regression. CF þ ID represents CF with cluster labels. CF þ Est.PS þ ID represents CF with propensity scores from
+a multilevel logistic regression and cluster labels. The dashed black line indicates the true average treatment effect value of 2.
+
+propensity scores and cluster labels performed similarly to Causal Forests using multilevel propensity scores.
+
+Intrigued by the poor performance of the modified
+Causal Forests based only on cluster labels, Figure 2
+explores the properties of Causal Forests when we
+
+MULTIVARIATE BEHAVIORAL RESEARCH
+
+837
+
+Figure 2. Performance of ATE estimates in two-level data: asymptotic properties. (J, I(sd)) represent the number of clusters and the
+mean size of clusters and its standard deviation, respectively. IPW represents inverse-propensity weighting and MMW-S represents
+marginal mean weighting through stratification. DR IPW and DR MMW-S represent doubly robust estimators with IPW and MMW-S
+weights, respectively. CF represents Causal Forests without modification. CF þ Est.PS represents CF with propensity scores from a
+multilevel logistic regression. CF þ ID represents CF with cluster labels. CF þ Est.PS þ ID represents CF with propensity scores from
+a multilevel logistic regression and cluster labels. The dashed black line indicates the true average treatment effect value of 2.
+
+increase the sample size beyond what is typical in
+most education studies. For better visualization,
+Figure 2 trims the top and bottom 10% of estimates
+from modified Causal Forests using only cluster labels
+in the (J, I(sd)) ¼ (10, 5000ð4Þ ) setting. But the absolute
+relative bias, SD, and MSE are computed using all
+1000 estimates from the simulation. Interestingly,
+when the number of clusters was 5000 and the size of
+each cluster was around 10, the default Causal Forests
+and modified Causal Forests with cluster labels performed best in terms of MSE among all Causal
+Forests methods. On the other hand, when the number of clusters was 10 and the size of each cluster was
+around 5000, Causal Forests with estimated propensity
+scores performed best in terms of bias and MSE
+among all Causal Forests methods; in fact, Causal
+Forests with cluster labels performed worse than the
+default Causal Forests.
+
+The result of Figure 2 agrees with some prior theoretical results concerning clustered data and the
+underlying sampling splitting procedure behind
+Causal Forests. For example, prior works in econometrics have shown that estimators for cluster-robust
+standard errors are generally consistent if the number
+of clusters goes to infinity and the size of the cluster
+is relatively small in comparison (Wooldridge, 2010).
+Additionally, in clustered randomized trials where the
+treatment is assigned at the cluster level, many methods typically require the number of clusters to be
+much larger than the size of the clusters to achieve
+consistent and asymptotically Normal estimates of the
+ATE; see Donner and Klar (2010), Hayes and
+Moulton (2009), Kang and Keele (2018) and references therein. Finally, as mentioned in “Causal forests
+and modifications for multilevel data,” when Causal
+Forests is provided with cluster labels, the underlying
+
+838
+
+Y. SUK ET AL.
+
+sample splitting procedure is done at the cluster level.
+This means that for a small number of clusters, there
+will be fewer clusters to train the tree, potentially
+leading to large biases. In contrast, for a large number
+of clusters, there will be many clusters to train the
+tree, leading to smaller biases. Combining these
+insights with Figure 2, in two-level data, we believe
+that providing cluster labels to Causal Forests is only
+useful in a setting where the number of clusters is
+much larger than the size of clusters.
+Design 1 with three-level data
+Three-level data were generated in a similar way as
+two-level data, but with an additional set of twodimensional continuous covariates at the highest
+hierarchy. Specifically, we varied the number of highest-level clusters K and the number of intermediatelevel clusters where the latter was determined by
+drawing a number from a normal distribution with
+mean J and standard deviation sd and rounding it to
+the nearest integer. Also, the propensity score and
+outcome models for three-level data were:
+logitðpijk Þ ¼ 0:2 þ 0:1X1ijk þ 0:03X2ijk þ 0:1W1jk
+Q
+þ0:08W2jk þ 0:1Q1k þ 0:05Q2k þ RW
+jk þ Rj
+
+Yijk ðzÞ ¼ 100 þ 2  z þ 2X1ijk þ 1X2ijk þ 2W1jk þ 1:5W2jk
+þ1Q1k þ 0:5Q2k þ UjkW þ UkQ þ ijk
+
+Figure 3 shows the simulation results for three-level
+data. Similar to the result from two-level data, the two
+DR estimators had the smallest bias. However, unlike
+the results from two-level data, modified Causal Forests
+with multilevel propensity scores was able to achieve the
+smallest MSE among all estimators; their MSEs were
+equal to or slightly lower than the MSEs of the DR estimators. The bias of modified Causal Forests with multilevel propensity scores was in between the bias of the
+non-DR estimators and the DR estimators; the notable
+exception is the MMW-S estimator with 15 three-level
+clusters where its bias was lower than modified Causal
+Forests with multilevel propensity scores. Also, similar
+to the result from two-level data, among different modifications to Causal Forests, we found that including the
+multilevel propensity scores had the largest improvement in terms of bias and variance compared to including only cluster labels into Causal Forests or using the
+default Causal Forests. Among Causal Forests estimators
+with only cluster labels, including the intermediate-level
+cluster labels (CF þ ID2) provided more bias and variance reduction than including the highest-level cluster
+labels (CF þ ID3). However, as seen from the two-level
+setting, using only cluster labels did not provide significant benefits compared to only using multilevel propensity scores, and there were no additional gains in
+performance from including the cluster labels into
+modified Causal Forests already using multilevel propensity scores.
+
+RW
+jk  Nð0,1Þ,
+RQk  Nð0,1Þ,UjkW  Nð0,10Þ,
+
+Design 1 with cross-classified data
+
+UkQ  Nð0,7Þ,ijk  Nð0,100Þ
+
+Our data generating model for cross-classified data follows closely to Meyers and Beretvas (2006) where we
+assume that cross-factor residuals are uncorrelated and
+there are three feeders from one factor to the other factor. The two factors’ numbers, denoted as F1 and F2,
+varied simultaneously. The exact propensity score and
+outcome models in cross-classified data were:
+
+We highlight three additional differences between
+the three-level simulation design and the two-level
+simulation design in “Design 1 with two-level data.”
+First, there are two more continuous covariates,
+Q1k , Q2k , at the highest level of the hierarchy. Second,
+there are two random effect terms in the propensity
+Q
+score model (i.e., RW
+jk and Rj ) and in the outcome
+Q
+model (i.e., UjkW and Uk ). Random effect terms follow
+a Normal distribution with mean zero and variance
+r2 : The additional random effect term in each model
+corresponds to the additional clustering effect at the
+highest level of the hierarchy. The ICCs for RW
+jk and
+RQj in the propensity score model are around 0.19 and
+0.19, respectively, and the ICCs for UjkW and UkQ in the
+outcome model are 0.1 and 0.07, respectively. Third,
+we provide either intermediate-level or highest-level
+cluster labels when we modify Causal Forests.
+Additional details on generating three-level data are in
+Appendix A.
+
+logitðpijk Þ ¼ 0:2 þ 0:1X1iðjkÞ þ 0:03X2iðjkÞ þ 0:1W1j
+Q
+þ0:08W2j þ 0:1Q1k þ 0:05Q2k þ RW
+j þ Rk
+
+YiðjkÞ ðzÞ ¼ 100 þ 2  z þ 2X1iðjkÞ þ 1X2iðjkÞ þ 2W1j þ 1:5W2j
+þ1Q1k þ 0:5Q2k þ UjW þ UkQ þ iðjkÞ
+Q
+W
+RW
+j  Nð0,1Þ,Rk  Nð0,0:5Þ,Uj  Nð0,10Þ,
+
+UkQ  Nð0,7Þ,ijk  Nð0,100Þ
+Compared to two-level data, in cross-classified
+data, there are two more continuous covariates to
+indicate an additional cluster level, Q1k , Q2k : Also,
+both the propensity score and the outcome models
+have two random effect terms for the two factors (i.e.,
+
+MULTIVARIATE BEHAVIORAL RESEARCH
+
+839
+
+Figure 3. Performance of ATE estimates in three-level data. (K, J(sd), and I(sd)) represent the number of level-3 clusters, the mean
+size of level-3 clusters with its standard deviation, and the mean size of level-2 clusters with its standard deviation, respectively.
+IPW represents inverse-propensity weighting and MMW-S represents marginal mean weighting through stratification. DR IPW and
+DR MMW-S represent doubly robust estimators with IPW and MMW-S weights, respectively. CF represents Causal Forests without
+modification. CF þ Est.PS represents CF with propensity scores from a multilevel logistic regression. CF þ ID2 and CF þ ID3 represent CF with level-2 cluster labels and level-3 cluster labels, respectively. CF þ Est.PS þ ID2 and CF þ Est.PS þ ID3 represent CF with
+propensity scores from a multilevel logistic regression and level-2 or level-3 cluster labels. The dashed black line indicates the true
+average treatment effect value of 2.
+Q
+Q
+W
+RW
+j , Rk and Uj , Uk ). Random effect terms follow a
+Normal distribution with mean zero and variance r2 :
+The ICCs for RW
+and RQk in the propensity score
+j
+
+model are around 0.21 and 0.10, respectively, and the
+ICCs for UjW and UkQ in the outcome model are 0.1
+and 0.07, respectively. Finally, for modified Causal
+
+840
+
+Y. SUK ET AL.
+
+Figure 4. Performance of ATE estimates in cross-classified data. (F1, F2, and I(sd)) represent the number of factor-1 clusters, the
+number of factor-2 clusters, and the mean size of factor-1 clusters with its standard deviation, respectively. IPW represents inversepropensity weighting and MMW-S represents marginal mean weighting through stratification. DR IPW and DR MMW-S represent
+doubly robust estimators with IPW and MMW-S weights, respectively. CF represents Causal Forests without modification.
+CF þ Est.PS represents CF with propensity scores from a multilevel logistic regression. CF þ F1ID, CF þ F2ID, and CF þ F12ID represent CF with the first factor labels, the second factor labels, and the two factors’ combined labels, respectively. CF þ Est.PS þ F1ID,
+CF þ Est.PS þ F2ID, and CF þ Est.PS þ F12ID represent CF with propensity scores from a multilevel logistic regression and the first
+factor, the second factor, or the combined labels. The dashed black line indicates the true average treatment effect value of 2.
+
+Forests based on cluster labels, we use either the first,
+second, or combined factor labels. Additional details
+on generating cross-classified data are in Appendix B.
+
+Figure 4 provides the results under cross-classified
+data setting. While the two DR estimators had the
+smallest bias in most scenarios, the modified Causal
+
+MULTIVARIATE BEHAVIORAL RESEARCH
+
+Forests with multilevel propensity scores had the
+smallest bias and MSE when the cluster size (here,
+factor 1 clusters) was larger than the number of the
+clusters. In the opposite setting where the size of
+the clusters was smaller than the number of clusters,
+the bias and MSE of modified Causal Forests with
+multilevel propensity scores was somewhere in
+between those from DR and non-DR estimators. The
+bias of modified Causal Forests with only cluster
+labels was comparable to or sometimes worse than
+that of the IPW estimator or MMW-S estimator.
+Among modified Causal Forests using cluster labels,
+Causal Forests using combined cluster identifiers
+(CF þ F12ID) had the smallest MSE than those using
+only one factor identifier (CF þ F1ID or CF þ F2ID).
+Similar to two-level and three-level settings, having
+both estimated propensity scores and cluster IDs in
+Causal Forests provided no additional benefits compared to having only multilevel propensity scores.
+Design 2 with two-level data
+In design 2, we generated two-level data similar to
+design 1, except we changed the propensity score and
+the outcome model as follows:
+logitðpij Þ ¼ 0 þ 0:1X1ij þ 0:03X2ij þ 0:16W1j
+þ0:08W2j þ b1 X1ij W2j þ Rj
+Yij ðzÞ ¼ 100 þ s  z þ 2X1ij þ 1X2ij þ 2W1j þ 0:5z  W1j
+þ1:5W2j þ b2 X1ij W2j þ Uj þ ij
+b ¼ ðb1 , b2 Þ 2 fð0:02, 0:3Þ, ð0:04, 0:6Þ, ð0:06, 1Þg
+Rj  Nð0, 1Þ, Uj  Nð0, 10Þ, ij  Nð0, 100Þ
+There are two major differences between the previous two-level simulation design in “Design 1 with
+two-level data” and the new two-level simulation
+design. First, there is now an interaction term between
+the individual-level covariate X1ij and the cluster-level
+covariate W2j in both the propensity score and outcome models. The interaction term’s magnitude is
+controlled by parameter b: We use this extra interaction term to intentionally mis-specify the propensity
+score and the outcome model by only fitting the main
+effects; note that this type of mis-specification can
+also be seen as a form of omitted variable bias where
+we “omitted” the interaction terms. Second, in the
+outcome model, there is an interaction term between
+the treatment z and the cluster-level covariate W1j :
+This interaction term creates heterogeneous clusterspecific treatment effects where the cluster-specific
+CATE is s þ 0:5W1j : However, the mean of W1j is
+zero and hence, the overall ATE remains the same as
+before, s ¼ 2.
+
+841
+
+Figure 5 summarizes the results with different values of b: As the propensity score and outcome models
+became more mis-specified, the DR estimators
+behaved similarly to non-DR estimators and both
+were equally biased. When the model mis-specification was moderate to large, Causal Forests methods
+almost always performed better in terms of bias and
+MSE than any of the traditional methods (IPW,
+MMW-S, and DR estimators) across different conditions on the number of clusters and the mean size of
+clusters. Even the default Causal Forests that did not
+incorporate any clustering information did better than
+traditional methods that incorporated clustering. This
+suggests that when parametric models are mis-specified, nonparametric methods like Causal Forests perform better than traditional parametric methods, even
+if the ML methods were not initially designed for
+clustered data, because they can automatically capture
+the omitted interaction terms that potentially lead to
+more significant bias compared to bias arising from
+ignoring clustering structure inside ML methods.
+Also, the modified Causal Forests with multilevel propensity scores outperformed the default Causal Forests
+in terms of variance across all settings, and they did
+better than the default Causal Forests in terms of
+MSE when the model mis-specification was small to
+moderate. Finally, Causal Forests using only cluster
+labels generally performed worse than Causal Forests
+using multilevel propensity scores.
+Takeaways from simulation studies
+Overall, the simulation studies above suggest some
+guidelines on how to modify ML methods for clustered/hierarchical data. While these are not meant to
+encompass every ML method in causal inference or
+every possible type of clustered data in practice, we
+hope that the suggestions provided below based on
+our simulation study with Causal Forests can serve as
+useful guidelines for empirical or theoretical analyses
+of clustered data with ML methods.
+1.
+
+For Causal Forests, incorporating multilevel, hierarchical structure through multilevel propensity
+score models typically had the largest improvement in terms of bias and MSE compared to
+Causal Forests that directly used cluster labels. In
+particular, Causal Forests using cluster labels
+should only be reserved to settings when the
+number of clusters is much larger than the size
+of clusters.
+
+842
+
+Y. SUK ET AL.
+
+Figure 5. Performance of ATE estimates in two-level data under design 2; b1 and b2 are coefficients of the omitted interaction
+terms in parametric selection and outcome models, respectively. (J, I(sd)) represent the number of clusters and the mean size of
+clusters and its standard deviation, respectively. IPW represents inverse-propensity weighting and MMW-S represents marginal
+mean weighting through stratification. DR IPW and DR MMW-S represent doubly robust estimators with IPW and MMW-S weights,
+respectively. CF represents Causal Forests without modification. CF þ Est.PS represents CF with propensity scores from a multilevel
+logistic regression. CF þ ID represents CF with cluster labels. CF þ Est.PS þ ID represents CF with propensity scores from a multilevel
+logistic regression and cluster labels. The dashed black line indicates the true average treatment effect value of 2.
+
+2.
+
+3.
+
+In general, there was no significant benefit in
+terms of bias and MSE when using both multilevel propensity scores and cluster labels inside
+Causal Forests compared to just using multilevel
+propensity scores.
+Causal Forests with multilevel propensity scores
+almost always performed better in terms of bias
+and MSE than multilevel propensity score
+
+estimators (IPW and MMW-S) with correctly
+specified parametric propensity scores, but generally performed worse than DR methods with correctly specified parametric propensity score and
+outcome models, with some notable exceptions.
+In particular, Causal Forests with multilevel propensity scores had similar or slightly lower MSE
+than those those from DR methods with correctly
+
+MULTIVARIATE BEHAVIORAL RESEARCH
+
+4.
+
+5.
+
+specified propensity score and outcome models
+whenever the size of the clusters is larger than the
+number of clusters.
+If DR or non-DR estimators were using parametric propensity score or outcome models that were
+moderately mis-specified, Causal Forests with
+multilevel propensity scores outperformed them
+in terms of bias and MSE.
+Causal Forests with multilevel propensity scores
+performed better in terms of MSE than the
+default Causal Forests without any modifications,
+even if the multilevel propensity score model
+inside modified Causal Forests was moderately
+mis-specified.
+
+Real data study
+Data
+TIMSS is an international educational study about students’ achievement progresses in mathematics and science and is sponsored by the International Association
+for the Evaluation of Educational Achievement (IEA).
+Since 1995, TIMSS has collected data among students
+in Grades 4 and 8 every four years. To do this, TIMSS
+uses a two-stage stratified cluster sampling design
+where in the first stage, each country selects schools
+based on important demographic variables (e.g., school
+location and/or school gender type), and in the second
+stage, each school randomly selects one or more intact
+classrooms (Martin et al., 2016). The most recent completed wave of TIMSS was in 2015 and conducted
+across 60 countries.
+We used the 2015 Korea TIMSS Grade-8 data to
+investigate the effect of private math lessons. The data
+contained 5309 students from 150 middle schools
+where the school sizes ranged from 6 to 75 students;
+the mean size of schools was about 30. While the original data resembled a three-level structure based on a
+student-class-school hierarchy, we found that most of
+the schools selected one classroom; 130 schools
+selected one classroom, and 20 schools selected two
+classrooms. Since there was a near one-to-one correspondence between school and class levels, we analyzed
+the data as a two-level data where students are nested
+within schools.
+The treatment was whether students received private math lessons, with 1 indicating that the student
+did and 0 otherwise; the treatment was assigned at the
+student level. The outcome was the first plausible
+value of students’ math achievement scores; in the
+2015 TIMSS data, each student obtained five plausible
+values because they took a subset of items from a full
+
+843
+
+battery of assessment items. In addition, we used 12
+covariates that were thought to influence the treatment and outcome variables. Six of 12 covariates were
+student-level covariates and the other six covariates
+were school-level covariates. Student-level covariates
+included (1) gender (sexM, male and female), (2)
+fathers’ highest education level (dad.edu, with three
+levels including no college, college dad_cll, and don’t
+know dad_q), (3) the number of books at home
+(books25, with two levels defined as more than 25
+books or less than or equal to 25 books), (4) the number of home study supports (hspprt, with three levels
+including neither own room nor Internet connection,
+one of them hspprt_1, and both hspprt_2), (5) students’ confidence in math (M.stuconf, continuous),
+and (6) value in math (M.value, continuous). Schoollevel covariates included (1) whether the school is
+gendered (gender.type, with three levels of all-boys,
+all-girls girlsch, and co-education coedu), (2) the percentage of economically disadvantaged students
+(pct.disad, with four levels of 0% to 10%, 11% to 25%
+disad_11, 26% to 50% disad_26, and more than 50%
+disad_M50), (3) school location (city.size, with four
+levels of urban city_U, suburban city_Sub, medium
+size city city_M, and small town), (4) emphasis on
+academic success (acad.emph, continuous), 5) math
+instruction affected by resource shortage (M.resshort,
+continuous),
+and
+(6)
+discipline
+problems
+(dscpn, continuous).
+We excluded students whose responses were inconsistent with the following two questions regarding
+their participation in private math lessons: (Q1)
+whether students received private math lessons and
+(Q2) for how many months they received these lessons. In particular, we excluded students who
+answered “Yes” to (Q1) and “did not attend” to (Q2)
+and students who answered “No” to (Q1) and
+answered something other than “did not attend” to
+(Q2). Additionally, we excluded students who were
+missing 7 out of 12 covariates. The final sample consisted of 4943 students (93.1% of the original sample)
+from 149 schools. In the final sample, the outcome’s
+mean was 606.08 and its standard deviation was
+84.19; its minimum and maximum were 306.66 and
+859.86, respectively. Data analyzed in this study is
+included in the supplementary materials and can also
+be found at the first author’s github repository.
+Methods
+We followed our simulation study and estimated a
+joint propensity score model based on random-effects
+
+844
+
+Y. SUK ET AL.
+
+Figure 6. Covariate balance plots before and after propensity score adjustment.
+
+logistic regression with main effect terms. The outcome model (for DR methods) was based on randomeffects linear regression model with main effect terms.
+We also implemented Causal Forests as mentioned in
+“Design 1 with two-level data.” We used grf package
+to run Causal Forests. For the IPW, MMW-S, DR
+IPW, and DR MMW-S estimators, we used lme4
+package (Bates et al., 2015) to estimate propensity
+scores and outcome regression models. Standard
+errors were estimated using cluster bootstrap sampling
+with 5000 replicates. All analyses were conducted in
+R. We evaluated covariate balance between treated
+and untreated units before estimating the ATE. As a
+rule of thumb, a good balance for a covariate is when
+its absolute standardized mean difference is smaller
+than 0.1 and its variance ratio is in between 4/5 and
+5/4 (Rubin, 2001; Shadish et al., 2008; Steiner et al.,
+2010). For simplicity, we ignored sampling weights
+that weighed each individual in the data. Since we did
+not incorporate sampling weights and multiple plausible values, our proposed analysis plan does not generalize to the study population outside of TIMSS.
+Results
+Figure 6 provides covariate balance plots before and
+after propensity score adjustments. Before adjustment,
+there were imbalances in most of the 12 covariates:
+dad.edu, books25, hspprt, M.stuconf, M.value, pct.disad,
+city.size, and acad.emph. After IPW or MMW-S
+adjustment, we improved balance between private-lessons takers (the treated) and non-takers (the
+untreated). Weights from MMW-S with 3 strata
+achieved more successful balance than weights from
+the IPW estimator; weights from MMW-S achieved
+almost perfect mean and variance balance, whereas
+
+weights from the IPW estimator still left two covariates slightly imbalanced.
+Figure 7 summarizes the estimates, standard errors
+(in parentheses), and 95% confidence intervals of the
+ATE using different estimators. The prima facie effect
+is the unadjusted mean difference in students’ math
+achievement scores between private-lessons takers and
+non-takers. The unadjusted estimate was 66.88 points
+and the effect was reduced to 27.67 points and 33.88
+points using the IPW estimator and MMW-S estimator, respectively. The DR IPW and DR MMW-S estimators produced estimates of 32.96 and 29.58 points,
+respectively. The ATE estimates obtained with Causal
+Forests ranged from 25.54 (CF þ Est.PS) to 30.30
+(CF þ ID). Between Causal Forests, the IPW estimator, and MMW-S estimator, we found that the point
+estimates of the ATE from Causal Forests using
+multilevel propensity scores (CF þ Est.PS or
+CF þ Est.PS þ ID) were slightly smaller compared to
+the IPW estimator and MMW-S. Regarding the 95%
+confidence intervals of the ATE estimates, we found
+that all the confidence intervals were overlapping. The
+IPW estimator yielded the widest confidence interval
+(i.e., the most conservative standard error), while
+Causal Forests using multilevel propensity scores
+(CF þ Est.PS) produced the narrowest confidence
+interval (i.e., the most liberal standard error). Overall,
+all estimates reached similar conclusions about the
+treatment effect, that private math lessons had a positive effect on math achievement scores.
+
+Discussion and conclusions
+The goal of this paper was to study how to properly
+modify ML methods originally designed for i.i.d. data
+to estimate treatment effects in clustered/multilevel
+
+MULTIVARIATE BEHAVIORAL RESEARCH
+
+845
+
+Figure 7. The estimates, standard errors (in parentheses), and 95% confidence intervals of the ATE of taking private math lessons.
+
+data settings. In particular, we explored how to
+account for cluster or hierarchical structures in Causal
+Forests by including propensity scores from multilevel
+logistic regression or cluster labels. As stated in
+“Takeaways from simulation studies,” our simulation
+studies showed that among all modifications to Causal
+Forests, using Causal Forests with multilevel propensity scores had the best performance in terms of bias
+and MSE, and providing cluster labels was only useful
+in settings where the number of clusters is far larger
+than the size of the clusters. Also, modified Causal
+Forests with multilevel propensity scores performed
+somewhere in between DR and non-DR estimators
+that had correctly specified propensity score and outcome regression models. However, if these parametric
+models were mis-specified, modified Causal Forests
+with multilevel propensity scores performed better
+than the DR and non-DR estimators in
+our simulation.
+We also conducted a real data study to examine
+the effects of private math lessons from the 2015
+TIMSS data. All methods generally revealed that private math lessons improved math scores, though each
+estimator exhibited slightly different point estimates.
+Since each method carries different underlying
+assumptions about the data generating model, differences in these assumptions likely affected the specific
+estimated values of the treatment effect. Nevertheless,
+comparing their results allowed us to assess the
+plausibility of the underlying assumptions and
+reinforce our evidence for a causal effect. As such,
+while Causal Forests with multilevel propensity scores
+is generally recommended when researchers suspect
+more complex data generating processes or when
+
+there is insufficient subject-matter knowledge to justify parametric models, we recommend using both
+Causal Forests and traditional DR and non-DR
+approaches to strengthen the causal conclusion from
+the study.
+There are some limitations of the paper. First, we
+assumed SUTVA in a clustered setting where the
+treatment, assigned at the individual level, is hypothesized to not have spillover effects through interference.
+Second, our simulation study is limited to three types
+of clustered data structures and we did not analyze
+more complex clustering structures, such as clustering
+through spatiotemporal processes. Third, though we
+explored the consequence of omitting an interaction
+term when all the confounders were measured in
+design 2, we did not consider omitted variable bias
+arising from unmeasured pretreatment covariates.
+Fourth, we primarily used estimated propensity scores
+from random-effects logistic regression models as part
+of our modification strategy for Causal Forests.
+However, it has been shown that fixed effects models
+with cluster dummies are robust against unmeasured
+cluster-level variables (Arpino & Mealli, 2011;
+Wooldridge, 2010) and it would be interesting to
+examine whether using multilevel propensity scores
+with fixed effects inside ML methods can provide additional benefits in estimating the ATE. Fifth, since
+treatments are often multi-valued rather than binary,
+future work may extend the applicability of our results
+to multi-valued treatment settings by utilizing the
+results in Imbens (2000) and Imai and Van Dyk
+(2004). Sixth, this paper primarily focuses on estimating the ATE, but we believe that the insights from
+this work can be used to address challenges in optimal
+
+846
+
+Y. SUK ET AL.
+
+treatment assignment (Dimakopoulou et al., 2017;
+Kosorok & Moodie, 2015; Li et al., 2017).
+Despite these limitations, this paper provides a simple set of ways to modify preexisting ML methods in
+causal inference in order to estimate the ATE in
+multilevel settings. Our proposed modification of
+Causal Forests by using propensity scores from multilevel regression models helped minimize bias and
+MSE compared to directly providing cluster labels or
+using Causal Forests without any modifications. More
+broadly, this type of modification via the propensity
+score can serve as a template to modify a wide variety
+of ML methods when used in multilevel observational studies.
+
+Article information
+Conflict of Interest Disclosures: Each author signed
+a form for disclosure of potential conflicts of interest.
+No authors reported any financial or other conflicts of
+interest in relation to the work described.
+Ethical Principles: The authors affirm having followed professional ethical guidelines in preparing this
+work. These guidelines include obtaining informed
+consent from human participants, maintaining ethical
+treatment and respect for the rights of human or animal participants, and ensuring the privacy of participants and their data, such as ensuring that individual
+participants cannot be identified in reported results or
+from publicly available original or archival data.
+Funding: This work was partly supported by a Vilas
+Faculty Mid-Career Investigator Award through the
+University of Wisconsin-Madison.
+Role of the Funders/Sponsors: None of the funders
+or sponsors of this research had any role in the design
+and conduct of the study; collection, management,
+analysis, and interpretation of data; preparation,
+review, or approval of the manuscript; or decision to
+submit the manuscript for publication.
+Acknowledgements: The authors would like thank the
+associate editor Dr. Felix Thoemmes and three
+anonymous reviewers for their comments on prior
+versions of this manuscript. The ideas and opinions
+expressed herein are those of the authors alone, and
+endorsement by the authors’ institution or the funding
+agency is not intended and should not be inferred.
+
+ORCID
+Youmi Suk
+
+http://orcid.org/0000-0003-0316-6201
+
+References
+Arpino, B., & Cannas, M. (2016). Propensity score matching
+with clustered data: An application to the estimation of
+the impact of caesarean section on the Apgar score.
+Statistics in Medicine, 35(12), 2074–2091. https://doi.org/
+10.1002/sim.6880
+Arpino, B., & Mealli, F. (2011). The specification of the propensity score in multilevel observational studies.
+Computational Statistics & Data Analysis, 55(4),
+1770–1780. https://doi.org/10.1016/j.csda.2010.11.008
+Athey, S., & Imbens, G. (2016). Recursive partitioning for
+heterogeneous causal effects. Proceedings of the National
+Academy of Sciences, 113(27), 7353–7360. https://doi.org/
+10.1073/pnas.1510489113
+Athey, S., Tibshirani, J., & Wager, S. (2019). Generalized
+random forests. The Annals of Statistics, 47(2),
+1148–1178. https://doi.org/10.1214/18-AOS1709
+Athey, S., & Wager, S. (2019). Estimating treatment effects
+with causal forests: An application. arXiv preprint arXiv:
+1902.07409.
+Bates, D., M€achler, M., Bolker, B., & Walker, S. (2015).
+Fitting linear mixed-effects models using lme4. Journal of
+Statistical Software, 67(1), 1–48. https://doi.org/10.18637/
+jss.v067.i01
+Breiman, L., Friedman, J. H., Olshen, R. A., & Stone, C. J.
+(1984). Classification and regression trees. Wadsworth.
+Carvalho, C., Feller, A., Murray, J., Woody, S., & Yeager, D.
+(2019). Assessing treatment effect variation in observational studies: Results from a data challenge.
+Observational Studies. https://obsstudies.org/277-2/
+Chernozhukov, V., Chetverikov, D., Demirer, M., Duflo, E.,
+Hansen, C., Newey, W., & Robins, J. (2018). Double/
+debiased machine learning for treatment and structural
+parameters. The Econometrics Journal, 21(1), C1–C68.
+https://doi.org/10.1111/ectj.12097
+Dimakopoulou, M., Zhou, Z., Athey, S., & Imbens, G.
+(2017). Estimation considerations in contextual bandits.
+arXiv preprint arXiv:1711.07077.
+Donner, A., & Klar, N. (2010). Design and analysis of cluster
+randomization trials in health research. Wiley.
+Hayes, R. J., & Moulton, L. H. (2009). Cluster randomised
+trials. Chapman & Hall/CRC. https://doi.org/10.1201/
+9781584888178
+Hill, J. L. (2011). Bayesian nonparametric modeling for
+causal inference. Journal of Computational and Graphical
+Statistics, 20(1), 217–240. https://doi.org/10.1198/jcgs.
+2010.08162
+Hong, G. (2010). Marginal mean weighting through stratification: Adjustment for selection bias in multilevel data.
+Journal of Educational and Behavioral Statistics, 35(5),
+499–531. https://doi.org/10.3102/1076998609359785
+Hong, G., & Hong, Y. (2009). Reading instruction time and
+homogeneous grouping in kindergarten: An application
+of marginal mean weighting through stratification.
+Educational Evaluation and Policy Analysis, 31(1), 54–81.
+https://doi.org/10.3102/0162373708328259
+Hong, G., & Raudenbush, S. W. (2006). Evaluating kindergarten retention policy: A case study of causal inference
+for multilevel observational data. Journal of the American
+Statistical Association, 101(475), 901–910. https://doi.org/
+10.1198/016214506000000447
+
+MULTIVARIATE BEHAVIORAL RESEARCH
+
+Hong, G., & Raudenbush, S. W. (2013). Heterogeneous
+agents, social interactions, and causal inference. In S. L.
+Morgan (Ed.), Handbook of causal analysis for social
+research (pp. 331–352). Springer.
+Imai, K., & Van Dyk, D. A. (2004). Causal inference with general treatment regimes: Generalizing the propensity score.
+Journal of the American Statistical Association, 99(467),
+854–866. https://doi.org/10.1198/016214504000001187
+Imbens, G. W. (2000). The role of the propensity score in
+estimating dose-response functions. Biometrika, 87(3),
+706–710. https://doi.org/10.1093/biomet/87.3.706
+Kang, H., & Keele, L. (2018). Estimation methods for cluster
+randomized trials with noncompliance: A study of a biometric smartcard payment system in India. arXiv preprint
+arXiv:1805.03744.
+Keller, B., Kim, J.-S., & Steiner, P. M. (2015). Neural networks for propensity score estimation: Simulation results
+and recommendations. In L. A. van der Ark, D. M. Bolt,
+W.-C. Wang, J. A. Douglas, & M. Wiberg (Eds.),
+Quantitative psychology research: The 80th Annual Meeting
+of the Psychometric Society (pp. 279–291). Springer.
+Kim, J., & Seltzer, M. (2007). Causal inference in multilevel
+settings in which selection processes vary across schools.
+CSE technical report 708. National Center for Research
+on Evaluation, Standards, and Student Testing (CRESST).
+Kim, J.-S., & Steiner, P. M. (2015). Multilevel propensity
+score methods for estimating causal effects: A latent class
+modeling strategy. In. A. van der Ark, D. M. Bolt, W.-C.
+Wang, J. A. Douglas, & M. Wiberg (Eds.), Quantitative
+psychology research: The 80th Annual Meeting of the
+Psychometric Society (pp. 293–306). Springer.
+Kosorok, M. R., & Moodie, E. E. M. (2015). Adaptive treatment strategies in practice (E. E. M. Moodie & M. R.
+Kosorok, Eds.). Society for Industrial and Applied
+Mathematics.
+Leite, W. L. (2016). Practical propensity score methods using
+R. Sage Publications.
+Li, L., Lu, Y., Zhou, D. (2017). Provably optimal algorithms
+for generalized linear contextual bandits. Proceedings of the
+34th International Conference on Machine LearningVolume 70, Sydney, Australia, 6–11 Aug. (pp. 2071–2080).
+JMLR.org.
+Lunceford, J. K., & Davidian, M. (2004). Stratification and
+weighting via the propensity score in estimation of causal
+treatment effects: A comparative study. Statistics in
+Medicine, 23(19), 2937–2960. https://doi.org/10.1002/sim.
+1903
+Martin, M. O., Mullis, I. V. S., Hooper, M. (2016). Methods
+and Procedures in TIMSS 2015. TIMSS & PIRLS
+International Study Center, Boston College. http://timssandpirls.bc.edu/publications/timss/2015-methods.html.
+McCaffrey, D. F., Ridgeway, G., & Morral, A. R. (2004).
+Propensity score estimation with boosted regression for
+evaluating causal effects in observational studies.
+Psychological Methods, 9(4), 403–425. https://doi.org/10.
+1037/1082-989X.9.4.403
+Meyers, J. L., & Beretvas, S. N. (2006). The impact of
+inappropriate modeling of cross-classified data structures.
+Multivariate Behavioral Research, 41(4), 473–497. https://
+doi.org/10.1207/s15327906mbr4104_3
+Neyman, J. S. (1923). On the application of probability theory to agricultural experiments: essay on principles.
+
+847
+
+Section 9 (with discussion). Statistical Science, 4,
+465–480.
+R Core Team. (2020). R: A language and environment for
+statistical computing [Computer software manual].
+https://www.R-project.org/.
+Raudenbush, S. W., & Bryk, A. S. (2002). Hierarchical linear
+models: Applications and data analysis methods (Vol. 1). Sage.
+Rickles, J. H., & Seltzer, M. (2014). A two-stage propensity
+score matching strategy for treatment effect estimation in
+a multisite observational study. Journal of Educational
+and Behavioral Statistics, 39(6), 612–636. https://doi.org/
+10.3102/1076998614559748
+Robins, J. M., Rotnitzky, A., & Zhao, L. P. (1994).
+Estimation of regression coefficients when some regressors are not always observed. Journal of the American
+Statistical Association, 89(427), 846–866. https://doi.org/
+10.1080/01621459.1994.10476818
+Rosenbaum, P. R., & Rubin, D. B. (1983). The central role
+of the propensity score in observational studies for causal
+effects. Biometrika, 70(1), 41–55. https://doi.org/10.1093/
+biomet/70.1.41
+Rubin, D. B. (1974). Estimating causal effects of treatments
+in randomized and nonrandomized studies. Journal of
+Educational Psychology, 66(5), 688–701. https://doi.org/
+10.1037/h0037350
+Rubin, D. B. (1986). Comment: Which ifs have causal
+answers. Journal of the American Statistical Association,
+81(396), 961–962. https://doi.org/10.1080/01621459.1986.
+10478355
+Rubin, D. B. (2001). Using propensity scores to help design
+observational studies: application to the tobacco litigation.
+Health Services and Outcomes Research Methodology, 2(3/
+4), 169–188. https://doi.org/10.1023/A:1020363010465
+Schafer, J. L., & Kang, J. (2008). Average causal effects from
+nonrandomized studies: a practical guide and simulated
+example. Psychological Methods, 13(4), 279–313. https://
+doi.org/10.1037/a0014268
+Scharfstein, D. O., Rotnitzky, A., & Robins, J. M. (1999).
+Adjusting for nonignorable drop-out using semiparametric nonresponse models. Journal of the American
+Statistical Association, 94(448), 1096–1120. https://doi.
+org/10.1080/01621459.1999.10473862
+Shadish, W. R., Clark, M. H., & Steiner, P. M. (2008). Can
+nonrandomized experiments yield accurate answers? A
+randomized experiment comparing random and nonrandom assignments. Journal of the American Statistical
+Association, 103(484), 1334–1344. https://doi.org/10.1198/
+016214508000000733
+Steiner, P. M., Cook, T. D., Shadish, W. R., & Clark, M. H.
+(2010). The importance of covariate selection in controlling for selection bias in observational studies.
+Psychological Methods, 15(3), 250–267. https://doi.org/10.
+1037/a0018719
+Steiner, P. M., Kim, J.-S., & Thoemmes, F. (2012). Matching
+strategies for observational multilevel data. In Joint
+Statistical Meeting Proceedings, Social Statistics Section, 28
+July–2 Aug, San Diego, California (pp. 5020–5032).
+American Statistical Association.
+Stuart, E. A. (2010). Matching methods for causal inference:
+A review and a look forward. Statistical Science: A Review
+Journal of the Institute of Mathematical Statistics, 25(1),
+1–21. https://doi.org/10.1214/09-STS313
+
+848
+
+Y. SUK ET AL.
+
+Thoemmes, F. J., & West, S. G. (2011). The use of propensity scores for nonrandomized designs with clustered
+data. Multivariate Behavioral Research, 46(3), 514–543.
+https://doi.org/10.1080/00273171.2011.569395
+Tibshirani, J., Athey, S., Friedberg, R., Hadad, V., Miner, L.,
+Wager, S. (2019). grf: Generalized random forests (beta)
+(R package version 0.10.3) [Computer software manual].
+https://CRAN.R-project.org/package=grf
+van der Laan, M. J., Polley, E. C., & Hubbard, A. E. (2007). Super
+learner. Statistical Applications in Genetics and Molecular
+Biology, 6(1), 25. https://doi.org/10.2202/1544-6115.1309
+van der Laan, M. J., & Rose, S. (2011). Targeted learning:
+Causal inference for observational and experimental data.
+Springer Science & Business Media.
+Wager, S., & Athey, S. (2018). Estimation and inference of
+heterogeneous treatment effects using random forests.
+Journal of the American Statistical Association, 113(523),
+1228–1242. https://doi.org/10.1080/01621459.2017.1319839
+Westreich, D., Lessler, J., & Funk, M. J. (2010). Propensity score
+estimation: Neural networks, support vector machines,
+decision trees (cart), and meta-classifiers as alternatives to
+logistic regression. Journal of Clinical Epidemiology, 63(8),
+826–833. https://doi.org/10.1016/j.jclinepi.2009.11.020
+Wooldridge, J. M. (2010). Econometric analysis of cross section and panel data. MIT Press.
+
+Appendix A: Data generating model for threelevel data
+1.
+
+2.
+
+4.
+
+UjkW  Nð0, 10Þ, UkQ  Nð0, 7Þ, ijk  Nð0, 100Þ
+Yijk ¼ Zijk Yijk ð1Þ þ ð1  Zijk ÞYijk ð0Þ
+where UjkW and UkQ are normally distributed random
+effects for level-2 cluster j of level-3 cluster k, respectively. ijk is the random error for individual i in level-2
+cluster j of level-3 cluster k. Also, the treatment effect
+is constant and set to s ¼ 2.
+
+Appendix B: Data generating model for
+cross-classified data
+1.
+
+2.
+
+3.
+
+For each factor-1 cluster j ¼ 1, :::, J, generate number
+of individuals (e.g., students) per cluster nj (e.g.,
+schools) by drawing a number from a normal distribution with mean nI and standard deviation sd and
+rounding it to the nearest integer.
+Create factor-2 Cluster labels k ¼ 1, :::, K, (e.g., neighborhoods) according to Meyers and Beretvas (2006).
+Here, suppose there is no correlation between residuals and there are three feeders from one factor to the
+other factor. Each factor-1 cluster sends 70% of its
+individuals to the most adjacent factor-2 cluster, 15%
+of its individuals to the next closest factor-2 cluster,
+and 15% of its individuals to the third closest. The
+first factor-1 cluster sends 80% of its individuals to
+the most adjacent factor-2 cluster, and the rest of 20%
+to the next closest. Individuals of the last factor-1
+cluster are distributed in the same way as the first factor-1 cluster.
+For each individual i ¼ 1, :::, nðjkÞ in factor-1 cluster j
+and factor-2 cluster k, generate factor-1, factor-2, and
+individual-level
+covariates
+W j ¼ ðW1j , W2j Þ, Qk ¼
+ðQ1k , Q2k Þ and X iðjkÞ ¼ ðX1iðjkÞ , X2iðjkÞ Þ as follows.
+  
+
+2 0:2
+0
+,
+0:2 2
+0
+
+
+  
+
+Q1k
+0
+1 0:1
+N
+,
+0
+0:1 1
+Q2k
+
+
+
+
+X1iðjkÞ
+0:1W1j þ 0:05W2j þ j1j
+N
+,
+X2iðjkÞ
+0:08W1j þ 0:1W2j þ j2j
+ 
+  
+
+j1j
+0
+1 0:1
+N
+,
+j2j
+0
+0:1 1
+
+
+
+Note that level-2 covariates form a hierarchical model with
+level-3 covariates Q1k , Q2k , random errors j1k , j2k , and random variances. Similarly, the means of level-1 covariates are
+a function of upper-level covariates W1jk , W2jk , Q1k , Q2k :
+Generate individual treatment status Zij from the following random-effects logistic selection model.
+logitðpijk Þ ¼ 0:2 þ 0:1X1ijk þ 0:03X2ijk þ 0:1W1jk
+Q
+þ0:08W2jk þ 0:1Q1k þ 0:05Q2k þ RW
+jk þ Rk
+Q
+RW
+jk  Nð0, 1Þ, Rk  Nð0, 1ÞZijk  Bernoulliðpijk Þ
+
+4.
+where pijk is the propensity score for individual i in
+Q
+level-2 cluster j and level-3 cluster k, and RW
+jk and Rk
+
+Generate the potential outcomes Yijk ð1Þ, Yijk ð0Þ and
+observed outcome Yijk from random-effects linear
+regression models.
+Yijk ðzÞ ¼ 100 þ s  z þ 2X1ijk þ 1X2ijk þ 2W1jk þ 1:5W2jk
+þ1Q1k þ 0:5Q2k þ UjkW þ UkQ þ ijk
+
+For each level-2 cluster j ¼ 1, :::, Jk (e.g., classes) of
+level-3 cluster k ¼ 1, :::, K (e.g., schools), generate number of individuals per cluster njk by drawing a number
+from a normal distribution with mean I and standard
+deviation sd and rounding it to the nearest integer.
+For each individual i ¼ 1, :::, njk in level-2 cluster j and
+level-3 cluster k, generate level-3, level-2, and level-1
+covariates Qk ¼ ðQ1k , Q2k Þ, W jk ¼ ðW1jk , W2jk Þ, and
+X ijk ¼ ðX1jk , X2jk Þ as follows.
+Q  U ½0, 1, Q2k  U ½0, 1
+
+
+ 1k 
+ 
+W1jk
+0:1Q1k þ 0:05Q2k þ j1k
+2 0:2
+N
+,
+W2jk
+0:2 2
+0:08Q1k þ 0:1Q2k þ j2k
+
+
+
+
+ 
+X1ijk
+0:1W1jk þ 0:05W2jk þ 0:1Q1k þ 0:02Q2k þ j1jk
+10 2
+N
+,
+X2ijk
+0:08W1jk þ 0:1W2jk þ 0:05Q1k þ 0:01Q2k þ j2jk
+2 15
+
+
+  
+ 
+
+  
+
+j1jk
+j1k
+0
+0:5 0
+0
+1 0:1
+N
+,
+,
+N
+,
+j2jk
+j2k
+0
+0 0:5
+0
+0:1 1
+
+3.
+
+are normally distributed random effects for level-2 clusters and level-3 clusters, respectively.
+
+W1j
+W2j
+
+
+
+N
+
+
+
+10 2
+2 15
+
+
+
+Note that individual-level covariates form a hierarchical
+model with factor-1 covariates W1j , W2j , random errors
+j1j , j2j , and random variances.
+Generate individual treatment status ZiðjkÞ from the following cross-classified random-effects logistic propensity score model.
+
+MULTIVARIATE BEHAVIORAL RESEARCH
+
+logitðpijk Þ ¼ 0:2 þ 0:1X1iðjkÞ þ 0:03X2iðjkÞ þ 0:1W1j
+Q
+þ0:08W2j þ 0:1Q1k þ 0:05Q2k þ RW
+j þ Rk
+Q
+RW
+j  Nð0, 1Þ, Rk  Nð0, 0:5ÞZiðjkÞ  BernoulliðpiðjkÞ Þ
+
+where piðjkÞ is the propensity score for individual i in
+Q
+cluster j. RW
+j and Rk are normally distributed random
+effects for Factor-1 cluster j and Factor-2 cluster k,
+respectively.
+5.
+
+Generate the potential outcomes YiðjkÞ ð1Þ, YiðjkÞ ð0Þ and
+observed outcome YiðjkÞ from cross-classified randomeffects linear regression models.
+YiðjkÞ ðzÞ ¼ 100 þ s  z þ 2X1iðjkÞ þ 1X2iðjkÞ þ 2W1j
+þ1:5W2j þ 1Q1k þ 0:5Q2k þ UjW þ UkQ þ iðjkÞ
+UjW  Nð0, 10Þ, UkQ  Nð0, 7Þ, ijk  Nð0, 100ÞYiðjkÞ
+¼ ZiðjkÞ YiðjkÞ ð1Þ þ ð1  ZiðjkÞ ÞYiðjkÞ ð0Þ
+where UjW and UkQ are normally distributed random
+effects for factor-1 cluster j and factor-2 cluster k,
+respectively. iðjkÞ is the random error for individual i
+in factor-1 cluster j and factor-2 cluster k. Also, the
+treatment effect is constant and set to s ¼ 2.
+
+Appendix C: Choosing the number of strata S
+in MMW-S
+For each simulation condition, we chose the number of
+strata S based on covariates’ standardized mean differences
+
+849
+
+and variance ratios (Hong, 2010). Specifically, we computed the mean number of balanced covariates across 200
+replications and chose the optimal number based on
+within-stratum covariate balance (i.e., “mean.bal.s” and
+“var.bal.s” in tables below). Good balance of each covariate
+Table C2. Covariate balance with varying numbers of strata
+in two-level data under design 1: ð150, 30ð15Þ Þ—4 strata.
+Num. strata mean.bal.s var.bal.s lps.mean.dif.s mean.bal.o var.bal.o MSE
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+
+0.600
+3.150
+3.512
+3.534
+3.364
+3.190
+3.039
+2.863
+2.761
+2.667
+2.573
+2.468
+2.400
+2.324
+2.233
+2.221
+2.140
+2.092
+2.056
+1.987
+
+3.895
+3.970
+3.935
+3.901
+3.856
+3.796
+3.705
+3.639
+3.554
+3.470
+3.413
+3.336
+3.275
+3.199
+3.121
+3.083
+2.996
+2.967
+2.893
+2.845
+
+0.955
+0.355
+0.201
+0.136
+0.101
+0.078
+0.063
+0.053
+0.045
+0.040
+0.036
+0.032
+0.029
+0.027
+0.025
+0.023
+0.022
+0.021
+0.019
+0.019
+
+0.600
+3.645
+3.995
+4.000
+4.000
+4.000
+4.000
+4.000
+4.000
+4.000
+4.000
+4.000
+4.000
+4.000
+3.995
+4.000
+3.995
+3.995
+4.000
+4.000
+
+3.895
+4.000
+4.000
+4.000
+4.000
+4.000
+4.000
+4.000
+4.000
+4.000
+4.000
+4.000
+4.000
+4.000
+3.995
+3.995
+3.995
+3.995
+3.995
+3.995
+
+8.061
+0.719
+0.217
+0.147
+0.131
+0.138
+0.151
+0.157
+0.165
+0.175
+0.183
+0.190
+0.194
+0.201
+0.204
+0.208
+0.210
+0.206
+0.208
+0.214
+
+Note: mean.bal.s and var.bal.s represent the number of covariates that is
+balanced in terms of standardized mean differences and variance ratios
+within each stratum, respectively. lps.mean.dif.s represents the mean
+absolute difference in the logit propensity score within each stratum.
+mean.bal.o and var.bal.o represent the number of covariates that is balanced in terms of standardized mean differences and variance ratios
+across strata, respectively. MSE represents the mean-squared error of
+the marginal mean weighting through stratification (MMW-S) estimator.
+
+Table C1. Covariate balance with varying numbers of strata
+in two-level data under design 1: ð150, 30ð2Þ Þ—3 strata.
+
+Table C3. Covariate balance with varying numbers of strata
+in two-level data under design 1: ð30, 150ð4Þ Þ—5 strata.
+
+Num. strata mean.bal.s var.bal.s lps.mean.dif.s mean.bal.o var.bal.o MSE
+1
+0.615
+3.920
+0.952
+0.615
+3.920 8.125
+2
+3.232
+3.982
+0.355
+3.800
+4.000 0.674
+3
+3.595
+3.947
+0.202
+4.000
+4.000 0.214
+4
+3.515
+3.905
+0.136
+4.000
+4.000 0.135
+5
+3.365
+3.856
+0.101
+4.000
+4.000 0.141
+6
+3.182
+3.787
+0.079
+4.000
+4.000 0.154
+7
+3.037
+3.694
+0.064
+4.000
+4.000 0.171
+8
+2.876
+3.642
+0.054
+4.000
+4.000 0.185
+9
+2.737
+3.536
+0.047
+4.000
+4.000 0.200
+10
+2.631
+3.482
+0.041
+4.000
+4.000 0.215
+11
+2.538
+3.414
+0.036
+4.000
+4.000 0.223
+12
+2.466
+3.330
+0.033
+4.000
+4.000 0.232
+13
+2.373
+3.263
+0.030
+4.000
+4.000 0.243
+14
+2.299
+3.176
+0.028
+4.000
+4.000 0.246
+15
+2.248
+3.115
+0.026
+4.000
+4.000 0.253
+16
+2.152
+3.038
+0.024
+4.000
+4.000 0.265
+17
+2.120
+2.990
+0.023
+4.000
+4.000 0.263
+18
+2.073
+2.927
+0.022
+4.000
+4.000 0.261
+19
+1.998
+2.893
+0.020
+4.000
+4.000 0.273
+20
+1.978
+2.827
+0.020
+4.000
+4.000 0.275
+
+Num. strata mean.bal.s var.bal.s lps.mean.dif.s mean.bal.o var.bal.o MSE
+1
+0.775
+3.425
+0.953
+0.775
+3.425 7.617
+2
+2.445
+3.703
+0.354
+2.835
+3.860 0.940
+3
+3.013
+3.787
+0.200
+3.810
+3.965 0.392
+4
+3.189
+3.777
+0.134
+3.965
+3.985 0.242
+5
+3.216
+3.750
+0.099
+3.985
+3.995 0.191
+6
+3.114
+3.712
+0.076
+3.995
+4.000 0.167
+7
+3.026
+3.676
+0.062
+4.000
+4.000 0.156
+8
+2.908
+3.607
+0.052
+4.000
+4.000 0.148
+9
+2.792
+3.544
+0.043
+4.000
+4.000 0.145
+10
+2.691
+3.470
+0.038
+4.000
+4.000 0.153
+11
+2.623
+3.415
+0.034
+4.000
+4.000 0.146
+12
+2.526
+3.354
+0.030
+4.000
+4.000 0.147
+13
+2.423
+3.311
+0.027
+4.000
+4.000 0.146
+14
+2.373
+3.243
+0.025
+4.000
+4.000 0.146
+15
+2.300
+3.181
+0.023
+4.000
+4.000 0.142
+16
+2.227
+3.140
+0.021
+4.000
+4.000 0.142
+17
+2.194
+3.084
+0.020
+4.000
+4.000 0.144
+18
+2.146
+3.031
+0.018
+4.000
+4.000 0.142
+19
+2.086
+2.972
+0.018
+4.000
+4.000 0.142
+20
+2.026
+2.932
+0.016
+4.000
+4.000 0.143
+
+Note: mean.bal.s and var.bal.s represent the number of covariates that is
+balanced in terms of standardized mean differences and variance ratios
+within each stratum, respectively. lps.mean.dif.s represents the mean
+absolute difference in the logit propensity score within each stratum.
+mean.bal.o and var.bal.o represent the number of covariates that is balanced in terms of standardized mean differences and variance ratios
+across strata, respectively. MSE represents the mean-squared error of
+the marginal mean weighting through stratification (MMW-S) estimator.
+
+Note: mean.bal.s and var.bal.s represent the number of covariates that is
+balanced in terms of standardized mean differences and variance ratios
+within each stratum, respectively. lps.mean.dif.s represents the mean
+absolute difference in the logit propensity score within each stratum.
+mean.bal.o and var.bal.o represent the number of covariates that is balanced in terms of standardized mean differences and variance ratios
+across strata, respectively. MSE represents the mean-squared error of
+the marginal mean weighting through stratification (MMW-S) estimator.
+
+850
+
+Y. SUK ET AL.
+
+is achieved when the absolute standardized mean differences are smaller than 0.1 and variance ratios are in between
+4/5 and 5/4 (Rubin, 2001; Shadish et al., 2008; Steiner
+et al., 2010). Since we use 4 covariates in our two-level
+data simulation, the maximum number of balanced covariates is 4. In both three-level data and cross-classified data,
+we use 6 covariates and thus, the maximum number of
+balanced covariates is 6.
+
+The tables below show how different measures of balance
+change as a function of S along with the MSE of the
+MMW-S estimator. We saw that the choice of S impacts the
+performance of MMW-S and in many cases, S chosen based
+on Hong (2010) does not always lead to an estimator with
+the smallest MSE.
+
+Table C4. Covariate balance with varying numbers of strata
+in two-level data under design 1: ð5000, 10ð0:5Þ Þ—2 strata.
+
+Table C5. Covariate balance with varying numbers of strata
+in two-level data under design 1: ð10, 5000ð4Þ Þ—15 strata.
+
+Num. strata mean.bal.s var.bal.s lps.mean.dif.s mean.bal.o var.bal.o MSE
+
+Num. strata mean.bal.s var.bal.s lps.mean.dif.s mean.bal.o var.bal.o MSE
+
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+
+0.070
+4.000
+3.935
+3.380
+2.897
+2.666
+2.493
+2.352
+2.259
+2.188
+2.126
+2.095
+2.044
+2.024
+2.005
+1.991
+1.963
+1.934
+1.948
+1.925
+
+4.000
+4.000
+4.000
+4.000
+4.000
+3.994
+3.982
+3.969
+3.953
+3.939
+3.929
+3.912
+3.903
+3.894
+3.883
+3.875
+3.861
+3.853
+3.843
+3.836
+
+0.922
+0.346
+0.198
+0.134
+0.100
+0.078
+0.063
+0.053
+0.045
+0.039
+0.035
+0.031
+0.028
+0.025
+0.023
+0.021
+0.019
+0.018
+0.017
+0.016
+
+0.070
+4.000
+4.000
+3.935
+3.005
+3.000
+2.980
+2.940
+2.845
+2.745
+2.635
+2.515
+2.425
+2.320
+2.225
+2.195
+2.135
+2.085
+2.000
+1.950
+
+4
+4
+4
+4
+4
+4
+4
+4
+4
+4
+4
+4
+4
+4
+4
+4
+4
+4
+4
+4
+
+8.823
+0.113
+0.108
+0.364
+0.574
+0.730
+0.836
+0.910
+0.968
+1.011
+1.039
+1.065
+1.077
+1.093
+1.101
+1.110
+1.116
+1.121
+1.122
+1.124
+
+Note: mean.bal.s and var.bal.s represent the number of covariates that is
+balanced in terms of standardized mean differences and variance ratios
+within each stratum, respectively. lps.mean.dif.s represents the mean
+absolute difference in the logit propensity score within each stratum.
+mean.bal.o and var.bal.o represent the number of covariates that is balanced in terms of standardized mean differences and variance ratios
+across strata, respectively. MSE represents the mean-squared error of
+the marginal mean weighting through stratification (MMW-S) estimator.
+
+0.720
+2.005
+2.622
+2.976
+3.215
+3.378
+3.496
+3.567
+3.638
+3.731
+3.738
+3.746
+3.767
+3.774
+3.791
+3.795
+3.787
+3.799
+3.804
+3.800
+
+2.965
+3.397
+3.623
+3.745
+3.839
+3.873
+3.856
+3.829
+3.833
+3.872
+3.861
+3.868
+3.879
+3.884
+3.892
+3.879
+3.868
+3.868
+3.863
+3.859
+
+0.947
+0.344
+0.186
+0.119
+0.083
+0.062
+0.048
+0.038
+0.029
+0.021
+0.019
+0.018
+0.016
+0.014
+0.013
+0.012
+0.011
+0.010
+0.008
+0.007
+
+0.720
+2.500
+3.350
+3.715
+3.845
+3.925
+3.980
+3.995
+4.000
+4.000
+4.000
+4.000
+4.000
+4.000
+4.000
+4.000
+4.000
+4.000
+4.000
+4.000
+
+2.965
+3.670
+3.885
+3.945
+3.965
+3.985
+3.990
+3.995
+4.000
+4.000
+4.000
+4.000
+4.000
+4.000
+4.000
+4.000
+4.000
+4.000
+4.000
+4.000
+
+7.292
+1.017
+0.307
+0.161
+0.133
+0.071
+0.053
+0.045
+0.049
+0.073
+0.039
+0.027
+0.023
+0.021
+0.023
+0.021
+0.020
+0.018
+0.017
+0.020
+
+Note: mean.bal.s and var.bal.s represent the number of covariates that is
+balanced in terms of standardized mean differences and variance ratios
+within each stratum, respectively. lps.mean.dif.s represents the mean
+absolute difference in the logit propensity score within each stratum.
+mean.bal.o and var.bal.o represent the number of covariates that is balanced in terms of standardized mean differences and variance ratios
+across strata, respectively. MSE represents the mean-squared error of
+the marginal mean weighting through stratification (MMW-S) estimator.
+
+MULTIVARIATE BEHAVIORAL RESEARCH
+
+Appendix D: Simulation results using doubly
+robust estimators in causal forests
+
+851
+
+1994), in grf are provided below. We found that the mean
+estimator of the pointwise predictions consistently provided
+better estimates in terms of bias and efficiency than using
+the built-in average_treatment_effect function across simulation conditions.
+
+The simulation results using the built-in function, average_
+treatment_effect, particularly applying a modified version of
+augmented inverse-propensity weighting (Robins et al.,
+
+Table D1. Performance of ATE estimates in two-level data under design 1: using the built-in function average_treatment_effect
+in grf.
+(J, I(sd))
+Estimator
+CF
+CF þ Est.PS
+CF þ ID
+CF þ Est.PS þ ID
+
+(150, 30(2))
+
+(150, 30(15))
+
+(30, 150(4))
+
+Bias (%)
+
+SD
+
+MSE
+
+Bias (%)
+
+SD
+
+MSE
+
+Bias (%)
+
+SD
+
+MSE
+
+5.90
+4.20
+6.35
+4.85
+
+0.376
+0.362
+0.410
+0.359
+
+0.155
+0.138
+0.184
+0.138
+
+6.65
+4.75
+6.90
+6.35
+
+0.367
+0.354
+0.467
+0.418
+
+0.152
+0.134
+0.237
+0.191
+
+5.30
+1.75
+22.25
+2.35
+
+0.359
+0.351
+0.686
+0.352
+
+0.140
+0.124
+0.668
+0.126
+
+Note: J and I(sd) represent the number of clusters and the mean size of clusters and its standard deviation, respectively. CF represents Causal Forests without modification. CF þ Est.PS represents CF with propensity scores from a multilevel logistic regression. CF þ ID represents CF with cluster labels.
+CF þ Est.PS þ ID represents CF with propensity scores from a multilevel logistic regression and cluster labels.
+
+Table D2. Performance of ATE estimates in two-level data: asymptotic properties using the built-in function average_ treatment_effect in grf.
+(5000, 10(0.5))
+
+(J, I(sd))
+Estimator
+
+(10, 5000(4))
+
+Bias (%)
+
+SD
+
+MSE
+
+Bias (%)
+
+SD
+
+MSE
+
+1.45
+9.40
+1.30
+9.50
+
+0.104
+0.108
+0.104
+0.108
+
+0.012
+0.047
+0.011
+0.048
+
+0.85
+0.20
+43.00
+0.25
+
+0.107
+0.107
+1.375
+0.109
+
+0.012
+0.012
+2.628
+0.012
+
+CF
+CF þ Est.PS
+CF þ ID
+CF þ Est.PS þ ID
+
+Note: J and I(sd) represent the number of clusters and the mean size of clusters and its standard deviation, respectively. CF represents Causal Forests without modification. CF þ Est.PS represents CF with propensity scores from a multilevel logistic regression. CF þ ID represents CF with cluster labels.
+CF þ Est.PS þ ID represents CF with propensity scores from a multilevel logistic regression and cluster labels.
+
+Table D3. Performance of ATE estimates in three-level data: using the built-in function average_treatment_effect in grf.
+(K, J(sd), I(sd))
+Estimator
+CF
+CF þ Est.PS
+CF þ ID2
+CF þ ID3
+CF þ Est.PS þ ID2
+CF þ Est.PS þ ID3
+
+(100, 15(1), 30(2))
+
+(100, 15(1), 30(2))
+
+(30, 15(1), 100(4))
+
+Bias (%)
+
+SD
+
+MSE
+
+Bias (%)
+
+SD
+
+MSE
+
+Bias (%)
+
+SD
+
+MSE
+
+8.20
+5.90
+6.50
+9.75
+6.30
+7.15
+
+0.148
+0.126
+0.194
+0.244
+0.126
+0.127
+
+0.049
+0.030
+0.055
+0.097
+0.032
+0.036
+
+4.45
+5.00
+3.55
+17.60
+5.35
+7.70
+
+0.138
+0.137
+0.152
+0.618
+0.138
+0.146
+
+0.027
+0.029
+0.028
+0.506
+0.030
+0.045
+
+4.75
+2.25
+8.50
+15.45
+2.80
+3.35
+
+0.140
+0.128
+0.277
+0.451
+0.128
+0.130
+
+0.028
+0.018
+0.106
+0.299
+0.020
+0.021
+
+Note: K, J(sd), and I(sd) represent the number of level-3 clusters, the mean size of level-3 clusters with its standard deviation, and the mean size of level-2
+clusters with its standard deviation, respectively. CF represents Causal Forests without modification. CF þ Est.PS represents CF with propensity scores
+from a multilevel logistic regression. CF þ ID2 and CF þ ID3 represent CF with level-2 cluster labels and level-3 cluster labels, respectively.
+CF þ Est.PS þ ID2 and CF þ Est.PS þ ID3 represent CF with propensity scores from a multilevel logistic regression and level-2 or level-3 cluster labels.
+
+Table D4. Performance of ATE estimates in cross-classified data: using the built-in function average_treatment_effect in grf.
+(150, 150, 30(2))
+
+(150, 150, 30(15))
+
+(30, 30, 150(4))
+
+(F1, F2, I(sd))
+Estimator
+
+Bias (%)
+
+SD
+
+MSE
+
+Bias (%)
+
+SD
+
+MSE
+
+Bias (%)
+
+SD
+
+MSE
+
+CF
+CF þ Est.PS
+CF þ F1ID
+CF þ F2ID
+CF þ F12ID
+CF þ Est.PS þ F1ID
+CF þ Est.PS þ F2ID
+CF þ Est.PS þ F12ID
+
+11.45
+9.05
+12.20
+11.00
+11.90
+9.85
+9.60
+11.90
+
+0.400
+0.389
+0.456
+0.448
+0.493
+0.391
+0.391
+0.484
+
+0.212
+0.184
+0.267
+0.249
+0.299
+0.192
+0.190
+0.291
+
+10.80
+7.85
+11.85
+10.70
+9.70
+9.80
+8.95
+10.25
+
+0.397
+0.389
+0.518
+0.469
+0.566
+0.458
+0.416
+0.557
+
+0.204
+0.176
+0.325
+0.266
+0.358
+0.248
+0.205
+0.352
+
+6.20
+1.30
+23.65
+18.55
+15.35
+2.40
+2.20
+3.35
+
+0.429
+0.392
+0.831
+0.764
+0.720
+0.397
+0.397
+0.512
+
+0.199
+0.154
+0.913
+0.721
+0.612
+0.160
+0.159
+0.266
+
+Note: F1, F2, and I(sd) represent the number of factor-1 clusters, the number of factor-2 clusters, and the mean size of factor-1 clusters with its standard
+deviation, respectively. CF represents Causal Forests without modification. CF þ Est.PS represents CF with propensity scores from a multilevel logistic
+regression. CF þ F1ID, CF þ F2ID, and CF þ F12ID represent CF with the first factor labels, the second factor labels, and the two factors’ combined labels,
+respectively. CF þ Est.PS þ F1ID, CF þ Est.PS þ F2ID, and CF þ Est.PS þ F12ID represent CF with propensity scores from a multilevel logistic regression
+and the first factor, the second factor, or the combined labels.
+
+852
+
+Y. SUK ET AL.
+
+Table D5. Performance of ATE estimates in two-level data under design 2: using the built-in function average_treatment_effect
+in grf.
+(J, I(sd))
+Estimator
+(150, 30(2))
+CF
+CF þ Est.PS
+CF þ ID
+CF þ Est.PS þ ID
+(150, 30(15))
+CF
+CF þ Est.PS
+CF þ ID
+CF þ Est.PS þ ID
+(30, 150(4))
+CF
+CF þ Est.PS
+CF þ ID
+CF þ Est.PS þ ID
+
+b1 ¼ 0:02, b2 ¼ 0:3
+
+b1 ¼ 0:04, b2 ¼ 0:6
+
+b1 ¼ 0:06, b2 ¼ 1
+
+Bias (%)
+
+SD
+
+MSE
+
+Bias (%)
+
+SD
+
+MSE
+
+Bias (%)
+
+SD
+
+MSE
+
+7.05
+6.20
+7.90
+7.50
+
+0.385
+0.372
+0.419
+0.370
+
+0.168
+0.154
+0.201
+0.160
+
+7.40
+9.80
+9.95
+13.65
+
+0.387
+0.376
+0.425
+0.374
+
+0.172
+0.180
+0.220
+0.214
+
+11.80
+16.55
+15.75
+22.55
+
+0.382
+0.368
+0.420
+0.369
+
+0.202
+0.245
+0.276
+0.340
+
+6.95
+7.45
+8.30
+8.65
+
+0.449
+0.415
+0.477
+0.415
+
+0.221
+0.194
+0.255
+0.202
+
+7.30
+10.85
+10.45
+14.90
+
+0.450
+0.419
+0.480
+0.421
+
+0.223
+0.223
+0.274
+0.266
+
+11.70
+17.85
+16.30
+24.35
+
+0.448
+0.414
+0.478
+0.414
+
+0.256
+0.299
+0.334
+0.408
+
+5.40
+2.65
+25.00
+5.95
+
+0.380
+0.373
+0.707
+0.375
+
+0.156
+0.141
+0.750
+0.155
+
+4.95
+5.00
+33.60
+19.95
+
+0.398
+0.393
+0.731
+0.414
+
+0.168
+0.164
+0.987
+0.331
+
+8.60
+10.65
+46.00
+38.00
+
+0.383
+0.377
+0.734
+0.433
+
+0.176
+0.187
+1.384
+0.765
+
+Note: J and I(sd) represent the number of clusters and the mean size of clusters and its standard deviation, respectively. CF represents Causal Forests without modification. CF þ Est.PS represents CF with propensity scores from a multilevel logistic regression. CF þ ID represents CF with cluster labels.
+CF þ Est.PS þ ID represents CF with propensity scores from a multilevel logistic regression and cluster labels.
+
+

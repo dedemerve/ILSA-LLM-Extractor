@@ -1,0 +1,2648 @@
+Computers and Education: Artificial Intelligence 6 (2024) 100249
+
+Contents lists available at ScienceDirect
+
+Computers and Education: Artificial Intelligence
+journal homepage: www.sciencedirect.com/journal/computers-and-education-artificial-intelligence
+
+Using convolutional neural networks to automatically score eight TIMSS
+2019 graphical response items
+Lillian Tyack *, Lale Khorramdel , Matthias von Davier
+TIMSS & PIRLS International Study Center at Boston College, United States
+
+A R T I C L E I N F O
+
+A B S T R A C T
+
+Keywords:
+TIMSS
+International large-scale assessment
+Automated scoring
+Graphical responses
+Artificial neural network
+Convolutional neural network
+
+International large-scale assessments (ILSAs) have used graphical response-based items to measure student
+ability for decades, but they have yet to implement automated scoring of these responses and instead rely on
+human scoring alone. To investigate how scores provided by machine algorithms compare to those provided by
+human raters, we applied convolutional neural networks (CNNs) to classify image-based responses from eight
+Timss 2019 items. Our results show that the most accurate CNN models classified over 99% of the image responses into the appropriate scoring category for dichotomous items and almost 98% for one trichotomous item.
+Additionally, during the modeling process, the CNNs correctly classified numerous image responses that human
+raters had scored incorrectly. For most items, the number of incorrectly human-scored responses exceeded the
+average number of responses misclassified by the most accurate models. These results suggest that automated
+scoring using CNNs is comparable to, and in many cases more accurate, than human raters, even across a wide
+variety of graphing tasks. This paper argues that the machine learning procedure explored could be implemented
+in ILSAs as a verification method to improve the accuracy and consistency of graphical response item scores. In
+lieu of additional human raters, ILSAs could implement CNN-based automated scoring to provide a second set of
+scores, thus reducing the workload and costs associated with human scoring.
+
+1. Introduction
+Constructed response (CR) items have long been used in international large-scale assessments (ILSAs) to measure students’ understanding of content topics and critical thinking in an open-ended format
+(Bennet, 1991). While most CR items in ILSAs ask students to write responses to show their answers, some ask students to draw or complete an
+image to show their understanding. These items, known as graphical
+response items, encourage creativity and require non-routine problem-solving (Martinez, 1991). They are also useful for measuring certain
+skills. For example, the Trends in International Mathematics and Science
+Study (TIMSS) has historically assessed Geometry-related skills from the
+Mathematics framework by asking students to complete tasks on a grid,
+like plotting points or completing figures according to given specifications (Mullis & Martin, 2017). More recently, in TIMSS 2023
+free-drawing items that ask students to complete a model have been
+used in both the fourth and eighth grade versions of the assessment to
+measure knowledge of some Earth Science content (Centurino & Kelly,
+2021).
+
+CR items, particularly graphical response items, benefit from the
+digital environment because of the unique tools technology affords
+them, making them more critical for measurement now than ever. For
+TIMSS specifically, the 2019 cycle (eTIMSS) took advantage of the
+computer-based administration by developing items that merged measurement and digital tools to make items more equitable and engaging.
+New graphing tool items utilized straight-line plotting, snap-to-grid, and
+erase and reset tools, which promoted student engagement while
+measuring higher-order mathematics reasoning. In eTIMSS, students
+could draw and complete images to show their understanding more
+easily than in previous paper-based TIMSS cycles. At the same time,
+measurement precision was improved by reducing individual error
+associated with hand drawing (Cotter et al., 2020).
+Traditionally, CR items, particularly graphical response items, have
+been scored by human raters, which are considered the gold standard in
+scoring of open-ended responses. However, hiring human raters is both
+cost and resource-intensive, and moreover, they are subject to rater effects such as fatigue, leniency, and severity that can impact the reliability of scores (Bejar, 2012; Wind, 2019). Scoring can be improved by
+
+* Corresponding author.
+E-mail address: tyack@bc.edu (L. Tyack).
+https://doi.org/10.1016/j.caeai.2024.100249
+Received 9 August 2023; Received in revised form 8 May 2024; Accepted 3 June 2024
+Available online 6 June 2024
+2666-920X/© 2024 The Authors. Published by Elsevier Ltd. This is an open access article under the CC BY-NC-ND license (http://creativecommons.org/licenses/bync-nd/4.0/).
+
+L. Tyack et al.
+
+Computers and Education: Artificial Intelligence 6 (2024) 100249
+
+rater effects—severity and leniency—can also impact the accuracy and
+consistency of rater scores. While scoring guides may cover many unique
+responses, they cannot include all possible item responses. Thus, some
+unique responses may require interpretation from the scoring guide,
+leading to different judgments from different raters (Zhang, 2013).
+Unique “borderline” cases, which may be on the border between correct
+and incorrect, may receive credit from a rater giving the student the
+benefit of the doubt (leniency) but no credit from another rater
+(severity). Therefore, an individual student’s response score may
+depend on who is rating the answer rather than the response’s content
+(Bejar, 2012). Wind (2019) found that rater effects, particularly
+severity, threaten accurate student achievement estimates, potentially
+leading to systematic differences in how the items function.
+Wind (2019) and Bejar (2012) both recommend assessing response
+classifications for potential rater effects, ideally with double scoring of
+some kind, to evaluate and attend to discrepancies in scoring across
+raters (and, by extension, in ILSAs, across countries). TIMSS uses
+double-scoring for all human-scored items, but is limited in the number
+of responses that can be scored twice. To assess the raters’ scoring
+consistency, a within-country reliability scoring procedure is carried out
+where two raters score a subset of responses, and their scores are
+compared. The number of double-scored responses is only 200 per item
+per country because hiring a second full-time rater team to review all
+student responses would double the cost and training resources, which
+would be impossible for many participating countries to execute (Martin
+et al., 2020). While these reliability statistics can identify if a particular
+country struggled with scoring a CR item, they do not provide information about scoring consistency across countries.
+Because double-scoring all responses to CR items using additional
+human raters is cost-prohibitive in large-scale assessments, automatically double-scoring CR responses with ML has been used to improve
+scoring reliability and consistency. Automated scoring of CR items has
+already been implemented operationally in some large-scale assessments. For example. educational Testing Service (ETS) has an e-rater
+engine that has been operational since 1999, providing a second set of
+scores for the Graduate Record Examinations (GRE) essay portions. The
+e-rater engine uses natural language processing (NLP) to evaluate students’ essays based on linguistic features such as grammar, sentence
+variety, and organization. The GRE uses a human-in-the-loop approach,
+where a second human rater evaluates responses only when the e-rater
+score is vastly different from the original human rater score. According
+to ETS, the e-rater system has improved over the past two decades, with
+advancements in AI incorporated into its engine (ETS, 2020). Likewise,
+Pearson implemented the Intelligent Essay Assessor (IEA) operationally
+in 2010, which can score essays and short answers comparable to
+humans using ML and NLP. Like the e-rater, the IEA evaluates responses
+based on different features and produces a second score with a corresponding confidence that the score is accurate. Responses challenging
+for the IEA to score (e.g., those with low confidence) are routed to
+additional human scorers for manual scoring (Foltz et al., 2013).
+Advancements in NLP and AI in recent years have led to an influx of
+research on classifying open-ended responses using deep learning with
+neural networks, but almost all of the work has focused on text-based
+input. For example, pre-trained large language models like BERT and
+GPT (including ChatGPT) that are built on neural networks have risen in
+popularity for their ease of use and accuracy, allowing researchers to
+classify short text responses by fine-tuning parameters (Fernandez et al.,
+2022; Latif & Zhai, 2023; Lottridge et al., 2023; Mizumoto & Eguchi,
+2023; Ormerod et al., 2023). Researchers have also built and trained
+models on available human or student responses using open-source
+packages to reduce cost (Chen & Zhou, 2019; Uto et al., 2020; von
+Davier et al., 2022). Relevant to this study’s focus on TIMSS data, Jung
+et al. (2022) recently had success building and training ANNs on short
+text-based responses from TIMSS 2019. They achieved up to 92%
+agreement between human rater and ANN classifications across a selection of items and countries. More recently, Jung et al. (2024)
+
+introducing a second set of scores, either through an additional human
+rater or through machine scoring. Recent advances in artificial intelligence (AI) have bolstered the credibility of machine learning (ML) based
+scoring classifications for many item types, suggesting that it can be a
+successful validation technique in assessments (Chen & Zhou, 2019;
+Fernandez et al., 2022; Hao & Ho, 2019; Jung et al., 2022; Lottridge
+et al., 2023; Wang et al., 2023; Zhai et al., 2020).
+While much of the automated scoring research has focused on textbased responses (ETS, 2020; Foltz et al., 2013; Funayama et al., 2022;
+Jung et al., 2022; Ormerod et al., 2023; Yamamoto et al., 2017), a recent
+study by von Davier et al. (2022) found that graphical response items in
+international large-scale assessments can be scored on a similar level to
+human raters (achieving up to 97.5% agreement) using artificial neural
+networks (ANNs). von Davier et al. (2022) also discovered ANNs can
+help identify borderline responses that receive incorrect credit or are
+scored inconsistently across human raters. AI-based automated scoring
+of image responses shows promise as a quick and inexpensive alternative
+to hiring additional full-time raters and should be explored in ILSAs
+further.
+Therefore, this study aims to expand von Davier et al. (2022)’s
+research by extending the same ANN-based validation technique to
+more TIMSS items. The study thus examines how well convolutional
+neural networks (CNNs), a type of ANN, perform compared to human
+raters when automatically scoring eight TIMSS 2019 items across a selection of different tasks and complexity. The study also proposes how
+this ML-based validation technique can be implemented in ILSAs. In
+particular, this study addresses the following research questions (RQs).
+1. Can CNN-based automated scoring classify student graphical responses with similar performance to human raters using TIMSS 2019
+data?
+2. Moreover, does CNN-based automated scoring provide comparable
+performance to human rater scoring across different tasks and
+varying numbers of unique responses?
+3. How can CNN-based automated scoring be used operationally as a
+validation technique in ILSAs?
+2. Literature review
+CR items are vital to measurement in ILSAs but have historically been
+underutilized because they require scoring by human raters. CR items
+evaluate students understanding of content topics in ILSAs while
+engaging more complex cognitive functioning. Rather than relying on
+students to select from given options, CR items require students to
+formulate their own responses (Bennett, 1991). Often, human raters
+score open-ended CR items in ILSAs, which is a time-consuming and
+costly process for both the assessment developers and the participating
+countries. TIMSS, for example, has human raters undergo extensive
+training before data collection so that written and graphical response
+items are scored as accurately as possible. After in-person scoring
+training led by experts from the TIMSS & PIRLS International Study
+Center (ISC), country representatives translate the English scoring materials into their native language and train their human rater teams,
+which takes weeks (Martin et al., 2020). Naturally, the more CR items in
+an assessment cycle, the more time must be spent translating the
+training materials and scoring guides.
+Even with extensive training and comprehensive scoring guides,
+human raters are subject to rater effects that ultimately impact scores’
+accuracy, reliability, and consistency (Wind, 2019). One common rater
+effect is fatigue, which can cause raters to make mistakes and potentially
+assign the wrong credit to a student’s response. Fatigue is bound to occur
+at some point, as human raters review thousands of responses across
+days to weeks, depending on the size of the scoring team and the volume
+of student responses. Additionally, over time, raters may drift in their
+scoring behavior and assign scores for an item differently for responses
+seen at the end versus at the beginning (Bejar, 2012). Another pair of
+2
+
+L. Tyack et al.
+
+Computers and Education: Artificial Intelligence 6 (2024) 100249
+
+explored integrating ANN classification and machine translation using
+Google Translate and ChatGPT for classifying short written response
+items. Using student responses from six TIMSS 2019 items across eight
+countries and six different languages, Jung et al. found that multilingual
+responses could be successfully translated and classified using ANNs at
+the same level as human raters, further evidencing the potential benefits
+of using AI scoring validation in ILSAs.
+When it comes to graphical-based input, successful use of ANNs has
+been researched and implemented operationally in the medical field for
+some years. ANNs have been able to successfully classify images on the
+same level as experts across various tasks like predicting cancer from
+pictures of cells (Couture et al., 2018; Klauschen et al., 2018) and
+identifying diseases in images of tissue samples (Stidham et al., 2019; Yu
+et al., 2018). These results indicate the great potential of image classification with AI in other fields, particularly psychometrics and ILSAs.
+Unfortunately, only a few recent studies have explicitly examined how
+student graphical responses can be automatically scored using ML and
+AI techniques in psychometrics (Baral et al., 2023; Lee & Zhai, 2023; von
+Davier et al., 2022).
+The research on graphical response classification in ILSAs was
+identified as relatively unexplored by von Davier et al. (2022). Thus,
+they conducted a study to examine whether ANNs could be successful
+classifiers of student image responses from a TIMSS 2019 Problem
+Solving and Inquiry Task (PSI) item. The study used a released trichotomous item from the “Building” PSI task, which asked students to draw
+the back wall and sides of a shed on a grid according to given specifications. Students received credit if they drew both the back and sides
+correctly, and partial credit if only the back wall was drawn correctly.
+The study compared the performance of feed-forward neural networks
+(FFNs) to convolutional neural networks (CNNs) across various training
+epochs, optimizers, and model structures to see how the different types
+of ANNs would perform. FFNs are the simplest type of ANN and the
+fastest to train and run. CNNs are more powerful because they have
+additional layers, known as convolutional layers, which allow them to
+process information non-linearly, allowing for more flexibility and
+improved pattern recognition and feature detection (O’Shea & Nash,
+2015). The study found that CNNs outperformed the FFNs in terms of
+loss, accuracy, and F1-Scores. The best-performing CNN model classified
+an average of 97.53% of the image responses into the appropriate score
+category across five cross-validation samples. Additionally, the CNN
+models correctly classified 193 responses that were incorrectly classified
+by human raters, indicating that ML can be successful in identifying
+mistakes and inconsistencies in human scoring as well.
+The promising results of von Davier et al. (2022) prompted interest
+in further research to expand the literature on AI-based scoring of student graphical responses in assessments. Their findings demonstrate the
+potential of AI in improving the accuracy and efficiency of scoring student responses by serving as a quality control measure for human
+scoring. This study was devised to examine the efficacy of ANN validation across multiple items from TIMSS 2019 with varying complexity.
+Moreover, findings from the study would provide practical insights into
+how ANN-based automated scoring of student graphical responses could
+be implemented operationally in TIMSS and, by extension, other ILSAs.
+Funding was received from the IEA Research and Development initiative
+to carry out this study.
+
+Fig. 1. Flowchart of study workflow.
+
+and 2 s. The final stage directly addressed RQ3 by assessing all information gleaned during the study.
+The data cleaning stage involved the most modeling and research
+time, as its aim was twofold: first, to train the CNNs on data that had
+proper scores, and second, to determine human rater classification accuracy. In this stage, CNN models were used to identify responses that
+may have been misclassified by the human raters and “borderline” responses that received inconsistent scores across the raters. Once identified, these responses would be set aside for the final modeling and used
+to judge human rater performance. In order to compare the CNN classifications to the human rater classifications with as much evidence as
+possible, it was important to identify all (or almost all) student responses
+that were misclassified or inconsistently classified by the human raters
+in TIMSS 2019.
+Following item selection, the data cleaning, data modeling, and
+evaluation stages were conducted for each item individually across
+several months. The first item assessed was ME52048 (as it was the first
+selected restricted use item), then modeling moved to ME62300 (the
+second restricted use item), and so on until all eight items were modeled.
+Following the modeling of each item, the results were evaluated using
+exact match accuracy and F1-Scores (a comparison metric that accounts
+for imbalance in the amount of responses in each score category). Also,
+the number of responses incorrectly scored by the CNNs (identified as
+true misclassifications following manual review) was compared to the
+number of responses incorrectly scored by the human raters (identified
+as true misclassifications following manual review during the data
+cleaning stage). Evaluation of individual items was conducted to answer
+RQ1, while evaluation of results across all items was conducted to
+answer RQ2. The research team considered experiences during the
+modeling stages and results to draw conclusions about the operational
+
+3. Study overview
+This study was conducted in stages to answer the three research
+questions (discussed in more detail in the Methods section). After item
+selection, the data were cleaned using a combination of CNN modeling
+and manual (human) review. Modeling on the cleaned dataset was then
+performed, and the results were evaluated (see Fig. 1). The data cleaning
+stage identified inaccuracies and inconsistencies in human rater performance, while the final modeling stage provided the final CNN classifications. The outcomes from these stages informed answers to RQs 1
+3
+
+L. Tyack et al.
+
+Computers and Education: Artificial Intelligence 6 (2024) 100249
+
+use of ANNs in ILSAs for RQ3.
+
+Table 1
+Information for TIMSS 2019 items used in study.
+
+4. Methods
+
+Item
+
+Grade
+
+Cognitive
+Domain
+
+Label
+
+Average
+Percent
+Correct
+
+ME61081A
+
+4
+
+Applying
+
+28.90
+
+ME61081B
+
+4
+
+Applying
+
+ME61224
+
+4
+
+Applying
+
+ME71177
+
+4
+
+Reasoning
+
+ME71181
+
+4
+
+Applying
+
+ME52048*
+
+8
+
+Applying
+
+ME62300*
+
+8
+
+Reasoning
+
+ME72119
+
+8
+
+Applying
+
+Draw a line
+parallel to AB
+through C
+Draw a line
+perpendicular to
+AB through D
+Draw angle
+MNP larger than
+a right angle
+Complete the
+shape given 3
+conditions
+Rectangle with
+perimeter of 10
+cm
+Lines of
+symmetry for a
+figure
+Draw a
+rectangle given
+area and
+perimeter
+Point to
+complete a
+parallelogram
+
+4.1. Item selection
+Several factors were considered when selecting the TIMSS 2019
+items for the study. First, all graphical response items in TIMSS 2019
+were identified: 18 items required students to draw or complete a picture on a grid to demonstrate their understanding in eTIMSS, 11 of
+which were Grade 4 items and six of which were Grade 8 items. The
+Grade 4 items were from the Measurement and Geometry, Data, and
+Number content domains, while all of the Grade 8 items were from the
+Geometry content domain. One of these Grade 8 items was the “Building” PSI Task item, which was already modeled by von Davier et al.
+(2022), making it ineligible for this study. Due to time constraints, a
+subset of items was selected. Two Grade 8 items, ME52048 and
+ME62300, were selected because they could be explicitly discussed and
+used as examples under the restricted use guidelines. They also showcase two extremes of the spectrum of item complexity (which will be
+discussed further in the next section). The remaining items selected were
+those that would be used in TIMSS 2023 and scored using screenshots, as
+the potential operational use of CNN-based scoring in TIMSS was one of
+the primary RQs of the study (RQ3). Six of the Grade 4 items and four
+Grade 8 items were eligible for selection after these filtering steps.
+The remaining ten items were evaluated according to the skills they
+assessed and their complexity (i.e., how many possible responses could
+receive credit). To answer RQ2, selecting items that assessed a wide
+range of content was imperative to test how the CNNs would handle
+graphical input of various shapes and forms. Variety in possible responses was also a point of consideration: it was expected that items
+with few correct response options would be easier to classify for the
+CNNs than items with many correct response options (see Figs. 1–5).
+Eight of the ten items were selected for the study: five Grade 4 items and
+three Grade 8 items, with one of the Grade 8 items being trichotomous
+(having an additional score category of partial credit). One item at each
+grade was not selected because they were on the lowest end of the
+complexity spectrum, which was already covered by secured item
+ME72119 (which had three possible correct responses) and restricted
+use item ME52048.
+The selected items assess student’s ability to identify the characteristics of lines and angles, describe and draw geometric figures, analyze
+the properties of figures, and solve problems based on geometric relationships (Mullis & Martin, 2017). The five Grade 4 items assess the
+Measurement and Geometry content domain, with four covering the
+Geometry content area and ME71181 covering the Measurement content area of the TIMSS framework. The three Grade 8 items assess the
+Geometry content domain, specifically the Geometric Shapes and Measurements content area. For more information about the TIMSS content
+domains and topics, please see the TIMSS 2019 Mathematics Framework
+(Mullis & Martin, 2017). See Table 1 for information about the selected
+items from the TIMSS 2019 International Database (Fishbein et al.,
+2021).
+
+Average
+Percent
+Partial
+Credit
+
+21.60
+29.70
+48.40
+39.90
+41.70
+34.40
+
+17.70
+
+47.80
+
+Notes. Asterisk indicates restricted use items.
+
+the lines of symmetry stretch, but almost all correct responses look the
+same (see Fig. 2). Incorrect responses, on the other hand, have more
+variability: they could either have some but not all lines of symmetry
+present or be entirely off-task and include erroneous lines (see Fig. 3).
+Item ME62300 was a difficult item expected to present the most
+challenge to the CNNs due to the increased variability in acceptable
+responses and the additional partial credit score category. For this item,
+students were directed to draw a rectangle with a perimeter of 22 cm
+and an area of 24 cm2. Full credit responses contained an 8 by 3 rectangle drawn anywhere on the grid (see Fig. 4). Unlike ME52048, correct
+responses can be very different because they can be drawn anywhere on
+the grid. There is even more variability for the partial credit score
+category, where students receive partial credit for drawing a rectangle
+with either the correct perimeter or the correct area but not both. Six
+sizes of rectangles (5 by 6, 1 by 10, 4 by 6, etc.) fit these criteria,
+meaning that partial credit responses can be one of six rectangles drawn
+anywhere on the grid (see Fig. 5). Finally, incorrect responses had the
+most variability, containing rectangles of incorrect dimensions (e.g., 4
+by 5) or being off-task (see Fig. 6).
+4.3. Image response pre-processing
+Prior to modeling with CNNs, the image responses were preprocessed to retain as much information as possible when placed in
+the modeling arrays. Graphical responses must be shrunk down to a
+small dimension to ensure reasonable processing time. For example, in
+the MNIST fashion dataset, a popular choice for beginners experimenting with ANNs, the images are only 28 by 28 pixels (Xiao et al., 2017). In
+our study, the average size for student responses was 355 by 382 pixels.
+When placed in the arrays, the target size varied by item but was either
+64 by 64 pixels (the size used in von Davier et al., 2022) or 75 by 75
+pixels, depending on the complexity of student responses. These final
+response sizes were chosen to balance processing speed and classification accuracy.
+Using the magick package in R (Ooms, 2021), the images were converted to greyscale to further reduce processing time, their contrast
+
+4.2. Response variability examples
+Across all items used in the study, the two restricted use items
+exemplify the range in challenge for neural network modeling due to
+their differing levels of variability in acceptable correct responses. For
+all subsequent figures, images included are actual student responses
+from screenshots automatically taken during test administration.
+Item ME52048 is a medium-difficulty item that was expected to
+present little challenge to the CNNs. This item gives students a figure on
+a grid and asks them to draw the lines of symmetry. Correct responses for
+this item contain four lines of symmetry drawn through the figure. The
+variability within the set of correct responses is determined by how far
+4
+
+L. Tyack et al.
+
+Computers and Education: Artificial Intelligence 6 (2024) 100249
+
+Fig. 2. Examples of correct (A, B, C) and student responses for ME52048.
+
+Fig. 3. Examples of incorrect student responses for ME52048.
+
+Fig. 4. Examples of full credit student responses for ME62300.
+
+Fig. 5. Examples of partial credit student responses for ME62300.
+5
+
+L. Tyack et al.
+
+Computers and Education: Artificial Intelligence 6 (2024) 100249
+
+Fig. 6. Examples of incorrect student responses for ME62300.
+
+benchmarking participants.
+Before modeling and following pre-processing and array creation,
+the sample of responses for each item was split for simple hold-out
+validation, where a subset of responses was assigned to a training
+sample. The remaining responses were used as a validation sample so
+that the performance of the CNNs could be judged on responses that the
+models had not seen before (Chollet, 2018). The assignment was conducted using stratified random sampling on a by-country and by-score
+category basis to ensure the training sample was representative of the
+overall sample, with no country or score category included with
+significantly higher or lower frequency.
+For ANN modeling, larger training samples are desirable so that the
+models are exposed to as many different responses as possible for feature
+detection and pattern recognition. However, it is also important to
+maintain a large validation sample to ensure that the trained models are
+generalizable (Chollet, 2018). When beginning modeling with the first
+item, ME52048, a sample split of 70% training to 30% validation was
+selected based on modeling conducted by von Davier et al. (2022).
+However, after some initial CNN models were run with varying training
+sample sizes, it was quickly found that the models had comparable
+performance when 20–70% of the data were used for training. Thus, for
+the majority of modeling conducted in the study, the CNN models were
+trained on 20–30% of the responses (depending on the item).
+This study used three total stages of modeling for each item: For data
+cleaning, two stages of modeling occurred—the initial stage and an Item
+Response Theory (IRT)-based modeling stage, both used to identify errors and inconsistencies in the human rater scores and one final data
+modeling stage to produce the final response classifications for comparison against the human rater scores to answer the research questions.
+Each modeling stage used a different percentage of responses assigned to
+the training and validation samples. Additionally, the final stage of data
+modeling used cross-validation, where the sample assignment process
+was conducted five times to produce five different sets of training and
+
+enhanced by doubling saturation, and their sharpness increased. Then,
+the responses were pixelated by shrinking them down to their target size
+and increasing them to their standard size again, a technique employed
+because injecting noise (e.g., pixelation) into ML samples can sometimes
+boost the performance of CNNs (Audhkhasi et al., 2016; von Davier,
+2022). When images are shrunk down for CNNs, adjacent pixels are
+weighted together, and information can be lost. Pixelating responses
+also weighs adjacent pixels but to a lesser degree. Thus, when pixelated
+responses are shrunk down just before placement in the array, the degree to which the weighted pixels differ from their original values is less
+severe. Fig. 7 demonstrates how a student response appears when
+shrunk down to the target size without pixelation and with pixelation
+using the ggplot2 package (Wickham, 2016). Without pixelation, the
+response may lose lines integral to its classification into the proper score
+category. For ME52048, for example, an incorrect response where students had only drawn two lines of symmetry (across the diagonals) could
+appear the same as a correct response with all four lines of symmetry if
+no pixelation was used.
+After image modification, the responses were shrunk down to their
+target size and placed in arrays using the EBImage package (Ole, 2022).
+The corresponding human rater classifications were also saved in a
+separate array using integer label format (0 for incorrect, 1 for correct or
+partial credit, 2 for full credit).
+4.4. Sampling technique
+For each of the eight items, responses used in the study were
+collected from countries that participated in eTIMSS in the 2019 cycle.
+For both grades, the sample sizes were large and ideal for ML. At Grade
+4, the number of responses ranged from 20,571 to 22,444 total across 30
+countries and one benchmarking participant (e.g., regional entities, such
+as provinces and municipalities). At Grade 8, the number of responses
+ranged from 16,904 to 17,083 across 22 countries and three
+
+Fig. 7. Example of student response to ME52048 before placement in array (A) and after placement without pixelation (B) and with pixelation (C).
+6
+
+L. Tyack et al.
+
+Computers and Education: Artificial Intelligence 6 (2024) 100249
+
+validation samples. This process was done to ensure the robustness of
+results and that no single sample yielded unusually high or low performance (Chollet, 2018).
+
+4.6. Data cleaning stage 1: initial modeling
+During the initial modeling stage, a sample was created using 30% of
+the responses, which were assigned to the training set. CNNs were
+constructed with varying layer structures, as detailed in the “Convolutional Neural Network Model Training” section. After training, the CNNs
+were applied to the validation sample. Any discrepancies in human rater
+and CNN classifications of the validation sample were manually examined by the research team. For each reviewed image response, both
+classifications were considered while judging the response against the
+item’s scoring guide. Any responses determined to have received
+improper credit from the human rater were identified and set aside (i.e.,
+removed from the data sample keras arrays and placed into their own
+array), as were any responses found to have inconsistent scoring across
+raters. Using keras, CNN models can also provide final classifications for
+the training sample after training. While the number of disagreements
+between the trained CNN classifications and the human rater scores
+were small, these responses from the training sample were also manually
+reviewed and any incorrectly or inconsistently human-scored responses
+identified and set aside.
+Following the identification of improperly or inconsistently scored
+responses, the classification accuracies of the CNNs were computed by
+comparing the final CNN classifications on the validation sample to the
+human rater classifications. Based upon the performance of the CNNs (i.
+e., the classification accuracy and the loss metrics), the sample assignment ratio for final modeling was determined (either using 30% of the
+data for training or reducing to 20% for training if the models were
+highly accurate).
+
+4.5. Data cleaning: overview
+One of the goals of the data cleaning stage of the study was to ensure
+that the responses used in data modeling had correct classifications
+according to the items’ scoring guides so the CNNs would be trained on
+responses where the image features and the classifications matched.
+Otherwise, errors or rater effects may be introduced in the training that
+could impact the models’ learning and classifications (Chollet, 2018;
+Wind et al., 2017). von Davier et al. (2022) found that during individual
+review of responses where the classifications between the ANNs and
+human raters did not match, roughly 1.3% of the data were incorrectly
+scored by the human raters (given the improper credit according to the
+scoring guide). Additionally, they found that some responses received
+different scores depending on the rater (identified as “inconsistent
+human scoring”), reflecting severity and leniency effects that arise when
+stray marks or incomplete lines are present. von Davier et al. (2022)
+suggested in their conclusion that CNN-based validation can help
+identify inaccuracies and inconsistencies in human rater scoring. Thus, it
+was decided that a combination of CNN-based scoring and manual review would be used to clean the dataset.
+Therefore, data cleaning consisted of constructing CNNs and then
+manually reviewing misclassifications made by the models. Of the
+misclassified responses, any responses determined to be incorrectly
+scored by the human raters were set aside from the data sample. Likewise, any responses identified as inconsistently scored by the human
+raters—“borderline” responses that could be scored as correct or
+incorrect depending on the raters’ judgments about stray marks and
+incomplete lines—were also set aside. Two separate stages of neural
+network modeling were conducted. First, an initial round of modeling
+was done to give the research team an idea of how the CNNs would
+perform in the final data modeling and, more importantly, to identify
+the majority of incorrectly and inconsistently scored responses. A second
+round of modeling was conducted using the IRT-based CNN modeling
+technique explored in von Davier et al. (2022), which examined whether
+samples constructed based upon agreement between expected scores
+(ES) and human rater scores could improve model classification and
+detection of responses given improper credit by the human raters. In this
+round of modeling, ES were produced for each response based upon a
+students’ ability estimates and the items’ IRT parameters. Only responses where ES and the corresponding human rater scores matched
+were used in the training samples. This second step of data cleaning
+aimed to test the IRT-based ES modeling approach across multiple items
+and catch any remaining incorrectly or inconsistently human-scored
+responses to set aside from the main data sample. For the number of
+student responses assigned to the training and validation samples in
+each stage, see Table 2.
+
+4.7. Data cleaning stage 2: IRT-based expected score modeling
+The second data cleaning stage extended research published by von
+Davier et al. (2022) using IRT model-based scores as the basis for sample
+assignment and modeling. In TIMSS, plausible values are produced to
+capture student achievement on all items administered to them using
+IRT (Lord & Novick, 1968) and population modeling, which takes into
+consideration both achievement data and contextual data (e.g.,
+socio-economic status) gathered through context questionnaires (Mullis
+& Fishbein, 2020; von Davier, 2020). Using these plausible values and
+item parameters obtained from the TIMSS 2019 scaling (Foy et al., 2020)
+located in the adjusted eT19 IRT item parameter files available through
+the International Database (Fishbein et al., 2021), IRT-based ES can be
+computed for every student response.
+The ES can be computed as an estimate of the probability that a
+student with proficiency θ solves an item either with parameters a, b for
+dichotomous items or a, b, c for trichotomous items. For dichotomous
+items, the student proficiency θ for item j can be estimated using the
+two-parameter (2 PL) model (Birnbaum, 1968):
+)]
+[ (
+exp Daj θ − bj
+[ (
+)]
+P(2)j (θ) =
+1 + exp Daj θ − bj
+where bj is the item location parameter and Daj is the item discrimi
+
+Table 2
+Sample sizes for data cleaning modeling stages.
+Item
+ME61081A
+ME61081B
+ME61224
+ME71177
+ME71181
+ME52048
+ME62300
+ME72119
+
+Stage 1: Initial
+
+Stage 2: IRT-based ES
+
+Grade
+
+Training
+
+Validation
+
+Training (match)
+
+Validation (match)
+
+Validation (no match)
+
+4
+4
+4
+4
+4
+8
+8
+8
+
+6,210
+6,159
+6,524
+6,593
+6,731
+5,087
+5,036
+5,238
+
+14,361
+14,412
+15,630
+15,645
+15,713
+11,957
+11,868
+11,845
+
+7,926
+8,331
+8,488
+7,347
+8,432
+5,942
+5,157
+6,414
+
+7,999
+8,302
+8,466
+7,110
+8,260
+5,970
+5,230
+6,493
+
+4,295
+3,447
+4,899
+7,655
+5,664
+5,062
+6,268
+4,110
+
+­
+
+7
+
+L. Tyack et al.
+
+Computers and Education: Artificial Intelligence 6 (2024) 100249
+
+nating power with an added scale constant D of 1.7 to account for
+parametrization in PARSCALE (du Toit, 2003). For trichotomous items,
+the student proficiency θ for item j can be estimated using Master’s
+partial credit model (Masters, 1982):
+]
+[ k
+(
+)
+∑
+exp
+Daj θ − bjv
+v=1
+Pjk (θ) =
+]
+[ k
+mj
+(
+)
+∑
+∑
+exp
+Daj θ − bjv
+1+
+c=1
+
+similar training samples compared to the initial and final stages of
+modeling (see Table 2). Therefore, 50% of the responses where the IRTbased ES and the human rater score matched were assigned to a training
+sample (Tmatch), while the remaining half of the matching responses
+were assigned to a validation sample (Vmatch). After CNN models were
+trained, they were then applied to the matching validation sample
+(Vmatch) as well as a validation sample containing all responses where
+the IRT-based ES and the human rater score did not match (Vno_match).
+Like in the first stage of data cleaning (initial modeling), any responses
+where there were disagreements in classifications between the CNNs
+and human raters were manually reviewed and any responses showcasing incorrect or inconsistent human scoring set aside.
+All responses were evaluated by trained models (not just those in the
+validation samples) to guarantee that the final dataset was as clean as
+possible. Thus, another set of CNNs was created and trained on the 50%
+of responses previously in the matching validation sample (Vmatch).
+Conversely, the responses used for training (Tmatch) with the first set of
+CNNs were used as the matching validation sample in this second round.
+The same mismatching validation sample (Vno_match) was also used.
+Again, disagreements in classifications between the CNNs and human
+raters were examined, and responses showcasing improper or inconsistent scoring were removed from the final dataset.
+
+v=1
+
+where bjv is composed of the item location and category boundary (step)
+)
+(
+parameters, such that bjv = bj − ck .While we have a human rater
+generated score xin[r] that assigns either incorrect or correct (for
+dichotomous items) or no credit, partial credit, or full credit (for
+trichotomous items) to the encounter of a student n with task i based on
+rater r’s evaluation of the image, from the probabilities we can generate
+an ES based on the IRT item function that assigns response probabilities
+to each potential score level of the task, either using maximum priori
+(MAP) estimation for dichotomous items
+MAP = yin[max] = max(x=0,1) {P(X = x|θ, a, b)}
+or an average of expected a priori (EAP) estimation and MAP estimation
+for trichotomous items,
+[
+]
+2
+∑
+EAP = yin[exp] = round
+xP(X = x|θ, a, b, c)
+
+4.8. Data modeling: final modeling
+Following the data cleaning stage, the final data modeling was
+conducted to produce CNN classifications for comparison against human
+rater scores. 20% of the responses were assigned to the training sample
+for ME71177 and ME72119, while the remaining items had training
+samples composed of 30% of the responses. This approach allowed us to
+maximize the number of responses receiving classifications from the
+models, while still maintaining high agreement with the human rater
+scores (see Table 4). The most accurate models were also tested on the
+incorrect and inconsistently scored image responses identified during
+the data cleaning. This additional testing aimed to examine how many
+incorrectly scored image responses the final models could classify into
+the correct score category. These results would indicate the efficacy of
+the final CNNs’ detection of errors and inconsistencies in human rater
+scoring, and their potential application in ISLAs (RQ3).
+For the trichotomous item ME62300, augmentation was used to increase the size and representation of partial credit responses in the
+training sample for the final modeling. Augmenting datasets using
+existing responses is a technique used in ML to improve model learning
+when data is limited in size either across the entire sample or for
+particular classifications since large amounts of data are required for
+neural networks to be trained reliably (Chollet, 2018; Perez & Wang,
+2017; Shorten & Khoshgoftaar, 2019). When pursuing augmentation to
+reduce class imbalance, responses are included more than once in the
+training data, either as pure copies or with some changes added (such as
+noise, rotation, or mirroring) to maintain the same classification but
+appear as a different response (Leevy et al., 2018). For ME62300, 30% of
+the responses within each country and score category were assigned to
+the training sample. Then, the sample of responses that received no
+credit or full credit from the human raters was doubled by including the
+
+x=0
+
+and
+MAP = yin[max] = max(x=0..2) {P(X = x|θ, a, b, c)}
+where EAP estimation is the weighted average of all response probabilities for a student n and MAP estimation is the highest response
+probability for student n. The averaging procedure was conducted for
+the trichotomous item because the MAP-based scores alone did not
+produce any ES for the partial credit score category because the likelihood of receiving partial credit on the item under the IRT formula was
+never higher than the likelihood of receiving no credit or full credit.
+Therefore, any training sample constructed would be devoid of partial
+credit responses, and thus, the model would not learn to distinguish
+them from incorrect or full credit. The EAP-based scores, on the other
+hand, produce an overrepresentation of the partial credit responses,
+leading to very low agreement between the ES and the human rater
+scores. Averaging the MAP and EAP scores yielded ES that extended
+across the range of score categories with a more even score distribution.
+After computing the IRT-based ES (either yin[max] for dichotomous
+y
+
+items or in[max] 2 in[exp] for the trichotomous item), sample assignment was
+carried out. First, the ES were compared against the human rater
+generated scores xin[r] (see Table 3). Because only about half of the responses had agreement between the human rater scores and the ES per
+item, the percentage of responses assigned to the training sample was
+increased in this stage from 30% to 50%. This adjustment resulted in
++y
+
+Table 3
+Percent agreement between human rater and IRT-based expected scores across
+participating countries.
+Item
+
+Grade
+
+Minimum
+Agreement
+
+Maximum
+Agreement
+
+Average
+Agreement
+
+ME61081A
+ME61081B
+ME61224
+ME71177
+ME71181
+ME52048
+ME62300
+ME72119
+
+4
+4
+4
+4
+4
+8
+8
+8
+
+60.93
+57.06
+63.60
+57.38
+66.17
+44.83
+50.34
+62.11
+
+94.47
+95.71
+87.99
+76.94
+88.27
+81.44
+76.89
+85.22
+
+78.76
+82.83
+77.58
+65.38
+74.66
+70.18
+61.50
+75.85
+
+Table 4
+Average sample sizes across five CV samples for final data modeling stage.
+
+8
+
+Item
+
+Grade
+
+Training
+
+Validation
+
+ME61081A
+ME61081B
+ME61224
+ME71177
+ME71181
+ME52048
+ME62300
+ME72119
+
+4
+4
+4
+4
+4
+8
+8
+8
+
+6,058
+5,978
+6,556
+4,456
+6,691
+5,050
+13,720
+3,386
+
+14,134
+13,951
+15,232
+17,652
+15,660
+11,900
+11,617
+13,616
+
+L. Tyack et al.
+
+Computers and Education: Artificial Intelligence 6 (2024) 100249
+
+original responses and copies that were rotated 180◦ . The responses
+given partial credit were included in the final training sample six-fold,
+including two of the original response, two of the response mirrored,
+and two of the response rotated 180◦ . This procedure increased the
+overall sample distributions to have a higher representation of partial
+credit responses (which the models struggled with most during data
+cleaning), from 18.36% with no augmentation to 40.29% with
+augmentation (incorrect decreasing from 45.75% to 33.46%, and full
+credit decreasing from 35.89 to 26.25%).
+
+responses the model classified as correct when the human rater score is
+also correct—and recall—the proportion of responses classified as correct by the human rater that are identified as correct by the model.
+Precision is computed by dividing the true scores by actual scores, or in
+this case dividing the responses the human rater and the CNN classify as
+correct by all of the responses the CNN classifies as correct (true correct
+and false correct). Recall is computed by dividing the true scores by the
+predicted scores, or in this case dividing the responses the human rater
+and the CNN classify as correct by both the responses the human rater
+and the CNN classify as correct (true correct) and the responses the CNN
+classifies as incorrect but the human rater classifies as correct (false
+incorrect) (Grandini et al., 2020). Precision and recall were computed
+using the “precision_vec” and “recall_vec” functions from the yardstick
+package (Kuhn & Vaughan, 2021).
+For dichotomous items, F1-Scores were computed using the
+following formula:
+
+4.9. Convolutional neural network model training
+CNN models were trained using the keras package in R (Allaire &
+Chollet, 2021) and compiled using the sparse_categorical_crossentropy
+loss option. The models’ structures were informed by the results of
+parameter experimentation conducted by von Davier et al. (2022). All
+models had two or three fully connected layers, with each additional
+fully connected layer including 64 more units than the previous layer.
+Additionally, the models had the final fully connected layer with two or
+three units, representing incorrect, partially correct (when applicable),
+and fully correct. For every model, the convolutional layers used a
+kernel size of 3x3 and were always followed by a 2-dimensional max
+pooling layer with a pool size of 2x2.
+Modeling was conducted for 50 epochs of training using the Nadam
+(Dozat, 2016) optimizer. These settings were used based on von Davier
+et al. (2022), who found that models trained on 50 epochs tended to
+have slightly higher accuracies and lower losses than those trained on 25
+epochs and that those compiled using the “Nadam” optimizer performed
+better than those compiled using the “Adam” or “AdaMax” (Kingma &
+Ba, 2014) optimizers. von Davier et al. (2022) also found that including
+dropout layers in CNN models reduced model loss; thus, all models in
+this study included dropout layers following each max pooling layer and
+fully connected layer, except for the final fully connected layer in the
+model. Each dropout layer used a dropout rate of 0.25, indicating that
+25% of inputs would be dropped randomly from the layer during each
+iteration of training. Finally, CNNs with zero and no padding were
+generated.
+Four CNNs were compiled for each training/validation sample
+modeled in the initial and IRT modeling stages of data cleaning. These
+CNNs had either one convolutional layer with 32 filters or two convolutional layers with 32 and 64 filters, respectively. They also had two
+dense layers with 128 and 192 units, respectively. In the final data
+modeling stage, sixteen CNNs were produced in total. In addition to the
+one and two convolutional layer models created in the data cleaning
+stages, the final data modeling stage also had CNNs with three and four
+convolutional layers, with each additional layer including 32 more filters than the previous layer. They also had two or three dense layers,
+with each additional layer having 64 more units than the previous layer.
+
+F1-Score = 2 ×
+
+Precision × Recall
+Precision + Recall
+
+For the trichotomous item, precision and recall were first computed
+for each score category individually (instead of just correct), and then
+averaged into a single value for each metric respectively. The F1-Scores
+were then computed using the following formula:
+F1-Score = 2 ×
+
+MacroPrecision × MacroRecall
+MacroPrecision + MacroRecall
+
+5. Results – data cleaning
+5.1. Stage 1: initial modeling
+The models produced in the first data cleaning stage had close model
+fit, with losses ranging from 0.024 to 0.22. The models were highly
+accurate, with classification agreement between the CNNs and human
+raters ranging from 96% to 99%. During the review of responses where
+there was disagreement between the human rater classification and the
+CNN classification, 14 to 317 responses across the items were identified
+as incorrectly scored by the human raters, and 16 to 143 responses
+across the items were identified as inconsistently scored across the
+raters. After removing these responses from the validation sample, the
+model accuracies increased. The best-performing CNNs (those with the
+highest accuracies and lowest losses) agreed with the human raters for
+98.79%–99.84% of the dichotomous item responses and 96.64% of the
+trichotomous item responses (see Table 5).
+5.2. Stage 2: IRT-based expected score modeling
+The second stage of data cleaning with IRT-based ES modeling
+involved creating eight models for each item, four of which were trained
+on 50% of the data where human rater and IRT-based ES matched
+(Tmatch), and four of which were trained on the other half of the data
+where human rater and IRT-based ES matched (Vmatch). For all eight
+models, proficiency was also evaluated using a validation sample consisting of responses where the human rater and IRT-based ES did not
+match (Vno_match).
+The first set of four models, trained on responses where the human
+rater and IRT-based ES matched (Tmatch), tended to perform better when
+classifying responses where there was an agreement between the human
+rater sore and the IRT-based ES (Vmatch) than they did when classifying
+responses where there was no agreement (Vno_match). For the matching
+human rater-ES validation sample (Vmatch), the best-performing models
+had low losses, ranging from 0.01 to 0.04 for the dichotomous items and
+0.12 for the trichotomous item, which shows that the models closely fit
+the data. Upon review of the responses misclassified by the CNNs, most
+items had no additional responses identified as incorrectly scored by the
+human raters. Of the items that had additional incorrectly scored
+
+4.10. Validation sample classification evaluation
+Multiple metrics were used to assess CNN performance throughout
+each round of modeling. Exact match accuracy was computed by
+comparing the CNN classifications directly to the human rater classifications for each response. Higher accuracies indicate higher classification agreement between the CNNs and human raters. Loss was also used
+to indicate how well the CNNs classified the validation responses.
+Smaller loss values signify better classification ability (Chollet, 2018).
+Additionally, F1-Scores were computed because some of the items had a
+noticeable imbalance in response categories, where a few of the Grade 4
+items only had 20–30% of responses correct, and the trichotomous
+Grade 8 item had only 18% of responses in the partial credit category.
+Unlike accuracy, which uses blanket agreement between scores,
+F1-Scores consider true and false scores for correct and incorrect classifications (Grandini et al., 2020).
+F1-Scores take the weighted average of precision—the proportion of
+9
+
+L. Tyack et al.
+
+Computers and Education: Artificial Intelligence 6 (2024) 100249
+
+Table 5
+Most accurate CNN performance when trained on 30% of the data and number of incorrectly and inconsistently scored responses identified during misclassification
+review.
+Item
+
+Grade
+
+Model
+
+Loss
+
+Revised Accuracy
+
+Incorrect
+
+Inconsistent
+
+ME61081A
+ME61081B
+ME61224
+ME71177
+ME71181
+ME52048
+ME62300*
+ME72119
+
+4
+4
+4
+4
+4
+8
+8
+8
+
+2CL, ZP
+1CL, ZP
+2CL, ZP
+2CL, NP
+2CL, ZP
+2CL, NP
+1CL, ZP
+1CL, ZP
+
+0.0913
+0.1130
+0.1277
+0.0412
+0.0874
+0.0242
+0.2189
+0.0212
+
+99.53
+99.21
+98.79
+99.84
+99.35
+99.78
+96.64
+99.81
+
+133
+317
+79
+71
+49
+14
+149
+21
+
+116
+30
+143
+22
+16
+36
+26
+25
+
+Note. asterisk indicates the trichotomous item; CL = convolutional layers; NP = no padding, ZP = zero padding.
+
+responses identified (between 2 and 12), they were ones that were more
+difficult for the human raters to score. Between 0 and 9 additional responses were identified as exhibiting patterns of inconsistencies in
+scoring across raters. After these responses were set aside, classification
+agreement for the best-performing models increased slightly to over
+99% for all of the dichotomous items (between 99.47% and 99.92%) and
+98.07% for the trichotomous item (see Table 6).
+For the validation sample where the human rater and IRT-based ES
+scores did not match (Vno_match), the losses associated with the bestperforming models were slightly higher, ranging from 0.01 to 0.50 for
+the dichotomous items and 0.43 for the trichotomous item. These higher
+losses indicate that the CNNs did not fit the data as well for the mismatching validation sample (Vno_match) compared to the matching one
+(Vmatch). Additionally, there was more variation in performance between all four models produced for each item, and more responses were
+identified as incorrectly and inconsistently scored by the human raters
+(between 0 and 120 and between 0 and 33, respectively). Moreover,
+once the Vno_match sample was cleaned (incorrectly and inconsistently
+human-scored responses removed), accuracies were slightly lower than
+the Vmatch sample, ranging between 98.92% and 99.96% for the
+dichotomous items and 94.67% for the trichotomous item with an
+average of 98.93% (see Table 6).
+The second set of models, trained on the validation sample where
+human rater and IRT-based ES matched from the first set of models
+(Vmatch), had comparable performance to the first set of models, with the
+best-performing models having slightly higher classification accuracies
+and lower losses for some items and the opposite for other items. When
+applied to the validation sample (former training sample) where the
+human rater and IRT-based ES matched (Tmatch), the best-performing
+models had low losses, ranging from 0.002 to 0.06 for the dichotomous items, and 0.17 for the trichotomous item, indicating close model
+fit. Upon review of the responses misclassified by these CNNs, half of the
+items had no additional incorrectly human-scored responses identified
+while the other half had between 1 and 12 identified. Between 0 and 7
+responses were flagged and removed for having a pattern of inconsistency in human scoring. After removing these responses, classification
+agreement for the best-performing models increased slightly to between
+
+99.48% and 99.97% for the dichotomous items and 97.26% for the
+trichotomous item, with an average of 99.50% (see Table 7).
+For the validation sample where the human rater and IRT-based ES
+scores did not match (Vno_match), the losses associated with the bestperforming models were higher, ranging from 0.009 to 0.54 for the
+dichotomous items and 0.44 for the trichotomous item. Like with the
+previous set of models, the losses indicate that the CNNs had worse fit for
+the mismatching validation sample (Vno_match) than the matching validation sample (Vmatch). Again, more responses were identified as
+incorrectly and inconsistently scored by the human raters (between
+0 and 113 and between 0 and 24, respectively). Once the incorrectly and
+inconsistently human-scored responses identified from these CNN model
+misclassifications were removed, the best-performing model accuracies
+increased to between 97.86% and 99.96% for the dichotomous items
+and 93.74% for the trichotomous item with an average of 98.68% (see
+Table 7).
+For almost all models run across the items, the CNN model classifications on the validation sample where the human rater scores and IRTbased ES matched outperformed the validation sample where they did
+not match. While we cannot say precisely why there is a difference in
+model performance, it is likely partly due to the increased variability in
+response patterns associated with the non-matching responses. Students
+who unexpectedly (according to the IRT model) get the item correct (or
+receive some credit, according to the human rater) may respond in a less
+common way, such as drawing a line at the bounds of a tolerance area or
+completing a correct figure that is the least commonly drawn of the
+acceptable options. More uncommon correct responses may not appear
+correct because the models were not trained sufficiently on that pattern
+leading to a lack of association between those features and the correct
+category classification. On the other hand, students who unexpectedly
+get the item wrong may have responses that are almost correct or
+deserving of some credit but not quite. Almost correct responses tend to
+be the most commonly misclassified responses by the CNN models.
+Additionally, far more incorrectly and inconsistently human-scored
+responses were identified in the validation sample where the human
+rater scores and ES did not match (Vno_match). This is unsurprising, as
+there are more likely to be inaccuracies and inconsistencies in scoring
+
+Table 6
+Most accurate CNN performance when trained on the tmatch sample and number of incorrectly and inconsistently scored responses identified during misclassification
+review.
+Item
+ME61081A
+ME61081B
+ME61224
+ME71177
+ME71181
+ME52048
+ME62300*
+ME72119
+
+Grade
+4
+4
+4
+4
+4
+8
+8
+8
+
+Model
+2CL, NP
+1CL, NP
+2CL, ZP
+1CL, ZP
+2CL, ZP
+1CL, ZP
+2CL, ZP
+1CL, ZP
+
+Vmatch
+
+Vno_match
+
+Loss
+
+Revised Accuracy
+
+ICR
+
+ICS
+
+Loss
+
+Revised Accuracy
+
+ICR
+
+ICS
+
+0.0096
+0.0219
+0.0401
+0.0073
+0.0211
+0.0143
+0.1207
+0.0111
+
+99.90
+99.86
+99.67
+99.92
+99.47
+99.87
+98.07
+99.86
+
+2
+12
+0
+0
+0
+0
+7
+0
+
+4
+1
+9
+0
+1
+8
+2
+4
+
+0.0826
+0.4976
+0.1638
+0.0107
+0.0223
+0.0144
+0.4298
+0.019
+
+99.32
+98.92
+99.22
+99.83
+99.61
+99.96
+94.67
+99.90
+
+5
+120
+9
+0
+0
+0
+6
+0
+
+8
+0
+33
+1
+3
+5
+0
+2
+
+Note. asterisk indicates the trichotomous item; ICR = Incorrect; ICS = Inconsistent; CL = convolutional layers; NP = no padding, ZP = zero padding.
+10
+
+L. Tyack et al.
+
+Computers and Education: Artificial Intelligence 6 (2024) 100249
+
+Table 7
+Most accurate CNN performance when trained on the vmatch sample and number of incorrectly and inconsistently scored responses identified during misclassification
+review.
+Item
+
+Grade
+
+ME61081A
+ME61081B
+ME61224
+ME71177
+ME71181
+ME52048
+ME62300*
+ME72119
+
+4
+4
+4
+4
+4
+8
+8
+8
+
+Model
+1CL, NP
+2Cl, NP
+1CL, NP
+1CL, NP
+2CL, ZP
+1CL, ZP
+2CL, ZP
+1CL, ZP
+
+Tmatch
+
+Vno_match
+
+Loss
+
+Revised Accuracy
+
+ICR
+
+ICS
+
+Loss
+
+Revised Accuracy
+
+ICR
+
+ICS
+
+0.0066
+0.0223
+0.0648
+0.0107
+0.0215
+0.0026
+0.1733
+0.0058
+
+99.95
+99.79
+99.48
+99.93
+99.61
+99.97
+97.26
+99.97
+
+0
+12
+3
+0
+0
+0
+2
+1
+
+5
+0
+7
+1
+0
+3
+0
+6
+
+0.0592
+0.5432
+0.1453
+0.0113
+0.0461
+0.0087
+0.0439
+0.0166
+
+99.56
+97.86
+98.91
+99.86
+99.59
+99.96
+93.74
+99.93
+
+6
+113
+9
+0
+1
+1
+5
+0
+
+9
+3
+24
+3
+1
+8
+0
+2
+
+Note. asterisk indicates the trichotomous item; ICR = Incorrect; ICS = Inconsistent; CL = convolutional layers; NP = no padding, ZP = zero padding.
+
+where two classifications disagree. In other words, the validation sample
+where the human rater scores and ES scores matched has already been
+cleaned in a way, as it only used responses that were highly likely to
+have the correct classification because two separate classification
+methods gave them the same score.
+
+scored by the human raters. On average, the best CNN models classified
+between 94.78% and 99.60% of the responses given improper credit by
+the human raters into the correct score category. For six of these items,
+the models misclassified only 1 to 8 incorrectly human-scored responses,
+on average (see Table 9). These results indicate that the models are
+capable of correctly classifying the vast majority of the incorrectly
+human-scored responses for each dichotomous item.
+The trichotomous item ME62300 had lower performance across the
+clean validation sample and the sample of incorrectly human-scored
+responses than the dichotomous items. This item had an accuracy of
+97.99% and an average F1-Score of 0.9766, misclassifying 233 responses on average (see Table 8). Additionally, the CNNs misclassified
+25 of the 227 incorrectly human-scored responses, having the lowest
+average classification accuracy of 88.81% (see Table 9). While the CNN
+models were less adept at classifying responses into three score categories than two, they had comparable performance to the CNN models
+trained in von Davier et al. (2022) on a trichotomous item using 70% of
+responses. In that study, the CNNs achieved up to 97.53% average
+classification accuracy on the clean validation sample and correctly
+classified 86.22% of the incorrectly human-scored responses on average.
+
+6. Results – data modeling
+6.1. RQ1: Assessing CNN-based automated scoring performance for each
+item
+Consistent with the results of the previous two modeling stages
+conducted for data cleaning, the best-performing models had extremely
+low losses for the dichotomous items, ranging from 0.006 to 0.0298 on
+average, with a slightly higher but still relatively low average loss of
+0.121 for the trichotomous item. Moreover, classification accuracies
+were extremely high when comparing the CNN classifications to the
+human rater classifications. For the dichotomous items, the bestperforming models had an average of 99.37% and 99.92% accuracy
+and between 0.9948 and 0.9992 F1-Scores. Across the seven dichotomous items, the best-performing CNNs misclassified between 11 and 99
+responses on average, showing that CNNs can classify almost all responses correctly. When comparing the CNN model performance to the
+human raters, the CNNs perform as well as—and in many cases even
+better—than the human raters. For six of the seven dichotomous items,
+there were fewer CNN misclassifications on average than the number of
+incorrectly human-scored responses identified (see Table 8).
+For the dichotomous items, the final CNN models also performed
+well when applied to the sample of responses that were incorrectly
+
+6.2. RQ2: Assessing CNN-based automated scoring performance across
+items
+The CNN models had extremely high classification accuracies and
+F1-Scores across all items. Moreover, the models had similar numbers of
+misclassifications to the human raters, indicating comparable performance between CNNs and human raters regardless of task assessed or
+item complexity. Additionally, all items had low losses, signifying close
+
+Table 8
+Average best CNN model results on validation sample across five cross-validation data samples.
+Item
+
+Grade
+
+Model
+
+Average
+Loss
+
+Average
+Accuracy
+
+Average F1Score
+
+Average Number of
+Misclassified Responses
+
+Number of Incorrectly
+Human-Scored Responses
+Identified
+
+Number of Inconsistently
+Human-Scored Responses
+Identified
+
+ME61081A
+
+4
+
+0.0063
+
+99.89
+
+0.9992
+
+16
+
+193
+
+186
+
+ME61081B
+
+4
+
+0.0195
+
+99.70
+
+0.9981
+
+42
+
+601
+
+41
+
+ME61224
+
+4
+
+0.0298
+
+99.65
+
+0.9975
+
+53
+
+122
+
+244#
+
+ME71177
+
+4
+
+0.0099
+
+99.85
+
+0.9986
+
+27
+
+100
+
+30
+
+ME71181
+
+4
+
+0.0293
+
+99.37
+
+0.9948
+
+99
+
+67
+
+26
+
+ME52048
+
+8
+
+0.0091
+
+99.89
+
+0.9991
+
+13
+
+23
+
+71
+
+ME62300*
+
+8
+
+0.1214
+
+97.99
+
+0.9766
+
+233
+
+227
+
+39
+
+ME72119
+
+8
+
+1CL,
+2DL, NP
+3CL,
+2DL, NP
+4CL,
+2DL, ZP
+1CL,
+3DL, ZP
+2CL,
+2DL, NP
+1CL,
+3DL, NP
+3CL,
+2DL, ZP
+1CL,
+3DL, NP
+
+0.0095
+
+99.92
+
+0.9992
+
+11
+
+33
+
+48
+
+Notes. asterisk indicates the trichotomous item; value with hashtag includes one country that had 98 borderline correct responses identified as inconsistently scored
+due to their unique pattern likely caused by the translation of the item stem in the country’s context; CL = convolutional layers; NP = no padding, ZP = zero padding.
+11
+
+L. Tyack et al.
+
+Computers and Education: Artificial Intelligence 6 (2024) 100249
+
+classified on average with ME71181, but a vast disparity in the number
+of responses incorrectly classified due to the extremely high number of
+incorrectly human-scored responses identified (discussed further in the
+“Findings Related to Incorrect Human Scoring” section). Consistent with
+the findings across the clean validation sample, the trichotomous item
+ME62300 had the lowest classification accuracy for the incorrectly
+human-scored responses (88.81%), again likely due to the additional
+score category.
+
+Table 9
+Average best CNN model results on incorrectly human-scored responses across
+five cross-validation data samples.
+Item
+
+Grade
+
+Model
+
+Number of Incorrectly
+Human-Scored
+Responses Identified
+
+Average Incorrectly
+Human-Scored
+Responses
+Correctly Classified
+Number
+
+Percent
+
+ME61081A
+
+4
+
+193
+
+185
+
+96.46
+
+ME61081B
+
+4
+
+601
+
+573
+
+95.41
+
+ME61224
+
+4
+
+122
+
+117
+
+95.74
+
+ME71177
+
+4
+
+100
+
+99
+
+99.60
+
+ME71181
+
+4
+
+67
+
+64
+
+95.82
+
+ME52048
+
+8
+
+23
+
+22
+
+94.78
+
+ME62300*
+
+8
+
+227
+
+202
+
+88.81
+
+ME72119
+
+8
+
+1CL,
+2DL, NP
+3CL,
+2DL, NP
+4CL,
+2DL, ZP
+1CL,
+3DL, ZP
+2CL,
+2DL, NP
+1CL,
+3DL, NP
+3CL,
+2DL, ZP
+1CL,
+3DL, NP
+
+33
+
+31
+
+95.15
+
+6.3. RQ3: Understanding how automated scoring can Be used as a
+validation technique in ILSAs
+To better answer RQ3, it was imperative to investigate the misclassifications made by the human raters and the CNNs, as well as the
+inconsistencies in human rater scoring. This investigation, coupled with
+an examination of performance metrics across the items, is explored in
+the following three sections. The insights from these examinations are
+further elaborated in the Discussion section.
+6.3.1. Findings related to incorrect human scoring
+During data cleaning, it was found that for some responses, the
+human rater score did not match the image response during the individual review by the research team. Responses that were misclassified
+by the human raters were typically quite close to the classifications
+given but had one or a few features that placed them in a different score
+category. Across the dichotomous items, most of them had many more
+responses that were given credit by the human raters but should have
+been incorrect. These misclassifications likely come from the raters
+giving the students the benefit of the doubt or missing essential elements
+of the response that make it incorrect. For example, in ME52048, human
+raters gave credit to responses where four lines of symmetry were
+drawn, but one line was just off from being correct, while some responses that only had two of the four correct lines of symmetry also
+received credit (see Fig. 8).
+Unsurprisingly, more incorrectly human-scored responses were
+identified for items with more variation in correct responses, as can be
+seen in items ME61081A and ME61081B, where the number of incorrectly human-scored responses is high (especially compared to the
+neural network misclassifications). While little can be said about these
+secured items, the disparity is likely because both items use the same
+image response, meaning that each response must be scored twice,
+requiring the human rater to distinguish information drawn answering
+Part A from that answering Part B. For these items in particular, the
+CNNs were adept at learning the features associated with a correct score
+for each item part while ignoring all other information, which can be
+challenging for human raters. Additionally, the scoring guides provide a
+tolerance for students to draw within, making the items even more
+challenging to score since the tolerance could not be included in the
+screenshots while scoring.
+The trichotomous item also saw many incorrectly human-scored
+responses, which was unsurprising given that an additional score category was present and that students could draw one of six rectangles to
+receive partial credit. For the most part, the human raters misclassified
+the responses into an adjacent score category. The highest number of
+misclassifications was for responses that should have received partial
+credit but the human raters scored them as incorrect. Of these responses,
+many included rectangles that were implied but not explicitly stated in
+the scoring guide. Some scorers likely did not realize or forgot that these
+measurements were also worth partial credit. The next highest category
+of misclassifications was for responses that should have been incorrect
+but received partial credit. Of these responses, many had more than one
+rectangle present, with at least one having the correct or partial credit
+dimensions. The raters who gave these responses partial credit likely
+gave students the benefit of the doubt. However, during TIMSS scoring
+training, it is taught that if the student provides contradictory information (e.g., two rectangles), they have shown confusion and cannot
+
+Notes. asterisk indicates the trichotomous item; CL = convolutional layers; NP =
+no padding, ZP = zero padding.
+
+model fit and high ability to classify the student image responses. It was
+apparent that performance metrics tended to be better—lower losses,
+higher F1-Scores, and fewer misclassifications—for easier items (those
+with 40% correct and above) and items where there was less variability
+in student responses (only a few possible responses could receive credit),
+such as ME52048, ME72119, and ME71177 (see Table 8). The simplicity
+in the student responses to these items likely yielded better feature
+detection for the CNNs and, therefore, greater ability to detect responses
+that should receive credit versus those that should not. ME61081A also
+had one of the highest F1-Scores and lowest losses despite being a more
+difficult item (about 29% correct). The reason for the high model performance may be because there were fewer possible correct responses,
+according to the scoring guide, than for its counterpart ME61081B and
+other dichotomous items like ME61224 (both of which had closer to
+medium performance, with F1-Scores between 0.9950 and 0.9985).
+While the CNNs performed at about the same level or better than
+human raters for most of the items, two items saw higher misclassifications than the human raters: ME71181 and ME62300. These
+two items were similar in that they asked students to draw a rectangle
+with a given dimension (perimeter of 10 for ME71181 and perimeter of
+22 with area of 24 for ME62300) (see Table 1). As previously discussed
+in the “Response Variability Examples” section, students could draw
+their rectangle anywhere on the grid, yielding many possible responses
+that could receive credit. Thus, the CNNs likely were more challenged
+when detecting features associated with correct responses because so
+many possible correct responses could exist. There was even more difficulty for the trichotomous item presented by the additional score
+category, leading to more misclassifications than the other items. The
+CNN misclassifications for ME62300 are discussed further in the
+“Findings Related to Incorrect Machine Scoring” section.
+For the sample consisting of responses given improper or inconsistent credit by the human raters, the items had somewhat similar performance patterns as they did on the clean validation sample. Items that
+the CNNs excelled at classifying—ME52048, ME72119, and
+ME71177—had only one or two incorrectly human-scored responses
+incorrectly classified on average (CNN agreed with improper credit
+given by human rater). Interestingly, despite being one of the two more
+challenging items to classify, ME71181 had only three incorrectly
+human-scored responses incorrectly classified on average, which yielded
+a perfect of 95.82%, which was in the middle of the model performance.
+ME61081B had a similar percent (95.41%) of responses incorrectly
+12
+
+L. Tyack et al.
+
+Computers and Education: Artificial Intelligence 6 (2024) 100249
+
+Fig. 8. Example student responses from ME52048 that mistakenly received credit.
+
+receive credit.
+
+dichotomous items, most of the misclassified responses should have
+received no credit but were scored as correct by the CNN models. While
+it cannot be known why models had their particular patterns of misclassifications, it was seen that across all items, the misclassified responses tended to be close to correct. Like the human raters, CNN
+misclassifications had almost all of the correct features or all of the
+correct features but additional features present that made them decisively incorrect (but the models still tended to give them credit).
+The trichotomous item, ME62300, had the highest average number
+of model misclassifications. Across the five cross-validation samples, the
+best-performing CNN had 100% classification accuracy for full credit
+responses. It had 97.78% average classification accuracy for partial
+credit responses, where the models sometimes misclassified rectangles
+that fulfilled one of the two partial credit requirements but were not
+common. Out of the six possible options, it was found that drawing 4x6
+(correct area) and 5x6 (correct perimeter) rectangles were the most
+common, while drawing 1x10 or 2x12 rectangles were the least common. The models had the highest misclassifications for incorrect responses, sometimes giving credit to responses where a rectangle of 4x5
+was drawn. One possible reason for this may be because 4x5 is close in
+dimension to both of the most common rectangles drawn.
+
+6.3.2. Findings related to inconsistent human scoring
+During the review of the misclassified responses, some were found to
+have features present or absent, resulting in them being scored differently depending on the human rater or even the country. These
+“borderline” responses tended to have extraneous lines (information),
+stray marks, or incomplete lines, which made them more difficult to
+score (see Fig. 9). Some scorers gave students the benefit of the doubt,
+while others were more severe, giving credit only if responses were
+identical to those included in the scoring guides. For inconsistently
+scored “borderline” responses, it is difficult to say whether the students
+knew or did not know the correct answer, so the independent rater did
+not provide their own scores for comparison.
+For the trichotomous item, most of the inconsistently scored responses were given credit of some kind. For all but one of the dichotomous items, the human raters did not give the majority credit,
+expressing more severity in their scoring. ME61081A had 186 responses
+identified as inconsistently scored, with most of them having stray
+marks or additional lines on one part of the image that likely muddied
+the scoring for this item part but not ME61081B. ME61224 had the most
+inconsistently scored “borderline” responses identified, and the human
+raters gave most of them credit. For this item, one country in particular
+had 98 borderline responses where the correct angle was drawn but, an
+additional line was also present. While specifics cannot be given about
+this secure item, it can be said that this more common unexpected
+answering pattern was likely caused by the translation of the item stem
+in the country’s context.
+
+7. Discussion
+7.1. Research question 1
+The CNN models produced in this study performed exceptionally
+well for all items, on average, when applied to a clean validation sample.
+The dichotomous items had F1-Scores ranging from 0.995 to 0.999 with
+over 99% classification accuracy, while the trichotomous item had an
+F1-Score of 0.977 with 98% classification accuracy. Moreover, when
+comparing the model performance to the human rater performance, it
+
+6.3.3. Findings related to incorrect machine scoring
+Machine scores were considered incorrect when they did not match
+the image response during the independent review. For all of the
+
+Fig. 9. Example student responses from ME52048 and ME62300 that show patterns of inconsistent scoring.
+13
+
+L. Tyack et al.
+
+Computers and Education: Artificial Intelligence 6 (2024) 100249
+
+was found that six of the eight items had fewer misclassifications, on
+average, by the CNNs than the number of responses incorrectly scored
+by the human rater based on an independent review by the research
+team. These results exemplify how CNNs can automatically score imagebased responses with extremely high accuracy (almost perfect for
+dichotomous items), performing better than human raters for most of
+the items. Additionally, the pattern of misclassified responses was
+similar for both the human raters and the CNNs, where responses tended
+to be misclassified if they had almost all features correct or all features
+correct but additional lines present that make the students’ understanding unclear. Finally, the early CNNs used in data cleaning were
+integral to identifying student responses that were improperly and
+inconsistently scored by the human raters. Without using the neural
+networks to clean the dataset, any mistakes or inconsistencies in human
+scoring would not have been identified. The final modeling results on
+the incorrect and inconsistently human-scored response sample show
+that CNNs are highly adept at correctly classifying responses that were
+misclassified by human raters, further evidencing the benefit of having a
+second set of scores as a point of comparison.
+
+7.3. Research question 3
+The primary benefit of using CNNs to provide a second set of scores
+for graphical response items is that it is a time- and cost-efficient procedure that can replace the need for additional human raters and ultimately improve the measure’s reliability. Hiring more human raters to
+classify each response twice would require hours of additional training
+and scoring, thus increasing costs for the participating countries. CNNs,
+on the other hand, take just hours to train and can classify most student
+responses (e.g., those in the validation sample) in seconds. Only one
+researcher is required to write the scripts and run the models, with one
+or two content experts needed to review discrepancies and establish
+final item scores. Moreover, using multiple open-source packages in R
+improves the accessibility of the technique, where the true challenge lies
+in crafting the programs and learning how neural networks function
+rather than cost. Because CNNs have been shown to classify student
+graphical responses on the same level, and often better than, human
+raters, there is the potential that with enough refinement, this method of
+automated scoring could reduce human scoring further by only having
+human scorers score a subset of graphical responses for the training
+samples and have the CNNs classify all remaining responses.
+Another benefit of automatically producing a second set of scores is
+the potential to identify student responses that human raters have scored
+incorrectly and inconsistently. This study indicates that CNNs can help
+identify these responses through individual review of model misclassifications. Operationally, any responses identified as incorrectly
+scored by the human raters could be re-scored by a content expert
+following data collection. Content experts could also manually score
+responses that fall into the “borderline” category, where it is unclear
+which credit the response should receive. The two benefits of using this
+approach are that it can pool all “borderline” responses across participating countries and score them with a single rater to increase scoring
+consistency. In the case of TIMSS, this approach would be a marked
+improvement from past cycles, where human raters sometimes received
+individual feedback for specific “borderline” responses from scoring
+queries emailed to the ISC, resulting in potential scoring differences for
+countries that did not reach out with questions.
+Furthermore, there is the potential that CNN-based automated
+scoring could be used to bolster scoring materials made for human
+raters, provide country feedback, and inform decisions made during
+data review. Responses commonly scored incorrectly by human raters
+and frequent “borderline” responses could be included in scoring guides
+updated for data collection or future cycles. Also, human scoring
+training sessions could use some common incorrectly scored and
+“borderline” responses as examples to prepare scorers and evaluate the
+consistency of their scoring (for non-rule-based scoring items). Feedback
+could also be provided to countries before human scoring for data
+collection if specific patterns of incorrect scoring or “borderline” responses arise during the validation of the field test results. Another
+benefit could occur during item development, where “borderline” responses for similar older items could be used to inform the wording of
+the item stem and the selection of tools available to students for
+responding. Finally, during the data review of each item by country,
+CNN-based validation results could be used to inform decisions. For
+example, a table of agreements between the CNNs and human raters
+could be produced for the countries, and any participant with an unusually low agreement could be flagged for further examination and
+discussion.
+
+7.2. Research question 2
+For the seven dichotomous items, the CNNs all achieved low losses
+and extremely high F1-Scores and classification accuracies, indicating
+that the neural networks had successful classification ability regardless
+of the measured skill and variation in the number of possible responses.
+That being said, there was some variation in performance between 99%
+and 100% classification accuracy. As anticipated, the models tended to
+perform better for less complex items. The CNNs had the highest classification accuracies and lowest number of misclassified responses on
+average for easier items like ME72119 (0.9992 F1, 11 misclassifications), ME52048 (0.9991 F1, 13 misclassifications) and
+ME7177 (0.9986 F1, 27 misclassifications), which had between 42%
+and 48% of students getting them right, on average. Additionally, these
+three items had low variability for correct responses because there were
+only a few ways for students to receive credit. Therefore, most of the
+correct responses looked the same, further bolstering models’ training,
+particularly when learning to distinguish between correct and incorrect
+features. It was surprising to find that the models had extremely high
+performance for ME61081A (0.9992 F1, 16 misclassifications), which
+was expected to be more challenging because the images also included
+responses to ME61081B (0.9981 F1, 42 misclassifications). While it
+cannot be said precisely why this is the case, it may be because many of
+the correct responses had lines drawn similarly (going across the same
+grids in the image), as opposed to the lines drawn for ME61081B, which
+had more variation in responses that could receive credit.
+Also, as expected, the CNNs had lower performance for more
+complicated items with a lot of variability in correct responses and/or an
+additional score credit category, specifically ME71181 and ME62300.
+Both items had the most flexibility in possible responses since students
+could draw their shape (answer) anywhere on the grid. For ME71181,
+the model’s performance was the lowest among all the dichotomous
+items (0.9995 F1, 99 misclassifications), with more misclassifications
+than the human raters (67 misclassifications). For ME62300, the lower
+F1-Score of 0.9766 and classification accuracy of 97.99% were unsurprising, as the models had difficulty distinguishing between some
+partially correct and incorrect responses. However, it is worth noting
+that the best CNN model still performed exceptionally well, on average,
+when considering it was trained on only 20–30% of the responses.
+Moreover, the success of achieving almost 98% classification accuracy
+for the trichotomous item speaks to the benefit of using augmented
+training data for more complicated items and those with additional
+score categories.
+
+7.4. Limitations
+There are two main limitations to using CNNs for automated scoring
+of student responses. First, machines must be powerful enough to run
+the models efficiently, with sufficient gigabytes of RAM to train models
+on thousands of responses. We recommend a workstation with at least
+64 GB or access to a cluster of processors. Second, cleaning the data by
+14
+
+L. Tyack et al.
+
+Computers and Education: Artificial Intelligence 6 (2024) 100249
+
+manually reviewing some responses is necessary; for the best training
+samples, the data must not include incorrectly scored responses (Chollet,
+2018). Additionally, decisions about handling borderline responses that
+may be inconsistently scored by human raters and the CNNs must be
+made before sample cleaning, preferably by content experts. Cleaning
+the data requires additional modeling at the beginning of the process
+and some manual review, which can be inefficient. However, the associated time and labor increase is still less than hiring a second set of
+full-time human raters. This study, in particular, spent much effort on
+data cleaning both to determine human rater accuracy on graphical
+response items in TIMSS 2019—a task that had never been assessed
+across all student responses before— and to explore the efficacy of using
+IRT-based ES to identify misclass cations by human raters. For assessments that want to use CNN automated scoring for graphical responses,
+data cleaning could be limited to one round, using only CNN models, a
+mixture of CNNs and IRT-based ES, or potentially unsupervised scoring
+with generative AI tools like GPT-4.
+
+even better—than the human raters. For six of the eight items examined,
+the number of responses misclassified by the human raters was higher
+than the number of responses misclassified, on average, by the CNNs.
+These results suggest that CNNs are a powerful classification tool
+regardless of item and response complexity, achieving F1-Scores of
+0.995 and above for the dichotomous items and an F1-Score of 0.977 for
+the trichotomous item. In addition to using CNNs to provide a second set
+of scores to the items, this study also examines how CNNs could be used
+to clean the data before response classification, as improper scores are
+expected to occur whenever only a single human scorer is used. The
+novelty of using ES based on IRT modeling is emphasized and found to
+purify the training data successfully. During data cleaning, the CNNs
+helped to identify up to 2% of student responses that were either
+incorrectly or inconsistently scored by the human raters. Finally, the
+results indicate that CNN-based scoring of student graphical responses
+can be conducted efficiently across multiple items that assess different
+skills and tens of thousands of responses. Operationally, CNN-based
+validation can be used to improve the reliability and consistency of
+scoring by flagging responses for re-scoring by content experts. Results
+from modeling could also inform decision-making during the review of
+item functioning and aid in scoring material development. In sum, our
+study shows that automated scoring with CNNs in large scale assessments is possible with a high degree of success and many potential
+operational applications. By implementing an AI validation procedure,
+ILSAs can include more graphical response items with better precision to
+assess students’ critical-thinking skills and understanding of
+domain-specific tasks. Improving measurement by ILSAs will improve
+how countries make changes to facilitate student learning based on
+comparative assessment results.
+
+7.5. Future work
+Because CNN-based automated scoring with graphical response
+items performs so well, it is recommended that this validation technique
+be explored further by other research teams and be implemented operationally in ILSAs. Within the ISC, current work is being done for the
+TIMSS 2023 cycle to validate human rater scores for free-draw items and
+mathematical scoring of stored coordinate strings for graphing items. In
+future TIMSS cycles, there is the possibility that student graphical responses from previous assessment cycles could be used as the training
+data to validate responses from the current assessment cycle. Other
+research teams may also want to pursue pre-trained models, such as the
+GPT family, which can now process graphical input. A recent study by
+Lee and Zhai (2023) used GPT-4V to automatically score images of
+science models drawn by students. They found that the models yielded
+low to medium classification accuracy compared to human raters
+depending on students’ proficiency levels. While they note some limitations, such as GPT struggling to classify more complex drawings and
+its conversational function potentially contaminating some scores, their
+results are promising and indicate the potential that large language AI
+models have.
+Another area of improvement is the identification and review of
+misclassifications made by the CNNs. In this study, content experts
+conducted individual review for all responses where the human rater
+classifications differed from the CNN classifications. However, not all
+assessments that use AI validation will have the same resources or time
+available for individual review, as in the case of high-volume scoring.
+Therefore, additional classifications should be provided to identify responses that are more likely to be true validation misclassifications. For
+open-source options, different CNNs could provide multiple classifications for comparison. Any responses where the CNNs show vast differences in scoring, suggesting that they are more challenging to score,
+could be selected for individual review to ensure the proper classification is assigned. Another option is to utilize generative AI models like
+GPT-4 to assign an additional set of scores based primarily on the items’
+scoring guide and some example responses. Any responses where the
+generative AI score does not match the CNN score could be flagged as a
+possible misclassification by the machine, requiring further review by
+human experts.
+
+Statement on open data and ethics
+This study was approved by the TIMSS & PIRLS International Study
+Center at Boston College, and all procedures were conducted in accordance with applicable laws and institutional guidelines. Informed consent was obtained from all participants, and their privacy rights were
+strictly observed. Student image responses have been included as examples for restricted use items only and without identifying information. TIMSS 2019 Restricted use data is available upon special request at
+the following website: https://www.iea.nl/node/3263. Student
+permission to participate in TIMSS was obtained by their parents. By
+extension, student data is available for public use without identifying
+information to keep the students anonymous. Specifically, students
+participating in TIMSS receive randomly assigned student identifiers so
+that their information remains confidential. Human rater identification
+information was also kept confidential in the TIMSS assessment and not
+used for this study.
+Declaration of AI-assisted technologies
+During the preparation of this work the authors used Grammarly
+Premium Writing Assistance in order to check grammar and improve
+legibility. Suggestions were accepted or rejected on an individual basis.
+After using this tool, the authors reviewed and edited the content as
+needed and take full responsibility for the content of the publication. No
+generative AI (including Grammarly Go) was used in this study or the
+writing of this paper.
+List of Acronyms
+
+8. Conclusion
+This study expands upon the work conducted by von Davier et al.
+(2022) to investigate further how CNNs can be used to automatically
+classify student responses in ILSAs. Whereas von Davier et al. (2022)
+looked at only one TIMSS 2019 item, we assessed eight TIMSS items
+across multiple tasks with varying complexity in student responses. It
+was found that CNNs could perform comparable to—and in most cases
+
+Acronym
+
+Definition
+
+AI
+ANN
+CNN
+CR
+
+Artificial Intelligence
+Artificial neural network
+Convolutional neural network
+Constructed response
+(continued on next page)
+
+15
+
+L. Tyack et al.
+
+Computers and Education: Artificial Intelligence 6 (2024) 100249
+
+(continued )
+Acronym
+
+Definition
+
+EAP
+ES
+ETS
+FFN
+GRE
+IEA
+ILSA
+IRT
+ISC
+ILSA
+MAP
+ML
+NLP
+PSI
+RQ
+TIMSS
+
+Expected a priori
+Expected Scores
+Educational Testing Service
+Feed-forward neural network
+Graduate Record Examinations
+Intelligent Essay Assessor
+International Large Scale Assessment
+Item Response Theory
+TIMSS & PIRLS International Study Center
+International large-scale assessment
+Maximum a priori
+Machine learning
+Natural language processing
+Problem Solving and Inquiry (Task)
+Research question
+Trends in International Mathematics and Science Study
+
+Validation, Resources, Investigation, Formal analysis, Data curation.
+Lale Khorramdel: Project administration, Methodology. Matthias von
+Davier: Writing – review & editing, Supervision, Methodology, Investigation, Conceptualization.
+Declaration of competing interest
+The authors declare that they have no known competing financial
+interests or personal relationships that could have appeared to influence
+the work reported in this paper.
+Acknowledgments
+We thank the IEA (International Association for the Evaluation of
+Educational Achievement) R&D initiative for providing funding for this
+study, which allowed us to further our research to improve future cycles
+of TIMSS. Special thanks to our IEA liaisons Lauren Musu and Ralph
+Carstens who gave us exceptional guidance and support throughout our
+year-long grant project.
+
+CRediT authorship contribution statement
+Lillian Tyack: Writing – review & editing, Writing – original draft,
+
+Appendix
+The following describes the general workflow and provides pseudocode for restricted use item ME52048. This item asks students to draw four lines
+of symmetry on a given figure. Students receive credit if they draw four lines of symmetry on the diagram.
+Sample Assignment
+The following are the steps taken during the sample assignment stage: Assign responses to training and validation samples based upon a set sample
+split. For example, we may select 30% of responses to be in the training sample and the remaining 70% of responses to be in the validation sample. An
+example function could be make_assignment_file(), which would do the following.
+1. Read in data that have student IDs, the name of the images that correspond to their responses, and their human rater scores
+2. Loop through each country, within each country and score category assign 30% of responses to the training sample and 70% to the validation
+sample
+3. Save CSV files of the country assignments (if desired)
+4. Save RDS file for all of the country data together
+For cross-validation, the example function can be run additional times with separate assignment files produced.
+
+16
+
+L. Tyack et al.
+
+Computers and Education: Artificial Intelligence 6 (2024) 100249
+
+Image Pre-Processing
+Next, we make the data arrays for modeling, which involves reading in the image responses, modifying them to enhance feature detection, and
+placing them in a keras array. We have found that it saves time to create one array that includes all data, and then reshape that array into separate
+training and validation arrays. This is especially useful when testing different training sample sizes and going through multiple iterations of modeling.
+Three example functions could be used. First, the modify_image_responses() function, which would do the following.
+1. Crop the image responses
+2. Convert image responses to greyscale
+3. Increase saturation and contrast of images
+4. Pixelate the images
+
+Next, the create_all_data_array() function, which would do the following.
+1. Read in the data assignment file
+2. Read in the image responses
+3. Call the modify_image_responses() function to manipulate responses
+4. Resize the image responses and arrange into an array
+5. Return the array of images and their corresponding labels (human rater scores)
+
+And finally, the create_sample_array() function could take the argument “sample_type”, indicating which sample array would be created, either the
+17
+
+L. Tyack et al.
+
+Computers and Education: Artificial Intelligence 6 (2024) 100249
+
+training or the validation sample. For cross-validation, the example function can be run additional times with separate arrays created and saved. This
+function would do the following.
+1. Load the arrays for all of the data
+2. Randomize the data and reduce it to just the sample type
+3. Go through each response in the data, taking the image response object from the full data array and placing it into a new sample array
+
+Finally, we can plot the image responses in the arrays to get a rough estimate of how the neural networks will “view” them. We can plot just one
+image.
+
+18
+
+L. Tyack et al.
+
+Computers and Education: Artificial Intelligence 6 (2024) 100249
+
+Or we can plot multiple images at a time.
+
+19
+
+L. Tyack et al.
+
+Computers and Education: Artificial Intelligence 6 (2024) 100249
+
+Modeling
+During the modeling process, the training samples are loaded and models are constructed and trained on the training sample array. Any user can
+create a model, with the most basic convolutional neural network having one convolutional layer and two dense layers. A basic model, with one
+convolutional layer, no padding, dropout with a rate of 0.25, and two dense layers would constructed as be the follows.
+
+20
+
+L. Tyack et al.
+
+Computers and Education: Artificial Intelligence 6 (2024) 100249
+
+Evaluating Model Performance
+Model performance can be evaluated in a number of ways: overall accuracy, model loss, precision, recall, and F1-Scores. First, we can produce
+accuracy and loss using the keras evaluate() function.
+
+Next, we can compute the precision, recall, and F1-Scores using the yardstick package.
+
+Another document that should be produced is the assignment file with the CNN scores added. This way, we can see which specific responses have
+misclassifications according to a given model. Like with other pseudocode, this code can be looped for each CNN model and/or cross-validation
+sample.
+
+21
+
+L. Tyack et al.
+
+Computers and Education: Artificial Intelligence 6 (2024) 100249
+
+Manual Review of Misclassified Responses
+The last step would be to review any responses where there are disagreements between the human rater scores and the CNN scores. To review
+responses with mismatching scores, select a model that was run and compare the human scores and the machine scores by adding a new column to the
+document made in the previous step, for example “match”. For any responses where “match” is false, we can copy the image response file from the
+image directory to a subdirectory in the modeling folder.
+
+References
+
+Couture, H. D., Williams, L. A., Geradts, J., Nyante, S. J., Butler, E. N., Marron, J. S., …
+Niethammer, M. (2018). Image analysis with deep learning to predict breast cancer
+grade, ER status, histologic subtype, and intrinsic subtype. NPJ breast cancer, 4(1),
+30. https://doi.org/10.1038/s41523-018-0079-1
+Dozat, T. (2016). Incorporating nesterov momentum into adam. https://openreview.
+net/pdf?id=OM0jvwB8jIp57ZJjtNEZ.
+du Toit, M. (Ed.). (2003). IRT from SSI: BILOG-MG, MULTILOG, PARSCALE, TESTFACT.
+Scientific Software International, Inc.
+ETS. (2020). Automatically score essays with ETS’s e-rater® engine. ETS. https://www.
+ets.org/pdfs/criterion/score-essays-with-erater-engine.pdf.
+Fernandez, N., Ghosh, A., Liu, N., Wang, Z., Choffin, B., Baraniuk, R., & Lan, A. (2022).
+Automated scoring for reading comprehension via in-context bert tuning. In
+International conference on artificial intelligence in education (pp. 691–697). Cham:
+Springer International Publishing. https://doi.org/10.1007/978-3-031-11644-5_69.
+Fishbein, B., Foy, P., & Yin, L. (2021). TIMSS 2019 user guide for the international
+Database, 2nd ed. https://timssandpirls.bc.edu/timss2019/international-database/
+Foltz, P. W., Streeter, L. A., Lochbaum, K. E., & Landauer, T. K. (2013). Implementation
+and applications of the intelligent essay assessor. In M. D. Shermis, & J. Burstein
+(Eds.), Handbook of automated essay evaluation (pp. 68–88). New York: Routledge.
+Foy, P., Fishbein, B., von Davier, M., & Yin, L. (2020). Implementing the TIMSS 2019
+scaling methodology. In M. O. Martin, M. von Davier, & I. V. S. Mullis (Eds.), Methods
+and procedures: TIMSS 2019 technical report (pp. 12.1–12.146). https://timssandpirls.
+bc.edu/timss2019/methods/chapter-12.html.
+Funayama, H., Sato, T., Matsubayashi, Y., Mizumoto, T., Suzuki, J., & Inui, K. (2022).
+Balancing cost and quality: An exploration of human-in-the-loop frameworks for
+automated short answer scoring. In International conference on artificial intelligence in
+education (pp. 465–476). Cham: Springer International Publishing. https://doi.org/
+10.48550/arXiv.2206.08288.
+Grandini, M., Bagli, E., & Visani, G. (2020). Metrics for multi-class classification: An
+overview. arXiv. https://doi.org/10.48550/arXiv.2008.05756
+
+Allaire, J. J., & Chollet, F. (2021). Keras: R interface to ’keras’. R package version 2.6.0.
+https://CRAN.R-project.org/package=keras.
+Audhkhasi, K., Osoba, O., & Kosko, B. (2016). Noise-enhanced convolutional neural
+networks. Neural Networks, 78, 15–23. https://doi.org/10.1016/j.
+neunet.2015.09.014
+Baral, S., Botelho, A., Santhanam, A., Gurung, A., Cheng, L., & Heffernan, N. (2023).
+Auto- scoring student responses with images in mathematics. International
+Educational Data Mining Society. https://eric.ed.gov/?id=ED630842.
+Bejar, I. I. (2012). Rater cognition: Implications for validity. Educational Measurement:
+Issues and Practice, 31(3), 2–9. https://doi.org/10.1111/j.1745-3992.2012.00238.x
+Bennett, R. E. (1991). On the meanings of constructed response. ETS Research Report
+Series, 1991(2), i–46. https://doi.org/10.1002/j.2333-8504.1991.tb01429.x
+Birnbaum, A. (1968). Some latent trait models and their use in inferring an examinee’s
+ability. In F. M. Lord, & M. R. Novick (Eds.), Statistical theories of mental test scores
+(pp. 397–472). Reading, MA: Addison-Wesley Publishing.
+Centurino, V. A. S., & Kelly, D. L. (2021). TIMSS 2023 science framework. In
+I. V. S. Mullis, M. O. Martin, & M. von Davier (Eds.), TIMSS 2023 assessment
+frameworks. https://timssandpirls.bc.edu/timss2023.
+Chen, Z., & Zhou, Y. (2019). Research on automatic essay scoring of composition based
+on CNN and OR. In 2019 2nd international conference on artificial intelligence and big
+data (ICAIBD) (pp. 13–18). IEEE. https://doi.org/10.1109/icaibd.2019.8837007.
+Chollet, F. (2018). Deep learning with Python. Manning Publications Co. https://www.
+manning.com/books/deep-learning-with-python.
+Cotter, K. E., Centurino, V. A. S., & Mullis, I. V. S. (2020). Developing the TIMSS 2019
+mathematics and science achievement instruments. In M. O. Martin, M. von Davier,
+& I. V. S. Mullis (Eds.), Methods and procedures: TIMSS 2019 technical report (pp.
+1.1–1.36). https://timssandpirls.bc.edu/timss2019/methods/chapter-1.html.
+
+22
+
+L. Tyack et al.
+
+Computers and Education: Artificial Intelligence 6 (2024) 100249
+networks and latent semantic analysis classifiers. International Journal of Artificial
+Intelligence in Education, 33(3), 467–496. https://doi.org/10.1007/s40593-02200294-2
+O’Shea, K., & Nash, R. (2015). An introduction to convolutional neural networks. arXiv.
+https://arxiv.org/pdf/1511.08458.pdf.
+Perez, L., & Wang, J. (2017). The effectiveness of data augmentation in image
+classification using deep learning. arXiv preprint arXiv:1712.04621 https://arxiv.
+org/abs/1712.04621.
+Shorten, C., & Khoshgoftaar, T. M. (2019). A survey on image data augmentation for
+deep learning. Journal of big data, 6(1), 1–48. https://doi.org/10.1186/s40537-0190197-0
+Stidham, R. W., Liu, W., Bishu, S., Rice, M. D., Higgins, P. D., Zhu, J., … Waljee, A. K.
+(2019). Performance of a deep learning model vs human reviewers in grading
+endoscopic disease severity of patients with ulcerative colitis. JAMA Network Open, 2
+(5), Article e193963. https://doi.org/10.1001/jamanetworkopen.2019.3963
+Uto, M., Xie, Y., & Ueno, M. (2020). Neural automated essay scoring incorporating
+handcrafted features. In Proceedings of the 28th international conference on
+computational linguistics (pp. 6077–6088). https://aclanthology.org/2020.coling-mai
+n.535.pdf.
+von Davier, M. (2020). TIMSS 2019 scaling methodology: Item Response Theory,
+population models, and linking across modes. In M. O. Martin, M. von Davier, &
+I. V. S. Mullis (Eds.), Methods and procedures: TIMSS 2019 technical report (pp.
+11.1–11.25). https://timssandpirls.bc.edu/timss2019/methods/chapter-11.html.
+von Davier, M. (2022). Innovations in TIMSS 2023, group adaptive design, automated
+scoring, process data. In Invited talk at the AERA conference, san diego.
+von Davier, M., Tyack, L., & Khorramdel, L. (2022). Scoring graphical responses in TIMSS
+2019 using artificial neural networks. Educational and Psychological Measurement.
+https://doi.org/10.1177/00131644221098021
+Wang, K., Qiao, X., Sammit, G., Larson, E., Nese, J., & Kamata, A. (2023). Improving
+automated scoring of prosody using deep learning algorithm. Presentation at the 2023
+National Council on Measurement in Education (NCME) Annual Meeting.
+Wickham, H. (2016). ggplot2: Elegant graphics for data analysis (R Package Version
+3.3.5) https://ggplot2.tidyverse.org.
+Wind, S. A. (2019). Examining the impacts of rater effects in performance assessments.
+Applied Psychological Measurement, 43(2), 159–171. https://doi.org/10.1177/
+0146621618789391
+Wind, S. A., Wolfe, E. W., Engelhard Jr, G., Foltz, P., & Rosenstein, M. (2017). The
+influence of rater effects in training sets on the psychometric quality of automated
+scoring for writing assessments. International Journal of Testing, 18(1), 27–49.
+https://doi.org/10.1080/15305058.2017.1361426
+Xiao, H., Rasul, K., & Vollgraf, R. (2017). Fashion-MNIST: A novel image dataset for
+benchmarking machine learning algorithms. https://doi.org/10.48550/arXiv.1708.
+07747.
+Yamamoto, K., He, Q., Shin, H. J., & von Davier, M. (2017). Developing a machinesupported coding system for constructed-response items in PISA. ETS Research Report
+Series, 2017(1), 1–15. https://doi.org/10.1002/ets2.12169
+Yu, Y., Wang, J., Ng, C. W., Ma, Y., Mo, S., Fong, E. L. S., … Yu, H. (2018). Deep learning
+enables automated scoring of liver fibrosis stages. Scientific Reports, 8(1), Article
+16016. https://doi.org/10.1038/s41598-018-34300-2
+Zhai, X., Yin, Y., Pellegrino, J. W., Haudek, K. C., & Shi, L. (2020). Applying machine
+learning in science assessment: A systematic review. Studies in Science Education, 56
+(1), 111–151. https://doi.org/10.1080/03057267.2020.1735757
+Zhang, M. (2013). Contrasting automated and human scoring of essays. R & D
+Connections, 21(2), 1–11. https://www.ets.org/Media/Research/pdf/RD_Connectio
+ns_21.pdf.
+
+Hao, J., & Ho, T. K. (2019). Machine learning made easy: A review of scikit-learn package
+in Python programming language. Journal of Educational and Behavioral Statistics, 44
+(3), 348–361. https://doi.org/10.3102/1076998619832248
+Jung, J. Y., Tyack, L., & von Davier, M. (2022). Automated scoring of constructedresponse items using artificial neural networks in international large-scale
+assessment. Psychological Test and Assessment Modeling, 64(4), 471–494. https
+://www.psychologie-aktuell.com/fileadmin/Redaktion/Journale/ptam_2022-4/
+PTAM_2022-4_5.pdf.
+Jung, J. Y., Tyack, L., & von Davier, M. (2024). Combining machine translation and
+automated scoring in international large-scale assessments. Large-scale Assessments in
+Education, 12(1), 10. https://doi.org/10.1186/s40536-024-00199-7
+Kingma, D. P., & Ba, J. (2014). Adam: A method for stochastic optimization. arXiv. https:
+//arxiv.org/pdf/1412.6980.pdf.
+Klauschen, F., Müller, K. R., Binder, A., Bockmayr, M., Hägele, M., Seegerer, P., …
+International Immuno-Oncology Biomarker Working Group. (2018). Scoring of
+tumor-infiltrating lymphocytes: From visual estimation to machine learning.
+Seminars in Cancer Biology, 52, 151–157. https://doi.org/10.1016/j.
+semcancer.2018.07.001. Academic Press.
+Kuhn, M., & Vaughan, D. (2021). yardstick: Tidy characterizations of model
+performance. R Package Version 0.0.9. https://CRAN.R-project.org/package=yardst
+ick.
+Latif, E., & Zhai, X. (2023). Fine-tuning chatgpt for automatic scoring. arXiv preprint
+arXiv:2310.10072. https://doi.org/10.48550/arXiv.2310.10072
+Lee, G. G., & Zhai, X. (2023). Nerif: GPT-4V for automatic scoring of drawn models. arXiv
+preprint arXiv:2311.12990. https://doi.org/10.48550/arXiv.2311.12990
+Leevy, J. L., Khoshgoftaar, T. M., Bauder, R. A., & Seliya, N. (2018). A survey on
+addressing high-class imbalance in big data. Journal of Big Data, 5(1), 1–30. https://
+doi.org/10.1186/s40537-018-0151-6
+Lord, F. M., & Novick, R. (1968). Statistical theories of mental test scores. Addison-Wesley.
+Lottridge, S., Ormerod, C., & Jafari, A. (2023). Automated speech scoring using deep
+neural network transformer models. Presentation at the 2023 National Council on
+Measurement in Education (NCME) Annual Meeting.
+Methods and procedures: TIMSS 2019 technical report. (2020). In Martin. M. O., von
+Davier, M., & Mullis, I. V. S. (Eds.), (2020). https://timssandpirls.bc.edu/timss2019/
+methods.
+Martinez, M. E. (1991). A comparison of multiple-choice and constructed figural
+response items. Journal of Educational Measurement, 28(2), 131–145. https://doi.org/
+10.1111/j.1745-3984.1991.tb00349.x
+Masters, G. N. (1982). A Rasch model for partial credit scoring. Psychometrika, 47,
+149–174.
+Mizumoto, A., & Eguchi, M. (2023). Exploring the potential of using an AI language
+model for automated essay scoring. Research Methods in Applied Linguistics, 2(2),
+Article 100050. https://doi.org/10.1016/j.rmal.2023.100050
+Mullis, I. V. S., & Fishbein, B. (2020). Updating the TIMSS 2019 instruments for
+describing the contexts for student learning. In M. O. Martin, M. von Davier, &
+I. V. S. Mullis (Eds.), Methods and procedures: TIMSS 2019 technical report (pp.
+2.1–2.9). https://timssandpirls.bc.edu/timss2019/methods/chapter-2.html.
+Mullis, I. V. S., & Martin, M. O. (Eds.). (2017). TIMSS 2019 assessment frameworks.
+Retrieved from Boston College. TIMSS & PIRLS International Study Center. website:
+http://timssandpirls.bc.edu/timss2019/frameworks/.
+Ole, A. (2022). EBImage: An R package for image processing with applications to cellular
+phenotypes. R Package Version 4.34.0. https://github.com/aoles/EBImage.
+Ooms, J. (2021). magick: Advanced graphics and image-processing in R (R Package
+Version 2.7.2). https://CRAN.R-project.org/package=magick.
+Ormerod, C., Lottridge, S., Harris, A. E., Patel, M., van Wamelen, P., Kodeswaran, B., …
+Young, M. (2023). Automated short answer scoring using an ensemble of neural
+
+23
+
+

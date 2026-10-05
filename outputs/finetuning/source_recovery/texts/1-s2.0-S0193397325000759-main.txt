@@ -1,0 +1,1862 @@
+Journal of Applied Developmental Psychology 99 (2025) 101828
+
+Contents lists available at ScienceDirect
+
+Journal of Applied Developmental Psychology
+journal homepage: www.elsevier.com/locate/jappdp
+
+Using machine learning algorithms to predict students’ general self-efficacy
+in PISA 2018
+Bin Tan a , Hao-Yue Jin a , Maria Cutumisu b,*
+a
+b
+
+Centre for Research in Applied Measurement and Evaluation, Faculty of Education, University of Alberta, Edmonton, Canada
+Department of Educational and Counselling Psychology, Faculty of Education, McGill University
+
+A R T I C L E I N F O
+
+A B S T R A C T
+
+Keywords:
+Self-efficacy
+Machine learning
+PISA 2018
+Socio-ecological theory
+
+Self-efficacy is a critical psychological construct that exerts a positive impact on students’ learning experiences
+and global well-being. Previous studies explored the factors related to the development and variation of students’
+self-efficacy, but they only focused on a limited set of predictors. To gain a more comprehensive understanding of
+the factors affecting self-efficacy, it is necessary to build a predictive model based on a large number of predictors
+using a data-driven approach. Therefore, guided by socio-ecological theory, we categorized 256 candidate
+predictors from the PISA 2018 student and school questionnaires in five levels of socio-ecological systems. We
+then used two machine learning algorithms, Lasso and XGBoost, to predict self-efficacy of 612,004 students aged
+15 to 16 years from 79 countries and regions. The results showed that XGBoost outperformed Lasso. We then
+extracted feature importance from the best-performing XGBoost model to rank the features both overall and
+within each level of the socio-ecological systems. The analysis revealed that individual-level attributes such as
+mastery goal orientation, meaning of life, and positive emotions were the most important predictors of selfefficacy. Other significant contextual factors included parents’ emotional support, home possessions, and
+school climate factors (e.g., cooperation climate). Furthermore, self-efficacy varied significantly across countries.
+This study advances our understanding of self-efficacy by identifying the important predictors from different
+levels of socio-ecological perspectives. The results suggest that self-efficacy is a composite outcome shaped by a
+myriad of influences spanning from individual factors to broader socio-ecological perspectives.
+
+Self-efficacy comprises a set of beliefs regarding an individual’s
+ability to carry out specific tasks or meet specific objectives (Bandura,
+1977, 1997). Moreover, self-efficacy is a central component of Albert
+Bandura’s (1977, 1985) social cognitive theory, which offers a lens to
+understand one’s behaviors, motives, affective states, thought patterns,
+and cognitive processes. Although Bandura initially conceptualized selfefficacy as domain- or task-specific, subsequent researchers (e.g., Sherer
+et al., 1982; Schwarzer, 1992; Schwarzer, 1997; Schwarzer & Jerusalem,
+1995) introduced the idea of general self-efficacy as a broad, stable sense
+of personal competence across diverse or novel situations. In this
+framework, domain-specific self-efficacy emphasizes perceived competence within specific situations, whereas general self-efficacy captures
+an overarching belief in one’s competence. Aligning with this broader
+interpretation, the Program for International Student Assessment (PISA;
+OECD, 2019) defines self-efficacy as a belief that one’s actions can lead
+to desired outcomes, serving as a driving force behind one’s motivation
+
+to take action and persist in the face of challenges. The present study
+adopts PISA’s definition to examine how students’ self-efficacy relates to
+an array of individual- and contextual-level predictors. Compared to
+domain-specific self-efficacy, which reflects beliefs about one’s ability to
+succeed in a particular setting or task, general self-efficacy tends to be
+more strongly associated with a broader array of personal and contextual influences (Grether, Sowislo and Wiese, 2018; Lisá, 2020).
+Students’ general self-efficacy significantly influences their learning
+experiences, well-being, and even life outcomes (Govorova, Benítez, &
+Muñiz, 2020). There is consistent evidence that students’ self-efficacy is
+one of the most reliable and important predictors of their learning
+achievement (e.g., Areepattamannil, Freeman and Klinger, 2011;
+Govorova et al., 2020) and learning engagement (Linnenbrink & Pintrich, 2003). High self-efficacious students tend to use more effective
+learning strategies at all levels of competencies (Schunk & Ertmer,
+2000). Bassi, Steca, Fave and Caprara, 2007 also suggested that these
+
+* Corresponding author at: Department of Educational and Counselling Psychology, Faculty of Education, McGill University, 530 Education Building, 3700
+McTavish St., Montreal, QC H3A 1Y2, Canada.
+E-mail address: maria.cutumisu@mcgill.ca (M. Cutumisu).
+https://doi.org/10.1016/j.appdev.2025.101828
+Received 2 December 2024; Received in revised form 11 June 2025; Accepted 13 June 2025
+Available online 26 June 2025
+0193-3973/© 2026 The Authors. Published by Elsevier Inc. This is an open access article under the CC BY license (http://creativecommons.org/licenses/by/4.0/).
+
+B. Tan et al.
+
+Journal of Applied Developmental Psychology 99 (2025) 101828
+
+students spend more time on homework and report higher academic
+aspirations and better learning experiences. On the other hand, students
+with low self-efficacy are more likely to be delinquent and drop out of
+school, jeopardizing their future employment prospects (Bandura, Barbaranelli, Caprara and Pastorelli, 2001). Prior studies found that low
+self-efficacious students tended to experience mental and behavioral
+problems such as depression (Areepattamannil, Freeman and Klinger,
+2011; Muris, 2002), suicidal ideation and attempts (Valois, Zullig, &
+Hunter, 2015), social avoidance (Tahmassian & Moghadam, 2011), and
+addictive behaviors (Schwarzer & Luszczynska, 2006). Conversely,
+students with higher self-efficacy coped better with stress and experience greater psychological well-being than their peers (Tsang, Hui, &
+Law, 2012). Therefore, if we can understand the development and
+variation of self-efficacy, then we can use this knowledge to improve
+students’ self-efficacy and, eventually, their school engagement, academic achievement, and even life outcomes.
+Although extensive studies have been conducted regarding the
+relationship between self-efficacy and various aspects of students’
+learning and personal development (e.g., Bandura, 1977; Joët, Usher, &
+Bressoux, 2011; Maddux & Stanley, 1986; Shehzad, Alghorbany,
+Lashari, Lashari, & Razzaq, 2019), most of them have only examined the
+relationship among a few variables. To gain a more comprehensive
+understanding of the development and variation of students’ selfefficacy, it is essential to consider a larger number of variables that
+capture both individual level (e.g., personal backgrounds and characteristics) and broader contextual levels (e.g., home background, teacher
+background, and school environment). This study addresses this gap by
+applying machine learning (ML) algorithms to predict students’ selfefficacy using data from PISA 2018. Leveraging a large, diverse student sample and a wide array of candidate predictors categorized across
+socio-ecological levels, we aim to uncover the most important factors
+associated with students’ self-efficacy and contribute to a more integrated understanding of this critical construct.
+
+significant others influence one’s sense of efficacy (Bandura, 1977; Bong
+and Skaalvik, 2003). However, in practice, the effects of verbal
+persuasion on self-efficacy may be more complex. For example, Cassé,
+Oosterman, and Schuengel (2015a, 2015b) found that individuals who
+were led to believe they had mastered a skill initially reported higher
+self-efficacy. Yet, when they later encountered setbacks, their selfefficacy declined more sharply compared to those who had received
+negative feedback. Therefore, the impact of verbal persuasion likely
+depends on the consistency between persuasive messages and subsequent experiences.
+Lastly, physiological and emotional states provide authentic information that one can draw to infer one’s competencies. When individuals
+feel negative emotions such as fear or experience physical symptoms like
+shaking, they often interpret these reactions as signs of incapability
+which further undermines their self-efficacy. Conversely, positive
+emotions such as feeling proud or excited can boost people’s confidence
+in their competencies. Empirical evidence has supported the close
+relationship between emotions and self-efficacy (Andretta and McKay,
+2020; Caroli and Sagone, 2014; Villavicencio & Bernardo, 2016). This is
+because students with positive emotions tend to generate thoughts and
+actions that increase their self-efficacy, such as setting higher learning
+aspirations, perceiving higher task values, and promoting selfregulatory behaviors (Fredrickson, 2013; Lyubomirsky, King, &
+Diener, 2005).
+While these four primary sources of self-efficacy all reside at the
+individual level, they can also interact with other individual and
+contextual factors, leading to further variations of self-efficacy. For
+example, a cross-cultural study reported that vicarious experience and
+social persuasion predicted self-efficacy equally well for Korean and US
+students, whereas social persuasion was the best predictor for Filipino
+students (Ahn, Usher, Butz and Bong, 2016). Students’ self-efficacy can
+also vary by gender, although the empirical evidence to support this is
+largely inconsistent in the related literature. For instance, Arslan (2013)
+found that female Turkish secondary students were more often influenced by mastery experience, social persuasion, and physiological state
+than male students. On the other hand, a US study revealed that mastery
+experience, vicarious experience, and social persuasion could predict 18
+% of the variance in male students’ self-efficacy, but only 15 % of the
+variance in female students’ self-efficacy (Stevens, Wang, Olivárez, &
+Hamman, 2007). In addition, the sources of self-efficacy depend on
+students’ achievement levels. Specifically, Arslan (2013) found that
+both high and low achievers could benefit the most from mastery
+experience and vicarious experience in terms of boosting their selfefficacy beliefs, whereas social persuasion and mastery experience
+work best for middle achievers. Similarly, Usher and Pajares (2006)
+found that high achievers’ self-efficacy was best predicted by mastery
+experience and physiological state, while medium achievers’ selfefficacy was more influenced by mastery experience and verbal
+persuasion. In similar ways, the effects of sources of self-efficacy also
+differ across grade level, social-economic status, and learning style
+(Arslan, 2013; Pajares, Johnson, & Usher, 2007; Wigfield, Eccles and
+Rodriguez, 1998), suggesting the importance of understanding the
+relationship between self-efficacy beliefs and their contextual factors.
+These studies imply that self-efficacy is not only formed based on
+individuals’ perspectives and their direct interactions with other people
+and their surroundings (i.e., mastery experience, vicarious experience,
+verbal persuasion, and physiological and emotional states) but also
+shaped and reinforced by factors in higher-level contexts, such as cultural differences. Therefore, for education stakeholders to better understand the development and variation of students’ self-efficacy, a
+more comprehensive understanding of the relationship between selfefficacy and predictors at the individual level and at higher levels is
+needed.
+
+Primary sources for development and variation of self-efficacy
+Bandura’s (1977, 1985) social cognitive theory is the most wellestablished theory for self-efficacy. The theory posits that self-efficacy
+beliefs originate from four primary sources: mastery experience, vicarious experience, verbal persuasion, and physiological and emotional
+states. Although Bandura originally focused on domain-specific self-efficacy, the same four primary sources he identified are also relevant for
+general self-efficacy (Schwarzer, 1992; Luszczynska, Gutiérrez-Doña, &
+Schwarzer, 2005).
+Mastery experience refers to an individual’s past experience of successfully performing specific tasks. Researchers often consider mastery
+experiences the most powerful source of developing high self-efficacy, as
+they provide direct evidence that students truly had the capability to
+succeed on similar tasks (Palmer, 2006; Schunk & Meece, 2005).
+Empirical research supports this view. For instance, Kleppang, Steigen,
+and Finbråten (2023) examined predictors of adolescents’ self-efficacy,
+including mastery experience, social support, and sociodemographic
+factors (e.g., gender, school level, and parental education). Their findings showed that mastery experience accounted for the largest proportion of variance in adolescents’ self-efficacy.
+Vicarious experience involves learning through observing others.
+This type of experience provides opportunities for students to alter their
+self-efficacy beliefs by modeling and comparing themselves with other
+people (Bandura, 1997; Usher & Pajares, 2008). Students are likely to
+develop a higher self-efficacy if they see their peers succeed, especially
+when they share similar attributes (e.g., age, gender, and life background; Schunk, 1987).
+Verbal persuasion is experienced as another’s direct influence on an
+individual through the use of language. Especially in uncertain and
+difficult circumstances, factors like evaluative feedback and persuasive
+communication that one receives from knowledgeable, reliable, or
+2
+
+B. Tan et al.
+
+Journal of Applied Developmental Psychology 99 (2025) 101828
+
+A socio-ecological model of self-efficacy development
+
+instance, a meta-analysis by Huang (2016) found that mastery goal
+orientation was moderately to strongly correlated with self-efficacy,
+whereas performance-avoidance and mastery-avoidance goal orientations showed weaker associations. Additionally, longitudinal studies
+highlight a reciprocal relationship between self-efficacy and academic
+achievement, with higher self-efficacy leading to better performance,
+which in turn reinforces self-efficacy (Hwang et al., 2016). Researchers
+have identified several mediators in this relationship, including learning
+engagement (Linnenbrink & Pintrich, 2003), intrinsic motivation,
+learning strategies, and learning aspirations (Honicke & Broadbent,
+2016). Beyond academic outcomes, self-efficacy is also closely tied to
+students’ mental health and emotional well-being. Research consistently
+shows that students experiencing depression tend to report lower
+self-efficacy, whereas higher levels of life satisfaction and a sense of
+meaning in life are positively associated with stronger self-efficacy beliefs (Çakar, 2012; Yuen and Datu, 2021). Personal experiences and
+behaviors further shape self-efficacy development. For example, students repeating a grade often report lower self-efficacy, likely due to
+setbacks in academic progression and self-perception (Marsh et al.,
+2017; Rosário, Núñez, Valle, González-Pienda, & Lourenço, 2013).
+Similarly, school attendance behaviors (e.g., skipping class or arriving
+late) have been negatively associated with self-efficacy (Becker and
+Gable, 2009; Bianchi et al., 2022).
+
+While social cognitive theory identifies the sources of self-efficacy at
+the individual level and within the immediate environment, exploring
+the relationship between self-efficacy and additional predictors across
+both individual and broader levels requires another theoretical framework. Urie Bronfenbrenner’s (1979) socio-ecological theory is one of the
+most widely applied frameworks in understanding child development.
+This framework specifies that children’s development is a joint function
+of the influences of multiple nested ecological systems from narrow to
+extremely broad, including five levels of systems (i.e., individual,
+microsystem, mesosystem, exosystem, and macrosystem). Researchers
+often use this framework to understand how factors at various socioecological levels interact and collectively impact child development.
+At the center of the socio-ecological model is the individual, representing a constellation of individual characteristics, attributes, behaviors, and experiences. A higher level is the microsystem, which contains
+the relationships and activities in which the child directly connects or
+participates (e.g., family, teachers, and peers). Following that, the
+mesosystem is constructed as the set of interconnections among the elements in the microsystem, such as the connections between students’
+parents and teachers. School resources, policies, and climate stand at the
+exosystem, where the elements in the system do not directly affect students but affect the elements in the microsystem such as teachers. Those
+effects eventually pass on to the individuals, influencing their development. Finally, the macrosystem is the highest level of socio-ecological
+contexts, including social or cultural beliefs and ideologies that affect
+the inner systems (e.g., political and cultural predictors).
+Researchers in developmental psychology and education have
+widely employed the socio-ecological model to investigate a variety of
+constructs and phenomena related to child development and students’
+lives, including school bullying (Lim & Hoot, 2015; Shams, Garmaroudi,
+Nedjat, & Yekaninejad, 2018), school belonging (Allen, Vella-Brodrick,
+& Waters, 2018), mental health (Scharpf, Kaltenbach, Nickerson, &
+Hecker, 2021), physical activity participation (Devís-Devís, Beltrán-Carrillo, & Peiró-Velert, 2015; Essiet, Baharom, Shahar and Uzochukwu,
+2017), problem behaviors (Hsieh et al., 2015, 2016), executive functioning (Scharpf, Mueller, & Hecker, 2022), and academic achievement
+(Strohmeier & Wagner, 2023; Wang, King, & Leung, 2023). For instance,
+in the realm of self-efficacy, Chen, Ho, Goh, Ooi, & Siau (2024)
+employed the socio-ecological model to examine the relationship between parental control and self-efficacy among 453 secondary school
+students in Malaysia. They found a significant negative correlation between both paternal and maternal control and students’ self-efficacy.
+Despite such work, we did not identify any prior studies that systematically use the socio-ecological model to categorize a large set of predictors of self-efficacy.
+The present study utilizes Bronfenbrenner’s framework as a theoretical guide to categorize a wide range of candidate predictors from the
+PISA 2018 dataset, aiming to enhance the interpretability of the predictive results regarding self-efficacy. By organizing these predictors
+into the five socio-ecological levels (i.e., individual, microsystem, mesosystem, exosystem, and macrosystem levels), the study seeks to identify
+the most important predictors of students’ self-efficacy, both overall and
+within each specific level.
+
+Microsystem level
+At the microsystem level, students’ self-efficacy is directly shaped by
+their immediate interactions with parents, teachers, peers, and the
+school environment. Parenting strategies significantly influence students’ self-efficacy, with authoritarian and permissive parenting styles
+often linked to lower self-efficacy levels (Scott & Mallinckrodt, 2012;
+Yousaf, 2015). In contrast, parents who provide challenges, set high but
+attainable expectations, model problem-solving behaviors, and
+encourage perseverance foster greater self-efficacy in their children
+(Schunk & Meece, 2005). Family support also plays a crucial role, as
+research indicates a positive relationship between family encouragement and self-efficacy that, in turn, enhances students’ psychosocial
+well-being (Vieno, Santinello, Pastore, & Perkins, 2007). Additionally,
+socioeconomic status (Han, Chu, Song, & Li, 2015; Karaarslan & Sungur,
+2011) and family structure (e.g., intact vs. single-parent households)
+have been identified as key factors in self-efficacy development (Kalter,
+Alpern, Spence, & Plunkett, 1984; Kurtz & Derevensky, 1994). Beyond
+the family, students develop self-efficacy beliefs through their interactions with teachers and the school environment. Teachers serve as
+pivotal agents in fostering self-efficacy by employing effective instructional strategies, demonstrating enthusiasm, offering encouragement
+and support, and creating supportive learning environments (Chan &
+Lam, 2010; Sawyer, Graham, & Harris, 1992; Siegle & McCoach, 2007;
+Mitchell & DellaMattera, 2010). Moreover, teachers’ own self-efficacy,
+qualifications, and teaching experience have been positively associated with students’ self-efficacy levels (Mojavezi & Tamiz, 2012; Öqvist
+& Malmström, 2018). Peer interactions also contribute to self-efficacy
+development by providing opportunities for collaborative learning, social comparison, modeling, and positive reinforcement (Nyman, Parisod, Axelin, & Salanterä, 2019; Wheeler and Ladd, 1982). Furthermore,
+the school environment itself contains multiple potential influences on
+self-efficacy at the microsystem level, such as curriculum design
+(Krsmanovic, 2021), grading practices (Alkharusi, Aldhafri, Alnabhani,
+& Alkalbani, 2014; Bub, 2021), and availability of academic support
+services (Smith, Walter, & Hoey, 1992).
+
+Relationships between self-efficacy and factors across socioecological levels
+In this section, we briefly review existing studies on how self-efficacy
+is related to and shaped by several factors across socio-ecological levels.
+
+Mesosystem level
+
+Individual level
+
+At the mesosystem level, students’ self-efficacy is influenced by interactions among the different elements of the microsystem, such as the
+relationships among schools, teachers, and families. Engaging with
+
+At the individual level, students’ self-efficacy is closely linked to
+their motivation, attitudes, well-being, and personal experiences. For
+3
+
+B. Tan et al.
+
+Journal of Applied Developmental Psychology 99 (2025) 101828
+
+students’ families is an essential aspect of schools’ and teachers’ professional work (Epstein, 2018). Effective communication between
+teachers and parents can enhance teachers’ self-efficacy (De Coninck,
+Walker, Dotger, & Vanderlinde, 2020) that, in turn, positively impacts
+students’ self-efficacy by improving instructional quality (Künsting,
+Neuber, & Lipowsky, 2016) and increasing teacher support (Mitchell &
+DellaMattera, 2010). A strong parent-school partnership also fosters
+greater parental involvement in students’ homework, resulting in higher
+academic achievement, well-being, and self-efficacy for students
+(Dettmers, Yotyodying, & Jonkmann, 2019; Fan and Williams, 2010).
+Furthermore, the broader school climate—including competitive and
+cooperative learning environments, disciplinary policies, and classroom
+differentiation—significantly influences students’ self-efficacy (Ding
+et al., 2022; In’am & Sutrisno, 2021; Lee, Lui, & Chau, 2019; Shin,
+2018).
+
+worldwide. In addition to academic outcomes, PISA collects extensive
+contextual data related to students’ personal development and school
+experiences. These variables include, but are not limited to, demographic factors, noncognitive factors (e.g., behaviors, beliefs, and
+attitudes), home-related factors, school environment factors, and aspects of educational practices and school administration. PISA focuses
+exclusively on 15- to 16-year-old students because this age range typically marks the end of compulsory education in most participating
+countries. This period is especially significant, as students begin making
+important decisions about their future education and career pathways
+(Crockett and Crouter, 2014). It is also a critical stage in identity formation (Erikson, 1959; Waterman, 1984). Our study focuses on this age
+group to better understand how individual and contextual factors relate
+to students’ self-efficacy.
+Such large-scale assessment datasets offer researchers valuable opportunities to explore students’ academic achievement alongside personal and contextual factors, including self-efficacy. For example,
+Borgonovi and Pokropek (2019) analyzed data from PISA 2012 to
+investigate the development of self-efficacy among middle-school students. Their findings suggest that task-specific experiences significantly
+shape self-efficacy beliefs, underscoring the importance of tailored
+educational interventions. Moreover, Jin, Wu, Xia, and Zhao (2023)
+analyzed data from PISA 2018 to investigate the cultural values influencing student self-efficacy. Their research implies that cultural contexts
+significantly shape students’ self-efficacy beliefs, suggesting that
+educational strategies should be tailored to align with cultural values to
+effectively enhance self-efficacy.
+Given the high dimensionality of large-scale datasets, researchers are
+increasingly using advanced data-driven methods such as ML to extract
+meaningful insights. For example, Acıslı-Celik and Yesilkanat, 2023
+used ML approaches to predict students’ science achievement in PISA
+2015 and PISA 2018. Additionally, researchers have applied ML algorithms to predict students’ metacognitive variables. For example,
+Lezhnina and Kismihók (2022) developed a flexible approach that
+combined statistical and ML methods to explore German students’ attitudes toward information and communication technology in relation
+to their mathematical and scientific literacy, as measured by PISA 2015
+and 2018. Yi and Na, 2020 employed the random forest algorithm, logistic regression, and the hierarchical general linear model to build
+prediction models for math anxiety based on 194 variables from PISA
+student questionnaires. The most significant predictors identified were
+enjoyment of math, self-concept, and attributions to failure.
+Despite the growing use of ML in analyzing large-scale assessment
+data, most existing applications have focused on predicting students’
+academic achievement and metacognitive variables. To our knowledge,
+no prior studies have specifically applied ML approaches to predict
+students’ self-efficacy using large-scale international assessment data.
+
+Exosystem level
+The exosystem level comprises external factors that, while not
+directly influencing students, shape their environment by affecting key
+microsystem elements (e.g., teachers and families) and mesosystem interactions (e.g., school-family partnerships). For example, advantaged
+schools—those that are well-funded and located in desirable areas—tend to attract highly qualified teachers and provide access to
+advanced curricula, technology, and academic support services, all of
+which contribute to a learning environment that fosters self-efficacy
+(Baker, 2016; Maranto, 2013; Palmer, 2006; Wang, Tigelaar and
+Admiraal, 2019). Additionally, teacher evaluation systems and governance policies play a crucial role in shaping teachers’ well-being, job
+satisfaction, and effectiveness that, in turn, influence students’ learning
+experiences and self-efficacy (Shinkfield & Stufflebeam, 2012).
+Macrosystem level
+At the macrosystem level, broad sociocultural, political, and religious factors may influence both general and domain-specific self-efficacy in students. For instance, Ahn, Usher, Butz and Bong, 2016 found
+that collectivist cultures tend to report lower academic self-efficacy
+despite high levels of academic achievement. The PISA 2018 results
+(OECD, 2019d) support this pattern, which show that five economies—Vietnam, Malaysia, Russia, Macao (China), and Kazakhstan—ranked the lowest in the percentage of students reporting high
+levels of general self-efficacy. Additionally, Constantine, Okazaki and
+Utsey, 2010 found that, among international students in the U.S., Latin
+American students reported the highest levels of social self-efficacy
+compared to their African American and Asian American peers. Religious beliefs may also play a role in shaping self-efficacy. For example,
+Junaidi, Anwar, & Sahrir (2023) found that religion fosters social capital
+(e.g., social interaction, knowledge exchange, and trust) that, in turn,
+enhances entrepreneurial self-efficacy among Indonesian students.
+While direct research on the relationship between macrosystem factors
+and student self-efficacy remains limited, existing studies suggest that
+self-efficacy varies significantly across different macrosystem
+influences.
+
+The current study
+The present study aimed to predict 15- and 16-year-olds’ self-efficacy
+using a large number of candidate predictors from PISA 2018. Guided by
+Bronfenbrenner’s socio-ecological theory, we categorized these predictors into five levels (i.e., individual, microsystem, mesosystem, exosystem, and macrosystem) to enhance the interpretability of our
+findings. By structuring the analysis through this theoretical lens, the
+study sought to identify the most important factors influencing selfefficacy both overall and within each socio-ecological level. To this
+end, the study posed the following research questions:
+
+Large-scale assessment data and machine learning applications
+Large-scale international assessment studies including PISA, the
+Trends in International Mathematics and Science Study (TIMSS), and the
+Progress in International Reading Literacy Study (PIRLS) have gained
+increasing popularity in recent decades. Conducted across numerous
+countries, these studies generate high-dimensional datasets encompassing a wide range of student-, school-, and system-level variables,
+and involve large sample sizes—often hundreds of thousands of students
+globally. For example, PISA periodically assesses the reading, mathematics, and science knowledge of 15- and 16-year-old students
+
+(1) To what extent can students’ self-efficacy be accurately predicted
+using individual-level and contextual factors surveyed in PISA
+2018? We hypothesized that students’ self-efficacy could be
+predicted with a high degree of accuracy using a combination of
+individual-level attributes and contextual factors (i.e., variables
+at different levels of the social-ecological system).
+4
+
+B. Tan et al.
+
+Journal of Applied Developmental Psychology 99 (2025) 101828
+
+(2) Which of the individual-level and contextual factors surveyed in
+PISA 2018 are the most important predictors of students’ selfefficacy? We hypothesized that the most important predictors
+of students’ self-efficacy would emerge from multiple socioecological levels. While individual-level psychological and
+motivational factors are expected to play a major role, contextual
+influences from family, school, and broader societal environments may also significantly contribute substantially to its
+development and variation.
+(3) What are the most important factors at each socio-ecological level
+in predicting students’ self-efficacy? We hypothesized that specific predictors would emerge as important within each socioecological level. Additionally, factors at more proximal levels
+such as individual motivation and direct student experiences are
+expected to exert greater predictive influence than distal factors
+at higher levels.
+
+Dataset
+This study drew on data from the publicly available PISA 2018
+dataset (OECD, 2019a), specifically utilizing variables from the Student
+Questionnaire and the Principal Questionnaire (OECD, 2019b). We
+merged data from these two sources by linking students to their corresponding school principals, noting that multiple students were often
+associated with the same principal. The merged dataset includes responses from 612,004 students across 79 countries and regions and offers a wide range of variables. These include, but are not limited to,
+information on students’ backgrounds, attitudes, and learning environments, as well as school-level characteristics reported by principals.
+Together, these variables serve as candidate predictors of students’ selfefficacy across different socio-ecological levels.
+Response Variable.
+In this study, we treated self-efficacy as the response variable, representing the variable to be predicted. PISA 2018 Student Questionnaire
+measured self-efficacy using five items: “I usually manage one way or
+another”, “I feel proud that I have accomplished things”, “I feel that I can
+handle many things at a time”, “My belief in myself gets me through
+hard times”, and “When I’m in a difficult situation, I can usually find my
+way out of it”. Students responded to these items on a five-point Likert
+scale ranging from 1 (strongly disagree) to 5 (strongly agree). To align
+with the ML approach and optimize the performance of predictive
+models, we transformed students’ responses to these five items into a
+single continuous self-efficacy score using an Item Response Theory
+(IRT) model. Further details of this transformation are provided in the
+Data Preprocessing section.
+Features.
+Students’ test results along with other contextual factors collected
+from the school questionnaire and the mandatory parts of the student
+questionnaire constituted the features (i.e., predictors) in this study.
+These predictors included both individual item responses and, where
+applicable, derived construct scores based on multiple survey items. We
+first grouped the predictors into modules based on the PISA 2018
+Questionnaire Framework (OECD, 2019c). Then, we mapped each
+module onto one of the five levels of ecological systems depicted by the
+socio-ecological model. Table 1 presents the final classification of the
+predictors by module and the level of the ecological system.
+
+Methods
+To predict students’ self-efficacy using PISA 2018 data, we developed a multi-stage methodological workflow, as illustrated in Fig. 1. We
+drew on prior research (Farhood, Joudah, Beheshti, & Muller, 2024;
+Swathy & Saruladha, 2022) to inform this visual representation and
+adapted and expanded to better accommodate the large-scale analysis of
+self-efficacy and its predictors in our study. Regarding data preparation,
+we categorized predictors according to socio-ecological levels and performed data cleaning and variable transformation. In the model training
+and evaluation stage, we selected two ML algorithms—XGBoost and
+Lasso regression—and trained models using nested cross-validation. We
+then compared model performance and identified the best-performing
+model, from which we extracted feature importance scores for each
+predictor. For interpretation, we ranked predictors by their feature
+importance both overall and within each socio-ecological level. We also
+conducted reduced and exclusion model analyses to support further
+interpretation. The following subsections provide detailed description
+and explanations of our methodology.
+
+Fig. 1. Workflow of Data Preprocessing and Analysis.
+5
+
+B. Tan et al.
+
+Journal of Applied Developmental Psychology 99 (2025) 101828
+
+Table 1
+The Classification of Contextual Predictors of Self-efficacy.
+Level
+
+Module
+
+Contextual Predictor
+
+Individual
+
+Attitudes, motivation,
+and strategies for
+studying
+
+academic self-concept, intrinsic
+motivation, time of reading as
+enjoyment, reading time for tests, goal
+orientations and achievement motives
+(competitiveness, mastery goal
+orientation, and fear of failure), attitude
+toward school, fixed mindset, learning
+strategies, learning aspiration
+grade repetition, skipping class, being
+late for school/class, age of beginning
+early childhood education, age of
+beginning primary school education
+life satisfaction, meaning of life, positive
+emotions, other emotions (scared,
+lively, miserable, proud, afraid, sad)
+gender, empathy, attitude toward
+bullying, academic achievement
+language spoken at home, parents’
+educational background, parents’
+qualifications and certificates, the
+number of books at home, other study
+possessions at home, home possessions,
+parents’ emotion support
+class size, teacher support, teacher
+instruction strategies, teacher
+understanding, adaptive instructions,
+teacher feedback, teacher enthusiasm,
+teacher stimulation of reading
+engagement, clear instructions, teacher
+qualification and teaching skills
+multi-cultural cognition, global issues,
+the number of classes per week, minutes
+per class, pages of reading, in-school
+reading time, out-of-school reading
+time, after-class activities, the purpose
+of assessments (guide students’
+learning, make decisions about
+retention or promotion, group students
+for instructional purposes, adapt
+teaching to students’ needs, award
+certificates), additional languages
+taught in school, exposure to bullying,
+sense of belonging, school
+disadvantages (lack of good teaching
+staff, assisting staff, educational
+materials, physical infrastructure)
+competition climate, cooperation
+climate, disciplinary climate, students’
+disruptive and adverse behaviors in
+school, differential classroom,
+differentiated groups in the classroom,
+gender ratio in school, percentage of
+students with learning barriers
+(language difficulty, specifical needs,
+and low socio-economic status),
+dropout rate, percentage of students
+who participated in local school
+government or volunteered in extracurricular activities
+the purpose of assessments (evaluate
+teachers, improve curriculums),
+educational backgrounds of all teachers
+in school, percentage of teachers who
+attended professional development
+programs, visiting teachers, limited
+school resources, teacher evaluation,
+requirement of professional
+development activities
+purpose of assessments (inform parents
+about child’s progress), use of
+assessment data (directly release
+assessment results to parents)
+same variables as for “teachers and
+classrooms” in the microsystem
+
+Personal experience and
+behaviors
+Well-being
+Other student variables
+Microsystem
+
+Family and home
+backgrounds
+
+Teachers and
+classrooms
+
+School and curriculum
+
+Mesosystem
+
+School + schoolmates
+or classmates
+
+School + teachers
+
+School + parents
+
+Teacher + classmates
+
+Table 1 (continued )
+Level
+
+Module
+
+Contextual Predictor
+
+Exosystem
+
+School context
+
+school location, public/private school,
+local competitor schools, school
+ranking, learning support, purpose of
+assessments (compare the school to the
+national performance, compare the
+school with other schools, monitor the
+school’s progress across years), use of
+students’ assessment data (post
+publicly, report to an administrative
+authority), funding source, admission
+criteria, quality assurance of education
+(external evaluation)
+professional development activities and
+the same variables as for the school
+context
+country/region, children’s immigration
+status, parents’ immigration history,
+country origin of teachers
+
+Teacher context
+Macrosystem
+
+Data preprocessing
+We handled missing data in the dataset in two stages. In the first
+stage, we eliminated rows with missing data on any of the five items
+used to measure self-efficacy. We chose listwise deletion over imputation to avoid introducing additional errors to the response variable. This
+step eliminated 84,179 records from the original dataset, reducing it to
+its final 527,825 records. In the second stage, we imputed missing predictor values by substituting median values (Maniruzzaman et al.,
+2018).
+Next, we transformed the responses on the self-efficacy items into
+item response scores using a polytomous IRT model, the generalized
+partial credit model (Muraki, 1992). We adopted this method following
+the approach used in the PISA 2018 Technical Report (OECD, 2019a).
+An advantage of using the IRT scores is that they differentiate values of
+different items even though respondents score the same on those items.
+For example, because each item has a different ability to discriminate
+respondents’ attributes, scoring “3” on item A is not equivalent to
+scoring “3” on item B. Thus, respondents are more likely to score high on
+certain items over others. With this consideration, IRT scores reveal
+more information about students’ self-efficacy according to their
+divergent response composites on the five items measuring self-efficacy.
+Theoretically, IRT scores range from negative infinity to positive infinity
+on a continuous scale. To make the IRT scores more interpretable, we
+linearly transformed them by multiplying them by 15 to increase the
+standard deviation and adding 100 to them to ensure that all values were
+positive. The choice of 15 and 100 was arbitrary, being meant to facilitate interpretation (i.e., yield positive self-efficacy scores). However,
+this linear transformation does not change the underlying relative values
+of the measured constructs.
+We reverse-coded responses on negatively worded items for the
+predictor variables, computed total scores for relevant scales, and
+created dummy variables for the categorical predictors. The final preprocessed dataset contained a total of 256 predictors (including dummy
+variables) and one outcome variable (self-efficacy).
+Machine learning algorithms
+This study employs an ML approach to analyze the data due to the
+large size and complexity of the dataset involved. Classical statistical
+methods—such as linear regression, structural equation modeling, and
+hierarchical linear modeling—are often rooted in parametric frameworks that prioritize hypothesis testing and parameter estimation under
+strict assumptions (e.g., linearity, normality). While these methods are
+the most popular and effective for studies involving a limited number of
+variables, they might not be the optimal choice for high-dimensional
+datasets due to challenges, such as managing a large number of
+6
+
+B. Tan et al.
+
+Journal of Applied Developmental Psychology 99 (2025) 101828
+
+selection by eliminating unimportant predictors and including just a
+subset of the original predictors in the final model. Additionally, Lasso
+regression models all predictors simultaneously, making it computationally efficient, particularly for high-dimensional datasets. However,
+Lasso regression assumes linearity and may miss more nuanced relationships unless interaction terms are manually specified which are
+exponentially difficult and cumbersome to implement as the number of
+predictors grows.
+
+predictors, violations of assumptions, and inflated statistical power from
+large samples (Yarkoni & Westfall, 2017). By contrast, ML offers a more
+flexible alternative by iteratively learning patterns among variables and
+optimizing predictive models without relying on strict assumptions
+(Iwatani, 2018; Makridakis, Spiliotis, & Assimakopoulos, 2018). ML
+generates multiple data-driven predictive models, allowing for the selection of the best model for prediction and interpretation (Lee et al.,
+2018). For example, tree-based algorithms do not require assumptions of
+normality of residuals, linearity of the relationship, or homogeneity of
+variance (Bzdok & Meyer-Lindenberg, 2018; Gomes and Almeida,
+2017). Moreover, some ML algorithms, including tree-based algorithms,
+have the capability to simultaneously examine the relative importance
+of a large set of predictors, thus providing interpretable results. Therefore, ML techniques make unique contributions that differ from the capacities of classical statistical models in effectively handling large-scale
+datasets with numerous variables. This is especially useful to the present
+study and other studies that aim to understand how a large set of variables at different socio-ecological levels are related to students’ socioemotional development.
+To understand how predictors (individual level and beyond) are
+associated with students’ self-efficacy, we trained two explanatory
+predictive models using the XGBoost and Lasso Regression algorithms.
+We selected these algorithms for three principal reasons. First, both deal
+well with many predictors or features (Chen & Guestrin, 2016; Tibshirani, 1996). Second, XGBoost is a nonlinear, nonparametric, treebased ensemble that captures nonlinearities and interactions (Denisko
+and Hoffman, 2018), whereas Lasso is a parametric linear regression
+method with an L1 penalty for feature selection (Tibshirani, 1996). This
+contrast enables us to cross-check results from two fundamentally
+distinct approaches (Bzdok & Meyer-Lindenberg, 2018). Third, both
+algorithms are noted for their high predictive accuracy in educational
+and psychological research (Grover and Mehra, 2008; Lee et al., 2018).
+Importantly, they each provide a way to evaluate feature importance,
+enabling us to pinpoint key determinants of self-efficacy while
+concomitantly benefitting from their high predictive performance.
+Below, we describe each algorithm and discuss their strengths and
+limitations.
+XGBoost is a combination of decision trees and boosting algorithms
+(Chen & Guestrin, 2016). The decision tree algorithm generates predictions using a sequence of if-then rules. In each stage of the sequence,
+the if-then rules partition the data points into subsets based on the node
+with the lowest error rate. By repeating the procedure until the stopping
+criterion is met, the split will eventually end. Boosting is a method for
+correcting the mistakes of current models by adding new models
+sequentially to predict the residuals of the existing model, and then
+making another prediction along with the existing model. Throughout
+iterations, each execution is performed on the same dataset, and subsequent models are refinements of earlier models. Eventually, the prediction errors will be gradually reduced, and the iteration process will
+terminate when the model’s performance converges to a steady state.
+Although XGBoost is powerful for capturing complex relationships due
+to its optimization of if-then rules among variables (Denisko and Hoffman, 2018), it requires careful hyperparameter tuning to avoid overfitting—a situation where the model performs well on training data but
+fails to generalize to new or broader datasets.
+Lasso regression is a type of regularized linear regression that works
+the same as ordinary least-squares linear regression, with additional
+operations that impose larger penalties on unimportant predictors and
+shrink their regression coefficients toward zero (Tibshirani, 1996). The
+penalties are determined by seeking to minimize the sum of the absolute
+value of the regression coefficients. Such operations are advantageous in
+reducing model complexity and improving prediction performance by
+decreasing the influence of unimportant predictors. As the shrinkage
+function of the Lasso regression forces some of the coefficients of the
+unimportant predictors to be exactly equal to zero when its shrinkage
+parameter is sufficiently large, Lasso regression performs feature
+
+Model training and evaluation
+We implemented the XGBoost regressor and Lasso regressor in the
+Python 3.7 environment using the xgboost library (Chen & Guestrin,
+2016) and the scikit-learn library (Pedregosa et al., 2011), respectively.
+The scikit-learn library was also used for all phases of the model development process including training, validation, and testing. To ensure
+robust and reliable (i.e., less biased) model tuning and performance, we
+applied nested cross-validation combined with a grid search algorithm
+(Krstajic, Buturovic, Leahy, & Thomas, 2014). Fig. 2 depicts the two
+layers that make up the nested cross-validation algorithm: both outerand inner cross-validation employed four folds. The code, processed
+data, figures, and model results are available in a GitHub repository
+(GitHub Resources, 2025).
+Given the robustness of prediction results achieved with a large
+sample size and nested cross-validation algorithms, we considered a
+four-fold split acceptable. With inner cross-validation, the algorithm
+seeks to find the hyperparameters that result in the best model performance on the validation dataset, whereas in the outer cross-validation,
+the algorithm aims to test the generalizability of the tuned model performance to a new dataset (i.e., the test set). In the inner folds, we tuned
+hyperparameters for the XGBoost included the maximum depth of the
+trees (max_depth) and the number of trees used in the model (n_estimators). We selected the maximum tree depth from a range of 5 to 25,
+with a 5-step increment, and set the number of trees to 100, 150, or 200.
+For the Lasso algorithm, we tuned only the learning rate, choosing from
+the values 0.0001, 0.0005, 0.001, 0.005, 0.01, 0.05, and 0.1. To evaluate
+the model performance during both validation and testing, we used
+Mean Absolute Error (MAE), Root Mean Square Error (RMSE), and R2.
+We also used R2 to identify the optimal hyperparameters and compare
+model performance.
+Feature importance extraction and ranking
+From the best-performing model with all predictors, we extracted the
+feature importance value for each predictor. In XGBoost, the default
+feature importance is based on how frequently a given feature is used to
+split the data within all the decision trees (Chen & Guestrin, 2016).
+Because of its algorithmic design, XGBoost can capture non-linear relationships effectively (Jin, 2023; Farhood et al., 2024). The algorithm
+then normalizes the importance values, expressing each feature’s
+importance as a percentage, with the total summing to 100 %. This
+approach highlights the features that contribute the most to the model’s
+predictive power. In this context, higher feature importance values
+indicate greater contributions to the model’s ability to explain variations
+in self-efficacy.
+For Lasso regression, feature importance is reflected in how large or
+small each predictor’s regression coefficient is, after accounting for the
+shrinkage penalty (Tibshirani, 1996). Predictors with coefficients that
+remain larger in absolute value (i.e., further from zero) indicated greater
+importance, whereas those with coefficients shrinking closer to zero (or
+set exactly to zero) indicated lesser importance.
+After extracting these feature importance values, we ranked each
+predictor in descending order based on its importance. We conducted
+this ranking both overall (across all predictors) and separately within
+each socio-ecological level. This approach allowed us to address our
+research questions concerning the most influential predictors of self7
+
+B. Tan et al.
+
+Journal of Applied Developmental Psychology 99 (2025) 101828
+
+Fig. 2. The Nested Cross-Validation Algorithm.
+
+efficacy overall, as well as the key predictors within each ecological
+level.
+
+Results
+Descriptive statistics of the response variable
+
+Reduced and exclusion model analysis
+
+The IRT model effectively transformed responses to the five selfefficacy items into a single continuous score with substantial variability. The mean IRT score of self-efficacy was 99.99, with a standard
+deviation of 13.28 and a range from 57.60 to 128.32. Fig. 3 shows the
+histogram of self-efficacy scores, indicating a leptokurtic distribution
+(kurtosis = 3.48), characterized by a sharper peak and heavier tails
+compared to a normal distribution. This distribution suggests that a
+greater proportion of students scored at the extremes (very high or very
+low self-efficacy) than a normal distribution would predict. Additionally, the slight positive skew (skewness = 0.20) suggests a nonsymmetrical distribution, with a tendency for students to cluster toward higher self-efficacy scores.
+
+After determining which algorithm (XGBoost or Lasso) produced the
+best overall performance, we constructed an additional model using
+only the top predictors from that best-performing method (referred to as
+the reduced model). We defined “top predictors” as those with a relative
+importance exceeding 1 % in XGBoost or a regression coefficient above 1
+in Lasso. While this threshold is somewhat arbitrary, this practice—selecting and testing subsets of high-importance predictors—is
+commonly used in ML studies to confirm how much predictive power a
+small subset can retain (e.g., Chandrashekar & Sahin, 2014; Guyon &
+Elisseeff, 2003; Li et al., 2017). Next, we created a complementary
+model that excluded these top predictors entirely (i.e., exclusion model),
+thereby revealing how much variance the remaining features alone
+could explain. Both subset models used the same algorithm and hyperparameter settings as the full model.
+Comparing the R2 values across the full model, reduced model, and
+exclusion model addresses three key points. First, if the reduced model
+was to exceed the full model’s R2, the result might indicate overfitting in
+the original, more complex model (Bishop, 2006). This result would also
+suggest that the full model includes unnecessary predictors that introduce noise rather than improving predictive accuracy. Second, if the
+reduced model’s R2 is lower than that of the full model, the result indicates that these top predictors are particularly important, while also
+acknowledging that less important predictors contribute to the overall
+explained variance. The difference in R2 between these two models
+highlights the added value of these less important predictors. Third,
+examining the exclusion model clarifies whether the less important
+predictors still capture a meaningful proportion of the self-efficacy
+variance. If the model retains a substantial R2, the result suggests that
+these predictors capture important indirect relationships (even though
+they may not explain as much variation as the top predictors).
+Conversely, if the exclusion model’s R2 is close to zero, the result suggests that the majority of the predictive power stems exclusively from
+the top predictors.
+
+To what extent can students’ self-efficacy be accurately predicted using
+individual-level and contextual factors surveyed in PISA 2018?
+Table 2 shows the training, validation, and test accuracy for the two
+sets of predictive models, respectively. When comparing the predictive
+performance of Lasso regression and XGBoost models on the test set,
+XGBoost performed better than Lasso, with an R2 that suggests it could
+explain about half of the variability in students’ self-efficacy. Checking
+the MAEs and RMSEs of both models, we find that they both provide
+accurate prediction results with the consideration of the range (70.72)
+and standard deviation (13.28) of students’ self-efficacy scores. Results
+suggest that a substantial proportion of variance in students’ selfefficacy can be accounted for by using a combination of individuallevel attributes and contextual factors.
+Which of the individual-level and contextual factors surveyed in PISA
+2018 are the most important predictors of students’ self-efficacy?
+The predictors of students’ self-efficacy were ranked according to
+their relative importance in the best-performing prediction model, the
+XGBoost model. Fig. 4 presents the top 14 predictors, each contributing
+at least 1 % to the model’s relative importance. Collectively, these 14
+predictors accounted for 48.99 % of the cumulative relative importance
+in the model. Among them, mastery goal orientation turned out to be the
+8
+
+B. Tan et al.
+
+Journal of Applied Developmental Psychology 99 (2025) 101828
+
+Fig. 3. The histogram of self-efficacy IRT scores
+
+What are the most important factors at each socio-ecological level in
+predicting students’ self-efficacy?
+
+Table 2
+Model Performance Results.
+Model
+
+Data
+
+RMSE
+
+MAE
+
+R2
+
+Lasso
+
+Training set
+Validation set
+Test set
+Training set
+Validation set
+Test set
+
+10.130
+10.138
+10.137
+<0.001
+9.727
+9.699
+
+7.678
+7.684
+7.683
+<0.001
+7.242
+7.219
+
+0.418
+0.417
+0.417
+>0.999
+0.464
+0.467
+
+XGBoost
+
+Table 3 summarizes the top five predictors by socio-ecological level.
+The findings show that most top individual-level predictors were related
+to students’ noncognitive factors such as motivation, emotions, and
+well-being. At the microsystem level, parents’ emotional support,
+teachers teaching strategies, and study and home possessions ranked the
+highest. For the mesosystem where the elements in the microsystems are
+connected, school climates (cooperation and competition), teacher
+evaluation, and differentiated classrooms were the most important
+predictors of self-efficacy beliefs. Additionally, top predictors of the
+exosystem level were mostly related to admission criteria, funding
+sources, and school evaluation. Lastly, the most important predictors of
+self-efficacy within the macrosystem appeared to be several economies
+including Malaysia, Japan, Kazakhstan, Indonesia, and B.S.J.Z. China
+(Beijing, Shanghai, Jiangsu, and Zhejiang).
+When comparing the five socio-ecological levels based on the top five
+predictors within each level, the individual level ranked the highest
+overall, whereas the exosystem level ranked the lowest. However, it is
+important to note that this ranking is based solely on the available
+predictors in the dataset and is therefore limited by the scope of the
+survey variables. A more detailed discussion of these findings and their
+relationship with students’ self-efficacy is provided in the Discussion
+section.
+
+Note: The bold values indicate the model with better performance (i.e., lower
+error and higher R2 on the test set).
+
+most powerful predictor, with a relative importance of 11.88 %, followed by the meaning of life (7.69 %), proud (7.01 %), positive emotions (3.40 %), learning aspiration (3.15 %), performance-approach goal
+orientation (3.04 %), reading self-concept (2.97 %), parents’ emotional
+support (2.25 %), Malaysia (1.71 %), scary emotion (1.36 %), cooperation climate (1.26 %), Japan (1.21 %), performance-avoidance goal
+orientation (1.03 %), and empathy (1.00 %).
+To evaluate the explanatory power of these top predictors, we built a
+reduced model using only these 14 features as a means of assessing the
+robustness of the original XGBoost model (e.g., potential overfitting)
+and evaluating whether the lower-importance features still offered
+meaningful explanatory value. This reduced model explained 43.6 % of
+the variance in self-efficacy, compared to the full model’s R2 of 0.467.
+Their similarity confirms that these select predictors capture a substantial portion of the variance while posing a reduced risk of overfitting. The modest gap (approximately 3 %) between the full model and
+the reduced model reflects the additional contribution provided by the
+remaining predictors. In fact, when we constructed an exclusion model
+without the top 14 predictors, its R2 of 0.328 indicated that the less
+important predictors still accounted for a nontrivial portion of the
+variance in self-efficacy, overlapping with the explanatory power of the
+top predictors and thus suggesting that they might contribute indirectly
+to students’ self-efficacy.
+
+Discussion
+The goal of this study was to explore how predictors at different
+socio-ecological levels simultaneously and jointly account for variations
+in students’ self-efficacy. Specifically, we aimed to identify the most
+important predictors of self-efficacy, both overall and within each specific socio-ecological level. To achieve this goal, we employed XGBoost
+and Lasso Regression ML algorithms to model contextual factors from
+the PISA 2018 dataset as predictors for self-efficacy. Guided by socioecological theory, we categorized the candidate predictors into five
+levels and assessed the relative importance of individual predictors,
+9
+
+B. Tan et al.
+
+Journal of Applied Developmental Psychology 99 (2025) 101828
+
+Fig. 4. Relative Importance of the Top-Ranking Predictors in the XGBoost Model.
+
+based on the best-performing predictive model. This study offers new
+theoretical insights into the development and variation of self-efficacy,
+methodological innovations for studying self-efficacy using large-scale
+data and ML techniques, and practical implications for educational
+monitoring and targeted interventions at scale.
+
+interplay of multiple influences. In particular, many distal factors from
+higher-level socio-ecological contexts might exert indirect effects on
+self-efficacy through more proximal, individual-level factors.
+Which of the individual-level and contextual factors surveyed in PISA
+2018 are the most important predictors of students’ self-efficacy?
+
+To what extent can students’ self-efficacy be accurately predicted using
+individual-level and contextual factors surveyed in PISA 2018?
+
+Among all the candidate predictors compared, the most salient predictors of students’ self-efficacy appeared to be associated with students’
+positive affect and motivational factors. These factors were identified
+with high relative importance scores in our XGBoost model, meaning
+they were frequently selected to split data across many decision trees.
+This pattern suggests that these factors may interact meaningfully with
+other predictors and potentially play a central role in accounting for
+variance in self-efficacy. These variables may function as strong correlates, mediators, or outcomes of self-efficacy in unidirectional or reciprocal relationships. For example, the relationship between positive
+emotions and self-efficacy was consistent with previous empirical evidence (Andretta and McKay, 2020; Caroli and Sagone, 2014; Villavicencio & Bernardo, 2016) and theoretical perspectives (Bandura, 1977).
+As depicted in Bandura’s (1977) social cognitive theory, emotional
+states are one of the four primary sources of forming self-efficacy
+because students may infer their competencies based on their
+authentic emotional states. Also, individuals with positive emotions
+often generate thoughts and actions that increase their self-efficacy,
+such as setting higher learning aspirations, perceiving higher task
+values, and promoting self-regulatory behaviors (Fredrickson, 2013;
+Lyubomirsky et al., 2005). In turn, adolescents’ self-efficacy beliefs may
+contribute to maintaining a higher life satisfaction and experiencing
+more positive emotions (Caprara, Pastorelli, Regalia, Scabini and Bandura, 2005). In addition, the other cluster of highly-ranked predictors in
+this study relates to motivational factors, such as mastery goal orientation and competition motivation, which is consistent with other research
+findings that support the close relationship between self-efficacy and
+
+The prediction results of both the XGBoost and Lasso regression algorithms indicate that the prediction error was small and that the
+candidate predictors collectively could explain a substantial proportion
+of the variation in students’ self-efficacy. The satisfactory prediction
+results lay the foundation for exploring how these predictors relate to
+students’ self-efficacy. Particularly, XGBoost outperformed Lasso
+regression between the two algorithms. The superior performance of the
+nonlinear ensemble predictor XGBoost compared to the linear LASSO
+regression highlights the complexities inherent in the data that linear
+models are unable to fully capture. A critical distinction between the two
+models is that the XGBoost algorithm considers the effects of predictors
+sequentially and accounts for their interactions (Denisko and Hoffman,
+2018), while Lasso regression models all predictors simultaneously
+(Tibshirani, 1996). Students’ self-efficacy may relate to a single factor or
+a combination of multiple factors through mechanisms such as mediation (i.e., chains of influence) and moderation (i.e., interactions). For
+example, students’ academic aspirations and expectancy-value beliefs
+(e.g., subject value, achievement, and cost expectancy) can mediate the
+relationship between learning achievement and self-efficacy (Carroll
+et al., 2009; Doménech-Betoret, Abellán-Roselló, & Gómez-Artiga,
+2017). Owing to its sequential consideration of features in a tree-based
+structure, XGBoost is well-suited to identify complex interactions between predictors, thereby enhancing its performance (Denisko and
+Hoffman, 2018). While the model does not confirm causal pathways, it
+supports the theoretical proposition that self-efficacy is shaped by the
+10
+
+B. Tan et al.
+
+Journal of Applied Developmental Psychology 99 (2025) 101828
+
+What are the most important factors at each socio-ecological level in
+predicting students’ self-efficacy?
+
+Table 3
+Top Predictors by Socio-ecological System.
+SocioEcological
+Level
+
+Predictor
+
+Relative
+Importance
+
+Predictor
+Rank
+
+Individual
+
+mastery goal orientation (the
+tendency to mastery goals that
+students show in their study and
+life)
+meaning of life
+proud
+positive emotions
+learning aspiration (the desire,
+ambition, or motivation to
+acquire knowledge, develop new
+skills, and pursue educational
+goals)
+parents’ emotional support
+teacher instruction strategies
+study possessions (material items
+or resources that a student uses
+for academic or educational
+purposes)
+home possessions (material
+belongings and assets present in a
+student’s home)
+teacher understanding students
+cooperation climate
+competition climate
+teacher evaluation
+practice of differentiated
+classrooms
+percentage of students who
+participated in local school
+government or volunteered in
+extra-curricular activities
+admission criteria:
+recommendation of feeder
+schools
+admission criteria: residence in a
+particular area
+funding source: student fees or
+school charges paid by parents
+external evaluation of schools
+funding source: governments
+Malaysia
+Japan
+Kazakhstan
+Indonesia
+B.S.J.Z. China
+
+0.1188
+
+1
+
+0.0769
+0.0701
+0.0340
+0.0315
+
+2
+3
+4
+5
+
+0.0225
+0.0047
+0.0043
+
+8
+41
+46
+
+0.0034
+
+53
+
+0.0033
+0.0126
+0.0083
+0.0068
+0.0023
+
+54
+11
+21
+24
+72
+
+0.0022
+
+78
+
+0.0030
+
+58
+
+0.0022
+
+80
+
+0.0022
+
+82
+
+0.0020
+0.0020
+0.0172
+0.0122
+0.0097
+0.0093
+0.0090
+
+91
+92
+9
+12
+15
+17
+18
+
+Microsystem
+
+Mesosystem
+
+Exosystem
+
+Macrosystem
+
+Among factors at the level of the microsystem, parents’ emotional
+support emerged as the highest ranking predictor. This finding echoes
+several previous studies that have reported associations between parents’ emotional support and self-efficacy (Scott & Mallinckrodt, 2012;
+Vieno et al., 2007). From the perspective of social cognitive theory,
+parents may shape their children’s self-efficacy through verbal persuasions, such as expressing concerns and providing positive feedback to
+their children (Cassé et al., 2015a, 2015b). A similar explanatory
+mechanism might account for the high importance of teacher instructional strategies and teacher understanding, both of which being among
+the top five predictors in the microsystem. Additionally, home possessions and study possessions were important predictors of students’ selfefficacy at home, which is in line with other studies that suggested a
+strong association between self-efficacy and socioeconomic status (Han
+et al., 2015; Karaarslan & Sungur, 2011). In contrast, school-related
+factors within the microsystem did not rank as highly in this study.
+We interpret the relatively weak predictive power of these school-level
+factors as possibly reflecting their more indirect influence on students’
+self-efficacy. For example, school disadvantages may affect students’
+self-efficacy through reduced access to qualified teaching staff and
+educational materials (Palmer, 2006). Also, the school curriculum might
+shape teachers’ instructional strategies and the time spent in interactions with students (Larson & Keiper, 2012). Nonetheless, although
+students spend much of their time in school settings, they may not
+interact directly with many of these broader school-level factors, which
+could operate at the mesosystem level instead.
+Shifting to the mesosystem level, school climate factors, including
+competition and cooperation, ranked among the most important predictors of students’ self-efficacy, consistent with previous studies (Lee
+et al., 2019; Shin, 2018). For example, both cross-sectional and longitudinal studies showed that students’ learning motivations, sense of
+challenge, and learning goals are higher in a more competitive learning
+environment (Ding et al., 2022). One possible explanation could be that
+competitiveness may affect students’ self-efficacy through the mechanism of vicarious experience (Schunk, 1984). Another explanation
+might be that competitive climates provide extensive opportunities for
+social comparisons, while social comparison provides standards for
+students to judge their own competencies by observing their peers’
+performances (Steyn & Mynhardt, 2008). This social comparison
+mechanism may also help explain how differentiated classrooms impact
+students’ self-efficacy through the well-documented big-fish-little-pond
+effects. Beyond competition, cooperative environments may also foster
+students’ self-efficacy by enabling vicarious learning through peer
+observation. For example, In’am and Sutrisno (2021) found that students’ self-efficacy in learning mathematics was improved after cooperative learning activities. Similarly, Schindler and Bakker (2020) noted
+that collaborative problem solving appeared to promote mastery experiences, which could further reinforce students’ self-efficacy beliefs
+(Schindler & Bakker, 2020).
+The most salient predictors within the exosystem were admission
+criteria (the recommendation of feeder schools and the student’s residence in a particular area) and funding source (tuition and government
+funding). However, they still had a relatively weaker relationship with
+students’ self-efficacy. These predictors were associated with students’
+socioeconomic backgrounds and the advantages/disadvantages of
+schools and may have indirect relationships with students’ self-efficacy.
+As stated previously, several economies and countries of origin
+ranked highly among all predictors. This finding suggests that broad
+societal and cultural influences may be highly associated with students’
+self-efficacy, even though individual-level factors remain the most
+directly predictive. The importance of cultural and national background
+is consistent with previous research indicating that the relative importance of different sources of self-efficacy can vary across cultural
+
+motivations (Schunk, 1991; Usher & Pajares, 2008). In his social
+cognitive theory, Bandura postulated that motivated actions depend
+heavily on expected positive consequences which are strongly shaped by
+self-efficacy. Thus, the importance of positive emotions and motivational factors suggests potential implications for improving students’
+self-efficacy.
+Given the cross-sectional nature of the PISA 2018 data, the direction
+of influence cannot be conclusively established. However, regardless of
+directionality, the strong predictive value of these variables in XGBoost
+reinforces their theoretical and empirical importance in understanding
+self-efficacy development and variation. Notably, these predictors outperformed many other individual-level and contextual variables
+included in the survey, suggesting that students’ affective and motivational characteristics are more strongly associated with self-efficacy
+than other surveyed factors. From a socio-ecological perspective, these
+individual-level variables may reflect mechanisms through which
+broader contextual conditions are linked to students’ beliefs about their
+competence.
+
+11
+
+B. Tan et al.
+
+Journal of Applied Developmental Psychology 99 (2025) 101828
+
+contexts (e.g., Ahn, Usher, Butz and Bong, 2016; Arslan, 2013; Stevens
+et al., 2007). In our study, the predictive model frequently selected
+students’ countries of origin when splitting decision trees, suggesting
+that some macro-level variables might interact with predictors at lower
+socio-ecological levels (e.g., microsystem) to account for variation in
+self-efficacy. According to our results, Malaysia, Japan, Kazakhstan,
+Indonesia, and B.S.J.Z. China were the most important national predictors. These countries and economies are commonly associated with
+collectivistic culture values, which aligns with previous research
+showing that students from collectivistic countries often report lower
+self-efficacy despite strong academic performance (Ahn, Usher, Butz and
+Bong, 2016). Several interpretations are possible. Cultural influences
+may shape students’ self-efficacy indirectly by affecting the beliefs and
+behaviors of parents and teachers. Alternatively, self-efficacy scores in
+these countries and economies may simply exhibit greater variability in
+the dataset, allowing ML algorithms to identify them as stronger predictors. In this case, it is possible that the self-efficacy of students from
+these countries varies more significantly or interacts more with other
+predictors at the lower socio-ecological level, which leads to the
+particular importance of these economies and countries as predictors.
+
+that contribute most to self-efficacy. By identifying the top 14 predictors
+among 256 variables—explaining 43.6 % of self-efficacy (compared to
+46.7 % in the full model)—we illustrate the parsimonious strength of ML
+approaches in isolating the most impactful factors. On the other hand,
+excluding the top 14 predictors, the remaining predictors can still
+explain 32.8 % of variation in self-efficacy, indicating an overlap in
+explanatory power with the top predictors and suggesting that they may
+contribute indirectly to students’ self-efficacy. Future research can build
+on these findings to investigate more complex, interactive relationships
+among these top predictors and additional contextual variables, thereby
+advancing the understanding of the development and variation of selfefficacy.
+Practical. As high self-efficacy benefits students’ motivation and
+learning experience (Chowdhury and Shahabuddin, 2007), whereas low
+self-efficacy is associated with various mental and behavioral problems
+(e.g., Tahmassian & Moghadam, 2011), early identification of students
+with low self-efficacy is crucial for their educational careers and overall
+well-being. Our results suggest that a relatively small set of key predictors can explain students’ self-efficacy nearly as effectively as the full
+set of variables. This finding implies that education systems can feasibly
+employ ML approaches to monitor and support vulnerable student
+populations by focusing on a manageable subset of variables. Such early
+warning systems could help educators and policymakers identify students at risk of low self-efficacy and provide targeted interventions.
+The results also offer actionable insights for education stakeholders
+aiming to promote self-efficacy through well-informed policies and
+programs. Notably, we found that affective states emerged as some of
+the strongest predictors, indicating that efforts to support students’
+emotional well-being—such as promoting positive emotions, reducing
+stress, and fostering a sense of meaning in life—may significantly
+enhance self-efficacy. From a broader applied perspective, our findings
+also imply a layered nature of influences on self-efficacy across socioecological levels. Factors from higher socio-ecological levels may
+relate to self-efficacy indirectly by interacting with more proximal
+mechanisms at the individual or microsystem level. Therefore, interventions at the policy or institutional level should consider how they
+can directly or indirectly enhance the primary sources of self-efficacy
+and facilitate individual-level processes.
+
+Contributions and Implications
+Theoretical. To our knowledge, this study is the first to predict students’ self-efficacy using a large number of variables at different socioecological levels. Our findings highlight the close relationship between
+students’ self-efficacy, their affective states, and motivational attributes,
+which is consistent with Bandura’s social cognitive theory. Moreover,
+we assessed the importance of predictors simultaneously, revealing that
+self-efficacy may closely relate to variables at socio-ecological levels
+beyond the individual level, such as parents’ emotional support and the
+students’ countries of origin. This finding implies that students’ selfefficacy could be shaped not only at the individual level but also
+through interactions with higher-level contextual factors. This interpretation is also consistent with previous research examining the differences in self-efficacy across countries and other demographic
+background variables (e.g., Ahn, Usher, Butz and Bong, 2016; Arslan,
+2013).
+Moreover, our findings suggest a possible hierarchical pattern of
+association: while affective and motivational attributes appear to have
+more immediate, proximal associations with self-efficacy, higher-level
+socio-ecological factors—such as those at the mesosystem or exosystem
+level—may relate to self-efficacy indirectly through these individuallevel mediators. Notably, the emergence of certain countries of origin
+as top predictors challenges traditional assumptions about the distance
+of cultural and societal factors from individual psychological constructs.
+This finding raises theoretical possibilities about whether such macrolevel variables are directly associated with students’ self-efficacy or
+operate sequentially through intermediary factors at more proximal
+levels. Therefore, future theoretical models of self-efficacy may benefit
+from more explicitly considering how variables at higher socioecological levels interact with and potentially channel their influence
+through individual-level processes.
+Methodological. While ML methods have been used to study selfefficacy in prior research, they have typically been applied to smaller
+datasets, where classical statistical models may still be viable alternatives. To our knowledge, this study is the first to use ML methods to
+predict students’ self-efficacy using a large number of predictors on a
+large dataset. As introduced in the Methods section, traditional statistical methods were originally designed to analyze relatively small
+samples, whereas ML approaches were particularly developed to efficiently analyze large-scale datasets with many predictors and are thus
+more suitable for understanding the response variable more comprehensively (Grover and Mehra, 2008). Additionally, ML approaches
+provide tools for assessing and ranking the importance of predictors,
+allowing for more nuanced analyses and interpretations of the factors
+
+Limitations
+First, while this study focused on general self-efficacy, we recognize
+the importance of domain-specific self-efficacy and its potential differences in development and variation. Given that general and domainspecific self-efficacy may relate to different sets of individual and
+contextual factors, future research could explore whether domainspecific self-efficacy follows distinct patterns of association and development compared to general self-efficacy. Specifically, studies could
+investigate whether the most influential predictors of domain-specific
+self-efficacy differ from those identified for general self-efficacy or
+whether contextual factors show varying degrees of association
+depending on the specificity of self-efficacy being assessed.
+Second, the current study relied on the variables available in the
+PISA 2018 questionnaires, which limited our ability to examine a
+broader range of other potentially important predictors. As such, the
+PISA questionnaires did not capture all relevant factors across the socioecological levels that may relate to students’ self-efficacy. Moreover, we
+included only those variables that were available for analysis in our ML
+models. In particular, the exosystem-level predictors included in the
+study were relatively weak in their predictive power, potentially due to
+the absence of other critical exosystem-level variables in the dataset. For
+instance, teachers’ participation in professional development programs,
+which could potentially influence teaching practices and indirectly
+affect students’ self-efficacy, was not available for analysis. Therefore, it
+is crucial to acknowledge that the relative importance of predictors in
+this study reflects comparisons among currently available variables,
+12
+
+B. Tan et al.
+
+Journal of Applied Developmental Psychology 99 (2025) 101828
+
+rather than encompassing all potential variables within the socioecological levels. As such, the findings of this study should not be
+interpreted as representing the relative importance between socioecological levels or among all possible variables within each level in
+shaping students’ self-efficacy.
+Third, this study cannot make causal claims about the relationships
+between the contextual factors and students’ self-efficacy, given the
+cross-sectional design of PISA 2018. While XGBoost captures complex
+relationships among variables, it does not directly identify specific
+causal pathways or moderation effects. Much early research on selfefficacy and development relied on cross-sectional designs, comparing
+different age groups at a single time. While informative, cross-sectional
+studies provide only a snapshot and have important limitations in
+capturing the development of self-efficacy over time.
+Finally, a common concern that comes with employing ensemble
+learning algorithms like the XGBoost algorithm is that they do not offer
+result interpretation to the extent of single decision trees (Zopluoglu,
+2019). Unlike single decision trees, XGBoost makes it challenging to
+visualize the interactions among predictors and fully understand how
+predictions are made. However, the XGBoost model was still able to
+provide information about the relative importance of the predictors,
+offering insight into the most important predictors of self-efficacy,
+which aligns with the research question.
+
+Data availability
+Data used in this study are publicly available at: https://www.oecd.
+org/en/data/datasets/pisa-2018-database.html. GitHub Resources are
+available at: https://github.com/anonymousAuthor-BT/ML_Self_efficacy.git.
+References
+Acıslı-Celik, S., & Yesilkanat, C. M. (2023). Predicting science achievement scores with
+machine learning algorithms: A case study of OECD PISA 2015–2018 data. Neural
+Computing and Applications, 35(28), 21201–21228. https://doi.org/10.1007/s00521023-08901-6
+Ahn, H. S., Usher, E. L., Butz, A., & Bong, M. (2016). Cultural differences in the
+understanding of modelling and feedback as sources of self-efficacy information. The
+British Journal of Educational Psychology, 86(1), 112–136. https://doi.org/10.1111/
+bjep.12093
+Alkharusi, H., Aldhafri, S., Alnabhani, H., & Alkalbani, M. (2014). Classroom assessment:
+Teacher practices, student perceptions, and academic self-efficacy beliefs. Social
+Behavior and Personality: An International Journal, 42(5), 835–855. https://doi.org/
+10.2224/sbp.2014.42.5.835
+Allen, K.-A., Vella-Brodrick, D., & Waters, L. (2018). Rethinking school belonging: A
+socio-ecological framework. In K.-A. Allen, & C. Boyle (Eds.), Pathways to belonging:
+Contemporary research in school belonging (pp. 191–218). Brill Sense. https://doi.org/
+10.1163/9789004386969_011.
+Andretta, J. R., & McKay, M. T. (2020). Self-efficacy and well-being in adolescents: A
+comparative study using variable and person-centered analyses. Children and Youth
+Services Review, 118, Article 105374. https://doi.org/10.1016/j.
+childyouth.2020.105374
+Areepattamannil, S., Freeman, J. G., & Klinger, D. A. (2011). Influence of motivation,
+self-beliefs, and instructional practices on science achievement of adolescents in
+Canada. Social Psychology of Education, 14(2), 233–259. https://doi.org/10.1007/
+s11218-010-9144-9
+Arslan, A. (2013). Investigation of relationship between sources of self-efficacy beliefs of
+secondary school students and some variables. Educational Sciences: Theory and
+Practice, 13(4), 1983–1993. https://doi.org/10.12738/estp.2013.4.1753
+Baker, B. D. (2016). Does money matter in education? Albert Shanker Institute.
+Bandura, A. (1977). Self-efficacy: Toward a unifying theory of behavioral change.
+Psychological Review, 84(2), 191–215. https://doi.org/10.1037/0033-295X.84.2.191
+Bandura, A. (1985). Model of causality in social learning theory. In Cognition and
+psychotherapy (pp. 81–99). Boston, MA: Springer US. https://doi.org/10.1007/9781-4684-7562-3_3.
+Bandura, A. (1997). Self-efficacy: The exercise of control. W H Freeman/Times Books/
+Henry Holt & Co.
+Bandura, A., Barbaranelli, C., Caprara, G. V., & Pastorelli, C. (2001). Self-efficacy beliefs
+as shapers of children’s aspirations and career trajectories. Child Development, 72(1),
+187–206. https://doi.org/10.1111/1467-8624.00273
+Bassi, M., Steca, P., Fave, A. D., & Caprara, G. V. (2007). Academic self-efficacy beliefs
+and quality of experience in learning. Journal of Youth and Adolescence, 36(3),
+301–312. https://doi.org/10.1007/s10964-006-9069-y
+Becker, S. P., & Gable, R. K. (2009). The relationship of self-efficacy and GPA,
+attendance, and college student retention. NERA Conference Proceedings, 26.
+Retrieved from https://digitalcommons.lib.uconn.edu/nera_2009/26/.
+Bianchi, D., Cavicchiolo, E., Manganelli, S., Lucidi, F., Chirico, A., Girelli, L., &
+Alivernini, F. (2022). School absenteeism and self-efficacy in very-low-income
+students in Italy: Cross-lagged relationships and differential effects of immigrant
+background. Children and Youth Services Review, 136, Article 106446. https://doi.
+org/10.1016/j.childyouth.2022.106446
+Bishop, C. M. (2006). Pattern recognition and machine learning. Springer.
+Bong, M., & Skaalvik, E. M. (2003). Academic self-concept and self-efficacy: How
+different are they really? Educational Psychology Review, 15(1), 1–40. https://doi.
+org/10.1023/A:1021302408382
+Borgonovi, F., & Pokropek, A. (2019). Seeing is believing: Task-exposure specificity and
+the development of mathematics self-efficacy evaluations. Journal of Education &
+Psychology, 111(2), 268–283. https://doi.org/10.1037/edu0000280
+Bronfenbrenner, U. (1979). The ecology of human development: Experiments by nature and
+design. Harvard University Press.
+Bub, D. (2021). The impact of standards-based grading on the academic self-efficacy of high
+school students: A mixed methods study (publication no. 28497484) [Doctoral
+dissertation, Northwest Nazarene University]. ProQuest Dissertations & Theses.
+Bzdok, D., & Meyer-Lindenberg, A. (2018). Machine learning for precision psychiatry:
+Opportunities and challenges. Biological Psychiatry: Cognitive Neuroscience and
+Neuroimaging, 3(3), 223–230. https://doi.org/10.1016/j.bpsc.2017.11.007
+Çakar, F. S. (2012). The relationship between the self-efficacy and life satisfaction of
+young adults. International Education Studies, 5(6), 123–130.
+Caprara, G. V., Pastorelli, C., Regalia, C., Scabini, E., & Bandura, A. (2005). Impact of
+adolescents’ filial self-efficacy on quality of family functioning and satisfaction.
+Journal of Research on Adolescence, 15(1), 71–97. https://doi.org/10.1111/j.15327795.2005.00087.x
+Caroli, M. E. D., & Sagone, E. (2014). Generalized self-efficacy and well-being in
+adolescents with high vs. low scholastic self-efficacy. Procedia - Social and Behavioral
+Sciences, 141, 867–874. https://doi.org/10.1016/j.sbspro.2014.05.152
+
+Conclusion
+This study simultaneously identified important predictors of students’ self-efficacy and assessed their relative importance, both in the
+overall context and within each socio-ecological system. The findings of
+this study attempt to advance the theoretical understanding of how selfefficacy may develop and vary by interpreting associations between
+contextual factors and self-efficacy from both socio-ecological and social
+cognitive perspectives. As the results of relative importance suggest,
+self-efficacy is a joint function of a multitude of different levels of
+contextual factors. Thus, researchers and education practitioners may
+benefit from considering how factors across different layers of students’
+socio-ecological environments might jointly relate to the development
+and variation of self-efficacy. By identifying the most important and
+proximal predictors of self-efficacy, this study paves the way for future
+research to further investigate the complex relationships between students’ self-efficacy and its key influencing factors.
+CRediT authorship contribution statement
+Bin Tan: Visualization, Methodology, Investigation, Formal analysis, Data curation, Conceptualization, Writing – review & editing,
+Writing – original draft. Hao-Yue Jin: Conceptualization, Writing –
+review & editing, Writing – original draft. Maria Cutumisu: Validation,
+Supervision, Resources, Project administration, Methodology, Funding
+acquisition, Conceptualization, Writing – review & editing.
+Declaration of competing interest
+The authors have no conflict of interest to report.
+Acknowledgements
+We would like to thank the editor and the anonymous reviewers. We
+are also grateful to Alberta Innovates, the Social Sciences and Humanities Research Council of Canada - Insight Development Grant (SSHRC
+IDG) 430-2023-00853, the Social Sciences and Humanities Research
+Council of Canada - Insight Grant (SSHRC IG) 435-2020-0844, the
+Natural Sciences and Engineering Research Council Discovery Grant
+(NSERC DG) RGPIN-2019-07014, the CanCode – Cybera Inc. (Callysto)
+Grant RES0059331, and the Fonds de Recherche du Québec Santé
+347516 for supporting this research.
+13
+
+B. Tan et al.
+
+Journal of Applied Developmental Psychology 99 (2025) 101828
+
+Carroll, A., Houghton, S., Wood, R., Unsworth, K., Hattie, J., Gordon, L., & Bower, J.
+(2009). Self-efficacy and academic achievement in Australian high school students:
+The mediating effects of academic aspirations and delinquency. Journal of
+Adolescence, 32(4), 797–817. https://doi.org/10.1016/j.adolescence.2008.10.009
+Cassé, J. F. H., Oosterman, M., & Schuengel, C. (2015a). Verbal persuasion and resilience
+of parenting self-efficacy: Preliminary findings of an experimental approach. Family
+Science, 6(1), 23–30. https://doi.org/10.1080/19424620.2015.1009933
+Chan, J. C., & Lam, S. F. (2010). Effects of different evaluative feedback on students’ selfefficacy in learning. Instructional Science, 38, 37–58. https://doi.org/10.1007/
+s11251-008-9077-2
+Chandrashekar, G., & Sahin, F. (2014). A survey on feature selection methods. Computers
+and Electrical Engineering, 40(1), 16–28. https://doi.org/10.1016/j.
+compeleceng.2013.11.024
+Chen, C. S. H., Ho, M. C., Goh, Q. R., Ooi, P. B., & Siau, C. S. (2024). The Relationship of
+Parental Control on Academic Self-Efficacy Among Secondary School Students in
+Selangor. Quantum Journal of Social Sciences and Humanities, 5(3), 110–121. https://
+doi.org/10.55197/qjssh.v5i3.373
+Chen, T., & Guestrin, C. (2016). XGBoost: A scalable tree boosting system. In Proceedings
+of the 22nd ACM SIGKDD international conference on knowledge discovery and data
+mining (pp. 785–794). https://doi.org/10.1145/2939672.2939785
+Chowdhury, M. S., & Shahabuddin, A. M. (2007). Self-efficacy, motivation and their
+relationship to academic performance of Bangladesh college students. The College
+Quarterly, 10(1), 1–9. https://files.eric.ed.gov/fulltext/EJ813750.pdf.
+Constantine, M. G., Okazaki, S., & Utsey, S. O. (2010). Self-concealment, social selfefficacy, acculturative stress, and depression in African, Asian, and Latin American
+international college students. The American Journal of Orthopsychiatry, 74(3),
+230–241. https://doi.org/10.1037/0002-9432.74.3.230
+Crockett, L. J., & Crouter, A. C. (2014). Pathways through adolescence: An overview. In
+L. J. Crockett, & A. C. Crouter (Eds.), Pathways through adolescence (1st ed., pp.
+1–12). Psychology Press. https://doi.org/10.4324/9781315806518.
+De Coninck, K., Walker, J., Dotger, B., & Vanderlinde, R. (2020). Measuring student
+teachers’ self-efficacy beliefs about family-teacher communication: Scale
+construction and validation. Studies in Educational Evaluation, 64, Article 100820.
+https://doi.org/10.1016/j.stueduc.2019.100820
+Denisko, D., & Hoffman, M. M. (2018). Classification and interaction in random forests.
+Proceedings of the National Academy of Sciences, 115(8), 1690–1692. https://doi.org/
+10.1073/pnas.180025611
+Dettmers, S., Yotyodying, S., & Jonkmann, K. (2019). Antecedents and outcomes of
+parental homework involvement: How do family-school partnerships affect parental
+homework involvement and student outcomes? Frontiers in Psychology, 10, 1048.
+https://doi.org/10.3389/fpsyg.2019.01048
+Devís-Devís, J., Beltrán-Carrillo, V. J., & Peiró-Velert, C. (2015). Exploring socioecological factors influencing active and inactive Spanish students in years 12 and
+13. Sport. Education and Society, 20(3), 361–380. https://doi.org/10.1080/
+13573322.2012.754753
+Ding, Z., Liu, R.-D., Ding, Y., Yang, X., Hong, W., & Li, H. (2022). The concurrent and
+longitudinal relations between competitive classroom climate and learning
+motivation among Chinese adolescent students: The mediating roles of social
+comparisons. Psychology Research and Behavior Management, 15, 1209–1219. https://
+doi.org/10.2147/PRBM.S364803
+Doménech-Betoret, F., Abellán-Roselló, L., & Gómez-Artiga, A. (2017). Self-efficacy,
+satisfaction, and academic achievement: The mediator role of students’ expectancyvalue beliefs. Frontiers in Psychology, 8, 1193. https://doi.org/10.3389/
+fpsyg.2017.01193
+Epstein, J. L. (2018). School, family, and community partnerships in teachers’
+professional work. Journal of Education for Teaching, 44(3), 397–406.
+Erikson, E. (1959). Theory of identity development. E. Erikson, identity and the life cycle.
+Nueva York: International Universities Press.
+Essiet, I. A., Baharom, A., Shahar, H. K., & Uzochukwu, B. (2017). Application of the
+socio-ecological model to predict physical activity behaviour among Nigerian
+university students. The Pan African Medical Journal, 26. https://doi.org/10.11604/
+pamj.2017.26.110.10409
+Fan, W., & Williams, C. M. (2010). The effects of parental involvement on students’
+academic self-efficacy, engagement and intrinsic motivation. Educational
+Psychologist, 30(1), 53–74. https://doi.org/10.1080/01443410903353302
+Farhood, H., Joudah, I., Beheshti, A., & Muller, S. (2024). Evaluating and enhancing
+artificial intelligence models for predicting student learning outcomes. Informatics,
+11(3), 46. https://www.mdpi.com/2227-9709/11/3/46.
+Fredrickson, B. L. (2013). Positive emotions broaden and build. In P. Devine, & A. Plant
+(Eds.), Vol. 47. Advances in experimental social psychology (pp. 1–53). Academic Press.
+https://doi.org/10.1016/B978-0-12-407236-7.00001-2.
+GitHub Resources. (2025). https://github.com/anonymousAuthor-BT/ML_Self_efficacy.
+git.
+Gomes, C., & Almeida, L. S. (2017). Advocating the broad use of the decision tree method
+in education. Practical Assessment, Research and Evaluation, 22(1), 10. https://doi.
+org/10.7275/y36w-hg55
+Govorova, E., Benítez, I., & Muñiz, J. (2020). Predicting student well-being: Network
+analysis based on PISA 2018. International Journal of Environmental Research and
+Public Health, 17(11), 4014. https://doi.org/10.3390/ijerph17114014
+Grether, T., Sowislo, J. F., & Wiese, B. S. (2018). Top-down or bottom-up? Prospective
+relations between general and domain-specific self-efficacy beliefs during a workfamily transition. Personality and Individual Differences, 121, 131–139. https://doi.
+org/10.1016/j.paid.2017.09.021
+Grover, L. K., & Mehra, R. (2008). The lure of statistics in data mining. Journal of Statistics
+Education, 16(1). https://doi.org/10.1080/10691898.2008.11889552
+
+Guyon, I., & Elisseeff, A. (2003). An introduction to variable and feature selection.
+Journal of Machine Learning Research, 3, 1157–1182. https://doi.org/10.1162/
+153244303322753616
+Han, J., Chu, X., Song, H., & Li, Y. (2015). Social capital, socioeconomic status and selfefficacy. Applied Economics and Finance, 2(1), 1–10. https://doi.org/10.11114/aef.
+v2i1.607
+Honicke, T., & Broadbent, J. (2016). The influence of academic self-efficacy on academic
+performance: A systematic review. Educational Research Review, 17, 63–84. https://
+doi.org/10.1016/j.edurev.2015.11.002
+Hsieh, H. F., Heinze, J. E., Aiyer, S. M., Stoddard, S. A., Wang, J. L., & Zimmerman, M. A.
+(2015). Cross-domain influences on youth risky driving behaviors: A developmental
+cascade analysis. Journal of Applied Developmental Psychology, 38, 11–21. https://doi.
+org/10.1016/j.appdev.2015.03.002
+Hsieh, H. F., Zimmerman, M. A., Bauermeister, J. A., Caldwell, C. H., Xue, Y., Wang, Z., &
+Hou, Y. (2016). Cumulative risks and promotive factors for Chinese adolescent
+problem behaviors. Journal of Applied Developmental Psychology, 43, 71–82. https://
+doi.org/10.1016/j.appdev.2016.01.003
+Huang, C. (2016). Achievement goals and self-efficacy: A meta-analysis. Educational
+Research Review, 19, 119–137. https://doi.org/10.1016/j.edurev.2016.07.002
+In’am, A., & Sutrisno, E. S. (2021). Strengthening students’ self-efficacy and motivation
+in learning mathematics through the cooperative learning model. International
+Journal of Instruction, 14(1), 395–410. https://doi.org/10.29333/iji.2021.14123a
+Iwatani, E. (2018). Overview of data mining’s potential benefits and limitations in
+education research. https://digitalpromise.dspacedirect.org/handle/20.500.
+12265/75.
+Jin, R., Wu, R., Xia, Y., & Zhao, M. (2023). What cultural values determine student selfefficacy? An empirical study for 42 countries and economies. Frontiers in Psychology,
+14, 1177415. https://doi.org/10.3389/fpsyg.2023.1177415
+Jin, X. (2023). Predicting academic success: Machine learning analysis of student,
+parental, and school efforts. Asia Pacific Education Review, 1-22. https://doi.org/
+10.1007/s12564-023-09915-4
+Joët, G., Usher, E. L., & Bressoux, P. (2011). Sources of self-efficacy: An investigation of
+elementary school students in France. Journal of Education & Psychology, 103(3),
+649. https://doi.org/10.1037/a0024048
+Junaidi, J., Anwar, S. M., & Sahrir, S. (2023). The role of religion and social capital on
+entrepreneurship self-efficacy and motivation among students in Indonesia. Cogent
+Business & Management, 10(3), 2265091. https://doi.org/10.1080/
+23311975.2023.2265091
+Kalter, N., Alpern, D., Spence, R., & Plunkett, J. W. (1984). Locus of control in children of
+divorce. Journal of Personality Assessment, 48(4), 410–414. https://doi.org/10.1207/
+s15327752jpa4804_14
+Karaarslan, G., & Sungur, S. (2011). Elementary students’ self-efficacy beliefs in science:
+Role of grade level, gender, and socio-economic status. Science Education
+International, 22(1), 72–79. https://eric.ed.gov/?id=EJ941644.
+Kleppang, A. L., Steigen, A. M., & Finbråten, H. S. (2023). Explaining variance in selfefficacy among adolescents: The association between mastery experiences, social
+support, and self-efficacy. BMC Public Health, 23(1), 1665. https://doi.org/10.1186/
+s12889-023-16603-w
+Krsmanovic, M. (2021). Course redesign: Implementing project-based learning to
+improve students’ self-efficacy. Journal of the Scholarship of Teaching and Learning, 21
+(2), 93–106. https://doi.org/10.14434/josotl.v21i2.28723
+Krstajic, D., Buturovic, L. J., Leahy, D. E., & Thomas, S. (2014). Cross-validation pitfalls
+when selecting and assessing regression and classification models. Journal of
+Cheminformatics, 6(1), 10. https://doi.org/10.1186/1758-2946-6-10
+Künsting, J., Neuber, V., & Lipowsky, F. (2016). Teacher self-efficacy as a long-term
+predictor of instructional quality in the classroom. European Journal of Psychology of
+Education, 31, 299–322. https://doi.org/10.1007/s10212-015-0272-7
+Kurtz, L., & Derevensky, J. L. (1994). The effects of divorce on perceived self-efficacy and
+behavioral control in elementary school children. Journal of Divorce & Remarriage, 20
+(3–4), 75–94. https://doi.org/10.1300/J087v20n03_06
+Larson, B. E., & Keiper, T. A. (2012). Instructional strategies for middle and high school (2nd
+ed.). Routledge. https://doi.org/10.4324/9780203096529
+Lee, P., Lui, R., & Chau, M. (2019). How does competition help future learning in serious
+games? An exploratory study in learning search engine optimization. Journal of
+Information Systems Education, 30(3), 167–177. https://aisel.aisnet.org/jise/vol
+30/iss3/3.
+Lee, Y., Ragguett, R.-M., Mansur, R. B., Boutilier, J. J., Rosenblat, J. D., Trevizol, A., …
+McIntyre, R. S. (2018). Applications of machine learning algorithms to predict
+therapeutic outcomes in depression: A meta-analysis and systematic review. Journal
+of Affective Disorders, 241, 519–532. https://doi.org/10.1016/j.jad.2018.08.073
+Lezhnina, O., & Kismihók, G. (2022). Combining statistical and machine learning
+methods to explore German students’ attitudes towards ICT in PISA. International
+Journal of Research & Method in Education, 45(2), 180–199. https://doi.org/10.1080/
+1743727X.2021.1963226
+Li, J., Cheng, K., Wang, S., Morstatter, F., Trevino, R. P., Tang, J., & Liu, H. (2017).
+Feature selection: A data perspective. ACM Computing Surveys (CSUR), 50(6), 1–45.
+https://doi.org/10.1145/3136625
+Lim, S. J. J., & Hoot, J. L. (2015). Bullying in an increasingly diverse school population: A
+socio-ecological model analysis. School Psychology International, 36(3), 268–282.
+https://doi.org/10.1177/0143034315571158
+Linnenbrink, E. A., & Pintrich, P. R. (2003). The role of self-efficacy beliefs instudent
+engagement and learning in the classroom. Reading and Writing Quarterly, 19(2),
+119–137. https://doi.org/10.1080/10573560308223
+Lisá, E. (2020). Dispositional traits as predictors of self-efficacy. In C. Pracana, &
+M. Wang (Eds.), Psychology applications & developments VI (pp. 32–40). inScience
+Press.
+
+14
+
+B. Tan et al.
+
+Journal of Applied Developmental Psychology 99 (2025) 101828
+
+Luszczynska, A., Gutiérrez-Doña, B., & Schwarzer, R. (2005). General self-efficacy in
+various domains of human functioning: Evidence from five countries. International
+Journal of Psychology, 40(2), 80–89. https://doi.org/10.1080/00207590444000041
+Lyubomirsky, S., King, L., & Diener, E. (2005). The benefits of frequent positive affect:
+Does happiness lead to success? Psychological Bulletin, 131(6), 803–855. https://doi.
+org/10.1037/0033-2909.131.6.803
+Maddux, J. E., & Stanley, M. A. (1986). Self-efficacy theory in contemporary psychology:
+An overview. Journal of Social and Clinical Psychology, 4(3), 249–255. https://doi.
+org/10.1521/jscp.1986.4.3.249
+Makridakis, S., Spiliotis, E., & Assimakopoulos, V. (2018). Statistical and machine
+learning forecasting methods: Concerns and ways forward. PLoS One, 13(3), Article
+e0194889. https://doi.org/10.1371/journal.pone.0194889
+Maniruzzaman, M., Rahman, M. J., Al-MehediHasan, M., Suri, H. S., Abedin, M. M., ElBaz, A., & Suri, J. S. (2018). Accurate diabetes risk stratification using machine
+learning: Role of missing value and outliers. Journal of Medical Systems, 42(5), 92.
+https://doi.org/10.1007/s10916-018-0940-7
+Maranto, R. (2013). How do we get them on the farm? Efforts to improve rural teacher
+recruitment and retention in Arkansas. The Rural Educator, 34(1), 4. https://doi.org/
+10.35608/ruraled.v34i1.406
+Marsh, H. W., Pekrun, R., Parker, P. D., Murayama, K., Guo, J., Dicke, T., &
+Lichtenfeld, S. (2017). Long-term positive effects of repeating a year in school: Sixyear longitudinal study of self-beliefs, anxiety, social relations, school grades, and
+test scores. Journal of Education & Psychology, 109(3), 425–438. https://doi.org/
+10.1037/edu0000144
+Mitchell, S., & DellaMattera, J. (2010). Teacher support and student’s self-efficacy
+beliefs. Journal of Contemporary Issues in Education, 5(2). https://doi.org/10.20355/
+C5X30Q
+Mojavezi, A., & Tamiz, M. P. (2012). The impact of teacher self-efficacy on the students’
+motivation and achievement. Theory and Practice in Language Studies, 2(3), 483–491.
+https://doi.org/10.4304/tpls.2.3.483-491
+Muraki, E. (1992). A generalized partial credit model: Application of an EM algorithm.
+ETS Research Report Series, 1992(1), 159–176. https://doi.org/10.1002/j.23338504.1992.tb01436.x
+Muris, P. (2002). Relationships between self-efficacy and symptoms of anxiety disorders
+and depression in a normal adolescent sample. Personality and Individual Differences,
+32(2), 337–348. https://doi.org/10.1016/S0191-8869(01)00027-7
+Nyman, J., Parisod, H., Axelin, A., & Salanterä, S. (2019). Finnish adolescents’ selfefficacy in peer interactions: A critical incident study. Health Promotion International,
+34(5), 961–969. https://doi.org/10.1093/heapro/day048
+OECD. (2019a). PISA 2018 Database. https://www.oecd.org/pisa/data/2018database/.
+OECD. (2019b). PISA 2018 Background questionnaires (pp. 299–300). OECD. https://doi.
+org/10.1787/67e1518f-en
+OECD. (2019c). PISA 2018 questionnaire framework (pp. 217–256). OECD. https://doi.
+org/10.1787/850d0ef8-en
+OECD. (2019d). PISA 2018 results (volume III): What school life means for students’ lives.
+Paris: PISA, OECD Publishing. https://doi.org/10.1787/acd78851-en
+OECD. (2019). PISA 2018 Assessment and Analytical Framework. Paris: PISA, OECD
+Publishing. doi: 10.1787/b25efab8-en.
+Öqvist, A., & Malmström, M. (2018). What motivates students? A study on the effects of
+teacher leadership and students’ self-efficacy. International Journal of Leadership in
+Education, 21(2), 155–175. https://doi.org/10.1080/13603124.2017.1355480
+Pajares, F., Johnson, M. J., & Usher, E. L. (2007). Sources of writing self-efficacy beliefs
+of elementary, middle, and high school students. Research in the Teaching of English,
+42(1), 104–120. https://doi.org/10.58680/rte20076485
+Palmer, D. H. (2006). Sources of self-efficacy in a science methods course for primary
+teacher education students. Research in Science Education, 36(4), 337–353. https://
+doi.org/10.1007/s11165-005-9007-0
+Pedregosa, F., Varoquaux, G., Gramfort, A., Michel, V., Thirion, B., Grisel, O., …
+Cournapeau, D. (2011). Scikit-learn: Machine learning in Python. Machine Learning
+in Python, 6.
+Rosário, P., Núñez, J. C., Valle, A., González-Pienda, J., & Lourenço, A. (2013). Grade
+level, study time, and grade retention and their effects on motivation, self-regulated
+learning strategies, and mathematics achievement: A structural equation model.
+European Journal of Psychology of Education, 28, 1311–1331. https://doi.org/
+10.1007/s10212-012-0167-9
+Sawyer, R. J., Graham, S., & Harris, K. R. (1992). Direct teaching, strategy instruction,
+and strategy instruction with explicit self-regulation: Effects on the composition
+skills and self-efficacy of students with learning disabilities. Journal of Education &
+Psychology, 84(3), 340–352. https://doi.org/10.1037/0022-0663.84.3.340
+Scharpf, F., Kaltenbach, E., Nickerson, A., & Hecker, T. (2021). A systematic review of
+socio-ecological factors contributing to risk and protection of the mental health of
+refugee children and adolescents. Clinical Psychology Review, 83, Article 101930.
+https://doi.org/10.1016/j.cpr.2020.101930
+Scharpf, F., Mueller, S. C., & Hecker, T. (2022). The executive functioning of Burundian
+refugee youth: Associations with individual, family and community factors. Journal
+of Applied Developmental Psychology, 80, Article 101399. https://doi.org/10.1016/j.
+appdev.2022.101399
+Schindler, M., & Bakker, A. (2020). Affective field during collaborative problem posing
+and problem solving: A case study. Educational Studies in Mathematics, 105(3),
+303–324. https://doi.org/10.1007/s10649-020-09973-0
+Schunk, D. H. (1984). Sequential attributional feedback and children’s achievement
+behaviors. Journal of Education & Psychology, 76, 1159–1169. https://doi.org/
+10.1037/0022-0663.76.6.1159
+Schunk, D. H. (1987). Peer models and children’s behavioral change. Review of
+Educational Research, 57(2), 149–174. https://doi.org/10.3102/
+00346543057002149
+
+Schunk, D. H. (1991). Self-efficacy and academic motivation. Educational Psychologist, 26
+(3–4), 207–231. https://doi.org/10.1080/00461520.1991.9653133
+Schunk, D. H., & Ertmer, P. A. (2000). Self-regulation and academic learning: Selfefficacy enhancing interventions. In Handbook of self-regulation (pp. 631–649).
+Elsevier. https://doi.org/10.1016/B978-012109890-2/50048-2.
+Schunk, D. H., & Meece, J. L. (2005). Self-efficacy development in adolescence. In
+F. Pajares, & T. Urdan (Eds.), Self-efficacy beliefs of adolescents (pp. 71–96).
+Information Age Publishing.
+Schwarzer, R. (Ed.). (1992). Self-efficacy: Thought control of action. Hemisphere
+Publishing Corp.
+Schwarzer, R. (1997). Optimistic self-beliefs: Assessment of general perceived selfefficacy in thirteen cultures. World Psychology, 3(1), 177–190.
+Schwarzer, R., & Jerusalem, M. (1995). General self-efficacy scale (GSE) [database
+record]. APA PsycTests.. https://doi.org/10.1037/t00393-000
+Schwarzer, R., & Luszczynska, A. (2006). Self-efficacy, adolescents’ risk-taking
+behaviors, and health. Self-Efficacy Beliefs of Adolescents, 5, 139–159.
+Scott, A. B., & Mallinckrodt, B. (2012). Parental emotional support, science self-efficacy,
+and choice of science major in undergraduate women. Career Development Quarterly,
+53(3), 263–273. https://doi.org/10.1002/j.2161-0045.2005.tb00995.x
+Shams, H., Garmaroudi, G., Nedjat, S., & Yekaninejad, M. S. (2018). Effect of education
+based on socio-ecological theory on bullying in students: An educational study.
+Electronic Physician, 10(7), 7046. https://doi.org/10.19082/7046
+Shehzad, M. W., Alghorbany, A., Lashari, S. A., Lashari, T. A., & Razzaq, S. (2019). The
+interplay between pronunciation self-efficacy sources and self-efficacy beliefs: A
+structural equation modeling approach. Indonesian journal of. Applied Linguistics, 9
+(1). https://doi.org/10.17509/ijal.v9i1.15933
+Sherer, M., Maddux, J. E., Mercandante, B., Prentice-dunn, S., Jacobs, B., & Rogers, R. W.
+(1982). The Self-efficacy Scale: Construction and validation. Psychological Reports, 51
+(2), 663–671. https://doi.org/10.2466/pr0.1982.51.2.663
+Shin, M.-H. (2018). Effects of project-based learning on students’ motivation and selfefficacy. English Teaching, 73(1), 95–114. https://doi.org/10.15858/
+engtea.73.1.201803.95
+Shinkfield, A. J., & Stufflebeam, D. L. (2012). Teacher evaluation: Guide to effective practice
+(Vol. 41). Springer Science & Business Media.
+Siegle, D., & McCoach, D. B. (2007). Increasing student mathematics self-efficacy
+through teacher training. Journal of Advanced Academics, 18(2), 278–312. https://
+doi.org/10.4219/jaa-2007-35
+Smith, J., Walter, T., & Hoey, G. (1992). Support programs and student self-efficacy: Do
+first-year students know when they need help? Journal of the First-Year Experience &
+Students in Transition, 4(2), 41–67.
+Stevens, T., Wang, K., Olivárez, A., & Hamman, D. (2007). Use of self-perspectives and
+their sources to predict the mathematics enrollment intentions of girls and noys. Sex
+Roles, 56(5), 351. https://doi.org/10.1007/s11199-006-9180-2
+Steyn, R., & Mynhardt, J. (2008). Factors that influence the forming of self-evaluation
+and self-efficacy perceptions. South Africa Journal of Psychology, 38(3), 563–573.
+https://doi.org/10.1177/008124630803800310
+Strohmeier, D., & Wagner, P. (2023). Explaining the academic achievement gap of
+immigrant youth in Austria. Journal of Applied Developmental Psychology, 87, Article
+101560. https://doi.org/10.1016/j.appdev.2023.101560
+Swathy, M., & Saruladha, K. (2022). A comparative study of classification and prediction
+of Cardio-Vascular Diseases (CVD) using Machine Learning and Deep Learning
+techniques. ICT express, 8(1), 109–116. https://doi.org/10.1016/j.icte.2021.08.021
+Tahmassian, K., & Moghadam, N. J. (2011). Relationship between self-efficacy and
+symptoms of anxiety, depression, worry and social avoidance in a normal sample of
+students. Iranian Journal of Psychiatry and Behavioral Sciences, 5(2), 91.
+Tibshirani, R. (1996). Regression shrinkage and selection via the lasso. Journal of the
+Royal Statistical Society, Series B, 58(1), 267–288. https://doi.org/10.1111/j.25176161.1996.tb02080.x
+Tsang, S. K., Hui, E. K., & Law, B. C. (2012). Self-efficacy as a positive youth development
+construct: A conceptual review. Scientific World Journal, 2012(1), Article 452327.
+https://doi.org/10.1100/2012/452327
+Usher, E. L., & Pajares, F. (2006). Inviting confidence in school: Invitations as a critical
+source of the academic self-efficacy beliefs of entering middle school students.
+Journal of Invitational Theory and Practice, 12, 7–16. https://eric.ed.gov/?
+id=EJ766998.
+Usher, E. L., & Pajares, F. (2008). Sources of self-efficacy in school: Critical review of the
+literature and future directions. Review of Educational Research, 78(4), 751–796.
+https://doi.org/10.3102/0034654308321456
+Valois, R. F., Zullig, K. J., & Hunter, A. A. (2015). Association between adolescent suicide
+ideation, suicide attempts and emotional self-efficacy. Journal of Child and Family
+Studies, 24(2), 237–248. https://doi.org/10.1007/s10826-013-9829-8
+Vieno, A., Santinello, M., Pastore, M., & Perkins, D. D. (2007). Social support, sense of
+community in school, and self-efficacy as resources during early adolescence: An
+integrative model. American Journal of Community Psychology, 39(1), 177. https://
+doi.org/10.1007/s10464-007-9095-2
+Villavicencio, F. T., & Bernardo, A. B. I. (2016). Beyond math anxiety: Positive emotions
+predict mathematics achievement, self-regulation, and self-efficacy. The Asia-Pacific
+Education Researcher, 25(3), 415–422. https://doi.org/10.1007/s40299-015-0251-4
+Wang, F., King, R. B., & Leung, S. O. (2023). Why do East Asian students do so well in
+mathematics? A machine learning study. International Journal of Science and
+Mathematics Education, 21(3), 691–711. https://doi.org/10.1007/s10763-02210262-w
+Wang, J., Tigelaar, D. E., & Admiraal, W. (2019). Connecting rural schools to quality
+education: Rural teachers’ use of digital educational resources. Computers in Human
+Behavior, 101, 68–76. https://doi.org/10.1016/j.chb.2019.07.009
+
+15
+
+B. Tan et al.
+
+Journal of Applied Developmental Psychology 99 (2025) 101828
+
+Waterman, A. S. (1984). Identity formation: Discovery or creation? Journal of Early
+Adolescence, 4(4), 329–341. https://doi.org/10.1177/0272431684044004
+Wheeler, V. A., & Ladd, G. W. (1982). Assessment of children’s self-efficacy for social
+interactions with peers. Developmental Psychology, 18(6), 795. https://doi.org/
+10.1037/0012-1649.18.6.795
+Wigfield, A., Eccles, J. S., & Rodriguez, D. (1998). The development of children’s
+motivation in school contexts. Review of Research in Education, 23(1), 73–118.
+https://doi.org/10.3102/0091732X023001073
+Yarkoni, T., & Westfall, J. (2017). Choosing prediction over explanation in psychology:
+Lessons from machine learning. Perspectives on Psychological Science, 12(6),
+1100–1122. https://doi.org/10.1177/1745691617693393
+Yi, H. S., & Na, W. (2020). How are maths-anxious students identified and what are the
+key predictors of maths anxiety? Insights gained from PISA results for Korean
+
+adolescents. Asia Pacific Journal of Education, 40(2), 247–262. https://doi.org/
+10.1080/02188791.2019.1692782
+Yuen, M., & Datu, J. A. D. (2021). Meaning in life, connectedness, academic self-efficacy,
+and personal self-efficacy: A winning combination. School Psychology International,
+42(1), 79–99. https://doi.org/10.1177/0143034320973370
+Yousaf, S. (2015). Parenting style and self-efficacy among adolescents. Research on
+Humanities and Social Sciences, 5(3), 25–28. Retrieved June 20, 2025, from http
+s://www.iiste.org/Journals/index.php/JEP/article/view/18955.
+Zopluoglu, C. (2019). Detecting examinees with item preknowledge in large-scale testing
+using extreme gradient boosting (XGBoost). Educational and Psychological
+Measurement, 79(5), 931–961. https://doi.org/10.1177/0013164419839439
+
+16
+
+

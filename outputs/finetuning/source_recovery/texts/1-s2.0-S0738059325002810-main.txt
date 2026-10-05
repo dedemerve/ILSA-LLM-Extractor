@@ -1,0 +1,3860 @@
+International Journal of Educational Development 120 (2026) 103483
+
+Contents lists available at ScienceDirect
+
+International Journal of Educational Development
+journal homepage: www.elsevier.com/locate/ijedudev
+
+Effects of COVID-19 education policies on students’ learning proficiency in
+Latin America—Insights from PISA 2022
+Marcos Delprato
+
+∗
+
+Department of Education, University of Bath, UK
+Instituto de Investigaciones Educativas, Universidad Nacional de Chilecito, Argentina
+
+ARTICLE
+
+INFO
+
+ABSTRACT
+
+Keywords:
+COVID-19 pandemic
+Educational policies
+SHAP values
+Latin America
+SDG4
+PISA 2022
+
+Latin America’s education systems – with a high prevalence of students not achieving the basic competencies,
+entrenched inequalities and weak connectivity, and longer schools closures – were highly affected by the
+COVID-19 pandemic, experiencing sizeable learning losses. The role of education policies to boost students’
+engagement for remote learning were critical during schools shutdowns. Yet, there is a lack of evidence
+on whether pandemic educational policies were effective. Using explainable machine learning methods and
+a sample of ten countries from PISA 2022, this paper fills this gap by analysing the association of three
+education policies for remote learning (students’ resources, teachers’ resources and teachers’ communication)
+implemented during the pandemic with the probability of students reaching competency (level 2) in math and
+reading. I find that policies’ effects on learning are non-linear with specific thresholds where policy become
+more efficient to keep students’ chances of level 2 achievement, with these thresholds linked to schools’ length
+of closure and the intensity of policies. I also find that policy intersectionality is important with family wealth
+and educational inputs being pathways to counteract associations under longer schools’ closures, and policies
+not being capable of narrowing learning loss by gender (against girls). Results by educational sub-systems for
+the policy on students’ resources indicate that by school type there is similarity on associations for reading,
+but for math this policy is more productive in private than public schools, as for students from urban schools
+under longer period of closure than students from rural schools.
+
+1. Introduction
+
+Before the onset of the pandemic, however, LAC’s education systems
+were already experiencing low learning levels and deep structural
+inequalities (Arias Ortiz et al., 2024b; Brunori et al., 2024; Delprato
+et al., 2015; Fernández et al., 2024; Krüger, 2019; Murillo et al., 2023;
+Neidhöfer et al., 2018).
+Arias Ortiz et al. (2023)’s study for the LAC region estimates that
+75% of the students are low performers in math (not reaching the basic
+competencies given by level 2), and 55% of students lacks basic reading
+skills (failing to understand a simple text). The COVID-19 pandemic,
+in turn, worsened the already prevailing and detrimental educational
+inequality in the LAC region. Prolonged school closures in the region
+led to loss of learning (Betthäuser et al., 2023; Gómez and Andrés Uzín,
+2022), shifts on schools’ efficiency (Delprato and Antequera, 2025),
+increased inequalities (Bracco et al., 2025), and negative impacts on
+psychosocial health and well-being of students and teachers (CamachoZuñiga et al., 2021; Zhang et al., 2022), with vulnerable students
+experienced the greatest losses (Asadullah et al., 2023; UNESCO, 2024).
+
+Around 1.7 billion learners worldwide have been affected by the
+pandemic, including 99% of students in low (LIC) and lower-middle
+(LMIC) income countries (Reimers, 2022). In those countries with
+resources-constrained educational systems, the negative effects of the
+pandemic have been more profound because the wider barriers they
+had to tackle given by the triple burden of schooling deprivation,
+learning inequality and learning poverty (Asadullah et al., 2023). The
+Latin America and the Caribbean (henceforth: LAC) region experienced
+the longest period of school closures with poor connectivity (Gómez
+and Andrés Uzín, 2022; Munguia, 2023). Schools in region were closed
+for around 270 days on average between 2020–2012, representing a
+disruption of 1.42 years of schooling (Bracco et al., 2025). Consequently, in LAC region, the pandemic pushed a large cohort of students
+further down in the learning distribution – mostly affecting the more
+disadvantaged students (Jakubowski et al., 2023) – with estimates
+pointing towards a lost of years of schooling between 0.9–1.1, (from
+7.8 years to 6.9–6.7 years in gloomy scenarios) (Azevedo et al., 2021).
+
+∗ Correspondence to: Department of Education, University of Bath, UK.
+
+E-mail address: md2645@bath.ac.uk.
+https://doi.org/10.1016/j.ijedudev.2025.103483
+Received 5 May 2025; Received in revised form 13 December 2025; Accepted 17 December 2025
+Available online 30 December 2025
+0738-0593/© 2025 The Author. Published by Elsevier Ltd. This is an open access article under the CC BY license (http://creativecommons.org/licenses/by/4.0/).
+
+International Journal of Educational Development 120 (2026) 103483
+
+M. Delprato
+
+Yet, little is know about whether different educational policies implemented in the LAC region for remote learning during school shutdowns
+helped to at least either maintain pre-pandemic learning levels or
+prevent substantial drops on educational performance in the region
+and, additionally, for which group of students these policies were more
+or less beneficial for waning learning inequalities.
+A key hurdle for LAC students’ engagement with online education
+and governments’ education interventions throughout the pandemic
+was connectivity. Regional estimates indicate that nearly half of the
+population does not have access to an internet connection (CEPAL,
+2022). There are also entrenched wealth inequalities at the regional
+level in ICT access (Vera et al., 2023), with 70% for those falling
+into the lower income quintile not having access of internet at home
+(CEPAL, 2022), and students in the top wealth quartile being four times
+as likely (in comparison to the students from the bottom quartile) to
+have a laptop at home (Berlanga et al., 2020). This digital divide is
+likely to have been enlarged by the pandemic’s households income
+shocks leading to higher poverty (which in the region are estimated
+between 23%–39%; Bracco et al., 2025).
+On the back of the high prevalence of students not reaching competency levels in key subjects, as well as the escalation of educational
+inequalities in the LAC region brought by the pandemic (Arias Ortiz
+et al., 2024b) due to income shocks affecting relatively more students
+stemming from the most disadvantaged households and the already
+unequal distribution of schools resources – among which ICT were key
+for connectivity and remote learning – in the region by school type and
+location, the paper’s objective is to evaluate whether COVID-19 educational policies were in fact counteracting mechanisms against students’
+learning losses in an unprecedented scenario of schools shutdown and
+remote learning delivery, allowing students to sustain pre-pandemic
+education proficiency levels. This objective is therefore further assessed
+by students∕households drivers and schools configurations because
+these channels are likely to play a role on the degree of effectivity and
+heterogeneity of education pandemic policies.
+I also rely on interpretability machine learning (IML) models applied to the LAC region educational landscape to achieve this aim by
+dividing performance levels into two students binary groups: low (nonachieving) level and high competency levels. For this, I first evaluate
+different classification machine learning (ML) models and then, after
+obtaining the most efficient model, I use Shapley values as an analytical
+tool to boost interpretably of COVID-19 educational policies associations with students’ probabilities of reaching competency in math and
+reading. Another issue the paper attempts to address is whether these
+associations vary by the duration of closure of schools as, most likely,
+diminishing returns of educational policies across time may be at play
+when the educational sector resources investments are rather limited,
+a reality of the LAC’s education systems.
+Specifically, in this paper, based on PISA (Programme for International Student Assessment) data for the year 2022 for 10 LAC countries,
+I analyse the association of three education policies implemented during the pandemic with the probability of students reaching at least
+level 2 (competency levels) in math and reading. The specific policies analysed are: resources to support students learning, resources to
+support teachers for remote learning, and teacher communication with
+students and parents. As far I am aware, this is the first LAC study which
+weighs up associations of education policies with learning competency
+during the pandemic. This paper fills this gap and, methodologically,
+it innovates in the application of recently developed interpretable
+machine learning (ML) methods based on learning surveys for policy
+analysis, adding to the scarce literature (Bu and Chen, 2023; GómezTalal et al., 2024; Huang et al., 2024) which exclusively focuses on
+richer education systems.
+In particular, further to establishing which are the leading determinants of learning proficiency (level 2 or above) in the LAC region
+through a novel explainable artificial intelligence (XAI) method, that
+is, the SHAP (SHapley Additive exPlanation: Lundberg and Lee, 2017)
+
+method, the aim of this paper is to answer the following research
+questions (RQ) regarding the leverage effects of educational policies
+implemented during the pandemic:
+• RQ1. What are relationships of educational COVID-19 policies
+(e.g., resources to support students learning or teachers for remote
+learning) with the probability of students reaching level 2 in math
+and reading in the LAC region, and how these effects change by
+the extent of school closures?
+• RQ2. How do these relationships vary by households’ educational
+inputs (family SES and degree of family educational support) and
+by students’ gender?
+• RQ3. How do the leverage effects of educational COVID-19 policies vary across four education sub-systems (namely: private
+against public schools, and urban against rural schools) of the
+LAC region, and are these policies associations with learning
+heterogeneous?
+The rest of the paper is structured as follows. Section 2 contains
+a brief discussion about educational policies implemented during the
+pandemic in the LAC region. In Section 3 I present the data employed
+for the analysis. Section 4 outlines the methodological approach –
+i.e., the ML model used for estimations, gradient boosted trees – as
+well as the explainable ML method followed (i.e., the SHAP method).
+Section 5 contains the results, and concluding remarks are shown in
+Section 6.
+2. Background
+After the outbreak of COVID-19 pandemic, school closures forced
+countries in the LAC region to suddenly implement various distance
+learning modalities throughout 2020 as an urgent response to the crisis
+to sustain students’ pedagogic continuity (Parker and Alfaro, 2021;
+Pedró and Ramos Torres, 2022; Vincent-Lancrin et al., 2022). The LAC
+region’s evidence on the impact of COVID-19 educational policies on
+remote learning and students’ engagement with schoolwork has been
+mixed (Huepe et al., 2023), both due to specific countries’ challenges
+and their different degree of preparation based on previous ongoing
+strategies on remote learning. The implementation of distance learning varied based on each country’s capacity related to connectivity,
+access to digital devices and teachers’ preparation for remote learning
+(Sanchez et al., 2022), with an array of formats (printed material to be
+used at home, media∕TV∕radio and digital applications) and an overall
+expansion of learning and teachers online platforms (Ainscow et al.,
+2025; Miralrio et al., 2024; Paya Rico, 2022).
+Countries such as Mexico, for instance, had a long history on
+distance learning through ‘‘Telesecundaria’’, having as a result an advantageous situation when it suddenly had to switch to the new format
+of education delivery. The Learning at Home (‘‘Aprender en Casa’’) initiative was launched within this existing programme reaching 25 millions students (Ripani and Zucchetti, 2020) and it was complemented
+by radio, broadcasting content on television and internet (YouTube),
+and online evaluations aiming to ensure pedagogic continuity during
+lockdown (Vincent-Lancrin et al., 2022).
+The existence of different educational approaches of LAC countries
+shows that the most common employed strategy was synchronous
+online classes and online delivery of learning materials and assignments to students, followed by the delivery of learning materials to
+students and the delivery of audio lessons with pre-recorded videos
+(Parker and Alfaro, 2021). Which country’s approach was prioritised
+hinged on students’ ICT stocks at home and connectivity. For schools
+whose students had ICT disadvantages and barriers, physical delivery
+of learning materials was the leading strategy, as well as synchronous
+distance learning methods (through phone calls, radio and TV broadcasts) (Parker and Alfaro, 2021; OREALC/UNESCO, 2022). The use
+of mobile phones and WhatsApp, for instance, was a popular choice
+2
+
+International Journal of Educational Development 120 (2026) 103483
+
+M. Delprato
+
+for teachers due to they better adaptability when communicating with
+students with a low data consumption (Sanchez et al., 2022), albeit they
+do not have the same utility for complex educational tasks which may
+lead to frustration and, ultimately, decreasing students’ engagement
+(Santos et al., 2021). Moreover, nearly half of LAC countries also either
+adapted or reduced the curriculum (OREALC/UNESCO, 2022). Also,
+to counteract the negative effects of lockdown and schools shutdowns
+on learning, the majority of LAC educational authorities supported
+distance learning by distributing digital devices (Huepe et al., 2023).
+Nevertheless, connectivity was not addressed, with estimates showing
+the rate of internet access in LAC region was below 50% (Barron Rodriguez et al., 2020; CEPAL, 2022), adding to quality issues of remote
+learning programmes (Sanchez et al., 2022).
+As in the case of Mexico discussed above, in other LAC countries
+(including countries comprising the paper’s working sample) there
+were different educational initiatives which were complemented by
+social and economic support for the most marginalised. For example,
+in Argentina, the government tried to boost the chances of remote
+learning during the pandemic by approving an Emergency Program
+for ICT access in marginalised neighbourhoods, increasing toppings on
+food cards and universal child allowance by 19% and 28%, respectively
+(Delprato, 2025b). In Peru, the programme ‘‘Aprendo en Casa’’ (I Learn
+at Home) was re-launched including new materials and resources, using
+radio stations and the country’s national channels to broadcast secondary level educational content alongside a teachers’ training portal
+‘‘PeruEduca’’ which included, among other elements, applications for
+communication with students and classroom management (Martín and
+Ramos, 2024). In Uruguay, the ‘‘Plan Ceibal’’, a successful education
+policy for ICT access combined with distance learning, which had
+been implemented in 2007 and where primary and secondary students
+and teachers were given a PC (plus boosting connectivity in public
+schools). This was modified and extended due to the pandemic (Ceibal
+at Home) and it included both technical and pedagogical aspects, such
+as creating synchronous and asynchronous learning modalities, teacher
+training in the use of the new functionalities, and a huge virtual library
+(Quezada-Morales, 2022; Vincent-Lancrin et al., 2022).
+However, aggregated LAC evidence with regards to the efficiency of
+governments’ deployment of resources to support online learning and
+students’ engagement or for teachers to boost remote learning, geared
+towards minimising learning losses, is non-existent. The mixed use of
+technology and standard methods of teaching integrated in learning
+management systems had significant barriers, restricting its effectiveness due to deep equity and school infrastructure issues. For instance,
+according to a recent UNICEF report on the education response to the
+COVID-19 pandemic in the LAC region and its challenges and achievement, out of the 33 countries∕territories, only 19 facilitated teachers’
+access to technology, and with just one in five countries putting in place
+mechanisms for teacher accompaniment (UNICEF, 2024). Tailoring
+programs pitched at given students’ learning levels where implemented
+in most LAC countries, though formative assessments and accelerated
+programs where less common in the region (UNICEF, 2024).
+Ultimately, the main barrier the LAC region had to face was the
+pre-existing socioeconomic inequalities which further hampered the
+take-up of remote learning by students (Munoz-Najar et al., 2021). Students coming from poorer families suffered the most because students’
+engagement with remote learning is generally low where parents or
+caregivers have lower educational levels. For remote learning to be effective it requires three complementary, critical components: effective
+teachers, suitable technology and engaged learners (Munoz-Najar et al.,
+2021). Students’ engagement needs interesting and engaging content
+as well as frequent interactions with teachers and motivation which is
+boosted by a suitable home learning environment as factors that can
+influence the engagement of students (Kennedy et al., 2022). Family
+involvement was a vital element in the educational process, with 75%
+of LAC countries adopting measures to assist parents and caregivers
+
+during the pandemic (UNICEF, 2024). Yet, economic conditions deteriorated throughout the pandemic (Bracco et al., 2025) and that is the
+rationale why the paper’s analytical approach is to interact teachers’
+and students’ policy support variables with the duration of schools’
+closure (a proxy for the pandemic duration), as well as to look into
+heterogeneity effects by established drivers of educational inequity in
+the region (e.g., gender, family SES, parental input in education, and
+schools’ configurations).
+3. Data
+The paper’s analysis is based on the post-pandemic PISA dataset
+for the year 2022, using data from the LAC region for 10 countries
+(that is: Argentina, Brazil, Chile, Colombia, Dominican Rep., Mexico, Panama, Peru, Paraguay and Uruguay). PISA measures secondary
+students’ learning achievement (at 15 years-old), i.e., their ability to
+use their reading, mathematics and science knowledge and skills to
+meet real-life challenges and, vitally, it is the only source for LAC
+measuring learning levels after the pandemic and their associations
+with COVID-19 policies and background variables (e.g., school closure
+days, connectivity barriers for remote learning, etc.). PISA data was
+originally planned to take place in 2021 but the disruption caused
+by COVID-19 global pandemic forced the assessment to be postponed
+to 2022, and the content was updated with questions linking the
+‘‘resilience of education systems’’ from the point of view of fairness and
+inclusion within the pandemic’s remote learning (OECD, 2023a). The
+resilience of education systems in PISA 2022 was assessed through a
+new framework focusing on students’ capacity for continuous learning
+and adaptability, in addition to academic performance.
+PISA data collection entails significant efforts and resources to
+obtain cultural and linguistic breadth and balance in the assessment
+materials, with quality assurance mechanisms (e.g. including several
+rounds of review of the assessment materials by PISA participating
+countries) applied in translation, sampling, and data collection, thus
+giving PISA’s results a high degree of validity and reliability (OECD,
+2023a). The main stages of PISA data collection are: instrument development, field trial, sampling, translation and verification, main survey
+data collection, quality monitoring, data submission, and data analysis and reporting. Data submission in the LAC region happened in
+December 2023. Some of the quality controls included, for instance,
+linguistic quality assurance (minimising translation or cultural context
+differences), expert item review (with preliminary testing and ensuring
+to be culturally appropriate), and standardised sampling procedure (led
+by an independent contractor who obtained a representative sample
+of 4500 to 10,000 students per country to ensure valid and reliable
+national-level estimates) (for more details, see OECD, 2023a, Chapter
+1). The two outcomes the paper relies on are math and reading achievement. In the math domain, the test attempts to assess the capacity to
+reason mathematically and to formulate, employ and interpret mathematics to solve real, practical and concrete problems, whereas within
+the reading domain, it assess a student’s capability to understand, use,
+evaluate, reflect on and engage with texts to achieve given goals developing a student’s potential to participate in society (OECD, 2023a). In
+addition to the test, there is a comprehensive questionnaire that collects
+relevant information about the students’ family and socioeconomic
+backgrounds, their attitudes toward learning and study habits and a
+school’s background features.
+3.1. Data preprocessing
+The dataset leveraged in this paper begins by looking at the students’ data for the LAC countries included in PISA 2022 (a total of
+79,684 observations). Out of the 11 available countries, I excluded
+Costa Rica because its student’s economic, social, and cultural status
+(ESCS) index is completely missing (= 6113) and also excluded observations for the remaining 10 countries with ESCS (henceforth, called
+3
+
+International Journal of Educational Development 120 (2026) 103483
+
+M. Delprato
+
+Table 1
+Students and family variables—description.
+Variable
+
+Question
+
+Original variable in dataset
+
+Variable type
+
+Age
+Grade
+Gender
+Satisfaction with life
+Homework – all subjects (time spent)
+Digital devices at home-number
+Books – number
+Immigrant
+Speak other language at home
+Late entry – primary
+Repetition – primary
+Repetition – lower secondary
+Missed school (3 months in a row)
+Skipped school (1 day last 2 weeks)
+Teacher support for well being (index)
+Sense of belonging to school (index)
+School climate – bad (index)
+Safety in school and surroundings (index)
+Work – unpaid, days
+Work – paid, days
+Mother education
+Father education
+Siblings number
+SES (index)
+Family support for education (index)
+
+(1)
+Q2
+Q1
+Q3
+Q42
+Q44
+Q8
+Q9
+Q20
+Q21
+Q24
+Q25
+Q25
+Q26
+Q28
+Q29
+Q30
+Q31
+Q32
+Q34
+Q35
+Q11
+Q13
+Q10
+Derived
+Q55
+
+(2)
+st003q01ta-st003q03ta
+st001d01t
+st004d01t
+st016q01na
+st296q04ja
+st254q02ja to st254q06ja
+st255q01ja
+st021q01ta
+st022q01ta
+st126q01ta
+st127q01ta
+st127q02ta
+st260q02ja
+st062q01ta
+st267q01ja to st267q08ja
+St034q01ta to st034q06ta
+st038q03na to st038q11ja
+st265q01ja to st265q04ja
+st294q03ja
+st294q04ja
+st005q01ja
+st007q01ja
+st230q01ja
+na
+st300q04ja to st300q10ja
+
+(3)
+Continuous
+Discrete
+Binary
+Discrete
+Discrete
+Discrete
+Discrete
+Binary
+Binary
+Binary
+Binary
+Binary
+Binary
+Binary
+Continuous
+Continuous
+Continuous
+Continuous
+Discrete
+Discrete
+Discrete
+Discrete
+Discrete
+Continuous
+Continuous
+
+(1) For further details on student and family variables’ definition and measurement, see PISA 2022 Student Questionnaire: link. (2) Continuous indices are generated using the
+Stata command swindex which calculates a standardised weighted index from the variables using a GLS weighting procedure.
+
+as family SES) missing which are 2196 (a rate of 2.98%), leaving
+71,375 observations. From this student’s pool data key covariates are
+kept (see: Table 1). Some student’s and family’s covariates are left out
+because they are irrelevant or have a significant missing observations
+(e.g., parental occupation Q17, Q51 to Q57 about confidence on math,
+expectations, qualifications). This student dataset is merged with the
+school dataset which contains all school variables and educational
+policies including those related to COVID-19 (shown in Tables 2 and 3).
+Since the paper’s main objective is to unravel the association of COVID19 policies with students’ achievement, I restrict the working sample
+to those schools which have been closed due to the pandemic.1 The
+rate of school closure is 87.3%, which, when merged with the students’
+dataset, leads to a regional working sample of 55,041 observations (and
+2358 schools).
+Details on questions used (from the student’s and school’s questionnaires), names of variables and generated variable types (binary,
+discrete or continuous) are described in Table 1 to Table 3; totalling
+70 covariates. The coding of explanatory variables follows a standard
+logic such as categorical or binary variables transformed using the onehot encoding method which ML algorithms can easily process. After
+deletion of observations and the restriction of the sample are conducted
+due to reasons explained above, the next step is to assess missing values,
+which is not a major issue as 55 covariates have missing rates lower
+than 5% and 13 covariates have rates below 10%. To complete these
+missing values I use the 𝐾-Nearest Neighbour (KNN) imputation (with
+a 𝐾 = 7) which is applied to the small proportion of missing data and
+high dimensional data as the current study’s dataset. For this task, I
+rely on the KNNimputer from the Scikit-learn Python package.
+
+capturing the extent of learning competently levels for math and reading in the LAC region and, subsequently in the analysis, their determinants. These two performing rates are defined by first obtaining
+mean scores by averaging the 10 plausible values for each subject
+and then applying PISA’s thresholds for level 2 or above (which are
+421 for math and 408 for reading) allowing a homogenisation of
+performing levels across countries (OECD, 2023b).2 Collapsing math
+and reading performance into two categories (reaching competency in
+either math or reading, and not reaching it) allows to discern those
+students who are proficient in these two subjects and those who are not
+and, additionally, streamlining the analytical process which is a common approach followed in educational research using ML techniques
+(see, for instance: Chen et al., 2022; Gómez-Talal et al., 2024; San
+Martin Soares, 2024). The simplification behind the binary construction
+of the dependent variables gives insights into which factors are more
+relevant to explain the likelihood of students being academically proficient in a region that is characterised by low-learning levels making the
+analysis more policy-applicable and relevant, and therefore facilitating
+an easier grasp of underlying patterns behind proficiency outcomes
+defined by the level 2 thresholds.
+Table 4 shows, in line with earlier studies (Arias Ortiz et al., 2024b,
+2023), the extent of the learning crisis in the LAC region, with only 29%
+and 51% of students achieving proficient knowledge levels in math and
+reading (level 2 or above), correspondingly (Panel A, column 1). Given
+the long-term high segregation of secondary education systems in the
+region (Fernández et al., 2024; Murillo et al., 2023), poor achievement
+is still unequally distributed by either school type or school location
+(Panel A, columns 2 to 5). The achievement gap between private and
+public schools is around 32%, while urban schools have achievement
+rates 15% (math) and 21% (reading) higher than to rural schools.
+
+3.2. Data-achievement outcome
+With regards to dependent (or outcome) variables, preprocessing
+was carried out to transform continuous scores into binary variables
+
+2
+A comparison of level 2 achievement rates based on the average scores
+of then plausible values and each plausible value indicates the high degree of
+similarity, with absolute differences being in the intervals (0.0097–0.0128) for
+math and (0.0007–0.0039) for reading. I am thankful to an anonymous referee
+for raising this issue.
+
+1
+This also includes those cases where the school day closure variable is
+missing: 7259 students’ observations.
+
+4
+
+International Journal of Educational Development 120 (2026) 103483
+
+M. Delprato
+
+Table 2
+School variables–description.
+Variable
+
+Question
+
+Original variable
+
+Variable type
+
+Urban
+Private
+Town size
+Competition
+Funding government
+Funding fees
+Students – second language
+Students - learning needs
+Students – disadvantaged
+School size (enrolment)
+STR
+Teachers attended PD programme (last 3 months)
+Teachers – certified
+Teachers – degree or higher
+ICT – infrastructure per student (index)
+
+(1)
+Q1
+Q2
+Q1
+Q5
+Q4
+Q4
+Q7
+Q8
+Q9
+Q6
+Q6,Q8
+Q21
+Q8
+Q8
+Q15
+
+(3)
+Binary
+Binary
+Discrete
+Binary
+Continuous
+Continuous
+Continuous
+Continuous
+Continuous
+Continuous
+Continuous
+Continuous
+Continuous
+Continuous
+Continuous
+
+PC connected web-teacher ratio
+Admission criteria
+Transfer policies
+Autonomy (index)
+Social and emotional skills policy
+Teacher monitoring – methods
+Testing students learning, all methods
+Staff students support for inclusivity (index)
+Parents involvement fostered by school (index)
+School policy – ability grouping
+
+Q15
+Q11
+Q12
+Q13
+Q48
+Q19
+Q37
+Q28
+Q30
+Q39
+
+(2)
+sc001q01ta
+sc013q01ta
+sc001q01ta
+sc011q01ta
+sc016q01ta
+sc016q02ta
+sc211q01ja
+sc211q02ja
+sc211q03ja
+sc002q01ta to sc002q02ta
+sc018q01ta01, sc018q01ta02
+sc025q01na
+Sc018q02ta01, sc018q02ta02
+sc018q08ja01 to sc018q09ja02
+sc004q01ta,sc004q02ta, sc004q03ta,
+sc004q07na, sc004q08ja
+Sc004q01ta, sc004q03ta
+sc012q01ta to sc012q12ja
+sc185q01wa sc185q03wa sc185q04wa
+sc202q01ja to sc202q12ja
+sc189q01ja
+sc032q01ta to sc032q04ta
+sc034q01na sc034q02na sc034q03ta
+sc173q01ja to sc173q06ja
+sc192q01ja to sc192q06ja
+sc042q01ta, sc042q02ta
+
+School inequality indicators
+Gini coefficient for math scores
+Gini coefficient for reading scores
+Ratio math (poor vs rich studs)
+Ratio reading (poor vs rich studs)
+Correlation family SES w/ math scores
+Correlation family SES w/ reading scores
+
+Derived
+Derived
+Derived
+Derived
+Derived
+Derived
+
+Achievement plus SES mean at school
+Achievement plus SES mean at school
+Achievement plus SES mean at school
+Achievement plus SES mean at school
+
+Continuous
+Binary
+Binary
+Continuous
+Binary
+Discrete
+Binary
+Continuous
+Continuous
+Binary
+
+Continuous
+Continuous
+Continuous
+Continuous
+Continuous
+Continuous
+
+(1) For further details on school variables’ definition and measurement, see PISA 2022 School Questionnaire: link. (2) Continuous indices are generated using the Stata command
+swindex which calculates a standardised weighted index from the variables using a GLS weighting procedure.
+
+Table 3
+COVID-19 related variables–description.
+Variable
+
+Question
+
+Original variable
+
+Variable type
+
+(1)
+
+(2)
+
+(3)
+
+Covid school policy variables
+Resources to support studs learning
+Teacher communication w/ studs and parents
+Resources to support teachers for remote learning
+Support from educational authorities
+
+Q59
+Q61
+Q65
+Q66
+
+sc215q01ja-sc215q08ja
+sc217q01ja- sc217q10ja
+sc221q01ja- sc221q04ja
+sc222q01ja-sc222q03ja
+
+Discrete
+Discrete
+Discrete
+Discrete
+
+Covid school background variables
+Proportion of studs attending distance learning
+Teachers have skills for instruction
+Teachers have time to integrate digital devices in lessons
+Teachers have learning support platform
+Remote instruction hindered by digital devices access
+Remote instruction hindered by internet access
+Remote instruction hindered by system and educational material
+Number of days school closed
+
+Q63
+Q68
+Q68
+Q68
+Q60
+Q60
+Q60
+Q57
+
+sc219q01ja
+sc155q06ha
+sc155q07ha
+sc155q09ha
+sc216q01ja-sc216q02ja
+sc216q03ja-sc216q04ja
+sc216q05ja-sc216q06ja
+sc213q01ja
+
+Continuous
+Binary
+Binary
+Binary
+Discrete
+Discrete
+Discrete
+Continuous
+
+(1) For further details on school COVID-19 pandemic variables’ definition and measurement, see the last section of PISA 2022 School Questionnaire (from Q59): link.
+
+This points towards specific challenges across these four education
+sub-systems warranting a differential analysis on the effectiveness of
+COVID-19 educational policies which I undertake later on. On top of
+these challenges, most disadvantaged schools (either public or rural
+schools) experienced, on average, larger closures during the pandemic
+by 63 days and 12 days.
+
+(Mexico, Panama, Peru) whereas, in the opposite direction, countries
+such as Uruguay and Argentina remained closed for 130 and 216 days.3
+3.3. Pandemic policy covariates
+Three policy variables measuring the support students and teachers
+for remote learning during the pandemic are employed to assess their
+relationship with students’ achievement. These COVID-19 educational
+
+There is also a sizeable heterogeneity across countries on learning
+achievement and school closures length (Panel B, Table 4). For example, math and reading learning gaps between the highest (Chile)
+and lowest (Dominican Rep.) performing countries is of 38%–44%.
+Likewise, in some countries, schools remained closed at least 324 days
+
+3
+Densities on number of days schools were closed in each country during
+the pandemic are also shown in Fig. A.1.
+
+5
+
+International Journal of Educational Development 120 (2026) 103483
+
+M. Delprato
+
+Table 4
+Learning competency (at least level 2 achieved) and schools’ closure days.
+
+Panel A — Sub-samples
+Math
+Reading
+Days school closed (mean)
+N
+
+Panel B — Countries
+Argentina
+Brazil
+Chile
+Colombia
+Dominican Rep.
+Mexico
+Panama
+Peru
+Paraguay
+Uruguay
+
+Whole Sample
+
+School – private
+
+School – public
+
+School – urban
+
+School – rural
+
+(1)
+
+(2)
+
+(3)
+
+(4)
+
+(5)
+
+0.29
+0.51
+294
+55,041
+
+0.55
+0.76
+243
+13,430
+
+0.23
+0.45
+306
+41,611
+
+0.33
+0.56
+291
+39,644
+
+0.18
+0.35
+303
+15,397
+
+Math
+
+Reading
+
+Number of days
+school closed
+
+0.25
+0.27
+0.44
+0.26
+0.06
+0.325
+0.129
+0.336
+0.139
+0.427
+
+0.45
+0.52
+0.68
+0.47
+0.24
+0.53
+0.45
+0.49
+0.33
+0.59
+
+216
+279
+240
+275
+216
+346
+324
+352
+229
+130
+
+policies (henceforth denoted as CEP) indicators are: (i) resources to
+support students learning (CEP1), (ii) resources to support teachers
+for remote learning (CEP2), and (iii) teacher communication with
+students and parents (CEP3).4 These policy variables are constructed
+by aggregating the number of resources and methods of communication
+within each question (see details on questions employed for each policy
+variable definition in Table 3). The empirical analysis places emphasis
+on the first two CEP indicators as they are more closely linked to
+resources invested for remote learning. Furthermore, to gauge how
+the effect of COVID-19 educational policies on academic proficiency
+is related to the length of schools’ shutdown period, CEP variables are
+interacted with schools’ days of closure during the pandemic.
+CEP1 – students’ resources – includes eight kinds of resources to
+support for remote learning (e.g., paper textbooks, digital textbooks,
+real time lesson using videos, recorded lessons, lessons broadcasted
+by TV or radio, etc.); CEP2 – teaching resources – comprises four
+types of support (online platforms, tools to develop remote instruction
+plans, etc.); and, CEP3 – communication methods – includes nine items
+(notes∕emails, virtual office hours, phone calls, etc.). Formally, the
+COVID-19 educational policy 𝑘 for school 𝑗 (CEP𝑘𝑗 ) and their interactions (CEPI𝑘𝑗 ) which capture the efficiency of educational policies
+throughout school shutdowns are defined as:
+CEP𝑘𝑗 =
+
+𝐼
+∑
+
+3.4. Background covariates
+CEP𝑘𝑖,𝑗
+
+𝑖=1
+
+CEPI𝑘𝑗 =
+
+𝐼
+∑
+
+embody different dimensions of learning recovery policies addressing
+academic integration and favouring teaching in an adverse context
+(López, 2019; UNICEF, 2024).
+Table 5 shows, both for CEP variables and pandemic background
+variables (e.g., proportion of students attending distance learning,
+teachers having time to integrate digital devices in lessons, and remote
+instruction hindered by digital devices access), statistical significant
+differences between the two performing groups defined by the level
+2 threshold. As regards to policies (Panel A, columns 3 and 6), and in
+comparison to students whose achievement fall below level 2, students
+reaching level 2 in math and reading attend schools with a higher
+support for teachers remote learning (CEP2), whereas for CEP on
+students resources for online learning, CEP1 is only larger for higher
+achievers in the case of reading. In addition, students from lower
+achievement groups in math and reading not reaching level 2 attend
+schools which, in average, have had longer period of closure by 7
+and 3 days and results on raw differences for COVID-19 background
+variables show how CEP variables’ possible associations with learning
+for low achieving students are more powerfully affected by barriers
+linked to access of digital devices and connectivity, as well as by a
+lower availability of online teaching platforms (Panel B of Table 5).
+
+In Appendix A, I include the same summary statistics by not achieving (< level 2) and achievement groups (≥ level 2) for other covariates
+at the student∕family and school levels, demonstrating the importance
+of contextual factors on the chances of a student reaching proficient
+competencies in math and reading post-pandemic. These covariates are
+chosen following earlier studies on determinants of students’ learning
+and disadvantages for the LAC region operating at the individual and
+household levels as well as those features channelling educational
+inequalities at the school level (i.e., Arias Ortiz et al., 2023, 2024a;
+Agasisti et al., 2023; Delprato, 2025a; Murillo et al., 2023; Pagliarani,
+2025; Serrano Rodríguez et al., 2025; Varela et al., 2024).
+Consider, for instance, math achievement (Table A.1, column 3).
+The table shows that, compared to students whose achievement fall
+below level 2, level 2 (and above) performing students carry out
+more homework, have a larger numbers of digital devices (1.35) and
+books at home (0.75), with low achievers more likely to come from a
+language minority household, and to have poorer engagement proxied
+by higher rates of missing or skipping schools (of 9%–6%) as well as
+higher rates of repetition at primary (11%) and lower secondary levels
+(10%). Similarly, only 33% of level 2 achievers falls into the poor
+
+(1)
+CEP𝑘𝑖,𝑗 × SDC𝑗
+
+𝑖=1
+
+where CEP𝑘𝑖,𝑗 equals 1 if school 𝑗 applies item 𝑖 of educational policy
+𝑘, and 0 otherwise; 𝐼 is the total number of items (or intensity) of
+each COVID-19 policy put forward by a school to enhance remote
+learning; SDC denotes the number of days a school was closed during
+the pandemic. I combine the binary items for each school’s CEP with
+SDC because a CEP’s effectiveness to counteract learning losses due to
+school shutdowns aiming to maintain students’ achievement at level 2
+through engagement and pedagogic continuity may wane under a scenario of longer school closures (Delprato, 2025b), particularly for most
+vulnerable students (Mancebo and Vaillant, 2022) and diminishing
+returns of educational investments. Crucially, selected CEP variables
+
+4
+An additionally CEP variable used in the analysis is the support offered by
+educational authorities, be it at the national, regional and local level during
+the pandemic (i.e., CEP4).
+
+6
+
+International Journal of Educational Development 120 (2026) 103483
+
+M. Delprato
+
+Table 5
+Pandemic covariates and school policies by level of achievement (at least level 2).
+Math
+
+Reading
+
+Below level 2
+(1)
+
+Level 2 or above
+(2)
+
+Diff
+(3)
+
+Below level 2
+(4)
+
+Level 2 or above
+(5)
+
+Diff
+(6)
+
+Panel A — Covid school policy variables
+Resources to support students learning (CEP1)
+Resources to support students learning interaction
+Resources to support teachers for remote learning (CEP2)
+Resources to support teachers for remote learning interaction
+Teacher communication w/ students and parents (CEP3)
+Teacher communication w/ studs and parents interaction
+Support from educational authorities (CEP4)
+Support from educational authorities interaction
+
+5.35
+1572.13
+3.49
+1035.52
+7.57
+2256.97
+2.09
+611.99
+
+5.28
+1514.10
+3.66
+1061.30
+7.26
+2128.80
+1.89
+554.76
+
+−0.07***
+−58.03***
+0.17***
+25.78***
+−0.31***
+−128.17***
+−0.20***
+−57.23***
+
+5.31
+1559.24
+3.46
+1025.42
+7.60
+2261.15
+2.12
+618.66
+
+5.35
+1551.62
+3.62
+1060.07
+7.37
+2179.81
+1.95
+572.85
+
+0.04***
+−7.62***
+0.16***
+34.65
+−0.23***
+−81.34***
+−0.17***
+−45.80***
+
+Panel B — Covid school background variables
+Proportion of studs attending distance learning
+Teachers have skills for instruction
+Teachers have time to integrate digital devices in lessons
+Teachers have learning support platform
+Remote instruction hindered by digital devices access
+Remote instruction hindered by internet access
+Remote instruction hindered by system and educational material
+Number of days school closed
+
+8.28
+0.82
+0.56
+0.57
+5.24
+5.36
+4.29
+296
+
+9.19
+0.87
+0.64
+0.72
+4.44
+4.54
+3.55
+289
+
+0.91***
+0.05***
+0.07***
+0.15***
+−0.80***
+−0.83***
+−0.73***
+−7***
+
+8.19
+0.81
+0.56
+0.55
+5.34
+5.47
+4.45
+295
+
+8.90
+0.86
+0.61
+0.68
+4.68
+4.79
+3.71
+292
+
+0.71***
+0.05***
+0.05***
+0.13***
+−0.66***
+−0.68***
+−0.73***
+−3***
+
+N
+
+38,564
+
+16,477
+
+27,304
+
+27,737
+
+‘
+
+(1) Covid policy variables interactions are defined as the specific policy variable multiplied (or interacted) with school days of closure. (2) Significance levels: * p ≤ 0.10, ** p ≤
+0.05, ***p ≤ 0.01.
+
+half households but this raises up to 62% for students who are low
+performers, with the latter group having less educated parents. The
+same pattern of inequality happens when comparing school features
+(Table A.2). Low performing students are less likely to come from
+either urban or private schools and from schools where there is less
+competition, and with lower autonomy and less involvement of parents
+in schools (Panel A), with slightly larger inequalities happening in
+schools of higher achievers (e.g., gaps on correlation coefficient of
+achievement with family SES being larger; Panel B).
+
+validating the three ML binary classification models which involves
+hyperparameters optimisation using a cross-validation (CV) approach,
+and an untouched (or holdout) test set which constitutes the remaining
+20% of the dataset. This ensures the model selection process is robust
+without touching the final test set. The training data is divided into
+5 folds (or splits) with each fold containing the same proportion of
+target classes as the original set. Grid search is carried out using a range
+of hyperparameters based on the training data, and the best model
+(for each ML model: logit, NN or GBT) with the final configuration of
+hyperparameters selection relies on the AUROC metric. Once the best
+model is selected I obtain the weighted estimates of six performance
+metrics using the holdout∕test data (not used during training) to compare the three ML models’ performance. Besides, I obtain unweighted
+version of the evaluation metrics (and the bootstrap 95% CI using 1000
+iterations), as well as school (and country) GroupKfold cross-validator
+estimates of metrics as the average of the 5 folds. The latter approach
+ensures no group (school) appears in both the training and test sets,
+with here each school appears exactly once in the test set across
+all folds. This prevents information leakage across different schools,
+leading to a more reliable estimate of model’s performance. These tasks
+are carried out for the whole sample and sub-sample dataset and for the
+two outcomes.
+Specifically, during the grid search step for the math and reading
+dependent variables, for the logit model I use a set of hyperparameters
+with two penalties terms (L1-Lasso regularisation based on the absolute
+value of coefficients, and L2-ridge: penalty based on the square of the
+coefficients) and two inverse of regularisation strengths (C = 0.1, 1).
+For the NN model, I consider several (36) specifications, three hidden
+layer size sets: {200}, {100, 100}, {200, 100, 50}, and three activation
+rules (relu, tanh, logistic), with two regularisation parameters (alpha
+= 0.0001 and 0.05) and two learning rates for weight updates (0.001
+and 0.01). For the GBT model, I assess various specifications (in total,
+144) based on combinations of number of estimators (100, 500, 1000,
+5000), sub-sample ratios (0.5, 0.7, 0.9), trees of maximum depth (3, 5,
+7, 9) and three learning rates (0.001, 0.01, 0.1).6
+
+4. Methods
+Here, having previously defining data preprocessing (with data
+sources∕questions), outcomes, CEP variables and contextual features
+(used as controls) in Section 3, I outline the approach taken, methodological steps and ML models employed for estimation and how results
+are presented in the analysis through the SHAP method. It is important to mention that the paper’s research design or type of study is
+correlational because the paper investigates how COVID-19 educational
+policies intensity (and its interactions with school days of closure) are
+associated with the chances of students reaching proficiency levels in
+math and reading. Hence, the paper does not attempt to make causality
+claims between the educational outcome-policy components.5
+4.1. Models training and evaluation
+Because the educational outcome or dependent variable is binary
+(= 1 if a student reaches level 2 or above, and 0 otherwise), I rely on
+three binary classification ML models, that is: logistic regression (logit),
+neural networks (NN) and gradient boosted trees (GBT) (for technical
+details, see Hastie et al., 2009; Natekin and Knoll, 2013; Raschka
+and Mirjalili, 2019). The data is divided into a training∕validation set
+(which is an 80% of the main dataset) which is used for tuning and
+
+5
+Computationally, for the first step of the analysis (i.e., the estimation
+stage) I use the array of classification models offered by Scikit-Learn Classification Models package of Python (packages: LogisticRegression, MLPClassifier
+and xgboost.XGBClassifier) and, for interpretable version of estimates (the
+second stage), I rely on the TreeExplainer package which applies the SHAP
+method.
+
+6
+Other parameters for the GBT during grid search were set as follows:
+gamma = 0, min_child_weight = 1, colsample_bytree = 1, colsample_bylevel
+= 1, reg_lambda = 1, and reg_alpha = 0.
+
+7
+
+International Journal of Educational Development 120 (2026) 103483
+
+M. Delprato
+
+Table 6
+Comparison of ML models performance. Whole sample. Outcome: math.
+AUROC
+
+APRC
+
+ACC
+
+BACC
+
+F1 score
+
+MCC
+
+(1)
+
+(2)
+
+(3)
+
+(4)
+
+(5)
+
+(6)
+
+1. Logit
+Chosen parameters
+Weighted
+Unweighted
+Bootstrap CI
+GroupKFold by school
+GroupKFold by country
+
+Penalty = L1, C = 1
+0.8075
+0.8337
+[0.8262, 0.8413]
+0.8353
+0.8134
+
+0.6312
+0.6804
+[0.6635, 0.6973]
+0.6791
+0.6461
+
+0.7786
+0.7815
+[0.7735, 0.7890]
+0.7828
+0.7635
+
+0.6931
+0.71
+[0.7001, 0.7190]
+0.7104
+0.6871
+
+0.5589
+0.593
+[0.5767, 0.6073]
+0.5933
+0.5458
+
+0.4201
+0.4519
+[0.4326, 0.4702]
+0.4545
+0.4109
+
+2. Neural networks
+Chosen parameters
+Weighted
+Unweighted
+Bootstrap CI
+GroupKFold by school
+GroupKFold by country
+
+Activation = logistic, Alpha = 0.05, Hidden Layer Sizes = 200, Learning Rate Init = 0.001
+0.8374
+0.6847
+0.7979
+0.7209
+0.8586
+0.7295
+0.8026
+0.7426
+[0.8512, 0.8659]
+[0.7145, 0.7447]
+[0.7949, 0.8102]
+[0.7334, 0.7517]
+0.8365
+0.6861
+0.7827
+0.7166
+0.8075
+0.6381
+0.7565
+0.6836
+
+0.6033
+0.6428
+[0.6283, 0.6565]
+0.603
+0.5395
+
+0.475
+0.5111
+[0.4933, 0.5291]
+0.4592
+0.3992
+
+3. Gradient boosted trees
+Chosen parameters
+Weighted
+Unweighted
+Bootstrap CI
+GroupKFold by school
+GroupKFold by country
+
+Learning rate = 0.01, Max Depth = 5, Number Estimators = 5000, Sub Sample = 0.7
+0.8627
+0.7261
+0.8145
+0.7503
+0.8829
+0.7707
+0.8222
+0.7713
+[0.8763, 0.8896]
+[0.7558, 0.7853]
+[0.8151, 0.8298]
+[0.7624, 0.7808]
+0.8737
+0.7494
+0.8119
+0.7485
+0.8505
+0.7101
+0.7889
+0.7125
+
+0.6474
+0.6846
+[0.6715, 0.6990]
+0.6525
+0.5847
+
+0.5252
+0.5636
+[0.5461, 0.5816]
+0.5312
+0.469
+
+The six performance metrics employed to select one the of three
+competing ML models are: AUROC (area under the receiver operating
+characteristic ROC curve), APRC (average precision score), ACC (accuracy score), BACC (balanced accuracy score), F1 score (balanced F
+score), MCC (Matthews correlation coefficient) (see: Naidu et al., 2023;
+Vujović et al., 2021). The ACC metric equation is defined as follows:
+
+where RC𝑖 and PR𝑖 are the recall and precision at the 𝑖th threshold,
+respectively.
+4.2. Models’ comparison results
+Evaluation metrics for the best performing logit, NN and GBT
+models for the whole sample analysis are shown in Table 6 (for math)
+and in Table 7 (for reading), as well as the final chosen parameters
+for each model. Evaluation metrics for the six ML models for the
+two outcomes are higher for GBT, demonstrating a clear superiority
+of this ML model and it higher adaptability to differentiate between
+those students achieving level 2 performance and those who do not.
+GBT is the best performing model followed by the NN model and the
+logit model. In the case of models using math as dependent variable
+(Table 6), gaps on weighted metrics are between 1.7%–5.0% when
+comparing the GBT model against the NN model, and these performing
+gaps become larger (i.e., between 2.9% and 7.2%) when metrics are
+obtained when using the school GroupKfold version. The logit model is
+the worst performing ML model since the gaps with the GBT metrics are
+for the weighted version are on the range of [3.6%-10.5%] and for the
+school groups metrics between 2.9%–7.7%. On the same direction are
+gaps obtained for evaluation metrics when using reading competency
+as outcome (Table 7), which again favour the GBT model as the most
+fitting model for classifying reading performance levels. Appendix B
+(i.e., Tables B.1 to B.4) contains the same information for the school
+type and school location sub-samples. As for the main analysis, GBT
+is also superior to the NN and logit models across outcomes and the
+private–public, and urban–rural schools sub-samples.
+The superiority of the GBT model is not unexpected because treebased model such as the GBT can achieve higher predictive power,
+capturing non-linear and interaction effects between predictors (Ke
+et al., 2017; Qiu et al., 2022). Therefore, I outline below the GBT
+model which will be used for estimations and the procedure to obtain
+ML explainable results: Shapley Additive Explanations (SHAP) method
+(Lundberg and Lee, 2017), and how to obtain main and interactions
+effects of SHAP values for the pandemic educational policy variables.
+
+TP + TN
+ACC =
+(2)
+TP + TN + FP + FN
+where TP (TN) is the true (negative) positive rate, and FP (FN) is
+the false positive (negative) rate. The balanced version of accuracy
+(i.e., BACC) is an average of sensitivity (the true positive rate) and
+specificity (the true negative rate), making it more useful for imbalanced dataset, and it is given by:
+(
+)/
+TP
+TN
+BACC =
++
+2
+(3)
+TP + FN TN + FP
+The F1 score metric combines the precision and recall scores of a
+model by using the harmonic mean of PR and RC, yielding a balance
+between the model accuracy and its completeness, and it is obtained
+as:
+2 × (PR × RC)
+F1 score =
+(4)
+PR + RC
+where PR is the proportion of correctly classified positive samples (true
+positives) and RC measures the model ability to correctly identify all
+positive cases. The MCC metric is useful when evaluating the performance of a binary classification model, especially when the class
+distribution is imbalanced. It is given by:
+(TP × TN) − (FP × FN)
+MCC = √
+(5)
+(TP + FP)(TP + FN)(TN + FP)(TN + FN)
+Moreover, AUCROC metric is defined as the integral of the ROC
+curve, allowing a assessment of the classification performance for varying discrimination thresholds, with a AUCROC equals to one as perfect
+classification and a AUCROC of 0.5 equals to a random classification.
+The AUCROC is calculated as follows:
+1
+
+AUROC =
+
+∫0
+
+𝑅𝑂𝐶(𝑡) 𝑑𝑡
+
+(6)
+
+Finally, the APRC metric summarises a precision–recall curve as
+the weighted mean of precisions achieved at each threshold, with the
+increase in recall from the previous threshold used as the weight:
+∑
+APRC =
+(𝑅𝐶𝑖 − 𝑅𝐶𝑖−1 ) × 𝑃 𝑅𝑖
+(7)
+
+4.3. Estimation-gradient boosted trees
+Gradient boosted trees (GBT) is a nonparametric ML method composed of iteratively trained decision trees, correcting predictions of
+
+𝑖
+
+8
+
+International Journal of Educational Development 120 (2026) 103483
+
+M. Delprato
+
+Table 7
+Comparison of ML models performance. Whole sample. Outcome: reading.
+AUROC
+
+APRC
+
+ACC
+
+BACC
+
+F1 score
+
+MCC
+
+(1)
+
+(2)
+
+(3)
+
+(4)
+
+(5)
+
+(6)
+
+1. Logit
+Chosen parameters
+Weighted
+Unweighted
+Bootstrap CI
+GroupKFold by school
+GroupKFold by country
+
+Penalty = L1, C = 0.1
+0.7938
+0.8197
+[0.8122, 0.8278]
+0.8237
+0.8115
+
+0.8003
+0.8177
+[0.8071, 0.8278]
+0.8193
+0.8067
+
+0.7208
+0.7423
+[0.7338, 0.7508]
+0.7442
+0.7315
+
+0.7207
+0.7422
+[0.7338, 0.7507]
+0.744
+0.7285
+
+0.7288
+0.7461
+[0.7366, 0.7552]
+0.7482
+0.7351
+
+0.4412
+0.4846
+[0.4677, 0.5015]
+0.4882
+0.4617
+
+2. Neural networks
+Chosen parameters
+Weighted
+Unweighted
+Bootstrap CI
+GroupKFold by school
+GroupKFold by country
+
+Activation = logistic, Alpha = 0.05, Hidden Layer Sizes = (200, 100, 50), Learning Rate Init = 0.01
+0.8161
+0.8287
+0.7361
+0.7366
+0.7385
+0.8373
+0.8401
+0.755
+0.7551
+0.7554
+[0.8300, 0.8445]
+[0.8312, 0.8492]
+[0.7465, 0.7630]
+[0.7465, 0.7630]
+[0.7463, 0.7641]
+0.8368
+0.8374
+0.7473
+0.7472
+0.7585
+0.8215
+0.8187
+0.7358
+0.7302
+0.7374
+
+0.4731
+0.5101
+[0.4929, 0.5260]
+0.4985
+0.4725
+
+3. Gradient boosted trees
+Chosen parameters
+Weighted
+Unweighted
+Bootstrap CI
+GroupKFold by school
+GroupKFold by country
+
+Learning rate = 0.01, Max Depth = 5, Number Estimators = 5000, Sub Sample = 0.9
+0.8497
+0.8586
+0.7641
+0.7644
+0.869
+0.8692
+0.7817
+0.7817
+[0.8628, 0.8755]
+[0.8613, 0.8769]
+[0.7744, 0.7897]
+[0.7743, 0.7896]
+0.8625
+0.8623
+0.7769
+0.7768
+0.8446
+0.8437
+0.7596
+0.7587
+
+0.5284
+0.5634
+[0.5486, 0.5793]
+0.5535
+0.5172
+
+previous models, and being highly efficient and flexible with a high
+performance. The final ensemble of trees can capture non-linear and
+interaction effects between predictors, so it is not surprising its higher
+performance in comparison to the other two ML models. For the analysis, I use the XGBoost implementation of the GBT model (Chen and
+Guestrin, 2016).7 XGBoost’s objective function captures the deviation
+from the model and introduces regularisation to prevent overfitting
+(Ntamwiza and Bwire, 2025). Following (Chen and Guestrin, 2016),
+for a given dataset, a tree ensemble model uses 𝐾 additive functions to
+predict the output:
+𝑦̂𝑖 = 𝜙(𝐱𝑖 ) =
+
+𝐾
+∑
+
+𝑓𝑘 (𝐱𝑖 )
+
+been recently reintroduced as an explanatory framework (i.e., Lundberg
+and Lee, 2017; Štrumbelj and Kononenko, 2014). In the case of the
+educational field, there has been a recent growth in the application of
+Shapley values to identify main drivers of educational outcomes (for a
+review, see: Ersozlu et al., 2024; Hilbert et al., 2021).
+Shapley values have their origin in game theory (Shapley, 1953),
+measuring the average marginal contribution of a player in a cooperative game. In the context of ML, the player is interpreted as a
+characteristic (or attribute), and the cooperative game becomes the
+prediction task performed by the model. To explain the results of GBT
+models, I follow the SHAP method (Chen et al., 2023; Lundberg and
+Lee, 2017). I use the TreeExplainer (Lundberg et al., 2020) package
+which offers an exact calculation of SHAP values for tree-based models.
+SHAP values offer a local explanation of a model output by calculating
+the degree to which each feature (or variable) contributes to a given
+prediction value when conditioning on that feature. Formally, the
+change on prediction or SHAP value 𝜙𝑖 (.) for feature (or covariate) 𝑖
+in model 𝑓 for data point 𝑥 is given by:
+∑ 1 (
+)
+𝜙𝑖 (𝑓 , 𝑥) =
+𝑓𝑥 (𝑃𝑖𝑅 ∪ 𝑖) − 𝑓𝑥 (𝑃𝑖𝑅 )
+(11)
+𝑀!
+𝑅∈
+
+(8)
+
+𝑘=1
+
+Here, 𝑦̂𝑖 denotes the prediction label for a given sample 𝑓 (𝐱𝑖 ), and
+𝑓𝑘 (𝐱𝑖 ) represents the predicted score for the sample, an independent
+tree structure 𝑞 and leaf weights 𝜔, and 𝑓 (𝐱) denotes the value of a leaf
+(using 𝜔𝑖 to represent the score of the 𝑖th leaf), and where 𝑓𝑘 ∈  is
+the space of regression trees:  = {𝑓𝑘 (𝐱) = 𝜔𝑞(𝑥) }(𝑞 ∶ R𝑚 ↦ 𝑇 , 𝜔 ∈ R𝑇 ),
+where 𝑇 is the number of leaves in the tree. To learn the set of functions
+used in the model, the following regularised objective is minimised:
+∑
+∑
+(𝜙) =
+𝑙(𝑦̂𝑖 , 𝑦𝑖 ) +
+𝛺(𝑓𝑘 )
+𝑖
+𝑘
+(9)
+1
+and 𝛺(𝑓 ) = 𝛾𝑇 + 𝜆‖𝜔‖2
+2
+where 𝑙 measures the distance between the prediction and the target
+dependent variable, and 𝛺(.) is the penalisation term mitigating the
+risk of overfitting, and the model is trained in an additive manner for
+optimisation as:
+𝑁
+∑
+(
+)
+(𝑡) =
+𝑙 (𝑦𝑖 , 𝑦̂𝑡−1
+𝑖 , 𝑦𝑖 ) + 𝑓𝑡 (𝐱𝑖 ) + 𝛺(𝑓𝑡 )
+
+where  is the set of all feature permutations, 𝑃𝑖𝑅 is the set of all
+features before 𝑖 in the ordering 𝑅, 𝑀 is the number of input features,
+and 𝑓𝑥 is an estimate of the conditional expectation of the model’s
+prediction. The additive property of SHAP values means that SHAP
+values add to the output of the model:
+𝑓 (𝑥) = 𝜙0 (𝑓 ) +
+
+𝑀
+∑
+
+𝜙𝑖 (𝑓 , 𝑥)
+
+(12)
+
+𝑖=1
+
+(10)
+4.4.1. SHAP main effects and interactions—intersectionality of COVID-19
+educational policies
+Attributions based on the Shapley interaction index result in a
+matrix of feature attributions. SHAP values main effects (on the matrix’s
+diagonal) are obtained as the differences of SHAP values and the offdiagonal elements (i.e., SHAP interactions)8 for a given feature. That
+
+𝑖=1
+
+where 𝑦̂𝑡−1
+is the prediction of the 𝑖th instance at the 𝑡th iteration and
+𝑖
+𝑓𝑡 is added to improve the model according to Eq. (9).
+4.4. SHAP (SHapley Additive exPlanation) values—explainable ML estimates
+Within the field of explainable artificial intelligence (XAI), one of
+the most common interpretable framework is Shapley values, which has
+
+7
+
+0.7685
+0.7837
+[0.7759, 0.7923]
+0.7793
+0.7611
+
+8
+SHAP interaction values (a key element for intersectionality of education
+policy variables during the pandemic) are calculated as follows:
+∑ |𝑆|!(𝑀 − |𝑆| − 2)!
+𝛷𝑖,𝑗 (𝑓 , 𝑥) =
+× ∇𝑖,𝑗 (𝑓 , 𝑥, )
+2(𝑀 − 1)!
+⊆⧵{𝑖,𝑗}
+
+See: link-XGBoost.
+9
+
+International Journal of Educational Development 120 (2026) 103483
+
+M. Delprato
+
+is:
+𝛷𝑖,𝑖 = 𝜙𝑖 (𝑓 , 𝑥) −
+
+∑
+
+𝛷𝑖,𝑗 (𝑓 , 𝑥)
+
+math happens for students from schools which were closed from at
+least ≈ 380 days, and with an aggregated number of internet barriers
+above 5 (out of 8). However, for reading (Figs. 1(i) and 1(j)), these
+diminishing tendencies are not as pronounced, particularly for days
+of school closure, with negative estimates observed after 300 days
+onwards but smaller in magnitude (in absolute value ≤ 0.1, whereas
+for math SHAP values hover around −0.05).
+COVID-19 policies (students resources: CEP1, support for teachers
+remote learning: CEP2, and teachers communication: CEP3) interacted
+with school days of closure (SDC) effects on students’ achievement
+based on Eq. (13) are displayed in Figs. 1(c) to 1(e) (math) and Figs.
+1(k) to 1(m) (reading); that is, I discuss here associations of CEPI
+versions of COVID-19 policy variables with achievement. For math,
+Fig. 1(c) shows associations following U-shape type in two occasions
+between CEP1 and level 2 proficiency (a similar pattern is also found
+for CEP2), while for CEP3 there is a clear decreasing∕negative tendency, with negative SHAP values appearing when CEP3 ≥ 2000.10
+There are relevant COVID-19 policies’ thresholds which can either
+lower or increase the likelihood of reaching learning proficiency in
+math, hence reinforcing why it is important to model and account for
+non-linear relationships between CEP and achievement (which can be
+captured using complex ML models such as GBT). Specifically, values
+of CEP1 ≥ 4500 are associated with higher math-level 2 probabilities
+as well as in the (1500, 3000) lower interval. This reveals that longer
+school closures coupled with more investments in students resources
+for remote learning can counterbalance students’ learning losses. For
+CEP3, estimates show that more frequency on teachers communication
+alongside extended period of school shutdowns are related to students
+having lower chances of reaching level 2 math achievement (for values
+above 2000) which, in turn, may be suggesting that more methods employed by teachers to communicate during the pandemic is a reflection
+of weak students’ engagement with remote learning which naturally
+worsens the longer a school remains closed. Longer school days closed
+(SDC) and more frequency on teachers communication show a profile of
+students having lower chances of reaching level 2 achievement, perhaps
+indicating that more methods employed by teachers to communicate
+during the pandemic is a reflection of weak students’ engagement with
+remote learning. Higher levels of teachers’ resources support for remote
+learning at medium (700-1400) and higher (above 2300) ranges of
+CEP2 are related to positive SHAP values, increasing the chances of students achieving math proficiency. Furthermore, CEP’s associations with
+level 2 reading achievement (Figs. 1(k), 1(l) and 1(m)) show similar
+patterns on decreasing and increasing patterns (and thresholds) as for
+math in the case of CEP2 and CEP3, but with notable differences in the
+case of CEP1. Policies on students’ resources are particularly effective
+for boosting reading proficiency for wide range of CEP1 (above 1700)
+and at higher values of SDC (as seen in Fig. 1(k)).
+Additionally, when inspecting predicted probability ratios ( ̂
+RP) of
+COVID-19 educational policies based on Eq. (14), findings are also nonlinear with two different maximums (CEP1 and CEP2), and with similar
+
+(13)
+
+𝑗≠𝑖
+
+⏟⏞⏞⏞⏞⏞⏟⏞⏞⏞⏞⏞⏟
+SHAP interactions
+
+Furthermore, I rely on dependence plots when explaining main
+policy findings; in particular, to highlight how the ‘predicted probability ratio’ of learning proficiency changes for different values of
+CEP variables. Partial dependence plots display the marginal effect
+of a given covariate (feature) on the prediction of the ML model.
+Here, I obtain the predicted relative probability (RP) of the educational
+outcome taking the value 1 (reaching level 2 performance). The RP of
+a given COVID-19 educational policy CEP𝑘 is defined as:
+RP =
+
+𝑓 (𝑥 )
+∑𝑛
+(𝑖)
+𝑖=1 𝑓 (𝑥 )
+
+(1∕𝑛)
+
+(14)
+
+which is the mean value of the GBT model predicted probability when
+fixing the specific feature CEP𝑘 divided by the mean value of the
+model’s predicted probability, and 𝑓 (𝑥 ) is the partial function of the
+CEP𝑘 policy variable.
+4.5. Models-presentation of results
+The assessment of COVID-19 educational policies associations with
+the likelihood of reaching proficiency levels (≥ level 2) in math and
+reading relies on a two-step process: first, the estimation of GBT model
+(the best choice model based on evaluation metrics; see Section 4.2)
+and, second, to use these estimations as a baseline to derive SHAP
+values. The analysis moves sequentially from a regional level down
+to sub-sectors’ analyses (be it private∕public schools, and urban∕rural
+schools). All results are showcased in terms of plots of estimated SHAP
+values. I use summary plots displaying features attributions or associations (the pandemic related variables of Table 5 and students∕family
+and school covariates of Tables A.1 and A.2) in order of global importance. Plots comparing ranked determinants (by subject and subsamples) are also included. As regards to policy variables direct associations with achievement, plots of partial functions 𝑓 (𝑥 ) and relative
+probabilities RP (Eq. (14)) are used, as well as interactions marginal
+effects (𝛷𝑖,𝑗 (𝑓 , 𝑥)) by leading learning inequality drivers: gender, students’ households wealth, and family educational support. All analyses
+are weighted and include as additional covariate a country dummy to
+account for the LAC’s region country heterogeneity (or country fixed
+effects).
+5. Results
+5.1. Whole sample estimations
+5.1.1. COVID-19 policies’ effects on learning
+This section shows the leverage effects of the three COVID-19
+policies variables defined in Eq. (1) on the probability of students
+reaching the level 2 proficiency benchmark.9 Results for these learning
+recovery policies (interacted with school days of closure, CEPI𝑘 ) are
+shown in Fig. 1. First, I discuss students’ achievement association
+with some pandemic background variables (i.e, schools day of closure
+and internet barriers for remote learning). In the case of math, Figs.
+1(a) and 1(b) show a decreasing tendency on level 2 achievement
+and weaker student’s achievement (lower SHAP values) the longer a
+school was closed during the pandemic and the larger the extent of
+internet’s barrier for remote learning. In particular, learning losses in
+
+10
+Appendix C, Figs. C.1 and C.2, show results for specific components of
+COVID-19 policies of student’s support. These components∕policies are six:
+paper books, digital books, real time lessons, recorded lessons by teachers,
+recorded lessons by other outside schools, and recorded lessons displayed on
+TV and radio. The plots contain SHAP values for policy components (binary
+indicator) and relative probabilities for these components’ interactions with
+the period of schools shutdowns during the pandemic. This offers an overview
+of how the efficacy of educational support varies both by the type of policy
+components as well as their effects across days of schools’ closure. Overall,
+Fig. C.2 different plots suggests that, in the case of math for instance, digital
+books are superior as far as maintaining students’ proficiency at level 2 than
+paper books with diminishing effects at longer period of school closure; and,
+equally, recorded lessons by teachers (or by others outside schools) are more
+effective than real time lessons or recorded lessons showcased on TV and radio
+which are particularly ineffective. I am thankful to an anonymous referee for
+suggesting this additional analysis.
+
+for 𝑖 ≠ 𝑗 and  is the set of all 𝑀 input features, and ∇𝑖,𝑗 (𝑓 , 𝑥, ) =
+(
+)
+(
+)
+(
+)
+( )
+𝑓𝑥  ∪ {𝑖, 𝑗} − 𝑓𝑥  ∪ {𝑖} − 𝑓𝑥  ∪ {𝑗} + 𝑓𝑥  .
+9
+Leading determinants of math and reading learning proficiency are shown
+in Appendix D (Figs. D.1(a) to D.1(c)).
+10
+
+International Journal of Educational Development 120 (2026) 103483
+
+M. Delprato
+
+Fig. 1. SHAP values main effects and partial dependence plots for COVID-19 background variables and policies.
+Notes: (1) Main (direct) effect plots are derived using Eq. (13). (2) Partial dependence plots for math (Figs. 1(f), 1(g) and 1(h)) and for reading (Figs. 1(n), 1(o)
+and 1(p)) are represented as predicted relative ratios (RP) following Eq. (14).
+
+̂ hovering
+of students reaching reading proficiency, with values of PR
+around 1.
+
+decreasing patterns at higher values (CEP3). This is shown in the partial
+dependence plots of Figs. 1(f) to 1(h) (for math) and of Figs. 1(n) to
+1(p) (for reading). Note that here marginal effects of CEP variables are
+̂ are larger
+plotted (rather than SHAP values). In the case of math, RP
+than one, denoting positive associations with level 2 achievement, for
+CEP1 (above 1500 and below 2500, and above 5000), CEP2 (in the
+intervals 800–1300 and above 2200 approx), and CEP3 (below 2000).
+̂ at given CEP values.
+It is interesting to look into differentials of PR
+For instance, a change on CEP1 from 1500 to 1800 (Fig. 1(f)) leads
+to increment on ̂
+RP of 2%, which may be evidence of that schools
+with shorter increases on period of closure but with higher resources
+invested are able to maintain and slightly increase the chances of
+̂ ≥
+students reaching competency (level 2) on math (moving towards RP
+1). Relatively to math, reading’s RP estimates show that CEP1 predicted
+probability ratios are increasing from values just below 1500, reaching
+̂ of 1.04 at higher values (Fig. 1(n)). Interestingly, investments in
+PR
+teachers on resources (CEP2, Fig. 1(o)), are not as efficient as for
+math to boost learning chances but this policy is able to keep chances
+
+5.1.2. COVID-19 policies intersectionality
+An important feature of tree-based ML model such as GBT is that
+they can fully capture covariate’s interactions effects, highlighting the
+association of two variables on the dependent variable. This section
+shows interactions effects for COVID-19 educational policies. Namely, I
+show how estimations for the relationship of CEPs with level 2 achievement vary by parental educational inputs, family SES and students’
+gender. Fig. 2 shows these interactions math as dependent variable.11
+First, Figs. 2(a), 2(b) and 2(c) describe a specific interaction for
+CEPs: with family educational support during remote learning. In these
+plots higher (lower) values for the family educational support index
+
+11
+Due to space constraints, results for reading are included in the Appendix
+(Fig. E.1).
+
+11
+
+International Journal of Educational Development 120 (2026) 103483
+
+M. Delprato
+
+Fig. 2. SHAP values interactions of drivers of student’s disadvantages (i.e., parental educational input, household wealth, and gender) with COVID-19 educational
+policies (resources for student learning, teacher support for remote learning, and teacher communication with students and parents). Outcome: math level 2 or
+above.
+∑
+Notes: (1) Interaction effects are derived using the term 𝑗≠𝑖 𝛷𝑖,𝑗 (𝑓 , 𝑥) from Eq. (13).
+
+are shown in blue (red). Interactions’ behaviour is similar across CEP1
+and CEP2 indicators and somewhat different for the CEP3 (mirroring
+earlier estimates shown in Fig. 1). SHAP interactions for the two groups
+defined by whether a student is highly supported by their parents in
+educational activities hover around within the interval (−0.03, +0.03).
+In the case of CEP3, positive associations (SHAP values ≥ 0) of teacher
+communication with students’ math achievement is found for students
+who are educational supported (under CEP3 below 2000), but, then,
+this leverage effect diminishes becoming negative at higher values of
+CEP3 (Fig. 2(c)). Although for the resources policies indicators (CEP1
+and CEP2; Figs. 2(a) and 2(b)) the range of larger policies’ effects is
+wider, with students stemming from households where parents give
+more educational input being relative more benefited (blue dots being
+above red dots which are below the zero SHAP interactions line). This
+suggests that students attending schools with longer closures can to
+a certain degree be compensated if their parents provide additional
+educational input for remote learning activities, thus complementing
+direct effects of each CEP put forward.
+Second, estimated interactions of family SES with COVID-19 educational policy indicators (Figs. 2(d) to 2(f)) are more widespread, with
+SHAP interactions moving between values of −0.04 and +0.10 for CEP1
+and CEP2. A key differences on leverage effects of family SES with
+CEPs are found at increasing days of school shutdowns for CEP2, with
+
+larger teacher resources support being more impactful by having an
+increasing tendency along the CEP2 range and, therefore, indicating
+that well-off students are able to make the most in terms of their
+math achievement from these teachers’ support policies. For example,
+the SHAP values gap of reaching level 2 math performance between
+richer students and poorer students are higher than 0.08 when CEP2 is
+above 1500 (Fig. 2(e)), which corresponds to schools exhibiting longer
+shutdown periods. As expected, student’s family wealth is therefore
+vital for sustaining learning levels boosted by CEP in a scenario of
+extended school closures.
+Third, SHAP interactions suggest a gendered dimension of CEP
+associations with math achievement; this a consistent finding across the
+three policies. Figs. 2(g) to 2(i) display estimations of SHAP interactions
+of CEP variables and gender, with female students (dots shown in
+blue) and male students (dots shown in red). Female students are
+comparatively disadvantaged with regards to CEPs’ association with
+learning, with gaps against girls being more pronounced at higher
+values of CEP interacted indicators with SDC, where SHAP interactions
+for females being negative and for males being positive. Estimates for
+gender gaps on interactions values happens above CEP values of 2000
+– i.e., gaps of around +2 (for CEP2 and CEP3) – but less so for CEP1
+where gender gaps favouring male students (of +0.04) occur only at
+lower values of CEP1 (or lower shutdown periods). As a whole, gender
+12
+
+International Journal of Educational Development 120 (2026) 103483
+
+M. Delprato
+
+estimates of CEP policies may signal that policies are not adept for
+narrowing learning loss by gender linked to extended school closures,
+which, in fact, are generally magnified against female students.
+
+at CEP2 equals to 1000 and 2002 (Fig. 3(j)). Consequently, it can be
+argued that policies on teachers resources support for reading’s remote
+learning have a superior efficacy in public school settings at longer
+school closures.
+
+5.2. Sub-sample estimations
+5.2.2. Urban and rural schools results
+For educational policies by school location,13 estimates are shown
+for the math model partial dependence’s relative probabilities (RP) in
+Figs. 4(b)–4(e) and in Figs. 4(g)–4(j) for reading. On the one hand,
+in models with math as dependent variable, urban schools’ policy on
+students resources (CEP1) during remote learning is clearly beneficial
+for schools which were closed above the region’s mean threshold (Fig.
+4(b)) but, for rural schools, CEP1 does not have enough power to keep
+̂ is mostly
+learning levels for larger schools’ closure periods as its RP
+below one after the mean value of CEP1 (Fig. 4(d)). More precisely, ̂
+RP
+are around 0.98, so that rural schools’ students have 2% less chances
+of reaching level 2 math performance whereas all estimated RP are
+slightly larger than one for urban schools’ students. For reading models,
+urban schools’ CEP1 estimated relative probabilities (Fig. 4(g)) are
+similar than for math, whereas for students from rural schools CEP1
+seems to be more beneficial by keeping chances of reaching level 2 in
+reading above one (Fig. 4(i)). On the other hand, in the case of CEP2
+(resources to support teachers), estimated RP for math indicates that
+̂ are larger than one
+this policy is more relevant for rural students as RP
+from CEP2 above its mean (≥ 800) (Fig. 4(e)), but below one in urban
+schools ( ̂
+RP ≈ 0.96; Fig. 4(c)). CEP2 results for the reading model show
+relative more positive effects for rural schools’ students than for urban
+students (Figs. 4(h) and 4(j)).
+
+LAC education systems are far from homogeneous. Considering the
+segregated nature of education sub-systems in the LAC region (Acosta,
+2023; Murillo et al., 2023), having different pockets of disadvantage
+and levels of infrastructure and investment – as well as quite distinct
+students contextual factors –, each sub-system has its unique challenges
+when delivering education. This section deals with RQ3, going deeper
+than the whole sample analysis by looking into the leverage effects
+of educational COVID-19 policies to boost remote learning (and so
+achievement levels) by school type (private and public schools) and by
+school location (urban and rural schools).
+5.2.1. Private and public schools results
+I focus here on the education policies’ estimates.12 Partial dependence plots showing relative probabilities (RP) are included in Figs.
+3(b)–3(e) (for math) and in Figs. 3(g)–3(j) (for reading) based on two
+COVID-19 educational policies supporting remote learning during the
+pandemic: students’ resources (CEP1) and teaching resources (CEP2).
+All partial dependence plots point towards highly non-linear effects of
+policies, with noticeable patterns by school type.
+̂ of CEP1, equally for math
+First, predicted probability ratios (RP)
+and reading achievement, behave differently by school type, with
+private schools having a flat and decreasing tendency for math (Fig.
+3(b)) and an increasing tendency for reading (Fig. 3(g)) while, for
+public schools, CEP1’s shows an increasing pattern for math and a Ushape for reading (Figs. 3(d) and 3(i)). Focusing on math results and the
+same interval for CEP1 (1000–3000), estimates are similar for private
+and public schools, but ̂
+RP increases beyond 1.04 in the latter school
+group (and below one in private schools) at higher values of CEP1,
+thus suggesting CEP1 to be more productive in terms of relative math
+learning gains in public schools at longer periods of school closure. For
+̂ ≥ 1 in either school type after the mean
+reading, though, CEP1 RP
+value of CEP1, showing the particular relevance of students resources
+policies for public school students for math achievement and, at the
+same time, an equal relevance for reading achievement for private
+and public schools. Second, CEP2’s linkage with math achievement
+in private schools (Fig. 3(c)) shows an U-shape trajectory in terms of
+estimated RP, with associations becoming positive ( ̂
+RP > 1) for schools
+closed for longer periods (CEP2 ≥ 1500); yet, in public schools in
+̂ for CEP2 are below one (≈
+the same policy range of 1500–2000, RP
+0.98) (Fig. 3(e)). Reading results for CEP2 show inverse patterns for
+estimated RP compared to math: private school’s estimates are negative
+(or ̂
+RP < 1) from its mean value onwards (Fig. 3(h)) but then for
+public schools, ̂
+RP are increasing having two picks of 1.01 and 1.03
+
+5.2.3. COVID 19 policies intersectionality by school type and location
+SHAP interactions for the CEP1 indicator policy (students resources
+support) with two student’s covariates (i.e., gender and family SES)
+by school type and location are shown in Fig. 5 using as outcome
+math achievement. The profile of gender interactions is substantially
+heterogeneous by both private–public and urban–rural schools comparisons. For public schools, there are not major gaps for CEP1-math
+associations by male∕female students across most of CEP1 range, with
+gender gaps (against girls) on the effect of this policy only materialising
+at longer school closures, from CEP1 ≥ 2000 (Fig. 5(b)). In private
+schools, however, gender interactions gaps are non-linear across all
+the CEP1 scale. Policy-driven learning gaps are detrimental against
+girls at shorter school closure (CEP1 ≥ 1000), and they move on the
+opposite direction (against boys) when the comparison is based on
+schools experiencing longer periods of closure (Fig. 5(a)). Rural schools
+estimates’ patterns for gender resemble those from private schools with
+wider gaps against girls only happening at longer periods of closure
+(Fig. 5(d)) and against male students shorter periods of closure (where
+red dots are above blue dots), whilst, in urban schools (Fig. 5(c)),
+gender inequalities operate at a much larger period of school closure
+and without any gaps observed when CEP1 takes values than 1000
+(shorter period of school shutdown).
+Additionally, estimated interactions between students’ family wealth
+and CEP1 are displayed in Fig. 5(e) to Fig. 5(h). I find a consistent
+
+12
+A comparison of leading determinants based on the 25 to ranked covariates’ SHAP values for these two school types for math and reading are included
+in the comparative Figs. 3(a) and 3(f), where private schools’ estimates are
+shown on the left and public schools’ estimates are displayed on the right. For
+math, gender is the leading determinant for either school type and withinschool achievement inequality (proxied by Gini coefficient of math scores)
+has a similar ranking in either private or public schools, even though family
+SES is second ranked for private schools but seventh for public schools (Fig.
+3(a)); something similar happens with the covariate number of books at
+home. Various precursors of low achievement (e.g., repetition at primary and
+lower secondary, late entry) are higher ranked for public school students. For
+reading, in the case of students attending private schools there is a comparative
+greater influence of the school rate of certified teachers, some CEP variables
+(CEP1 and CEP2; which are in top 25 for private schools but not in public
+schools), books at home, father’s education, and school PC teacher–student
+ratio (Fig. 3(f)).
+
+13
+Figs. 4(a) and 4(f) show the relative global importance of the top
+25 highest ranked covariates for the urban sample (on the left) and rural
+sample (on the right). Taking the model for math as an example, it is worth
+mentioning that gender and household wealth are equally important having
+the same ranking as leading factors in either urban or rural schools, while
+the covariates intensity of paid work, number of books at home, school size
+and STR, as well as proportion of students engaged in remote learning and
+PC teacher–student ratio are ranked higher and have more predictive in urban
+than in rural schools (Fig. (4a)). In the latter school group, having more DD
+at home, family support for education and school driven inequality (proxied
+by Gini coefficient of math scores) and speaking a minority language are more
+relevant in rural school settings (Fig. 4(f)).
+
+13
+
+International Journal of Educational Development 120 (2026) 103483
+
+M. Delprato
+
+Fig. 3. School type (private versus public) determinants comparison and partial dependence plots for COVID-19 policies.
+Notes: (1) Math plots: Figs. 3(a) to 3(e); reading plots: Figs. 3(f) to 3(j). (2) Partial dependence plots for CEP indicators are represented as predicted relative
+ratios (RP) following Eq. (14).
+
+pattern where students’ resources support during shutdown tend to
+narrow performance gaps among poorer and richer public schools’
+students (Fig. 5(f)) across most of the range of CEP1 variable (below
+3000), but leaning towards students coming from better-off households
+under longer closures. And, for private schools (Fig. 5(e)), substantial
+gaps favouring better-off students in terms of CEP1 effects are observed
+at lower SDC values (where CEP1 ≤ 1000). Also, there is not an obvious
+distinction on interactions by students’ wealth with CEP1 by school
+location, with estimated SHAP values for richer and poorer students
+being quite homogeneous in either urban or rural schools (Figs. 5(g)
+and 5(h)).
+
+value of 33% of a standard deviation, which is comparable to more than
+a year of schooling (Jakubowski et al., 2023). This negative impact was
+relatively higher in regions with extended school closures such as the
+LAC region as schools were, on average, shutdown for 70 weeks (29
+weeks above the world’s average; CEPAL, 2024), leading to significant
+learning losses and larger dropouts (Lustig et al., 2021; Neidhöfer et al.,
+2021) within a context of weak ICT access, low connectivity and deep
+inequalities in the region. In turn, the role of educational policies for
+remote education in LAC region during the pandemic to keep learning
+levels (or at least to minimise possible learning losses) through boosting
+students’ pedagogic engagement, and to offer teachers with the right
+tools for the sudden switch towards an online learning delivery, were
+fundamental (Mateus et al., 2022; Mancebo and Vaillant, 2022).
+In this paper, relying on PISA 2022 for 10 Latin American countries
+(≈ 55,000 students), I assessed the leverage effects of three COVID-19
+educational policies, namely: students’ resources to support for remote
+
+6. Conclusions
+The COVID-19 pandemic and its impact on the global shutdown of
+schools led to a significant disruption in students’ teaching and learning. Estimates show that, globally, learning scores declined by a mean
+14
+
+International Journal of Educational Development 120 (2026) 103483
+
+M. Delprato
+
+Fig. 4. School location (urban versus rural) determinants comparison and partial dependence plots for COVID-19 policies.
+Notes: (1) Math plots: Figs. 4(a) to 4(e); reading plots: 4(f) to 4(j). (2) Partial dependence plots for CEP indicators are represented as predicted relative ratios
+(RP) following Eq. (14).
+
+learning (e.g., paper and digital textbooks, recorded lessons), teaching
+resources (e.g., online platforms, remote instruction plans, etc.), and
+teachers’ communication methods (e.g., emails, virtual office hours),
+with a particular interest on capturing the effects of these policies
+alongside the period of school shutdowns through interactions. Methodologically, estimates were derived using gradient boosted trees methods
+to capture non-linearities on the policies-achievement associations, and
+I used explainable machine learning methods (i.e., SHAP values) to
+showcase results.
+
+engagement and related learning losses) are non-linear, with policies
+having distinct patterns and effects by the extent of schools’ days of
+closure. The hypotheses which could support the whole sample results
+showing the lack of homogeneity of associations between education
+pandemic policies and students’ math and reading competency levels
+can be linked to an array of factors: weak ICT stock levels pre-pandemic
+(CEPAL, 2020; Sanchez et al., 2022), and therefore unequal students
+engagement across time caused by connectivity issues (Munoz-Najar
+et al., 2021), unsuitable learning environments (UNICEF, 2024), effective and prompt teaching adaptation to the unprecedented education
+delivery context (Ainscow et al., 2025), and well-established inequality
+drivers of achievement by schools sub-systems (a combination of school
+type and location; Acosta, 2023). These factors are likely to have jointly
+pushed towards a diversified efficiency of COVID-19 education policies
+aimed at keeping students’ learning levels by the degree of investment
+and period of schools closure. The paper’s results regarding learning
+
+6.1. Main findings
+The paper’s main findings can be summarised into the following
+three groups. First, the effects of educational policies brought forward
+by LAC educational authorities to alleviate the huge education disruption caused by the COVID-19 pandemic (counteracting students’ lack of
+15
+
+International Journal of Educational Development 120 (2026) 103483
+
+M. Delprato
+
+Fig. 5. SHAP values interactions of drivers of student’s disadvantages (i.e., gender and household wealth) with COVID-19 policy: Resources to support students’
+learning. Outcome: math level 2 or above.
+∑
+Notes: (1) Interaction effects are derived using the term 𝑗≠𝑖 𝛷𝑖,𝑗 (𝑓 , 𝑥) from Eq. (13).
+
+losses (or negative SHAP values), appearing for students attending
+schools which were closed from at least 380 days and with compounded
+barriers for internet connectivity, are an example of how these factors
+jointly operate.
+As regards to policies, and in the case of GBT model estimates using
+math as dependent variable, I find that policies involving resources support (both at the student and teacher levels) have increasing effects, but
+in certain brackets when these policies are interacted with school days
+of closure, and for policies on teachers’ communication during remote
+learning in particular, effects follow a clear decreasing∕negative tendency (especially at extended period of school shutdowns). Specifically,
+students resources support policies (CEP1) have positive associations
+with math at medium and high CEP1’s intervals (i.e., 1500–3000 and
+over 4500) which demonstrate that, even at given scenarios of longer
+closures if there are larger educational investments on resources in
+place, they can act as buffer mechanisms against likely learning losses.
+This finding is in line with earlier literature (Quezada-Morales, 2022)
+documenting some optimistic effects of ICT access educational policies
+for remote learning such as in Uruguay (Ceibal at home). Moreover, as
+far as reading achievement-policy relationships are concerned, results
+show similar overall patterns on decreasing and increasing patterns
+as for math, but with the exception of the policy linked to students
+resources, which I find to be impactful at raising reading proficiency
+levels at longer period of schools closure. Indeed, policies on students’ resources are considerable advantageous for boosting reading
+
+proficiency for wide range of CEP1 values and at higher values of
+school days of closure, which could be indicating not only the superior
+relevance of students’ resources subject-wise, but also that reading
+competencies themselves are more easily malleable and reactive to
+policies than math competencies. For example, in terms of relative
+probabilities (RP), a change on students resources policies (at values
+around 1500) is linked to RP equals to 1.04 (a 4% additional chances
+of reaching level 2 competencies in reading).
+Second, policies’ efficacy at holding up students’ proficiency levels
+throughout the pandemic at longer periods of closure are heterogeneous by students’ inequality drivers. Larger parental educational
+support or higher family wealth can further complement policies positive effects on learning, acting as cushioning mechanisms for prolonged
+school closures (Kennedy et al., 2022). In particular, CEP1 estimates
+for students coming from families where parents support them in their
+educational activities have SHAP interactions just above zero; whereas
+in the case of the teachers communication policy (CEP3), positive relationships (SHAP values ≥ 0) of CEP3 with students’ math achievement
+is only found for students who are educational supported by their
+parents (and at shorter days of school shutdowns). When it comes
+downs to family wealth interaction effects with COVID-19 educational
+policies, I find that a student’s degree of economic advantage is vital
+for policies objective to sustain learning levels; for instance, the gap
+on SHAP values for math between richer students and poorer students
+are higher than 0.08 when CEP2 is above mean school days of closure.
+16
+
+International Journal of Educational Development 120 (2026) 103483
+
+M. Delprato
+
+This is not unexpected considering – among other factors – the digital
+divide by socioeconomic status in the LAC region, where 70% of the
+population falling into the bottom 20% of the income distribution
+do not have access of internet at home (CEPAL, 2020). On top of
+family educational support and family SES as pathways of policiesachievement associations, I also find a gendered dimension of policies
+(Ramirez Lozano et al., 2022), particularly against female students,
+which is more remarkable at longer school closures. For example, I find
+estimates for gender gaps on interactions values happens above CEP
+values of 2000 (or longer school closures) for teachers’ resources and
+communication policies and, in the case of students’ resources, gaps
+in favours of male students happen when periods of schools closure
+are shorter. Overall, this suggest the need to address existing gender
+inequalities on learning which have been magnified by the pandemic
+and family dynamics impacting on students’ engagement during remote
+learning (Berniell et al., 2023).
+Third, policies (measuring students’ resources support) relationships
+with learning are heterogeneous by educational sub-systems. I find that
+policies are more productive for relative learning gains (particularly for
+math) within public schools and at longer periods of school closure. At
+medium values of CEP1, relative probabilities estimates show no gaps
+by school type on the impact of CEP1 on math, but RP raises to 1.04 in
+public schools at higher number of days of schools closure, showing the
+importance throughout the pandemic of incremental investments in the
+public school sector given its cohort of students tend to be more disadvantageous than students attending private schools. Similarly, I find
+that policies on teachers resources support for reading have a superior
+efficacy in public school settings at longer school closures. Results by
+school location also point towards some specificities; namely, policies
+in rural schools are not as prominent as for urban schools under longer
+periods of closure. For instance, ̂
+RP are just below 1 in rural schools
+(CEP1-math relationship), but all estimated RP are slightly larger than
+one for students attending urban schools.
+
+Fig. A.1. Number of days schools closed due to COVID-19 per country.
+
+teaching policies, where more investments on teacher’s training are required for the adoption of new technology and the usage of interactive
+approaches, promoting continuous professionalisation (Ainscow et al.,
+2025).
+6.3. Limitations and future research
+The analysis of the paper has some limitations. The usual caveat
+is that the paper’s estimates represent associations rather than causal
+impacts due to the cross-section nature of the PISA data on which the
+analysis is based and, in consequence, estimates reported should be
+interpreted with caution and not in a causal sense. Additionally, the
+paper’s results only capture immediate post-pandemic policy impacts,
+but not long-term effects of policies given the cumulative deterioration
+of learning achievement in the region after schools’ reopening. With
+regards to the analytical analysis, a limitation is the compounded
+nature of CEP measures I relied upon to derive associations with
+the probability of reaching competency levels in math and reading.
+Albeit some disaggregated results were briefly presented for students
+resources, this would additionally need some comparisons item by
+item and the extension of this disaggregation approach also for teaching support items. This is an interesting avenue of future research
+since sub-components of COVID-19 educational policies can be more
+easily identified and matched with existing policies frameworks implemented during the pandemic in the LAC region, broadening the
+existing evidence within the policy domain of recovering learning
+programs to actual effects of policies on learning brackets of achievement, increasing the resilience of LAC education systems. Likewise, a
+heterogeneity analysis of CEP using additional markers of disadvantage
+identifying vulnerable populations of students (such as Indigenous
+communities, migrants∕refugees, individuals without internet access,
+people living remote areas, and those with special needs; UNICEF,
+2024) can be beneficial for narrowing inequalities in the region and for
+a better preparation against future unprecedented shocks and a growing
+tendency for an online learning delivery of education.
+
+6.2. Policy implications
+The paper yielded different implications for future designs of educational policies for remote learning in the LAC region. Given the
+non-linear associations of COVID-19 educational policies with learning
+found driven by the extent of schools’ period of closure, Latin American
+governments should accelerate investments on ICT access and internet
+connectivity so that make educational engagement of students have
+a better chance of being more continuous during prolonged schools
+shutdowns. And, crucially, it is important that these investments are
+aligned with the length of remote learning (Miralrio et al., 2024),
+particularly for students facing wider socio-economic barriers. Having
+a reliable connection (as well as quality ICT such as laptops∕PC rather
+than mobile phones; Lezama et al., 2023; Santos et al., 2021) for
+school activities for extended periods of remote learning is therefore
+crucial. Taking into account the whole sample estimates, this kind of
+investments on ICT and connectivity infrastructure should be priority
+for public school’s students to boost math’s proficiency levels as well as
+in rural schools where connectivity is very low (CEPAL, 2020). Alongside these interventions, it is also vital to boost students’ social and
+emotional wellbeing as they were linked to educational engagement
+during the pandemic (Salas-Pilco et al., 2022; Zhang et al., 2022) as
+students’ life satisfaction is found to be among the top ten predictors
+for both math and reading proficiency.
+Policies should also place a special attention to the inequality
+effect that has been observed over the pandemic (Huepe et al., 2023),
+focusing on students who faced greater obstacles for whom policies
+were less effective; that is, poorer and female students as shown by
+the paper’s intersectionality analysis, confirming related studies for the
+region (e.g., Meneses et al., 2025). Besides, the lack of a consistent
+positive estimates for the policy variable of teachers’ resources support
+found in the analysis seem to be in line with a paradigm shift regarding
+
+Declaration of competing interest
+The authors declare that they have no known competing financial interests or personal relationships that could have appeared to
+influence the work reported in this paper.
+Appendix A
+See Fig. A.1, Tables A.1 and A.2.
+17
+
+International Journal of Educational Development 120 (2026) 103483
+
+M. Delprato
+
+Table A.1
+Covariates differences by level of achievement (at least level 2)—students variables.
+Math
+
+Reading
+
+Below level 2
+(1)
+
+Level 2 or above
+(2)
+
+Diff
+(3)
+
+Below level 2
+(4)
+
+Level 2 or above
+(5)
+
+Diff
+(6)
+
+Satisfied with life
+Homework-time spent
+Age
+Mother educational level
+Father educational level
+SES (index, low)
+Gender-male
+Number of digital devices at home
+Number of books at home
+Number of siblings
+Immigrant
+Speak other language
+Late entrant in primary
+Repeated in primary
+Repeated in lower secondary
+Missed school (more than 3 months in a row)
+Skipped a day of school in last 2 weeks
+Teacher support for well being (index, low)
+Sense of belonging to school (index, low)
+School climate – bad (index, low)
+Safety in school and surroundings area (index, low)
+Work unpaid days
+Work paid days
+Family support for education (index, low)
+
+6.96
+3.26
+15.83
+5.08
+4.95
+0.62
+0.46
+7.58
+1.41
+2.13
+0.05
+0.04
+0.24
+0.14
+0.13
+0.08
+0.24
+0.52
+0.50
+0.49
+0.44
+3.22
+1.43
+0.51
+
+6.87
+3.71
+15.86
+6.15
+6.06
+0.33
+0.54
+8.93
+2.15
+1.80
+0.03
+0.01
+0.14
+0.02
+0.03
+0.03
+0.16
+0.46
+0.51
+0.55
+0.50
+3.05
+0.88
+0.50
+
+−0.09
+0.46
+0.04
+1.07
+1.11
+−0.30
+0.08
+1.35
+0.75
+−0.32
+−0.02
+−0.03
+−0.10
+−0.11
+−0.10
+−0.06
+−0.09
+−0.06
+0.01
+0.05
+0.06
+−0.17
+−0.55
+−0.01
+
+7.08
+3.13
+15.82
+4.94
+4.84
+0.67
+0.52
+7.32
+1.30
+2.19
+0.06
+0.05
+0.26
+0.17
+0.15
+0.11
+0.25
+0.54
+0.49
+0.48
+0.46
+3.16
+1.60
+0.53
+
+6.80
+3.64
+15.85
+5.82
+5.69
+0.41
+0.46
+8.60
+1.94
+1.88
+0.03
+0.01
+0.16
+0.04
+0.04
+0.03
+0.19
+0.48
+0.51
+0.54
+0.45
+3.19
+0.96
+0.49
+
+−0.28
+0.51
+0.03
+0.88
+0.84
+−0.25
+−0.06
+1.28
+0.63
+−0.32
+−0.03
+−0.04
+−0.10
+−0.13
+−0.11
+−0.08
+−0.07
+−0.06
+0.02
+0.05
+−0.01
+0.03
+−0.63
+−0.04
+
+N
+
+38,564
+
+16,477
+
+27,304
+
+27,737
+
+(1) Differences shown in bold are not statistically significant at 10%.
+
+Table A.2
+Covariates differences by level of achievement (at least level 2)—school and COVID policy variables.
+Math
+
+Reading
+
+Below level 2
+(1)
+
+Level 2 or above
+(2)
+
+Diff
+(3)
+
+Below level 2
+(4)
+
+Level 2 or above
+(5)
+
+Diff
+(6)
+
+Panel A. School variables — context
+Government funding (%)
+Fees funding (%)
+Students w/ a second language (%)
+Students w/ learning needs (%)
+Disadvantaged students (%)
+Teachers attended PD programme in last 3 months (%)
+Social and emotional skills policy
+Urban
+Community size
+Private
+Competition
+Enrolment
+Certified teachers (%)
+Teachers w/ a degree (%)
+STR
+No admission criteria used
+No transfer criteria used
+Autonomy (index, low)
+PC connected web-teacher ratio
+ICT infrastructure per student (index, low)
+Improvements and quality policies (index, low)
+Methods to monitor the practice of teachers
+Staff and studs support for inclusivity (index, low)
+Parents involvement fostered by school (index, low)
+Testing students learning
+Policy on ability grouping
+
+0.72
+0.22
+0.06
+0.04
+0.41
+0.46
+0.75
+0.71
+3.03
+0.12
+0.81
+828.04
+0.62
+0.63
+25.53
+0.18
+0.50
+0.56
+0.32
+0.57
+0.37
+2.31
+0.54
+0.54
+0.96
+0.39
+
+0.54
+0.40
+0.04
+0.03
+0.26
+0.49
+0.81
+0.85
+3.41
+0.36
+0.89
+1024.03
+0.57
+0.65
+25.37
+0.15
+0.48
+0.40
+0.40
+0.56
+0.35
+2.43
+0.59
+0.59
+0.99
+0.40
+
+−0.19
+0.19
+−0.02
+−0.01
+−0.15
+0.04
+0.07
+0.14
+0.38
+0.24
+0.08
+195.99
+−0.05
+0.02
+−0.16
+−0.03
+−0.02
+−0.16
+0.08
+−0.02
+−0.02
+0.12
+0.04
+0.04
+0.04
+0.02
+
+0.73
+0.21
+0.07
+0.04
+0.43
+0.45
+0.74
+0.68
+2.93
+0.09
+0.79
+777.94
+0.62
+0.63
+25.33
+0.18
+0.51
+0.57
+0.30
+0.56
+0.38
+2.31
+0.54
+0.53
+0.94
+0.38
+
+0.61
+0.34
+0.04
+0.04
+0.31
+0.48
+0.79
+0.83
+3.34
+0.28
+0.87
+988.67
+0.59
+0.64
+25.63
+0.16
+0.48
+0.46
+0.38
+0.58
+0.35
+2.38
+0.57
+0.58
+0.99
+0.40
+
+−0.12
+0.13
+−0.03
+0.00
+−0.12
+0.03
+0.06
+0.15
+0.41
+0.19
+0.08
+210.73
+−0.03
+0.01
+0.30
+−0.02
+−0.02
+−0.12
+0.09
+0.01
+−0.03
+0.07
+0.03
+0.05
+0.05
+0.03
+
+Panel B. School inequality indicators
+Gini coefficient for math scores
+Gini coefficient for reading scores
+Ratio math (poor vs rich studs)
+Ratio reading (poor vs rich studs)
+Correlation family SES w/ math scores
+Correlation family SES w/ reading scores
+
+0.07
+0.09
+0.97
+0.97
+0.13
+0.13
+
+0.07
+0.08
+0.97
+0.96
+0.15
+0.15
+
+0.00
+−0.01
+−0.01
+−0.01
+0.03
+0.03
+
+0.07
+0.09
+0.97
+0.97
+0.12
+0.12
+
+0.07
+0.08
+0.97
+0.96
+0.15
+0.15
+
+0.00
+−0.01
+−0.01
+−0.01
+0.03
+0.03
+
+N
+
+38,564
+
+16,477
+
+27,304
+
+27,737
+
+(1) Differences shown in bold are not statistically significant at 10%.
+18
+
+International Journal of Educational Development 120 (2026) 103483
+
+M. Delprato
+
+Table B.1
+Comparison of ML models performance by school type: private schools.
+AUROC
+(1)
+Panel A — outcome: math
+1. Logit
+Chosen parameters
+Weighted
+GroupKFold by school
+2. Neural networks
+Chosen parameters
+Weighted
+GroupKFold by school
+3. Gradient boosted trees
+Chosen parameters
+Weighted
+GroupKFold by school
+Panel B — outcome: reading
+1. Logit
+Chosen parameters
+Weighted
+GroupKFold by school
+2. Neural networks
+Chosen parameters
+Weighted
+GroupKFold by school
+3. Gradient boosted trees
+Chosen parameters
+Weighted
+GroupKFold by school
+
+APRC
+(2)
+
+ACC
+(3)
+
+BACC
+(4)
+
+F1 score
+(5)
+
+MCC
+(6)
+
+0.733
+0.7056
+
+0.7206
+0.6977
+
+0.7758
+0.7435
+
+0.4546
+0.4006
+
+Activation = relu, Alpha = 0.05, Hidden Layer Sizes = 200, Learning Rate Init = 0.001
+0.7606
+0.7843
+0.697
+0.6924
+0.7043
+0.7218
+0.6511
+0.6469
+
+0.7295
+0.6845
+
+0.3851
+0.2941
+
+Learning rate = 0.01, Max Depth = 3, Number Estimators = 5000, Sub Sample = 0.7
+0.8462
+0.8718
+0.7605
+0.7532
+0.8115
+0.8351
+0.7352
+0.7298
+
+0.7917
+0.765
+
+0.5118
+0.4625
+
+Penalty = L1, C = 0.1
+0.806
+0.9232
+0.8012
+0.9185
+
+0.8809
+0.8714
+
+0.4248
+0.3811
+
+Activation = relu, Alpha = 0.05, Hidden Layer Sizes = 200, Learning Rate Init = 0.001
+0.7718
+0.8905
+0.7826
+0.6836
+0.7412
+0.8831
+0.7517
+0.6575
+
+0.859
+0.8361
+
+0.3884
+0.3243
+
+Learning rate = 0.01, Max Depth = 3, Number Estimators = 5000, Sub Sample = 0.7
+0.8589
+0.9446
+0.8232
+0.7157
+0.8392
+0.9338
+0.8143
+0.7006
+
+0.8877
+0.882
+
+0.4867
+0.4625
+
+Penalty = L2, C = 0.1
+0.8071
+0.8333
+0.7751
+0.7999
+
+0.8084
+0.7938
+
+0.6726
+0.6525
+
+Table B.2
+Comparison of ML models performance by school type: public schools.
+
+Panel A — outcome: math
+1. Logit
+Chosen parameters
+Weighted
+GroupKFold by school
+2. Neural networks
+Chosen parameters
+Weighted
+GroupKFold by school
+3. Gradient boosted trees
+Chosen parameters
+Weighted
+GroupKFold by school
+Panel B — outcome: reading
+1. Logit
+Chosen parameters
+Weighted
+GroupKFold by school
+2. Neural networks
+Chosen parameters
+Weighted
+GroupKFold by school
+3. Gradient boosted trees
+Chosen parameters
+Weighted
+GroupKFold by school
+
+AUROC
+(1)
+
+APRC
+(2)
+
+ACC
+(3)
+
+BACC
+(4)
+
+F1 score
+(5)
+
+MCC
+(6)
+
+Penalty = L1, C = 1
+0.791
+0.8169
+
+0.5112
+0.5474
+
+0.7903
+0.8093
+
+0.6271
+0.638
+
+0.4166
+0.4331
+
+0.3229
+0.3528
+
+Activation = logistic, Alpha = 0.05, Hidden Layer Sizes = 200, Learning Rate Init = 0.01
+0.8136
+0.5435
+0.7913
+0.6349
+0.4329
+0.8151
+0.5455
+0.8079
+0.6527
+0.4614
+
+0.3333
+0.365
+
+Learning rate = 0.01, Max Depth = 3, Number Estimators = 5000, Sub Sample = 0.7
+0.8518
+0.6148
+0.8132
+0.6765
+0.8599
+0.6339
+0.8306
+0.684
+
+0.5119
+0.5219
+
+0.4179
+0.4432
+
+Penalty = L1, C = 0.1
+0.7901
+0.7461
+0.8013
+0.7392
+
+0.6791
+0.6741
+
+0.4297
+0.446
+
+Activation = logistic, Alpha = 0.05, Hidden Layer Sizes = 200, Learning Rate Init = 0.01
+0.8101
+0.7784
+0.7311
+0.7269
+0.6956
+0.8103
+0.7532
+0.7338
+0.7254
+0.6811
+
+0.455
+0.4535
+
+Learning rate = 0.01, Max Depth = 3, Number Estimators = 5000, Sub Sample = 0.7
+0.8448
+0.8192
+0.763
+0.7586
+0.8449
+0.7975
+0.7641
+0.756
+
+0.5193
+0.5152
+
+0.719
+0.731
+
+Appendix B
+
+0.7139
+0.721
+
+0.7301
+0.7169
+
+Appendix D. Whole sample determinants of math and reading
+proficiency
+
+See Tables B.1–B.4.
+Figs. D.1(a) and D.1(b) give an overview of the distribution of
+SHAP values for each student and covariate offering a more granular
+approach than average SHAP values, showing the direction of the
+effect of the top 25 most impactful covariates on learning competencies
+prediction. These two figures are beeswarm plots which are essentially
+
+Appendix C
+See Figs. C.1 and C.2.
+19
+
+International Journal of Educational Development 120 (2026) 103483
+
+M. Delprato
+
+Table B.3
+Comparison of ML models performance by school location: urban schools.
+
+Panel A — outcome: math
+1. Logit
+Chosen parameters
+Weighted
+GroupKFold by school
+2. Neural networks
+Chosen parameters
+Weighted
+GroupKFold by school
+3. Gradient boosted trees
+Chosen parameters
+Weighted
+GroupKFold by school
+Panel B — outcome: reading
+1. Logit
+Chosen parameters
+Weighted
+GroupKFold by school
+2. Neural networks
+Chosen parameters
+Weighted
+GroupKFold by school
+3. Gradient boosted trees
+Chosen parameters
+Weighted
+GroupKFold by school
+
+AUROC
+(1)
+
+APRC
+(2)
+
+ACC
+(3)
+
+BACC
+(4)
+
+F1 score
+(5)
+
+MCC
+(6)
+
+Penalty = L1, C = 1
+0.8031
+0.8184
+
+0.6815
+0.7033
+
+0.7475
+0.7566
+
+0.6922
+0.7146
+
+0.5823
+0.6236
+
+0.4098
+0.4491
+
+Activation = logistic, Alpha = 0.05, Hidden Layer Sizes = 200, Learning Rate Init = 0.01
+0.8262
+0.7209
+0.7715
+0.7304
+0.6403
+0.8179
+0.7064
+0.755
+0.7165
+0.6267
+
+0.4755
+0.4485
+
+Learning rate = 0.01, Max Depth = 3, Number Estimators = 5000, Sub Sample = 0.5
+0.8606
+0.7675
+0.795
+0.747
+0.8562
+0.7617
+0.7861
+0.7484
+
+0.6632
+0.6713
+
+0.5241
+0.5176
+
+Penalty = L1, C = 0.1
+0.799
+0.8208
+0.8125
+0.8441
+
+0.7574
+0.7807
+
+0.4396
+0.4653
+
+Activation = logistic, Alpha = 0.05, Hidden Layer Sizes = 200, Learning Rate Init = 0.01
+0.8216
+0.8469
+0.744
+0.7368
+0.7765
+0.822
+0.8561
+0.7457
+0.7376
+0.7807
+
+0.4796
+0.4784
+
+Learning rate = 0.01, Max Depth = 3, Number Estimators = 5000, Sub Sample = 0.7
+0.8448
+0.8668
+0.7642
+0.7584
+0.8533
+0.8822
+0.7725
+0.7634
+
+0.7921
+0.8057
+
+0.5212
+0.5324
+
+0.7242
+0.7406
+
+0.7177
+0.7288
+
+Table B.4
+Comparison of ML models performance by school location: rural schools.
+
+Panel A — outcome: math
+1. Logit
+Chosen parameters
+Weighted
+GroupKFold by school
+2. Neural networks
+Chosen parameters
+Weighted
+GroupKFold by school
+3. Gradient boosted trees
+Chosen parameters
+Weighted
+GroupKFold by school
+Panel B — outcome: reading
+1. Logit
+Chosen parameters
+Weighted
+GroupKFold by school
+2. Neural networks
+Chosen parameters
+Weighted
+GroupKFold by school
+3. Gradient boosted trees
+Chosen parameters
+Weighted
+GroupKFold by school
+
+AUROC
+(1)
+
+APRC
+(2)
+
+ACC
+(3)
+
+BACC
+(4)
+
+F1 score
+(5)
+
+MCC
+(6)
+
+Penalty = L1, C = 1
+0.7962
+0.833
+
+0.4761
+0.5027
+
+0.8483
+0.8504
+
+0.6235
+0.6279
+
+0.3901
+0.393
+
+0.3567
+0.3459
+
+Activation = logistic, Alpha = 0.05, Hidden Layer Sizes = (200, 100, 50), Learning Rate Init = 0.001
+0.7985
+0.4767
+0.8481
+0.624
+0.3911
+0.8175
+0.474
+0.8381
+0.6315
+0.3934
+
+0.3564
+0.3335
+
+Learning rate = 0.01, Max Depth = 3, Number Estimators = 5000, Sub Sample = 0.7
+0.8484
+0.5755
+0.8498
+0.6705
+0.8724
+0.5835
+0.8652
+0.6675
+
+0.4783
+0.4769
+
+0.4074
+0.4313
+
+Penalty = L2, C = 0.1
+0.7505
+0.6156
+0.797
+0.6591
+
+0.4901
+0.5769
+
+0.2972
+0.4112
+
+0.6984
+0.7509
+
+0.6329
+0.6908
+
+Activation = logistic, Alpha = 0.05, Hidden Layer Sizes = (200, 100, 50), Learning Rate Init = 0.001
+0.7551
+0.6265
+0.7058
+0.6263
+0.4614
+0.7698
+0.6219
+0.7266
+0.6656
+0.5438
+
+0.3047
+0.362
+
+Learning rate = 0.01, Max Depth = 3, Number Estimators = 5000, Sub Sample = 0.7
+0.8228
+0.6956
+0.7624
+0.7213
+0.8407
+0.7247
+0.7777
+0.7257
+
+0.463
+0.4799
+
+20
+
+0.6331
+0.6306
+
+International Journal of Educational Development 120 (2026) 103483
+
+M. Delprato
+
+Fig. C.1. Direct effects-SHAP values for binary indicators of students resources COVID policies by sub-items.
+
+21
+
+International Journal of Educational Development 120 (2026) 103483
+
+M. Delprato
+
+Fig. C.2. Interaction effects—Binary indicators of students resources COVID policies by sub-items multiplied by schools’ days of closure.
+Notes: (1) Partial dependence plots for CEP indicators are represented as predicted relative ratios (RP) following Eq. (14).
+
+22
+
+International Journal of Educational Development 120 (2026) 103483
+
+M. Delprato
+
+Fig. D.1. Student∕family SHAP values and comparison determinants plot for math and reading achievement (at least level 2).
+Notes: (1) Plots show the first 25 covariates in order of associations given by absolute values of average SHAP values for each covariate. (2) In summary plots
+(beeswarm plots (a) and (b)), red represent high values of covariates and in blue dots low values. (3) Plot (c) shows a comparison of covariates’ ranking by
+subject. (For interpretation of the references to color in this figure legend, the reader is referred to the web version of this article.)
+
+dot plots where each student’s specific SHAP value has one dot on the
+line per covariate, and dots are stacked horizontally showing the SHAP
+value density for each covariate, arranged from low to high values.
+In the case of math achievement (Fig. D1(a)), the beeswarm plot
+shows that gender, family wealth, student’s engagement in paid work,
+student repetition (at primary), educational inputs and effort (number
+of books and digital devices at home and homework) as well as a
+student’s satisfaction are leading determinants for the probability of a
+student reaching (at least) level 2 in math. Some of these estimates
+are fairly spread (e.g., family SES). School inequality (measured by a
+school’s Gini coefficient of math scores) and the proportion of students
+engaged in remote learning, though lower on their impacts, are still
+empirical relevant. For reading (Fig. D.1(b)), there is a relative similar
+ranking on top determinants, with the main difference being gender
+(absent from the top 25 covariates set) and the higher relevance of
+school inequality (proxied by the distribution of reading scores within
+a school, the Gini coefficient, and for the 𝜌 of family SES with reading
+scores at the school level), ranked 8th and 14th for reading but 15th
+and 24th for math.
+
+The subject ranking of determinants can be seen more clearly in Fig.
+D.1(c), showing math and reading performance drivers alongside one
+another based on their SHAP values. With regards to relative higherranked determinants for math than for reading are gender, school size
+and student repetition at primary and lower secondary, school rate of
+students engaged in remote learning during the pandemic, school type
+and STR. And, conversely, higher differences in the rank determinants
+for reading in comparison to math are: homework and students’ life
+satisfaction, mother’s education, family size, being a speaker of a
+second language, and PC-teacher ratio. Interestingly, only one covariate
+of the COVID-19 variables group (of those shown in Table 5), namely,
+proportion of students attending distance learning, made it into the top
+25 covariates based on average SHAP absolute values.
+Appendix E
+See Figs. E.1 and E.2.
+
+23
+
+International Journal of Educational Development 120 (2026) 103483
+
+M. Delprato
+
+Fig. E.1. SHAP values interactions of drivers of student’s disadvantages (i.e., parental educational input, household wealth, and gender) with COVID-19 educational
+policies (resources for student learning, teacher support for remote learning, and teacher communication with students and parents). Outcome: reading level 2
+or above.
+∑
+Notes: (1) Interaction effects are derived using the term 𝑗≠𝑖 𝛷𝑖,𝑗 (𝑓 , 𝑥) from Eq. (13).
+
+24
+
+International Journal of Educational Development 120 (2026) 103483
+
+M. Delprato
+
+Fig. E.2. SHAP values interactions of drivers of student’s disadvantages (i.e., gender and household wealth) with COVID-19 policy: Resources to support students’
+learning. Outcome: reading level 2 or above.
+∑
+Notes: (1) Interaction effects are derived using the term 𝑗≠𝑖 𝛷𝑖,𝑗 (𝑓 , 𝑥) from Eq. (13).
+
+References
+
+Berniell, I., Gasparini, L., Marchionni, M., Viollaz, M., 2023. The role of children and
+work-from-home in gender labor market asymmetries: evidence from the COVID-19
+pandemic in Latin America. Rev. Econ. Househ. 21 (4), 1191–1214.
+
+Acosta, F., 2023. Between expansion and segmentation: revisiting old and new
+disparities in secondary education in Latin America. Int. J. Incl. Educ. 1–18.
+Agasisti, T., Antequera, G., Delprato, M., 2023. Technological resources, ICT use and
+schools efficiency in Latin America–Insights from OECD PISA 2018. Int. J. Educ.
+Dev. 99, 102757.
+Ainscow, M., Calderón-Almendros, I., Duk, C., Viola, M., 2025. Using professional
+development to promote inclusive education in Latin America: possibilities and
+challenges. Prof. Dev. Educ. 51 (1), 149–166.
+Arias Ortiz, E., Bos, M.S., Chen Peraza, J., Giambruno, C., Levin, V., Oubiña, V.,
+Pineda, J.A., Zoido, P., 2024a. Learning can’t wait [el aprendizaje no puede
+esperar]. World Bank Publications - Reports 41144, The World Bank Group.
+Arias Ortiz, E., Bos, M., Giambruno, C., Zoido, P., 2023. Latin America and the
+Caribbean in PISA 2022: How Many Students are Low Performers? Tech. Rep.,
+Inter-American Development Bank.
+Arias Ortiz, E., Dueñas, X., Giambruno, C., López, Á., 2024b. The State of Education in
+Latin America and the Caribbean: Learning Assessments. Tech. Rep., Inter-American
+Development Bank.
+Asadullah, M., Bouhlila, D.S., Chan, S.-J., Draxler, A., Ha, W., Heyneman, S.P.,
+Luschei, T.F., Semela, T., Yemini, M., 2023. A year of missed opportunity:
+Post-covid learning loss–A renewed call to action. Int. J. Educ. Dev. 99, 102770.
+Azevedo, J.P., Hasan, A., Goldemberg, D., Geven, K., Iqbal, S.A., 2021. Simulating the
+potential impacts of COVID-19 school closures on schooling and learning outcomes:
+A set of global estimates. World Bank Res. Obs. 36 (1), 1–40.
+Barron Rodriguez, M., Cobo, C., Muñoz-Najar, A., Sánchez Ciarrusta, I., 2020. Remote
+learning during the global school lockdown: Multi-country lessons. World Bank..
+Berlanga, C., Morduchowicz, A., Scasso, M., Vera, A., 2020. Reabrir las escuelas en
+américa latina y el caribe: Claves, desafíos y dilemas para planificar el retorno
+seguro a las clases presenciales. Banco Interam. Desarro. 10, 0002906.
+
+Betthäuser, B.A., Bach-Mortensen, A.M., Engzell, P., 2023. A systematic review and
+meta-analysis of the evidence on learning during the COVID-19 pandemic. Nat.
+Hum. Behav. 7 (3), 375–385.
+Bracco, J., Ciaschi, M., Gasparini, L., Marchionni, M., Neidhöfer, G., 2025. The impact
+of COVID-19 on education in Latin America: Long-run implications for poverty and
+inequality. Rev. Income Wealth 71 (1), e12687.
+Brunori, P., Ferreira, F.H., Neidhöfer, G., 2024. Inequality of Opportunity and Intergenerational Persistence in Latin America. Tech. Rep. 17202, IZA Discussion
+Papers.
+Bu, Y., Chen, F., 2023. What key contextual factors contribute to students’ reading
+literacy among top-performing countries and economies? Statistical and machine
+learning analyses. Int. J. Educ. Res. 122, 102267.
+Camacho-Zuñiga, C., Pego, L., Escamilla, J., Hosseini, S., 2021. The impact of the
+COVID-19 pandemic on students’ feelings at high school, undergraduate, and
+postgraduate levels. Heliyon 7 (3).
+CEPAL, 2020. Universalizar el acceso a las tecnologías digitales para enfrentar los
+efectos del COVID-19.
+CEPAL, 2022. Panorama social de américa latina y el caribe 2022: la transformación
+de la educación como base para el desarrollo sostenible.
+CEPAL, 2024. Preventing and reducing school dropout in latin america and the
+caribbean.
+Chen, H., Covert, I.C., Lundberg, S.M., Lee, S.-I., 2023. Algorithms to estimate Shapley
+value feature attributions. Nat. Mach. Intell. 5 (6), 590–601.
+Chen, T., Guestrin, C., 2016. Xgboost: A scalable tree boosting system. In: Proceedings
+of the 22nd Acm Sigkdd International Conference on Knowledge Discovery and
+Data Mining. pp. 785–794.
+25
+
+International Journal of Educational Development 120 (2026) 103483
+
+M. Delprato
+Chen, F., Sakyi, A., Cui, Y., 2022. Identifying key contextual factors of digital reading
+literacy through a machine learning approach. J. Educ. Comput. Res. 60 (7),
+1763–1795.
+Delprato, M., 2025a. Identifying the post-pandemic determinants of low performing students in latin america through interpretable machine learning SHAP values-insights
+from PISA 2022. arXiv preprint arXiv:2509.24508.
+Delprato, M., 2025b. Pedagogic engagement in Argentina for students attending primary
+and secondary levels–an empirical analysis of main barriers during the COVID-19
+pandemic. OSF Preprints,
+Delprato, M., Antequera, G., 2025. School efficiency in latin america before and after
+the COVID-19 pandemic: New evidence from PISA 2018 and 2022. Int. J. Educ.
+Res. 129, 102493.
+Delprato, M., Köseleci, N., Antequera, G., 2015. Educación para todos en américa latina:
+Evolución del impacto de la desigualdad escolar en los resultados educativos. Rev.
+Latinoam. Educación Comp. 6 (8), 45–75.
+Ersozlu, Z., Taheri, S., Koch, I., 2024. A review of machine learning methods used for
+educational data. Educ. Inf. Technol. 1–21.
+Fernández, R., Pagés, C., Szekely, M., Acevedo, I., 2024. Education inequalities in Latin
+America and the Caribbean. Tech. Rep., National Bureau of Economic Research.
+Gómez, G.M., Andrés Uzín, P.G., 2022. Effects of COVID-19 on education and schools’
+reopening in Latin America. COVID-19 Int. Dev. 119–135.
+Gómez-Talal, I., Bote-Curiel, L., Rojo-Álvarez, J.L., 2024. Understanding the disparities
+in mathematics performance: An interpretability-based examination. Eng. Appl.
+Artif. Intell. 133, 108109.
+Hastie, T., Tibshirani, R., Friedman, J., 2009. The Elements of Statistical Learning: Data
+Mining, Inference, and Prediction. Springer.
+Hilbert, S., Coors, S., Kraus, E., Bischl, B., Lindl, A., Frei, M., Wild, J., Krauss, S.,
+Goretzko, D., Stachl, C., 2021. Machine learning for the educational sciences. Rev.
+Educ. 9 (3), e3310.
+Huang, Y., Zhou, Y., Chen, J., Wu, D., 2024. Applying machine learning and SHAP
+method to identify key influences on middle-school students’ mathematics literacy
+performance. J. Intell. 12 (10), 93.
+Huepe, M., Palma, A., Trucco, D., 2023. Education during the pandemic: an opportunity
+to transform education systems in Latin America and the Caribbean. Soc. Policy
+Ser. 243.
+Jakubowski, M., Gajderowicz, T., Patrinos, H.A., 2023. Global learning loss in student
+achievement: First estimates using comparable reading scores. Econom. Lett. 232,
+111313.
+Ke, G., Meng, Q., Finley, T., Wang, T., Chen, W., Ma, W., Ye, Q., Liu, T.-Y., 2017.
+Lightgbm: A highly efficient gradient boosting decision tree. Adv. Neural Inf.
+Process. Syst. 30.
+Kennedy, A.I., Mejía-Rodríguez, A.M., Strello, A., 2022. Inequality in remote learning
+quality during COVID-19: student perspectives and mitigating factors. Large-Scale
+Assessments Educ. 10 (1), 29.
+Krüger, N.S., 2019. La segregación por nivel socioeconómico como dimensión de la
+exclusión educativa: 15 años de evolución en América Latina.
+Lezama, E.E., Cabrera Echegaray, S.H., Rugel Medina, M.N., Carbajal Destre, P.E.,
+Ninaquispe Soto, M.E., 2023. Appropriation of information technologies during
+remote university education in Latin America. LACCEI 1 (8).
+López, F.M., 2019. Diagnóstico, teoría e intervenciones públicas para abatir el abandono
+escolar en la educación secundaria de segundo ciclo: aprendizajes desde américa
+latina. Rev. Latinoam. Educación Comp.: RELEC 9 (14), 11–30.
+Lundberg, S.M., Erion, G., Chen, H., DeGrave, A., Prutkin, J.M., Nair, B., Katz, R.,
+Himmelfarb, J., Bansal, N., Lee, S.-I., 2020. From local explanations to global
+understanding with explainable AI for trees. Nat. Mach. Intell. 2 (1), 56–67.
+Lundberg, S.M., Lee, S.-I., 2017. A unified approach to interpreting model predictions. In: Proceedings of the 31st International Conference on Neural Information
+Processing Systems. NIPS ’17, Curran Associates Inc. Red Hook, NY, USA, pp.
+4768–4777.
+Lustig, N., Neidhöfer, G., Tomassi, M., 2021. Growing educational gaps in latin america:
+how to avoid the most lasting scar from COVID-19. Policy Brief Futur. Work. Glob.
+South (FOWIGS).
+Mancebo, M., Vaillant, D., 2022. Learning Recovery Programs - Assessing the Evidence
+and Potential for Latin America. Tech. Rep., World Bank.
+Martín, A.V.D., Ramos, J.M.L., 2024. Marco DEIFDC: Evaluación del despliegue de
+la educación digital en perú en plena pandemia de Covid-19. Rev. Latinoam.
+Tecnología Educ. 23, 2.
+Mateus, J.-C., Sola, P.A., Cabrera, C.d.R.G., Ugalde, C., Novominsky, S., 2022. Perspectivas docentes para una agenda crítica en educación mediática post COVID-19.:
+Estudio comparativo en latinoamérica. Comun.: Rev. Científica Comunicación Y
+Educación (70), 9–19.
+Meneses, F., Ortega, L., Kuzmanic, D., Valenzuela, J.P., 2025. Analyzing the impact
+of COVID-19 on gender gaps in mathematics: The role of socioeconomic status in
+Chile. Int. J. Educ. Dev. 113, 103221.
+Miralrio, A., Muñoz-Villota, J., Camacho-Zuñiga, C., 2024. From flexibility to adaptive
+learning: a pre-COVID-19 perspective on distance education in Latin America. Front.
+Comput. Sci. 6, 1250992.
+Munguia, N., 2023. COVID-19 and its influence on sustainable development goal 4:
+Latin america and caribbean region. In: SDGs in the Americas and Caribbean
+Region. Springer, pp. 1–17.
+
+Munoz-Najar, A., Gilberto, A., Hasan, A., Cobo, C., Azevedo, J.P., Akmal, M., 2021.
+Remote learning during COVID-19: Lessons from today, principles for tomorrow.
+World Bank..
+Murillo, J., Martínez-Garrido, C., Graña, R., 2023. Segregación escolar por nivel
+socioeconómico en educación primaria en américa latina y el caribe. REICE-Revista
+Iberoam. Sobre Calid. Efic. Y Cambio Educación.
+Naidu, G., Zuva, T., Sibanda, E.M., 2023. A review of evaluation metrics in machine
+learning algorithms. In: Computer Science on-Line Conference. Springer, pp. 15–25.
+Natekin, A., Knoll, A., 2013. Gradient boosting machines, a tutorial. Front.
+Neurorobotics 7, 21.
+Neidhöfer, G., Lustig, N., Tommasi, M., 2021. Intergenerational transmission of lockdown consequences: prognosis of the longer-run persistence of COVID-19 in Latin
+America. J. Econ. Inequal. 19 (3), 571–598.
+Neidhöfer, G., Serrano, J., Gasparini, L., 2018. Educational inequality and intergenerational mobility in Latin America: A new database. J. Dev. Econ. 134,
+329–349.
+Ntamwiza, J.M., Bwire, H., 2025. Predicting biking preferences in Kigali city: A
+comparative study of traditional statistical models and ensemble machine learning
+models. Transp. Econ. Manag. 3, 78–91.
+OECD, 2023a. PISA 2022 Assessment and Analytical Framework. Tech. Rep., PISA,
+OECD Publishing, Paris.
+OECD, 2023b. PISA 2022 results (volume i): The state of learning and equity in
+education. Tech. Rep., PISA, OECD Publishing, Paris.
+OREALC/UNESCO, 2022. Educación en américa latina y el caribe en el segundo año
+de la COVID-19.
+Pagliarani, S., 2025. Improving the performance of public schools: Evidence from latin
+American countries in PISA 2022. J. Latinos Educ. 1–14.
+Parker, M., Alfaro, P., 2021. Education during the COVID-19 pandemic: Access,
+inclusion, and psychosocial support leaving no caribbean child behind. Doc. Proy.
+Comisión Económica Para América Lat. Caribe (CEPAL).
+Paya Rico, A., 2022. Inclusion and the right to education in latin america and
+the caribbean: Policies, resources, and good practice in the COVID-19 social
+and educational emergency. In: Inclusive Pedagogical Practices Amidst a Global
+Pandemic: Issues and Perspectives Around the Globe. Springer, pp. 49–61.
+Pedró, F., Ramos Torres, D., 2022. Closing now to reopen better tomorrow? Pedagogical
+continuity in latin American universities during the pandemic. J. New Approaches
+Educ. Res. 11 (2), 295–306.
+Qiu, W., Chen, H., Dincer, A.B., Lundberg, S., Kaeberlein, M., Lee, S.-I., 2022.
+Interpretable machine learning prediction of all-cause mortality. Commun. Med.
+2 (1), 125.
+Quezada-Morales, R., 2022. Advancing digital learning in a traditional system: Uruguay
+during the COVID-19 pandemic. Curr. Issues Comp. Educ. 24 (2).
+Ramirez Lozano, J.P., Bridshaw Araya, L.C., Brito Ochoa, M.P., 2022. Latin American
+female academic perceptions about the COVID pandemic’s impact on gender equity
+and within-country inequality. Manag. Res.: J. Iberoam. Acad. Manag. 20 (2),
+169–192.
+Raschka, S., Mirjalili, V., 2019. Python Machine Learning: Machine Learning and Deep
+Learning with Python, Scikit-Learn, And TensorFlow 2. Packt publishing ltd.
+Reimers, F.M., 2022. Learning from a pandemic. The impact of COVID-19 on education
+around the world. Prim. Second. Educ. Dur. Covid-19: Disruptions Educ. Oppor.
+Dur. A Pandemic 1–37.
+Ripani, M.F., Zucchetti, A., 2020. Mexico: Aprende en casa (learning at home).
+Salas-Pilco, S.Z., Yang, Y., Zhang, Z., 2022. Student engagement in online learning
+in latin American higher education during the COVID-19 pandemic: A systematic
+review. Br. J. Educ. Technol. 53 (3), 593–619.
+San Martin Soares, P., 2024. Combining statistical and machine learning methods to
+identify predictors of Brazilian students’ proficiency in PISA 2018. J. Psychoeduc.
+Assess. 42 (8), 927–954.
+Sanchez, A., Crawford, M., Oviedo Buitrago, M.E., Ellinore Ahlgren; Arias Diaz, O.S.,
+Saavedra-Chanduvi, J., 2022. Guide for learning recovery and acceleration : Using
+the RAPID framework to address COVID-19 learning losses and build forward
+better. Rev. Psicodidáctica (English Ed.) 1 (183656).
+Santos, L.M., Grisales, D., Rico, J.S., 2021. Percepción y accesibilidad tecnológica de
+universitarios en el suroeste de república dominicana durante el Covid-19. Rev.
+Int. Educación Para la Justicia Soc. 10 (1).
+Serrano Rodríguez, R., González, N.A., Pérez Gracia, E., Carpio, A.J., 2025. Analysing
+education quality and equity in international large-scale assessment in the Latin
+American context. Educ. Res. Eval. 1–21.
+Shapley, L.S., 1953. A value for n-person games. Contrib. Theory Games 2.
+Štrumbelj, E., Kononenko, I., 2014. Explaining prediction models and individual
+predictions with feature contributions. Knowl. Inf. Syst. 41, 647–665.
+UNESCO, 2024. La urgencia de la recuperación educativa en América Latina y el Caribe.
+UNESCO.
+UNICEF, 2024. Educational Response to the COVID-19 Pandemic in Latin America and
+the Caribbean: Analyzing Challenges and Achievements for Future Action Planning.
+Tech. Rep., Panama.
+Varela, J.J., Berger, C., Chaux, E., Miranda, R., Lisboa, C., Orellana, C.T.L., 2024. School
+violence, bullying, and cyberbullying in south america: risks, protective factors, and
+interventions. In: Handbook of School Violence, Bullying and Safety. Edward Elgar
+Publishing, pp. 256–268.
+26
+
+International Journal of Educational Development 120 (2026) 103483
+
+M. Delprato
+Vera, A., Rivas, A., et al., 2023. El monitoreo de políticas educativas digitales en
+américa latina y el caribe.
+Vincent-Lancrin, S., Cobo Romaní, C., Reimers, F., Madero, C., Vargas, E., 2022. How
+learning continued during the COVID-19 pandemic. Glob. Lessons Initiat. Support.
+Learn. Teach. OECD World Bank. http://dx.doi.org/10.1787/Bbeca162-En.
+
+Vujović, Ž., et al., 2021. Classification model evaluation metrics. Int. J. Adv. Comput.
+Sci. Appl. 12 (6), 599–606.
+Zhang, S.X., Batra, K., Xu, W., Liu, T., Dong, R.K., Yin, A., Delios, A.Y., Chen, B.Z.,
+Chen, R.Z., Miller, S., et al., 2022. Mental disorder symptoms during the COVID-19
+pandemic in Latin America–a systematic review and meta-analysis. Epidemiology
+Psychiatr. Sci. 31, e23.
+
+27
+
+

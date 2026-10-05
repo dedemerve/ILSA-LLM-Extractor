@@ -1,0 +1,1887 @@
+European Journal of Education
+
+ORIGINAL ARTICLE
+
+Data Mining on the Fundamental Factors Influencing
+Mathematics Achievement: Traditional and
+Modern Perspectives
+Burcu Koca Guler1
+
+| Fulya Gokalp Yavuz1,2
+
+1Department of Statistics, Middle East Technical University, Ankara, Turkey
+
+| 2The Data Mine, Purdue University, West Lafayette, Indiana, USA
+
+Correspondence: Burcu Koca Guler (bkoca@metu.edu.tr)
+Received: 16 December 2024 | Revised: 1 September 2025 | Accepted: 18 September 2025
+Funding: The authors received no specific funding for this work.
+Keywords: achievement | hierarchical data | machine learning methods | mathematics | mixed-­models | TIMSS
+
+ABSTRACT
+
+Assessing achievement is a complex task due to its dependence on multiple factors and the hierarchical structure of educational
+data, yet surveys like TIMSS offer valuable insights into its determining factors like students' mathematics anxiety. However,
+disregarding the nested structure of data and ignoring the assumptions of models causes poor performance such as inaccurate
+predictions and biased estimates. Our research utilises linear mixed models (LMMs) and machine learning (ML) techniques
+(e.g., REEM-­tree and GP boosting) especially chosen for their abilities to model nested data and capture non-­linear relationships. This study is a pioneer in the literature as these ML algorithms are implemented for the first time in TIMSS. Accordingly,
+mathematical tendency and emotional factors are the two primary predictors of mathematics achievement across all methods,
+acknowledging the possibility of potential bias due to reliance on self-­report responses. However, there are variations in the effect size of the students' origins among the methods. This indicates different algorithms yield distinct results according to their
+inner processes and priorities, such as revealing statistical significance of predictors or contributing to predictive performance.
+Moreover, gender has a negligible impact across all models in our analysis, caused by cultural differences in the sample. Overall,
+while LMMs are widely accepted, ML methods remain competitive alternatives in prediction and flexibility. All three methods
+yield similar benchmarks, yet ML methods offer slightly better performance in RMSE, MAE, and MAPE while exhibiting high
+predictive power and capturing nonlinearity and interaction. Although they take more computation time, parallel processing
+mitigates this in larger datasets. Consequently, ML methods and LMMs concurrently provide broader and more precise insights
+in terms of predictive and inferential gains.
+
+1   |   Introduction
+In the field of mathematics education, achievement is often
+measured by the examination scores of students. Although
+mathematics scores of students may appear like just a number
+at first sight, they reflect several insights into students' competence regarding cognitive abilities, intellectual capacities,
+and knowledge of underlying structures. The reason behind
+mathematics playing a pivotal role in cognitive development
+
+and academic achievement is that it develops problem-­solving
+skills, procedural knowledge, and conceptual understanding
+in students. Intrinsically, it can be concluded that students
+mostly having high scores are likely to have well-­developed
+cognitive skills and be successful in mathematical concepts
+under relatively convenient conditions such as optimum
+testing environment, fair evaluation metrics, and personal
+bias-­free assessment. However, even when the proper conditions are satisfied, analyzing, deducing, and monitoring the
+
+© 2025 John Wiley & Sons Ltd.
+
+European Journal of Education, 2025; 60:e70281
+https://doi.org/10.1111/ejed.70281
+
+1 of 23
+
+TIMSS evaluates mathematics and science abilities of 4th-­and
+8th-­grade students from around the world (Fishbein et al. 2021).
+It is conducted by the International Association for the
+Evaluation of Educational Achievement (IEA) approximately
+every 4 years, starting in 1995, and has been conducted in about
+70 countries. The most recent TIMSS assessment was in 2023.
+However, the assessment is still being processed. Therefore,
+the second most recent evaluation was in 2019, and all the data
+collected is publicly available (https://​timss​2019.​org/​inter​natio​
+nal-­​datab​ase/​). The information provided includes individual
+student characteristics, as well as perspectives on their home,
+teacher, and school environments, in addition to their achievement scores. TIMSS offers a comparative analysis of students'
+mathematics and science abilities, but not all data is provided for
+every participating country.
+The TIMSS committee implements changes and establishes
+guidelines to establish standards for the data collection process
+(Martin et al. 2020). This allows for a more consistent sample
+and allows for similar subgroups in different countries to be
+compared. For example, the mean age of students should be
+at least 9.5 at the time of the test for 4th-­grade students in all
+countries. Moreover, some countries may have different curricula for 4th grades. In such cases, fifth-­or sixth-­grade students
+from countries with non-­standard programmes may participate
+in the 4th-­grade test. These countries are separated from other
+countries in the comparisons of success, which is also the case
+in this study.
+One common and traditional strategy to handle large-­scale educational data is Hierarchical Linear Model (HLM). However,
+considering the magnitude of large-­scale data sets in education
+and their complexities, various alternatives that could be more
+effective in terms of statistical performance have been utilized
+in this study. For example, machine learning (ML) algorithms
+can handle the non-­linearity (Hilbert et al. 2021). Since the
+relation between dependent and independent variables in educational data such as TIMSS is likely to have a non-­linear structure, the linearity assumption of HLM can yield poor and biased
+predictive performance compared to ML algorithms. Moreover,
+the linearity assumption of the traditional models attempts to
+establish analytically meaningful ground for the model, but it
+decreases the reliability of an analysis due to inconsistency with
+data's underlying nature. In addition to that, the classical models
+may require selection and combination of predictors to be able to
+convert data into a single model because of the multicollinearity
+2 of 23
+
+and overfitting issues (Yarkoni and Westfall 2017). However,
+ML models can handle this difficulty in a more practical manner (Ozen et al. 2025). Besides the flexibility in application, they
+can cope with a moderate correlation between predictors and
+the dependent variable (Nguyen et al. 2023).
+This study stands out as a pioneer in several dimensions such
+as the first application and comparison of Random Effects/EM
+tree (REEM-­tree) and Gaussian Process Boosting (GP boosting)
+in TIMSS data. It does not only investigate the factors affecting students' achievement scores from three countries from different levels of development in TIMSS 2019 data by utilising a
+comprehensive method, but also introduces, for the first time,
+the applicability of new ML techniques such as REEM-­tree and
+GP boosting to TIMSS data and also considers schools nested
+within the country effect as a random term in the models. In
+fact, GP boosting was first introduced for nested educational
+data, and we obtained non-­negligible results on significance and
+effect sizes of the variables. It is crucial to note here that having
+country as a random effect allows us to generalise the finding to
+any country by including its own characteristics in the model.
+Comparisons between the models, strategies, and algorithms are
+presented to guide practitioners in the analysis of educational
+data. Moreover, the results can show us the most crucial factors
+that need improvement in order for students to get better math
+scores. Also, the gender effect on achievement is still a black box.
+There are many studies criticising whether being a boy or girl
+affects math scores (e.g., Thomas 2024; Reynolds et al. 2022).
+This study also makes a statistically significant contribution via
+a country-­specific view. In addition, governments can take into
+account the advice given about immigrant students in this research since the critical results are presented. Consequently, this
+study underscores several key points that are relevant to diverse
+groups, including policy-­makers, educators, and others.
+
+2   |   Literature Review
+The TIMSS dataset has been used to investigate various
+factors that contribute to student achievement from different perspectives. In recent years, thanks to the advantages
+of ML algorithms, their applications on TIMSS data have
+been increasingly adopted in the field of education (Hilbert
+et al. 2021). Even though there exists a rising trend in the literature, studies that utilised traditional methods such as exploratory data analysis (EDA) and HLM are still predominant. For
+example, the studies of Wiberg (2019), Ramirez (2006), and
+Carnoy et al. (2015), which employ traditional methods on
+TIMSS data, focus on analysing relationships between different concepts and variables, such as the relationship between
+students' TIMSS mathematics scores and their grades or national test scores. In their study, Wiberg (2019) used descriptive
+statistics, linear regression, and multilevel analysis to examine the relationship between these variables obtained from
+students in Sweden. Similarly, Ramirez (2006) used hierarchical modelling to investigate the mathematical achievement of
+Chilean students, and both studies reveal that the educational
+status of the family is a significant factor in student success.
+The study by Carnoy et al. (2015) uses descriptive statistics to
+compare the TIMSS and PISA performances of Russian students concerning different levels of family academic resources
+European Journal of Education, 2025
+
+14653435, 2025, 4, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/ejed.70281 by Yildiz Teknik University, Wiley Online Library on [24/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+mathematics scores need elaboration and an in-­depth investigation due to the hierarchical structure of educational data,
+the dependence of the achievement on multiple factors and
+their interactions, the possibility of missing data, and the assumptions of methods used. Thus, these challenges make the
+analysis methodologically demanding. To gain accurate and
+efficient results, the quality of data used is also of paramount
+importance. While educational data sets are widely acknowledged, there is a scarcity of reliable resources that provide
+insight into student academic performance. The Trends in
+International Mathematics and Science Study (TIMSS) offers
+a comprehensive and long-­term study on a large scale, enabling comparisons between countries, and providing a historical perspective on student achievement for each country.
+
+Although the study of Saha et al. (2024) does not include analyses on TIMSS, it highly coincides with our current work because
+of the similarity in the objectives and variables. In their study,
+university undergraduate students in Bangladesh are analyzed
+to identify the factors affecting mathematical achievement
+while taking into account the perspectives of both teachers and
+students, utilising a mixed model approach. The study reveals
+that self-­motivation is the most impactful element in students'
+success, followed by students' enthusiasm and curiosity about
+mathematical concepts, which closely align with the factor variables in our study.
+Additionally, there exist studies applying traditional well-accepted methods to TIMSS data, not only investigating relationships between different concepts and variables but also
+focusing on the measurement theory and validation of test
+scores (e.g., Haladyna and Downing 2004; Liou and Bulut 2020).
+For example, in Liou and Bulut's (2020) study, the science performances of 8th-­grade students were examined with TIMSS
+2011 data, with a focus on question types and domains. In addition to item difficulty analysis, they use a cumulative link mixed
+modelling approach to find item format cognitive domain impacts on the science scores. Since TIMSS results are essential for
+national and international studies, academic research, and the
+development and regulation of education policies (Schmidt and
+Burroughs 2016; Carnoy et al. 2015), it is essential to understand
+the consequences of this large-­scale study and to understand the
+factors affecting the final scores.
+As well as the widespread usage of traditional methods in the
+field of education, there are recent studies applying the state-of-­the-­art ML methods such as random forest (RF), support
+European Journal of Education, 2025
+
+vector machines (SVMs), and k-­nearest neighbours (KNN). For
+example, Park et al. (2023) analyse the psychological factors
+influencing the mathematical achievement of students via linear regression, logistic regression, and several ML algorithms
+using Test of Learning Psychology results provided by Able
+EduTech Inc., which highly coincides with one of the aims of
+this study. However, in our analysis, we implement the extended
+version of linear regression by including random effects and
+ML algorithms considering the hierarchical and also subject-specific structure of the data set. Another study that closely coincides with ours in terms of ML algorithm used is the one by
+Liu et al. (2024). However, while their study examines reading
+achievements of PISA 2018 using REEM-­tree, we utilised LMM,
+REEM-­tree, and GP Boosting to investigate TIMSS 2019 mathematics achievement. Moreover, in the study of Gocheva-­Ilieva
+et al. (2020), they implement three different ML methods like
+classification and regression trees (CART), CART ensembles
+and bagging (CART-­EB), and multivariate adaptive regression
+splines (MARS) on the experimental test results, and propose a
+new ensemble method to assess the mathematics achievement
+of students. Additionally, Doz et al. (2023) use RF regression
+to analyse the effects of demographic factors on students' successes using teacher-given grades and INVALSI test scores.
+Their study has found that the variables macroregion, school
+type, and economic-­social-­cultural status are significant predictors, while gender and origin have a slight effect on success.
+Moreover, the authors in the study of Hoti et al. (2025) employ
+several ML algorithms such as RF, decision tree (DT), and Multi-Layer Perceptron to investigate students' performance utilising
+the collection of students' data from various institutions. The results show that the decision tree has the highest accuracy and
+F1-­Score when applying the SMOTE technique to make the data
+balanced. When ADASYN is applied to the data, SVMs and RF
+are both ranked first, having the same accuracy and F1-­Score.
+On the other hand, there are studies that utilise ML methods
+and are specifically based on TIMSS data, as demonstrated in
+the study by Filiz and Öz (2019). They apply educational data
+mining techniques such as naive Bayes algorithm, DT, artificial neural network, SVMs, and logistic regression to find the
+best technique for examining the key elements of success. They
+found that logistic regression and SVMs are best suited to classify the successes of students. Moreover, in the study of Wang
+et al. (2023), they employ a RF regression approach to analyse
+the factors affecting mathematical achievement of East-­A sian
+students, finding that students' confidence in mathematics, socioeconomic status, and school emphasis on academic success
+are the most important factors. However, the authors acknowledge the nested structure of the data but do not account for it
+in their analysis and implement a single-­level (or fixed-­effect)
+RF algorithm to examine the TIMSS data. Although the results
+appear consistent with the literature, ignoring the nature of the
+hierarchical structure may restrict the reliability of the findings
+and prevent the revelation of hidden aspects of the data.
+Another study that does not account for the nested structure of
+hierarchical data is the study of Huang et al. (2024). They employ
+multiple linear regression, SVMs, DT, RF and extreme gradient
+boosting (XGBoost), which do not capture the nested structure of the data, to assess the key elements of students' mathematics literacy using the PISA dataset. Despite its innovative
+3 of 23
+
+14653435, 2025, 4, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/ejed.70281 by Yildiz Teknik University, Wiley Online Library on [24/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+and their neighbouring countries. Additionally, the study by
+Liou (2017) investigates the relationship between students' science achievements and three emotional beliefs: self-­concept,
+intrinsic value, and utility value. This study examines the correlation utilising Pearson product-­moment correlation analysis and conducts separate models for each country employing
+multiple regression analysis. However, a more efficient approach would be to model the countries together in order to
+reduce potential modelling errors. Moreover, the studies of
+Kaleli-­Yılmaz and Hanci (2016) and Zhu and Leung (2012)
+can also be examples of TIMSS data usage, investigating influential factors of mathematics achievement via traditional
+methods. Utilising a quantitative analysis such as descriptive
+statistics, the study of Kaleli-­Yılmaz and Hanci (2016) investigates the differences in mathematics achievement among
+8th-­g rade students in Turkey by considering factors such as
+school type, parents' education status, gender, mathematics report mark, cognitive domains, and the effect of gender
+on these domains. The study found that although girls have
+higher average scores, the difference between boys' and girls'
+average scores is statistically insignificant. The other factors
+such as parents' education status and cognitive domains statistically affect the TIMSS success of students. Similarly, Zhu
+and Leung (2012) conducted a study employing a two-­level
+hierarchical model on 8th-­g rade students in Hong Kong and
+found that while homework frequency does not affect achievement, the amount of time spent on homework has a positive
+correlation with student achievement.
+
+It is well-­k nown that hierarchical data sets like TIMSS or
+PISA include information depending on their levels. While
+student-­dependent factors provide individual characteristics
+of students, school-­dependent factors give information on the
+resources and structural aspects of schools. Therefore, the personal elements of students are expected to be different, but the
+characteristics depending on facilities and resources must be
+the same for all the students within the same school. Similarly,
+students in the same country reflect common items regarding
+the country since the levels of development, economic status,
+and educational policies are identical. Without incorporating
+these levels of information, all observations are treated as independent, which causes a loss of information. Additionally,
+it leads to biased estimators, and consequently, biased conclusions (Moerbeek 2004). On the other hand, it causes under-­or
+overestimated standard errors and thereby inflated type I or
+type II errors, respectively. This inflation is serious particularly when the dependency of observations within the same
+unit is strong (Wampold and Serlin 2000). Thus, it is necessary
+to analyse such data using appropriate ML algorithms such as
+REEM-­tree or GP boosting ensuring model-­data compatibility, as we did in our study.
+
+2.1   |   Research Questions
+Based on the gaps defined in the literature review, this study
+aims to address the following research questions:
+1. Which factors are the significant elements considering the
+mathematical achievement of the students according to
+TIMSS 2019 data?
+2. What type of similarities and differences do the algorithms
+REEM-­tree, GP boosting and LMM capture about the variables regarding the significance and strength, and how do
+these variables differ across the algorithms implemented in
+this study?
+3. Which algorithm yields the best predictive performance
+metrics in terms of Root Mean Squared Error (RMSE),
+Mean Absolute Error (MAE) and Mean Absolute
+Percentage Error (MAPE)?
+The rest of the study is organised as follows. Initially, we outline the contribution of this research. Following this, we provide an overview of the TIMSS dataset, followed by a detailed
+examination of its characteristics. Next, we summarise both
+traditional and modern ML methods employed in our analysis.
+Subsequently, we present all outputs and results derived from
+our study. In the last section, the discussion and conclusion are
+presented.
+
+3   |   Sample
+Although TIMSS includes both mathematics and science scores
+of students, we prefer to examine the mathematical aspects
+4 of 23
+
+of students depending on the ideas made by Kirkland (2010)
+and Darshan Singh et al. (2018). Kirkland (2010) agrees that
+mathematics is the basic level of all scientific fields and that
+others are the developed versions of mathematics. According
+to Darshan Singh et al. (2018), if students have good mathematical thinking skills, then they may successfully develop
+their ideas in other fields, especially in science. Given the
+aforementioned remarks, we proceed with an investigation
+into the academic performance of students in the field of
+mathematics for the purpose of this study. Moreover, grade
+four is the pivotal year in building foundational knowledge,
+language skills, and fostering curiosity (Marôco et al. 2024).
+Examining fourth-­g rade students may be even more essential
+in shaping educational policies compared to the investigation
+of eighth-­g rade students since it can notify policy-­makers and
+educators of the early determination of required reforms in
+the curriculum (UNESCO and International Association for
+the Evaluation of Educational Achievement 2020), teachers'
+professional development needs, and inequalities in the opportunities and resources. Therefore, these reforms can be
+implemented as soon as the gaps are realized using the fourth-grade students' data.
+In the process of selecting countries for the study, certain criteria are used to ensure consistency and comprehensibility. One
+example of this is the inclusion of countries with a high number
+of refugees, as they are often considered to be at a disadvantage
+due to language barriers and lack of educational opportunities
+(Koyama 2015). Moreover, in the studies of Wiberg (2019) and
+Hastedt (2016), born status in the home country is specified as
+a well-­known factor that positively or negatively affects mathematics achievement of students based on the characteristics
+of immigrants. Thus, integrating immigration via the variable
+born status into the analysis can provide more insights into
+mathematics achievement. In the report of Refugees in Turkey:
+Livelihoods Survey Findings (Turkish Red Crescent and World
+Food Programme 2019), Turkey is the country that holds the
+highest number of refugees worldwide, and thus there are a
+significant number of disadvantaged groups participating in education outside of the country's education plan. It is crucial to
+evaluate and understand the current state of this country, to comprehend the effect of these groups on the education system, and
+to contribute to making necessary improvements. Additionally,
+it is important to not only examine the situation in this country,
+but also to compare it to similar situations in other countries. In
+TIMSS 2019, Turkey conducted TIMSS for students in their 5th
+year of formal schooling. Also, Norway, England, South Africa,
+and New Zealand conducted the study for this grade level for
+various reasons such as students starting school at an earlier
+age than other countries. Further information can be found in
+Martin et al. (2020) and the report of the Ministry of National
+Education of the Republic of Turkey (TIMSS M 2019).
+In line with the main purpose of the study, the countries are
+determined according to their success rankings as well as the
+criteria mentioned above. Turkey ranked 23rd among 58 participating countries with an average score of 523 (above the
+midpoint of 500) at the 4th-­grade level, and it has the highest
+standard deviation, indicating wide score ranges within the
+country. Among the countries mentioned, only England and
+Norway surpass Turkey in rankings. On the TIMSS scale, both
+European Journal of Education, 2025
+
+14653435, 2025, 4, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/ejed.70281 by Yildiz Teknik University, Wiley Online Library on [24/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+contribution to the literature in terms of ML applications, not
+accounting for the nesting structure may result in overlooking
+important information contained in the data.
+
+Countries
+
+Years of
+schooling
+
+Economic
+status
+
+Average
+math score
+
+Rank
+in 2019
+
+Age of
+students
+
+England
+
+5
+
+Developed
+
+556
+
+8/58
+
+≥ 10
+
+• Top-­ranked position
+• Developed country
+• 5 years of schooling
+
+Turkey
+
+5
+
+Developing
+
+523
+
+23/58
+
+≥ 10
+
+• Mid-­ranked position
+• Developing country
+• 5 years of schooling
+• High number of refugees
+
+S. Africa
+
+5
+
+Developing
+
+374
+
+56/58
+
+≥ 10
+
+• Bottom-­ranked position
+• Developing country
+• 5 years of schooling
+
+are developed countries with higher scores than the midpoint.
+England ranks 8th with an average mathematical score of 556 in
+the 4th grade, while Norway is placed 11th. Given this disparity,
+we choose to include England in our analysis. Meanwhile, New
+Zealand and South Africa fall below Turkey in rankings. New
+Zealand holds the 40th position out of 58 countries, whereas
+South Africa is placed 56th, with a lower average score of 374
+in mathematics achievement at the 4th grade. Consequently, we
+opt to include South Africa, as it ranks as the 3rd least successful
+country.
+In summary, this study uses TIMSS 2019 data from Turkey,
+England, and South Africa national samples representing a
+global diversity in the field of education, and their summary is
+given in Table 1.
+It is worth noting that England is a developed country,
+whereas Turkey and South Africa are considered developing
+countries. By including countries with varying levels of development in the model, it reduces the possibility of the established model being biased in terms of development. According
+to the TIMSS, 500 points refers to the scale mid-­point. It is statistically significant that the average math scores of England
+and Turkey, with standard errors of 3.0 and 4.4 respectively,
+are higher than the mid-­point. In contrast, South Africa's average math score of 374, with a standard error of 3.6, is significantly lower than the mid-­point at the 95% confidence level
+(TIMSS M 2019). As a result, students from Turkey show the
+highest level of inconsistency among the countries. However,
+the understanding of a question may differ among students
+due to different cultural and family backgrounds. We assume
+a measurement invariance, indicating that individuals from
+different countries have the same perception and interpretation of the items (Byrne and Watkins 2003). The main aim is
+to comprehend the factors that influence success by including
+different success levels and to provide a more comprehensive
+understanding than a single-country analysis. By including the country variable as a covariate or random effect, the
+variation between these countries will be incorporated into
+the model.
+
+European Journal of Education, 2025
+
+Selection rationale
+
+4   |   Instruments
+The modelling design begins by identifying dependent and independent variables, examining assumptions, and specifying
+random levels. Mathematics score is used as a dependent variable (see all variables used in Appendix A, Table A1). However,
+TIMSS does not provide the actual scores; instead, it provides
+five plausible values for each area, which are drawn from the
+resulting posterior distribution for each observation (Fishbein
+et al. 2021). Martin et al. (2020) highlight that these plausible
+values are not individual test scores and are randomly selected
+from the conditional normal distribution for each individual. To
+ensure reliable inference, Martin and Mullis (2012) recommend
+using an average of the five plausible values. Therefore, the
+mean score of these values is performed as a dependent variable
+of the analysis.
+The data includes 18 highly related variables representing
+students' opinions (or self-­criticism) about math. We prefer to
+utilize factor analysis (FA) to decrease the effect of multicollinearity between highly related predictors. To reduce the data
+dimension and increase conceptual integrity, it is applied in
+the preprocessing stage. After implementing FA, we gathered
+two factors, and they were identified as mathematical tendency and emotional factors. Factor loadings and 18 variables
+used can be seen in Appendices A and B, Tables A1 and B1.
+Utilizing these two factors instead of the original 18 Likert-scale variables enhances model interpretability. Our modeling approach encompasses both statistical and ML methods,
+culminating in the identification of the most effective model
+while prioritizing parsimony.
+Furthermore, the variable SES is also constructed in the preprocessing step. The original data includes variables representing
+the socio-economic status of students. Including these variables as a compact structure is more preferable for increasing
+the interpretability of variables. We aggregate all relevant variables into a single SES variable while summing them. It can be
+found in Appendix A, Table A1 for the details of each individual
+variable.
+
+5 of 23
+
+14653435, 2025, 4, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/ejed.70281 by Yildiz Teknik University, Wiley Online Library on [24/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+TABLE 1    |    Countries used in this study and their summary information on years of schooling, economic status, average math scores, rankings,
+and age of students.
+
+According to Table 2, the gender distribution of participants is
+roughly equal across the three countries. A higher percentage
+of participants were born in the corresponding country as opposed to not being born there. The variable, number of books
+has five different categories, which has an increasing scale from
+1 to 5 (1: 0–10 books, 2: 11–25 books, 3: 26–100 books, 4: 101–200
+books, 5: more than 200 books). On average, students in England
+have more books than students in Turkey and South Africa.
+Moreover, the table also shows mean values of math scores. The
+mean math scores for England and Turkey are around 555 and
+522, respectively, while the mean for South Africa is around 370.
+Moreover, Turkey has the highest standard deviation in math
+scores with a value of 95.83. The highest mean level of SES belongs to England, followed by South Africa and Turkey. The
+
+mean of emotional factor in England is negatively around 0.5
+while Turkey and South Africa approximately have mean values
+of 0.06 and 0.13, respectively. On the other hand, mean of the
+mathematical tendency factor in England is the highest value
+with 0.34. Although, absolute mean values in Turkey and South
+Africa seem similar, the value of South Africa is in negative
+direction.
+Figure 1 displays how the mathematics scores vary in each country with some outliers. According to the figure, the median values
+for Turkey and England are very close to each other and prominently higher than the median value of South Africa. Similarly,
+the dispersion in Turkey and England appears narrower than in
+South Africa, reflecting a more intense math achievement among
+students. Additionally, the numerous outliers in South Africa are
+mostly gathered around high math scores, while a few outliers
+are found around low math scores in Turkey. England appears to
+have relatively few outliers, suggesting a more consistent picture of
+student math performance. A more detailed representation of the
+data can be found in Figure 2.
+
+TABLE 2    |    Number of observations, math scores, number of books, gender, and origin percentages for England, Turkey and South Africa.
+
+Variable name
+
+England
+
+Turkey
+
+South Africa
+
+2521
+
+3334
+
+7747
+
+Math score* (SD)
+
+554.70 (82.94)
+
+522.00 (95.83)
+
+370.40 (94.02)
+
+Number of books*
+
+3
+
+2.5
+
+2
+
+SES*
+
+14.2
+
+13
+
+13.1
+
+Emotional factor*
+
+−0.484
+
+0.0581
+
+0.132
+
+Mathematical tendency factor*
+
+0.338
+
+0.287
+
+−0.234
+
+Gender (girls)**
+
+0.50
+
+0.52
+
+0.50
+
+Origin (yes)**
+
+0.90
+
+0.97
+
+0.92
+
+Number of observations
+
+Note: Mean value (*) and percentage (**) are provided.
+
+FIGURE 1    |    Strip-­chart showing country-­based observations.
+
+6 of 23
+
+European Journal of Education, 2025
+
+14653435, 2025, 4, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/ejed.70281 by Yildiz Teknik University, Wiley Online Library on [24/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+The descriptive statistics of used variables are given in Table 2.
+The number of students who take the exam in England,
+Turkey, and South Africa is 2521, 3334 and 7747, respectively.
+Moreover, the correlation matrix for each country is provided in
+Appendix C, Figures C1–C3.
+
+Figure 2 depicts the math scores, gender, social-­economic status
+(SES), and number of books across countries and the pairwise
+relationships between these variables. It shows that the distributions of math scores for Turkey and England are similar, while
+South Africa is left-­shifted. Figure 2 [1,2] shows that the gender
+distributions differ among countries in terms of math scores. The
+lowest medians of SES scores belong to South Africa, according to
+Figure 2 [1,3]. Figure 2 [1,4] shows that math scores increase with
+the number of books for Turkey and England, with some outliers.
+The majority of students in South Africa have 0–10 books, while a
+minority have 101–200 or more than 200 books.
+After providing an initial overview, we now explain the insights that have been gathered from the data in relation to
+the use of random effects, as demonstrated by the box plots
+in Figure 3.
+Figure 3 illustrates the box plots of math scores for schools in
+order to demonstrate the differences between the countries and
+the schools within each country. The x-­a xis represents the school
+IDs, and the y-­a xis displays math scores. The centre lines in each
+panel represent the average values for each country, while the
+centerline of each box represents the median math scores. It can
+be observed that the scores of schools fluctuate around the average lines with different scales. Some schools have scores that do
+not even come close to the average line, as seen by the interquartile range, minimum, and maximum values, indicating a large
+European Journal of Education, 2025
+
+inconsistency and fluctuation between schools. This fluctuation
+in scores may depend on known or latent factors. Thus, it is compulsory to incorporate this fluctuation into the analysis, which
+takes into account both inter-­school and intra-­school variability.
+
+5   |   Data Analysis Methodology
+In this section, we provide a comprehensive description of the
+data analysis methodology used in our study. Figure 4 depicts
+the general flow of the analysis to clarify the main ideas and
+steps of this research. For the implementation of this study, we
+used the R programming language.
+
+5.1   |   Classical Predictive Method: Linear
+Mixed Models
+Linear mixed models (LMM), first introduced by Laird and
+Ware (1982), extends traditional linear models that include an
+additional random effect term. It is primarily applied to longitudinal and clustered data sets. In clustered data, individuals or
+observations are grouped together, as is the case with TIMSS
+2019, where each school represents a cluster, and students are
+the constituent individuals within each cluster. When modeling
+such data, the dependency structure among the subjects within
+a cluster should be considered.
+7 of 23
+
+14653435, 2025, 4, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/ejed.70281 by Yildiz Teknik University, Wiley Online Library on [24/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+FIGURE 2    |    Plots showing relations between math scores and demographics.
+
+FIGURE 4    |    Flow-­chart of the data analysis methodology.
+
+Let yi show the variable of interest, math achievement, for each
+observation. LMM is defined as below:
+yi = Xi β + Zi ui + 𝜀i , i = 1, … , n,
+
+(1)
+
+(
+)
+of
+where yi is ni × 1 vector
+(
+) response, β is (p × 1) unknown fixed
+design
+matrix for the fixed
+effect vector, Xi is ni × p known
+(
+)
+effects of the ith subject, εi is( ni × 1) vector of within-­subject
+error for the ith subject, Zi is ni × q known design matrix for
+the random effects of the ith subject, ui is (q × 1) unknown random effect vector. The random effects ui and error terms εi are
+
+8 of 23
+
+normally distributed with 0 mean. Moreover, it is beneficial to
+note that ui and 𝜀i are assumed as independent of each other. In
+our model setting, Zi is a designed matrix that consists of random intercept for each school or each school within the country depending on the model set. Since parameter estimators
+in this model include other unknown parameters, obtaining a
+closed-­form solution is not possible. Therefore, iterative algorithms such as Expectation–Maximisation (EM) are used for
+parameter estimation (Dempster et al. 1977; Wu 1983; Meng
+and Rubin 1993). For deeper investigation and rationale behind employing iterative methods in LMM, see Verbeke and
+
+European Journal of Education, 2025
+
+14653435, 2025, 4, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/ejed.70281 by Yildiz Teknik University, Wiley Online Library on [24/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+FIGURE 3    |    Box-­plots showing fluctuations in the score of schools for selected countries.
+
+effects models besides the independence assumption of boosting
+algorithm. General model definition form used is as follow:
+
+In this study, after employing LMM, the exploration extends to
+integrating ML techniques, broadening the analytic horizon,
+and enhancing the predictive capacity of the study. We choose to
+use REEM-­tree and GP boosting as they allow us to incorporate
+the nested structure within our data effectively.
+
+y = F(X ) + Zb + 𝜀,
+
+5.2   |   ML Methods
+5.2.1   |   REEM-­T ree
+REEM-­tree is proposed by Sela and Simonoff (2012), which
+explores the implementation and outlines the methodology of
+CART (Classification and Regression Trees) in the context of
+mixed effect structures. The REEM-­tree method, like other tree-based algorithms, shows less sensitivity to parametric assumptions. Hence, the authors argue that the REEM-­tree approach
+exhibits greater efficacy compared to classical models incorporating random effects, as well as regression trees that do not incorporate random effects. A general random-­effects model with
+random errors utilized can be described as follows
+(
+)
+yij = Zij bi + f xij1 , … , xijK + 𝜀ij ,
+(2)
+⎛ ⎞
+⎜ ⎟
+⎜ ⎟
+⎜ 𝜀i1 ⎟
+⎜ ⎟
+�
+�
+⎜ . ⎟ ∼ Normal 0, R ,
+i
+⎜ ⎟
+⎜ . ⎟
+⎜ ⎟
+⎜ . ⎟
+⎜ ⎟
+⎝ 𝜀iJ ⎠
+bi ∼ Normal(0, D),
+
+where Zij is a design matrix for each i = 1, … , I and
+j = 1, 2, … , Ji, bi is an object-­specific effect, f is a known linear function with inputs xij1 , … , xijK for variables 1 to K , 𝜀ij is an
+object-­specific random errors for case i in cluster j, Ri and D are
+variance–covariance matrices.
+One beneficial property of REEM-­tree is to handle missing values in the attributes while constructing trees. Thanks to the iterative algorithm used, REEM-­tree constructs a tree with various
+technique such as surrogate split in estimating the components
+bi, Ri and D, and hence, the tree is unaffected by the missing
+observations (Sela and Simonoff 2012).
+5.2.2   |   GP Boosting
+GP Boosting is offered by Sigrist (2022) as a combination of
+boosting with the Gaussian process and grouped random effect
+models. The method includes flexibility and smooth adjustment of nonparametric GP and mainly aims to ease zero prior
+mean and linearity assumptions of Gaussian process and mixed
+European Journal of Education, 2025
+
+(3)
+
+b ∼ N(0, Σ),
+(
+)
+𝜀 ∼ N 0, 𝜎 2 In ,
+
+where y is response variable, F(X ) are fixed effect, b is random effect with covariance matrix Σ and 𝜀 is an error term (Sigrist 2022).
+In GP boosting algorithm, the function F(X ) is mainly based on
+the non-­parametric estimation of the predictors. For this reason,
+it is impossible to obtain certain statistical diagnostics such as
+p values or direct-­effect sizes. However, the algorithm can still
+provide the variable importance plots for each of the predictors
+(Chakraborty et al. 2024).
+
+6   |   Results
+6.1   |   Linear Mixed Models
+We begin the modelling strategy with a simple model, including
+only the intercept and aim to extend it to the final model. The
+simple models are constructed from two different perspectives regarding random effects: (i) schools and (ii) schools nested within
+countries. Although incorporating a class-level random effect
+could be an alternative strategy, it is disregarded in the data utilised for this study due to the presence of only one class per school.
+However, we prefer to incorporate schools nested within countries
+as random effects, allowing for examination of the underlying population, as defined by Searle et al. (1992) in section 1.4. It is worth
+noting that incorporating country as a random effect is not a common modelling strategy, but it is justifiable in this context as the
+countries used in this study constitute a group of countries (those
+with 4th grades) in TIMSS, enabling generalisation of the model.
+The ANOVA test (p < 0.0001) makes the comparison between the
+initial models with random effects (i) and (ii) hereby, we continue
+with the nested structure of random effects. Then, the predictors
+are included to the current model sequentially. At each step, we
+have found that the variables included are statistically significant
+and make significant difference in BIC between the current and
+previous models. Hence, it is found that we should incorporate all
+of the student-­level predictors at the final model. The optimum
+random effect model obtained is presented as
+MathScoreijk = 435.95 − 3.69 × Gijk + 4.54 × NBijk + 16.87 × Oijk
++ 13.89 × EFijk + 32.98 × MTFijk + 2.21 × SESijk + uj∣k + uk
+
+(4)
+
+where = 1, … , I , j = 1, 2, … , Ji and k = 1, 2, 3. G, NB, O, EF, MTF
+and SES denotes the predictors gender, number of books, origin,
+emotional factor, mathematical tendency factor and economic
+status, respectively. uk is school-­level random effect while uj∣k
+represents the random effect of schools nested within countries
+(see Appendix D, Table D1).
+The model equation shows that the mathematical tendency factor and the emotional factor are among the top three elements
+that positively contribute to mathematics scores with varying
+9 of 23
+
+14653435, 2025, 4, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/ejed.70281 by Yildiz Teknik University, Wiley Online Library on [24/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+Molenberghs (1997), Laird and Ware (1982), Harville (1977),
+Patterson and Thompson (1971) and West et al. (2022).
+
+It is observed that the predictor number of books at home, identified as one of the statistically significant variables, increases
+math scores by 4.54 units. This variable takes values from 1 to
+5, categorizing the number of books. Notably, for students who
+have a substantial number of books (more than 200) at home, it
+contributes a maximum of 22.7 units to their math scores.
+We find that gender has a significant effect on math achievement when schools are nested in countries. Girls tend to have
+higher math scores, although the strength of the effect is relatively small. Our findings align with previous research from
+UNESCO (2020), which found that gender has little effect on
+math achievement in many countries but may have a larger effect
+in certain regions, such as Southeast Asia and Latin America.
+The outputs of the classical predictive model indicate that
+SES has a positive effect on the math achievement of students.
+
+Similarly, it is found that the indicator SES positively affects students' achievement scores in many studies (e.g., Haveman and
+Wolfe 1995; Caponera and Losito 2016). Since the range of SES is
+between 8 and 16, the highest contribution can be about 35 and
+the lowest one is about 17.5 to the overall math score.
+Examining a scatter plot comparing predicted values against
+actual values, Figure 5, is essential for evaluating the model's
+performance. Figure 5, representing the actual and predicted
+values from randomly selected 150 schools, suggests that the obtained model appears to be eligible.
+In addition to the visual insights gained from Figure 5, the
+evaluation of model performance extends to the analysis of
+performance metrics. These metrics serve as crucial benchmarks, allowing for a comprehensive assessment of the classical
+model's efficacy and facilitating meaningful comparisons with
+other methods implemented in the study. For this aim, the entire data is divided into two subsets: the training set and the test
+set. We prefer to randomly split the data 80% for the training
+set and 20% for the test set through this study to obtain reliable model performance metrics. The models are fitted utilising
+the training set, and their performance metrics, RMSE, MAE,
+and MAPE, are obtained on the test data to assess the model
+performance. The mathematical definitions of the performance
+metrics are as follows:
+
+FIGURE 5    |    Predictive performances of LMM.
+
+10 of 23
+
+European Journal of Education, 2025
+
+14653435, 2025, 4, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/ejed.70281 by Yildiz Teknik University, Wiley Online Library on [24/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+strengths. The contribution of the factors mathematical tendency [range: (−2.38, 2.14)] and emotional [range: (−4.16, 1.28)]
+to the predicted math scores may change to between (coefficient × bounds: −78.5, 70.5) and (−57, 18), respectively. Also,
+the classical model suggests that students can achieve higher
+math scores if they attend school in their home country. In other
+words, students born in the country tend to score about 17 points
+higher than those who are not, keeping other effects fixed.
+
+1 ∑
+∣ yi − ŷi ∣
+n i=1
+
+(5)
+
+n
+
+MAE =
+
+MAPE =
+
+n
+100 ∑ || yi − ŷi ||
+|
+|
+n i = 1 || yi ||
+
+(6)
+
+(7)
+
+where yi denotes the actual value and ŷi the predicted value.
+In the case of comparison, the smallest values are considered
+the best performances for these three metrics. In the classical
+approach, RMSE, MAE, and MAPE are found as 61.07, 48.76
+and 11.68, respectively.
+It is worthwhile to consider a different strategy by incorporating the country as an explanatory variable and considering
+only school as a random effect. This approach would allow for a
+broader interpretation of the country effect, taking into account
+the variations between schools. However, it is limited to the examination of Turkey, South Africa, and England and cannot be
+generalised to other 4th-­grade countries. However, those who
+will use this one-­level random effect model in their research can
+choose the one that suits their purposes.
+
+6.2   |   ML Methods
+6.2.1   |   REEM-­T ree
+Beside LMM, some ML methods have been developed for nested
+structured data sets. REEM-­Tree (Sela and Simonoff 2012) and
+GP Boosting (Sigrist 2022) are two of them, and we focus on
+these two methods since they enable us to consider the nested
+structure of the data with fewer parametric assumptions and
+provide flexible tree-­based applications (Salditt et al. 2023).
+REEM-­tree models have various advantages in addition to
+the strengths of classical random-­effect models, making them
+effective and flexible tools in statistical modelling that can
+exceed the boundaries of traditional approaches. One of the
+key strengths of the classical method lies in its capability to
+capture the magnitude of relationships between dependent
+and independent variables. However, this characteristic does
+not hold true for REMM-­t ree and GP boosting. Nevertheless,
+these methods provide additional perspectives that LMM
+has limited ability in terms of flexible implementation. For
+instance, REEM-­tree does not assume a linear relationship
+between dependent and independent variables, whereas
+LMM does.
+REEM-­tree includes two iterative parts. At the first step, the algorithm fits a regression tree without random effects which are
+initialized as zero at the beginning. Afterwards, the tree is used
+to create indicator variables. At the second step, LMM using
+maximum likelihood (MLE) or restricted maximum likelihood
+estimation (RMLE) is fitted to obtain current random effects
+European Journal of Education, 2025
+
+from the estimated model. The process lasts until convergence
+occurs (Sela and Simonoff 2012).
+Although REEM-­tree is an extended version utilising LMMs,
+it is not possible to write the output obtained from REEM-­tree
+in equation-­based closed form. On the other hand, it provides
+several metrics to assess the power of models and strategies. In
+REEM-­tree, the same model comprising all the predictors and
+schools nested within countries as a random effect is employed
+for the purpose of comparing the performance of LMM and
+REEM-­tree.
+Figure 6 shows the predictive performances of REEM-­tree for
+randomly selected 150 schools among three countries. We anticipate observing the points aligning along a straight line with
+a slope of 1. Nevertheless, while this guideline is suitable for specific plots, certain others (e.g., id: 5207 South Africa; 5067 Turkey;
+5032 England) behave in a distinct manner. Overall, there seems
+to be a similarity in the general pattern with Figure 5.
+As an output of the REEM-­t ree algorithm, Figure 7 shows the
+pruned regression tree structure. The initial split is noticeable,
+focusing on the mathematical tendency factor. This division
+reveals significant colour discrimination, particularly at the
+0.4 threshold of the tendency factor, highlighting its effectiveness. Moreover, interior and leaf nodes with high math
+scores are marked in bold-­blue, while those with lower math
+scores are shaded in light-­blue. Following the initial split, it
+becomes apparent that the nodes on the right-­hand side exhibit higher math scores compared to those on the left-­hand
+side. Subsequently, as we progress through the steps, the tendency factor continues to play a pivotal role, offering further
+insights.
+Besides the mathematical tendency factor, emotional factor, SES,
+and number of books are incorporated into the decision mechanism of the tree. However, while these factors are included from
+the first splits, SES and the number of books are incorporated in
+the following steps. Naturally, it can be thought that the factors
+are the most crucial indicators for assessing the math scores for
+REEM-­tree.
+
+6.2.2   |   GP Boosting
+Boosting (Schapire 1999) is a general ML algorithm aiming at
+the improvement of accuracy. It is described as a fast, simple,
+and computationally easy method. However, it is limited in the
+context of hierarchical data. Sigrist (2022) has developed an extended version of boosting, incorporating a combination of mixed
+models and Gaussian processes, to address the assumption-based redundancies. Unlike REEM-­tree, GP Boosting cannot
+provide a closed-­form equation as an output since it makes lots
+of tries with many parameters and brings out the most optimum
+solution for the data set loaded. Therefore, we provide actual
+versus predicted scatter plot and several performance metrics.
+Figure 8 effectively illustrates the performance of the GP boosting algorithm. We observe the points aligning along a straight
+line. The findings obtained by the figure coincide with results
+from Figures 5 and Figure 6. Notably, the GP boosting model
+11 of 23
+
+14653435, 2025, 4, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/ejed.70281 by Yildiz Teknik University, Wiley Online Library on [24/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+√
+√
+n
+√1 ∑
+(
+)2
+yi −̂
+RMSE = √
+yi
+n i=1
+
+FIGURE 7    |    Pruned REEM-­Tree.
+
+12 of 23
+
+European Journal of Education, 2025
+
+14653435, 2025, 4, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/ejed.70281 by Yildiz Teknik University, Wiley Online Library on [24/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+FIGURE 6    |    Predictive performances of REEM-­tree.
+
+An additional insightful visualisation offered by the GP boosting
+algorithm is the importance plot. Figure 9 shows the importance
+
+of each variable in terms of the gain in descending order. This
+plot helps us understand which variables play a crucial role in
+the model's accuracy and overall effectiveness. For GP boosting,
+the most and the least significant elements are mathematical
+tendency and gender, respectively.
+
+FIGURE 8    |    Predictive performances of GP boosting.
+
+FIGURE 9    |    Variable importance plot.
+European Journal of Education, 2025
+
+13 of 23
+
+14653435, 2025, 4, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/ejed.70281 by Yildiz Teknik University, Wiley Online Library on [24/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+yields favourable metrics, with scores of 59.92, 47.80 and 11.42
+for RMSE, MAE and MAPE, respectively.
+
+LMM
+
+REEM-­tree
+
+GP boosting
+
+RMSE
+
+61.069
+
+61.032
+
+59.923
+
+MAE
+
+48.761
+
+48.611
+
+47.797
+
+MAPE
+
+11.680
+
+11.611
+
+11.415
+
+System time
+
+1.542 (s)
+
+3.144 (s)
+
+2.713 (min)
+
+Note: The best values for each performance metric are highlighted in bold.
+
+We compare the modern and traditional techniques using
+three different metrics: RMSE, MAE and MAPE; all metrics and system times are reported in Table 3. The best performance metrics are highlighted in bold. The methods are
+selected primarily based on their ability to handle the hierarchical structure of the data and are expected to provide very
+similar results in terms of performance metrics. Although
+there seems to be a slight difference between the metrics, GP
+boosting has superior performance in each error metric compared to LMM and REEM-­tree. Moreover, it can be seen in
+Table 3 that REEM-­t ree outperforms LMM as well, albeit by
+a small margin.
+
+6.3   |   Interpretative Comparison of the Algorithms
+Besides investigating the factors affecting mathematics achievement, another perspective of this study highlights the competitive edge of extended ML algorithms such as REEM-­tree and
+GP boosting when compared to the traditional method of LMM.
+The algorithm of LMM is relatively straightforward and based
+on parameter estimation equations. It does not only provide predictions but also allows for inference. For example, in addition
+to ML models where we can predict and describe relationships
+between variables for countries, schools, or students based on
+the measurements, LMM also constructs how these relationships occur. It shows the magnitude of the relationship between
+independent variables and the dependent variable.
+On the other hand, modern algorithms, REEM-­tree and GP
+boosting, have several benefits such as predictive power. It is
+important to note that ML algorithms generally aim to achieve
+high predictive power as their first and main goal. However, although it may seem like an inadequate and controversial feature
+of ML algorithms at first glance, this raises different perspectives for researchers to consider. For example, high predictive
+performance enhances the reliability of the model and, accordingly, increases its real-­world application in relevant areas such
+as finance, healthcare, or education, thereby supporting system
+automation. Similarly, insufficient predictive power may indicate that the structural suitability of the model needs to be investigated, or that the model may be ignoring important variables
+(Salditt et al. 2023). Moreover, aiming to obtain high prediction
+power helps in selecting the best-­performing model and tuning
+the parameters. Therefore, while focusing on predictive power is
+a central aspect of ML, it is not inherently problematic.
+The REEM-­tree offers more effective performance compared
+to standard trees and allows for modelling data without considering linearity. Sela and Simonoff (2012) also indicate that
+14 of 23
+
+REEM-trees outperform when the true relationship follows
+a tree structure and demonstrate comparable performance to
+linear models incorporating random effects, even when a tree
+structure is not assumed. Furthermore, they demonstrate that
+REEM-­trees are more skilled at estimating the underlying functional form and random effects compared to LMMs, especially
+in situations where there are limited observations per object
+(Sela and Simonoff 2012). Additionally, despite the absence of
+a mathematical equation as an output, visualisations serve as
+supplementary materials to enhance the comprehensibility of
+the impact. Among the methods examined, GP boosting is best
+suited to obtain factors that influence math scores, as it can
+easily produce a variable importance plot as an output of the
+algorithm.
+It is seen that LMM has dominated statistical analyses in the
+educational field and become the prior option to analyse nested-structured data over the years, even though relevant assumptions have not been satisfied in empirical data. If practitioners
+would like to follow a fully parametric route, methods like nonlinear mixed models (NLMMs) are appropriate if one can posit
+a reasonably nonlinear functional form of the underlying process. However, on the other hand, we have emphasised that the
+state-­of-­the-­art techniques, such as REEM-­tree and GP boosting, can enable practitioners to analyse nested-­structured data
+with enhanced performance in a more flexible way. For example, REEM-­trees can capture nonlinearities, are less vulnerable
+to certain parametric requirements, and provide better predictive power than LMM (Sela and Simonoff 2012). Moreover, GP
+boosting seems more advantageous than the others, LMM and
+REEM-­tree, in terms of the flexible nature of the GP boosting
+algorithm for grouped random effects, certain parametric assumptions such as zero and linearity assumptions for the prior
+mean function, and independence assumption unlike other
+boosting algorithms (Sigrist 2022). REEM-­tree and GP boosting
+are highly competitive with LMM and promising to enhance
+predictive power. Therefore, these algorithms have the potential
+to significantly outperform classical methods.
+Consequently, ML methods have the ability to handle large
+amounts of data without considering non-­linearity, convergency,
+and complex data structures with high predictive performance
+(Hilbert et al. 2021). Moreover, with data that is continuously
+growing, ML algorithms will become more visible and crucial in
+the coming years (Romero and Ventura 2010; Hilbert et al. 2021).
+
+6.4   |   Limitations
+This study includes several limitations in terms of the data set
+and modeling path. An important issue concerns the original
+dataset, which contains a significant amount of missing data.
+Due to TIMSS 2019 sample design, achievement gaps between
+schools in Turkey and South Africa cannot be distinguished
+from achievement differences between classes within the same
+schools.
+The situation is similar in England, where one class per school is
+included in the sample, except for 20 schools. Therefore, we omit
+the class level and build the models with a two-­level hierarchical structure: schools nested within countries. Since the data are
+European Journal of Education, 2025
+
+14653435, 2025, 4, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/ejed.70281 by Yildiz Teknik University, Wiley Online Library on [24/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+TABLE 3    |    Performance metrics.
+
+An additional limitation is the modelling strategy. At the beginning of the analysis part, the classical model is applied to
+different scenarios. For instance, schools nested in countries
+(preferred), students nested in schools, and only schools are
+implemented for random effects. In instances where countries
+are excluded from random effects, they are introduced as fixed
+effects to account for variations between countries and the specific contributions of variables associated with each country.
+However, REEM-­tree does not allow the inclusion of the interaction terms into the analysis. To ensure a consistent analysis
+and to be able to compare analyses fairly, we prefer to proceed
+with the model by incorporating the country effect as a random
+effect rather than a fixed one for all algorithms.
+On the other hand, although ML algorithms work well in terms
+of prediction accuracy, it may be better to mention their computational cost. Because of the complicated inner processes,
+they take more time compared to classical algorithms. However,
+this drawback can be overcome via parallel processing and
+optimization.
+Moreover, mathematical tendency factor and emotional factor
+are derived from student subjective responses to Likert-­scale
+items, for example, statements like ‘I enjoy learning mathematics’ or ‘I find mathematics challenging’. These items are combined using factor analysis to produce factor scores. While this
+approach improves construct measurement, it remains subject
+to potential self-­report biases such as social desirability.
+
+7   |   Discussion
+Capitalising on the advantages of traditional and modern approaches, this study implements various statistical techniques
+to investigate the factors that significantly impact students'
+mathematics achievement as determined by TIMSS 2019 data
+with the secondary aim of providing guidance to policymakers
+and researchers on student success. However, in this study, our
+attention is directed not only towards the elements impacting
+mathematical achievement but also towards the comparison of
+the algorithms implemented. Besides the classical random effect
+model (i.e., LMM), the algorithms REEM-­tree and GP boosting
+are also employed to criticise the applicability and performance
+of ML algorithms. To the best of our knowledge, this article presents a fresh perspective in this regard.
+The analysis of mathematics achievements in both developed
+and developing countries is conducted utilising random effect
+modelling and modern ML techniques to obtain solid, comparable, and meaningful results. Because of the data structure,
+it is compulsory to account for both school-­specific effects and
+schools within-­country effects, thereby increasing the statistical
+power of the analysis thanks to incorporating subject-­specific
+
+European Journal of Education, 2025
+
+random effects. It is important to acknowledge and account for
+these variations in order to effectively implement new education
+policies and take appropriate precautions. Failure to do so may
+result in a significant loss of information and a lack of precision
+in the analysis of educational data.
+The analyses create several critical outputs that enable us to
+make logical inferences directly and differ in critical inferences.
+The mathematical tendency is the most important element in
+students' math success because of its high level of positive contribution in all three approaches. Lee and Stankov (2018) identified variables such as confidence in mathematics and students'
+educational aspirations, respectively, as important predictors of
+mathematics achievement, which are similar to the mathematical tendency and emotional factors in our study. They suggest
+that confidence in mathematics is the most important factor
+influencing math achievement, which coincides with our findings here.
+While algorithms may yield similar results concerning mathematical tendencies and emotional factors, they often diverge
+in other variables. For example, origin appears as the second
+most important variable according to the random effect model.
+However, both modern approaches indicate that it is not as significant. It does not even feature in the pruned REEM-­tree regression output (see Figure 7). Moreover, it takes place as the
+second least important element in the GP boosting variable importance plot.
+Gender serves as another predictor where all algorithms converge on a similar conclusion. Based on the findings, it is not
+feasible to generalise that gender difference contributes a valuable gap between girls and boys in terms of math scores. The literature also shows similar results (Doz et al. 2023). For example,
+Kim (2021) found that the gender effect has almost no contribution to the student's achievement in South Korea. However, despite the small effect on math scores, it is worth mentioning that
+the traditional way argues that girls tend to achieve higher math
+scores than boys with a statistically significant contribution.
+SES is the most used attribute to examine factors affecting mathematical achievement of students in the literature. This is due to
+the crucial need to notice the confounding impact of economic
+contributions on students' successes since it can create inequity
+and a huge gap in achievements. In our research, we found that
+students with higher SES tend to achieve higher math scores
+than those without. However, the contribution of this variable
+found with LMM is limited. On the other hand, for GP boosting
+and REEM-­tree, the effect is much more considerable among all
+predictors since it is the third and fourth most important factor,
+respectively. In the literature, consistent findings emerge across
+numerous studies, indicating the SES in relation to mathematics
+achievement (e.g., Takashiro 2017; Ersan and Rodriguez 2020;
+Singh 2015).
+Practitioners and researchers may consider using these modern
+statistical techniques, which are currently of limited use in the
+educational field but are continuously growing in relevance, to
+offer better actions for stakeholders and beneficiaries involved
+in education.
+
+15 of 23
+
+14653435, 2025, 4, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/ejed.70281 by Yildiz Teknik University, Wiley Online Library on [24/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+sampled from the population, we can count countries as random
+effects in the model. Additionally, the number of variables used
+in the analysis is limited because of missingness. For instance,
+the teacher data set is not included in the study due to an excessive number of missing values in England. Additionally, the
+home data set is entirely unavailable for England.
+
+This study possesses two major dimensions: (1) examining the
+factors influencing the mathematics achievement of students
+from England, Turkey, and South Africa based on TIMSS and
+(2) giving insights into the traditional and modern ML applications on the hierarchical data. The former shows that the
+mathematical tendency and emotional factors are by far the
+most crucial elements in a student's success. On the contrary,
+the gender effect does not appear among the significant predictors affecting the mathematics achievement of students. The
+latter presents that ML algorithms are highly competitive with
+traditional algorithms in terms of predictive power and flexible
+application in hierarchical datasets. It should be stated that GP
+boosting and REEM-­tree are the ML algorithms handling the
+nested structure in the hierarchical data. These algorithms have
+better performance metrics in terms of RMSE, MAE, and MAPE
+compared to the LMM. Thus, they can be considered strong alternatives to the traditional methods for the hierarchical data in
+the educational field.
+
+9   |   Recommendations and Implications
+This study offers that the innovations made only on the curricular reforms are not adequate for students' mathematics
+achievement. Since the most crucial element of success is found
+as the mathematical tendency factor across all the methods implemented in the current study, educational policies should be
+included and prioritized to improve the mathematics-­related
+motivation of students. Policymakers and educators are advised to consider students' attitudes towards mathematics and
+administer tests to track progress. This study suggests that educators should focus on making math more appealing to students. Similarly, educators should focus on decreasing the stress
+and anxiety level of students caused by mathematics while encouraging collaborative learning since the emotional factor is
+among the top elements influencing success. On the other hand,
+our study indicates SES is the significant variable in students'
+mathematics achievement. Therefore, our study highlights the
+importance of socio-­economic equality and recommends that
+policymakers should strengthen reforms in supporting students
+from lower socio-­economic backgrounds to prevent a significant
+disparity between students' mathematics achievement.
+Moreover, researchers can utilise modern ML algorithms thanks
+to their high predictive accuracies and adaptabilities. Besides
+the competitive edge and certain advantages of them, researchers intending to employ the ML algorithms should be careful
+about the data type compatibility. Still, this study encourages
+the usage of these algorithms in the field of education, not individually, but in combination with the traditional methods to
+recognise key points better.
+
+10   |   Future Study
+In future studies, we intend to extend the study to an econometrics perspective by including additional variables such as GDP
+and education expenditure at the country level as external predictors. Moreover, plans for a follow-­up study using TIMSS 2023
+16 of 23
+
+data are being considered, with the aim of evaluating changes in
+math achievement in relation to the same covariates. Moreover,
+mathematics achievement stands out as a pivotal domain for assessing student performance. However, broadening this domain
+to include other aspects could enhance the reliability of the research on students' achievement. Therefore, the science achievement of students could be concurrently considered.
+
+Conflicts of Interest
+The authors declare no conflicts of interest.
+Data Availability Statement
+The data used in this study are publicly available and can be found in
+https://​timss​2 019.​org/​inter​natio​nal-­​datab​ase/​.
+References
+Byrne, B. M., and D. Watkins. 2003. “The Issue of Measurement Invariance
+Revisited.” Journal of Cross-­Cultural Psychology 34, no. 2: 155–175.
+Caponera, E., and B. Losito. 2016. “Context Factors and Student
+Achievement in the IEA Studies: Evidence From TIMSS.” Large-­Scale
+Assessments in Education: An IEA-­ETS Research Institute Journal 4, no.
+1: 1–22.
+Carnoy, M., T. Khavenson, and A. Ivanova. 2015. “Using TIMSS and
+PISA Results to Inform Educational Policy: A Study of Russia and Its
+Neighbours.” Compare: A Journal of Comparative and International
+Education 45, no. 2: 248–271.
+Chakraborty, S., T. Dey, L. Xiang, and J. T. Adler. 2024. “A Spatial
+Gaussian-­Process Boosting Analysis of Socioeconomic Disparities in
+Wait-­Listing of End-­Stage Kidney Disease Patients Across the United
+States.” Stat 7, no. 2: 508–520.
+Darshan Singh, A., S. Raghunathan, E. Robeck, and B. Sharma. 2018.
+Cases on Smart Learning Environments. IGI Global.
+Dempster, A. P., N. M. Laird, and D. B. Rubin. 1977. “Maximum Likelihood
+From Incomplete Data via the EM Algorithm.” Journal of the Royal
+Statistical Society, Series B: Statistical Methodology 39, no. 1: 1–22.
+Doz, D., M. Cotič, and D. Felda. 2023. “Random Forest Regression in
+Predicting Students' Achievements and Fuzzy Grades.” Mathematics 11,
+no. 19: 4129.
+Ersan, O., and M. C. Rodriguez. 2020. “Socioeconomic Status and
+Beyond: A Multilevel Analysis of TIMSS Mathematics Achievement
+Given Student and School Context in Turkey.” Large-­Scale Assessments
+in Education 8, no. 1: 15.
+Filiz, E., and E. Öz. 2019. “Finding the Best Algorithms and Effective
+Factors in Classification of Turkish Science Student Success.” Journal of
+Baltic Science Education 18, no. 2: 239–253.
+Fishbein, B., P. Foy, and L. Yin. 2021. “TIMSS 2019 User Guide for
+the International Database. Hentet Fra.” https://​timss​andpi​rls.​bc.​edu/​
+timss​2 019/​inter​natio​nal-­​database.
+Gocheva-­Ilieva, S., H. Kulina, and A. Ivanov. 2020. “Assessment of
+Students' Achievements and Competencies in Mathematics Using
+CART and CART Ensembles and Bagging With Combined Model
+Improvement by MARS.” Mathematics 9, no. 1: 62.
+Haladyna, T. M., and S. M. Downing. 2004. “Construct-Irrelevant
+Variance in High-­Stakes Testing.” Educational Measurement: Issues
+and Practice 23, no. 1: 17–27.
+Harville, D. A. 1977. “Maximum Likelihood Approaches to Variance
+Component Estimation and to Related Problems.” Journal of the
+American Statistical Association 72, no. 358: 320–338.
+European Journal of Education, 2025
+
+14653435, 2025, 4, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/ejed.70281 by Yildiz Teknik University, Wiley Online Library on [24/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+8   |   Conclusion
+
+Haveman, R., and B. Wolfe. 1995. “The Determinants of Children's
+Attainments: A Review of Methods and Findings.” Journal of Economic
+Literature 33, no. 4: 1829–1878.
+Hilbert, S., S. Coors, E. Kraus, et al. 2021. “Machine Learning for the
+Educational Sciences.” Review of Education 9, no. 3: e3310.
+Hoti, A. H., X. Zenuni, J. Ajdari, and F. Ismaili. 2025. “Predictive
+Modeling of Student Success Using Machine Learning.” International
+Journal on Information Technologies & Security 17, no. 1: 37–46.
+Huang, Y., Y. Zhou, J. Chen, and D. Wu. 2024. “Applying Machine
+Learning and SHAP Method to Identify Key Influences on Middle-School Students' Mathematics Literacy Performance.” Journal of
+Intelligence 12, no. 10: 93.
+Kaleli-­Yılmaz, G., and A. Hanci. 2016. “Examination of the 8th Grade
+Students' TIMSS Mathematics Success in Terms of Different Variables.”
+International Journal of Mathematical Education in Science and
+Technology 47, no. 5: 674–695.
+Kim, S. 2021. “Effects of Socioeconomic Status and Gender on Valued
+Qualities and Future Success in South Korea.” Korea Observer 52, no.
+4: 733–756.
+Kirkland, K. 2010. Computer Sciences: Notable Research and Discoveries.
+Facts on File. Infobase Publishing.
+Koyama, J. P. 2015. “Learning English, Working Hard, and Challenging
+Risk Discourses.” Policy Futures in Education 13, no. 5: 608–620.
+Laird, N. M., and J. H. Ware. 1982. “Random-Effects Models for
+Longitudinal Data.” Biometrics 38: 963–974.
+Lee, J., and L. Stankov. 2018. “Non-­Cognitive Predictors of Academic
+Achievement: Evidence From TIMSS and PISA.” Learning and
+Individual Differences 65: 50–64.
+Liou, P. Y. 2017. “Profiles of Adolescents' Motivational Beliefs in Science
+Learning and Science Achievement in 26 Countries: Results From
+TIMSS 2011 Data.” International Journal of Educational Research 81:
+83–96.
+Liou, P. Y., and O. Bulut. 2020. “The Effects of Item Format and
+Cognitive Domain on Students' Science Performance in TIMSS 2011.”
+Research in Science Education 50, no. 1: 99–121.
+Liu, H., D. Yang, S. Nie, and X. Chen. 2024. “Identifying Key Factors
+of Reading Achievement: A Machine Learning Approach.” iScience 27,
+no. 10: 110848.
+Marôco, J., H. Harju-­Lukkainnen, and J. Rautopuro. 2024. “Worldwide
+Predictors of Science Literacy in Lower-­Secondary Students: A TIMSS
+2019 Analysis.” International Journal of Science Education: 1–19.
+Martin, M. O., and I. Mullis. 2012. Methods and Procedures in TIMSS
+and PIRLS 2011. TIMSS\& PIRLS International Study Center, Boston
+College.
+Martin, M. O., M. von Davier, and I. Mullis. 2020. Methods and
+Procedures: TIMSS 2019 Technical Report. International Association for
+the Evaluation of Educational Achievement.
+Meng, X.-­L ., and D. B. Rubin. 1993. “Maximum Likelihood Estimation
+via the ECM Algorithm: A General Framework.” Biometrika 80, no. 2:
+267–278.
+Moerbeek, M. 2004. “The Consequence of Ignoring a Level of Nesting
+in Multilevel Analysis.” Multivariate Behavioral Research 39, no. 1:
+129–149.
+Nguyen, K. L., T. R. Mayberry, Y. Liu, M. S. Khine, and V. K. Pallipuram.
+2023. “An Evaluation of Tiered Machine Learning Framework to Predict
+Science Achievement Among Singapore Students.” International
+Conference on Computational Science and Computational Intelligence
+(CSCI) (pp. 200–206).
+European Journal of Education, 2025
+
+Ozen, Z., N. Pereira, and S. Bright. 2025. “Exploring Critical Predictors
+of Math and Science Achievement for High Achieving Students in
+TIMSS Data: Application of Elastic-­Net Logistic Regression.” Journal of
+Advanced Academics 36: 695–713.
+Park, J., S. Kim, and B. Jang. 2023. “Analysis of Psychological Factors
+Influencing Mathematical Achievement and Machine Learning
+Classification.” Mathematics 11, no. 15: 3380.
+Patterson, H. D., and R. Thompson. 1971. “Recovery of Inter-­Block
+Information When Block Sizes Are Unequal.” Biometrika 58, no. 3:
+545–554.
+Ramirez, M. J. 2006. “Understanding the Low Mathematics
+Achievement of Chilean Students: A Cross-­National Analysis Using
+TIMSS Data.” International Journal of Educational Research 45, no. 3:
+102–116.
+Reynolds, M. R., J. R. Izzo, and R. C. Schultz. 2022. “Beyond Simple
+Mean Differences: Analysis of Sex Similarities and Differences in
+Academic Achievement With the Kaufman Tests of Educational
+Achievement.” Journal of Psychoeducational Assessment 40, no. 8:
+923–935.
+Romero, C., and S. Ventura. 2010. “Educational Data Mining: a Review
+of the State of the Art.” IEEE Transactions on Systems, Man, and
+Cybernetics, Part C (Applications and Reviews) 40, no. 6: 601–618.
+Saha, M., S. Islam, A. A. Akhi, and G. Saha. 2024. “Factors Affecting
+Success and Failure in Higher Education Mathematics: Students' and
+Teachers' Perspectives.” Heliyon 10, no. 7: e29173.
+Salditt, M., S. Humberg, and S. Nestler. 2023. “Gradient Tree Boosting
+for Hierarchical Data.” Multivariate Behavioral Research 58, no. 5:
+911–937.
+Schapire, R. E. 1999. “A Brief Introduction to Boosting.” International
+Joint Conference on Artificial Intelligence 99, no. 999: 1401–1406.
+Schmidt, W. H., and N. A. Burroughs. 2016. “Influencing Public School
+Policy in the United States: the Role of Large-Scale Assessments.”
+Research Papers in Education 31, no. 5: 567–577.
+Searle, S., G. Casella, and C. McCulloch. 1992. Variance Components.
+John Wiley and Sons Inc.
+Sela, R. J., and J. S. Simonoff. 2012. “RE-­EM Trees: A Data Mining
+Approach for Longitudinal and Clustered Data.” Machine Learning 86:
+169–207.
+Sigrist, F. 2022. “Gaussian Process Boosting.” Journal of Machine
+Learning Research 23, no. 232: 1–46.
+Singh, M. 2015. “Influence of Socioeconomic Disadvantages on
+Mathematics Achievement: A Multilevel Cohort Analysis.” Journal of
+Educational Research 108, no. 5: 347–357.
+Takashiro, N. 2017. “A Multilevel Analysis of Japanese Middle School
+Student and School Socioeconomic Status Influence on Mathematics
+Achievement.” Educational Assessment, Evaluation and Accountability
+29: 247–267.
+Thomas, H. 2024. Sex Differences in Reading and Math Test Scores of
+Children: A Heterodoxical Model. Springer Nature.
+TIMSS M. 2019. “Eğitim Analiz ve Değerlendirme Raporları Serisi:
+TIMSS 2019 Türkiye Ön Raporu, 15.”
+Turkish Red Crescent and World Food Programme. 2019. “Refugees in
+Turkey: Livelihoods Survey Findings.” Ankara, Turkey.
+UNESCO and International Association for the Evaluation of
+Educational Achievement. 2020. Measuring Global Education Goals:
+How TIMSS Helps (Programme and Meeting Document). UNESCO.
+https://​unesd​oc.​unesco.​org/​ark:/​4 8223/​​pf000​0375119.
+United Nations Educational, Scientific and Cultural Organization
+(UNESCO). 2020. “Global Education Monitoring Report 2020: Inclusion
+and Education: All Means All.”
+
+17 of 23
+
+14653435, 2025, 4, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/ejed.70281 by Yildiz Teknik University, Wiley Online Library on [24/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+Hastedt, D. 2016. Mathematics Achievement of Immigrant Students.
+Springer.
+
+Wampold, B. E., and R. C. Serlin. 2000. “The Consequence of Ignoring
+a Nested Factor on Measures of Effect Size in Analysis of Variance.”
+Psychological Methods 5, no. 4: 425–433.
+Wang, F., R. B. King, and S. O. Leung. 2023. “Why Do East Asian
+Students Do So Well in Mathematics? A Machine Learning Study.”
+International Journal of Science and Mathematics Education 21, no. 3:
+691–711.
+West, B. T., K. B. Welch, and A. T. Galecki. 2022. Linear Mixed Models:
+A Practical Guide Using Statistical Software. Chapman and Hall/CRC.
+Wiberg, M. 2019. “The Relationship Between TIMSS Mathematics
+Achievements, Grades, and National Test Scores.” Education Inquiry
+10, no. 4: 328–343.
+Wu, C. J. 1983. “On the Convergence Properties of the EM Algorithm.”
+Annals of Statistics 11, no. 1: 95–103.
+Yarkoni, T., and J. Westfall. 2017. “Choosing Prediction Over Explanation
+in Psychology: Lessons From Machine Learning.” Perspectives on
+Psychological Science 12, no. 6: 1100–1122.
+Zhu, Y., and F. Leung. 2012. “Homework and Mathematics Achievement
+in Hong Kong: Evidence From the TIMSS 2003.” International Journal
+of Science and Mathematics Education 10: 907–925.
+
+18 of 23
+
+European Journal of Education, 2025
+
+14653435, 2025, 4, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/ejed.70281 by Yildiz Teknik University, Wiley Online Library on [24/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+Verbeke, G., and G. Molenberghs. 1997. Linear Mixed Models for
+Longitudinal Data. Springer.
+
+TABLE A1    |    Data dictionary for the raw data set.
+Variable names
+
+Explanations
+
+IDSCHOOL
+
+School ID
+
+IDSTUD
+
+Student ID
+
+ASBG01
+
+Gender of student
+
+ASBG04
+
+Amount of books in your home
+
+1: 0–10
+2: 11–25
+3: 26–100
+4: 101–200
+5: More than 200
+
+ASBG05A
+
+A computer or tablet
+
+ASBG05B
+
+Study desk/table for your use
+
+ASBG05C
+
+Your own room
+
+Do you have any of these things at your home?
+(re-­coded)
+1: No
+2: Yes
+
+ASBG05D
+
+Internet connection
+
+ASBG05E
+
+Your own mobile phone
+
+ASBG05F
+
+Central heating (TUR)
+Your own television (ENG)
+Dictionary (SA)
+
+ASBG05G
+
+Air conditioning (TUR)
+Bicycle (ENG)
+Electricity (SA)
+
+ASBG05H
+
+Washing machine (TUR)
+Musical instrument (ENG)
+Running tap water (SA)
+
+ASBG07
+
+Origin
+
+Were you born in the mentioned country?
+(re-­coded)
+1: No
+2: Yes
+
+ASBM02A
+
+I enjoy learning mathematics
+
+ASBM02B
+
+I wish I did not have to study
+mathematics
+
+ASBM02C
+
+Mathematics is boring
+
+Do you agree with the statement? (Re-­coded)
+1: Disagree a lot
+2: Disagree a little
+3: Agree a little
+4: Agree a lot
+
+ASBM02D
+
+I learn many interesting things in
+mathematics
+
+ASBM02E
+
+I like mathematics
+
+ASBM02F
+
+I like any schoolwork that involves
+numbers
+
+ASBM02G
+
+I like to solve mathematics problems
+
+ASBM02H
+
+I look forward to mathematics lessons
+
+ASBM02I
+
+Mathematics is one of my favourite
+subjects
+
+Used for SES
+
+Used for factor analysis
+
+Encoding
+
+(Continues)
+
+European Journal of Education, 2025
+
+19 of 23
+
+14653435, 2025, 4, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/ejed.70281 by Yildiz Teknik University, Wiley Online Library on [24/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+Appendix A
+
+Variable names
+
+Explanations
+
+Encoding
+
+ASBM05A
+
+I usually do well in mathematics
+
+ASBM05B
+
+Mathematics is harder for me than for
+many of my classmates
+
+ASBM05C
+
+I am just not good at mathematics
+
+Do you agree with the statement? (re-­coded)
+1: Disagree a lot
+2: Disagree a little
+3: Agree a little
+4: Agree a lot
+
+ASBM05D
+
+I learn things quickly in mathematics
+
+ASBM05E
+
+Mathematics makes me nervous
+
+ASBM05F
+
+I am good at working out difficult
+mathematics problems
+
+ASBM05G
+
+My teacher tells me I am good at
+mathematics
+
+ASBM05H
+
+Mathematics is harder for me than any
+other subject
+
+ASBM05I
+
+Mathematics makes me confused
+
+Used for factor analysis
+
+Appendix B
+
+TABLE B1    |    Factor loadings.
+Variable names
+
+Factor 1 (emotional)
+
+Factor 2 (mathematical tendency)
+
+ASBM02A
+
+0.779
+
+ASBM02B
+
+0.137
+
+0.467
+
+ASBM02C
+
+0.271
+
+0.422
+
+ASBM02D
+
+0.525
+
+ASBM02E
+
+0.836
+
+ASBM02F
+
+0.710
+
+ASBM02G
+
+0.726
+
+ASBM02H
+
+0.743
+
+ASBM02I
+
+0.775
+
+ASBM05A
+
+0.544
+
+−0.101
+
+ASBM05B
+
+0.718
+
+ASBM05C
+
+0.680
+
+ASBM05D
+
+0.521
+
+ASBM05E
+
+−0.125
+
+ASBM05F
+
+0.497
+
+ASBM05G
+
+0.397
+
+0.641
+
+ASBM05H
+
+0.761
+
+ASBM05I
+
+0.686
+
+20 of 23
+
+European Journal of Education, 2025
+
+14653435, 2025, 4, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/ejed.70281 by Yildiz Teknik University, Wiley Online Library on [24/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+TABLE A1    |    (Continued)
+
+FIGURE C1    |    Correlation matrix for England.
+
+European Journal of Education, 2025
+
+21 of 23
+
+14653435, 2025, 4, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/ejed.70281 by Yildiz Teknik University, Wiley Online Library on [24/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+Appendix C
+
+22 of 23
+
+European Journal of Education, 2025
+
+14653435, 2025, 4, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/ejed.70281 by Yildiz Teknik University, Wiley Online Library on [24/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+FIGURE C2    |    Correlation matrix for South Africa.
+
+Appendix D
+TABLE D1    |    Output of LMM.
+Variable names
+
+Value
+
+SE
+
+p
+
+Intercept
+
+435.95
+
+46.31
+
+0.00
+
+Gender (boy)
+
+−3.69
+
+1.19
+
+0.00
+
+Number of books
+
+4.54
+
+0.57
+
+0.00
+
+Origin (yes)
+
+16.87
+
+2.43
+
+0.00
+
+Emotional factor
+
+13.89
+
+0.63
+
+0.00
+
+Mathematical tendency
+
+32.98
+
+0.64
+
+0.00
+
+SES
+
+2.21
+
+0.39
+
+0.00
+
+Note: Random effect: schools nested country. AIC & BIC: 118356.4 & 118429.1 (AIC and BIC are the measures that estimate the information loss of given models.
+Lower AIC and BIC values indicate better models. However, they are not useful on their own, they are mostly useful when comparing models.). Log-­likelihood:
+−59168.19.
+
+European Journal of Education, 2025
+
+23 of 23
+
+14653435, 2025, 4, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/ejed.70281 by Yildiz Teknik University, Wiley Online Library on [24/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+FIGURE C3    |    Correlation matrix for Turkey.
+
+

@@ -1,0 +1,2523 @@
+Received: 24 August 2020
+
+Revised: 17 March 2021
+
+Accepted: 19 April 2021
+
+DOI: 10.1111/jcal.12559
+
+ARTICLE
+
+Exploring latent states of problem-solving competence using
+hidden Markov model on process data
+Yue Xiao1
+
+| Qiwei He2
+
+1
+Faculty of Psychology, Beijing Normal
+University, Beijing, China
+2
+
+Educational Testing Service, Princeton, New
+Jersey, USA
+3
+
+Department of Research Methodology,
+Measurement and Data Analysis, University of
+Twente, Enschede, The Netherlands
+4
+
+| Bernard Veldkamp3
+
+|
+
+Hongyun Liu4
+
+Abstract
+The response process of problem-solving items contains rich information about
+respondents' behaviours and cognitive process in the digital tasks, while the information extraction is a big challenge. The aim of the study is to use a data-driven
+approach to explore the latent states and state transitions underlying problem-
+
+Beijing Key Laboratory of Applied
+Experimental Psychology, Faculty of
+Psychology, Beijing Normal University, Beijing,
+China
+
+solving process to reflect test-takers' behavioural patterns, and to investigate how
+
+Correspondence
+Hongyun Liu, Beijing Key Laboratory of
+Applied Experimental Psychology, Faculty of
+Psychology, Beijing Normal University, Beijing,
+100875, China.
+Email: hyliu@bnu.edu.cn
+
+states during the problem-solving process and compared the frequency of states
+
+these states and state transitions could be associated with test-takers' performance.
+We employed the Hidden Markov Modelling approach to identify test takers' hidden
+and/or state transitions between different performance groups. We conducted comparable studies in two problem-solving items with a focus on the US sample that was
+collected in PIAAC 2012, and examined the correlation between those frequencies
+from two items. Latent states and transitions between them underlying the problem-
+
+Funding information
+National Natural Science Foundation of China;
+National Science Foundation
+
+solving process were identified and found significantly different by performance
+groups. The groups with correct responses in both items were found more engaged
+in tasks and more often to use efficient tools to solve problems, while the group with
+incorrect responses was found more likely to use shorter action sequences and
+exhibit hesitative behaviours. Consistent behavioural patterns were identified across
+items. This study demonstrates the value of data-driven based HMM approach to
+better understand respondents' behavioural patterns and cognitive transmissions
+underneath the observable action sequences in complex problem-solving tasks.
+KEYWORDS
+
+behavioural pattern, hidden Markov model, PIAAC, problem-solving skills, process data
+
+1
+
+|
+
+I N T RO DU CT I O N
+
+(i.e., interactive scenario-based items) and the collection of a broader
+range of records in log files. The new data source provides informa-
+
+Growing interests in assessing problem-solving skills and knowledge
+
+tion not just on whether test takers are able to solve tasks but how
+
+in technology-related environments have been facilitated by the move
+
+they approach the solution and how much time their efforts take
+
+toward delivering assessments via computer and the internet (Bennett
+
+(He & von Davier, 2016).
+
+et al., 2007, 2010). The use of computers as the delivery platform
+
+As a test-taker attempts an interactive item, his/her actions are
+
+enables the development of new and innovative item types
+
+recorded, in the form of an ordered sequence of multi-type, timestamped events. This sort of data contained in log files, referred to as
+
+Yue Xiao, Faculty of Psychology, Beijing Normal University; Qiwei He, Educational Testing
+Service (ETS); Bernard Veldkamp, Department of Research Methodology, Measurement and
+Data Analysis, University of Twente; Hongyun Liu, Beijing Key Laboratory of Applied
+Experimental Psychology, Faculty of Psychology, Beijing Normal University.
+
+1232
+
+© 2021 John Wiley & Sons Ltd
+
+process data in this paper, provides information beyond response data
+that typically show correctness or incorrectness only. This additional
+information holds promise to help us understand the strategies that
+
+wileyonlinelibrary.com/journal/jcal
+
+J Comput Assist Learn. 2021;37:1232–1247.
+
+underlie proficient performance and identify key actions that lead to
+
+domains in PIAAC—literacy, numeracy, and PSTRE. A comprehensive
+
+success or failure (e.g., Arieli-Attali et al., 2019; Han et al., 2019; He &
+
+background survey was also included to assist in understanding the
+
+von Davier, 2015, 2016; Liao et al., 2019).
+
+interest, attitude, and ability of individuals to appropriately use socio-
+
+The information extracted from process data is particularly valuable
+
+when
+
+examining
+
+interactive
+
+problem-solving
+
+tasks
+
+(He et al., 2019, 2021). The analysis of process data has recently
+
+cultural tools—including digital technology and communication tools—
+to access, manage, integrate, and evaluate information, construct
+knowledge, and communicate with others (OECD, 2011).
+
+gained strong interests, with a wide range of model- and data- driven
+
+Of the three core assessment domains, the PSTRE domain
+
+methods proposed to understand the types of strategies that contrib-
+
+involves the most interactive item types and is available only on
+
+ute to successful and unsuccessful problem-solving, identify the
+
+computer-based assessment (CBA). Respondents were routed to the
+
+behavioural differences between observed and latent subgroups and
+
+CBA only if they self-reported having some prior computer experience
+
+assess the proficiency on the trait of interests (e.g., Goldhammer
+
+and passed the ICT core test (including the core ICT screening and
+
+et al., 2013; He et al., 2019, 2021; He & von Davier, 2016;
+
+CBA core test which consisted of 3 literacy and 3 numeracy items)
+
+LaMar, 2018; Tang et al., 2020).
+
+(OECD, 2012).
+
+However, to extract underlying information from process data,
+
+Participants in the PSTRE domain fall within our research inter-
+
+one has to confront a couple of challenges: First, problem-solving
+
+ests. In PIAAC, the PSTRE items were used to assess the ability to
+
+strategies are usually not well defined. Even though item developers
+
+“use digital technology, communication tools, and networks to acquire
+
+and content experts could pre-define optimal strategies that are the
+
+and evaluate information, communicate with others and perform prac-
+
+most efficient ways to solve the tasks, the strategies may not be
+
+tical tasks” (OECD, 2009). The items assessed adults' competencies in
+
+exclusively recorded in advance (He et al., 2019). Also, there are
+
+setting appropriate goals and plans, as well as accessing and making
+
+always unpredictable behaviour patterns in the incorrect response
+
+use of information through computers and networks (OECD, 2009).
+
+group (Ulitzsch et al., 2021; Ulitzsch, He, & Pohl, 2021). Second, pro-
+
+The assessment of PSTRE required individuals to engage with com-
+
+cess data are generally noisy, highly variable, and hard to perceive
+
+plex tasks: for instance, they were required to click buttons or links,
+
+(Tang et al., 2020). The loose structure of process data may bring
+
+select from dropdown menus, drag and drop, copy and paste, and so
+
+issues for model fit and interpretations. Third, to accomplish a
+
+on. These multitudes of different actions (i.e., all interactions between
+
+problem-solving task usually requires several steps or stages and iden-
+
+the respondent and the testing platform) were recorded in log files.
+
+tifying these stages from each sequence is helpful for understanding
+
+Figure 1 exhibits an example PSTRE item in PIAAC. The layout of
+
+test-takers' strategies (Kroehne & Goldhammer, 2018). However, the
+
+this item is simple and straightforward. To solve this problem, test
+
+segmentation of the observed process usually requires human judge-
+
+takers are required to fill in the box by performing calculations based
+
+ment, which is very time-consuming and laborious.
+
+on the table provided. Respondents must monitor progress as they
+
+In this study, we implemented an application from the latent
+
+select files, checking against the provided criteria to know when
+
+sequence analysis to divide the complex problem-solving process into
+
+they have satisfied the constraints presented in the problem. Sorting
+
+several task states via a data-driven approach. The aim of this paper is
+
+the songs by size would greatly facilitate the finding of the solution,
+
+two-fold: first, to explore the latent states and state transitions under-
+
+but respondents could also solve the items using other procedures.
+
+lying problem-solving process to reflect test-takers' behavioural pat-
+
+The sorting function can be used either through the dropdown menu
+
+terns, and second, to investigate how these states and state
+
+or clicking on the shortcut button on the smart portal.
+
+transitions could be associated with test-takers' performance. Specifically, we applied the hidden Markov model (HMM) on action
+sequences from two items in the Problem-Solving Technology-Rich
+Environment (PSTRE) domain in the Programme for the International
+
+1.2 | Leveraging process data to understand
+problem-solving skills
+
+Assessment of Adult Competencies (PIAAC) and compared the results
+between correct and incorrect groups to characterize the problem-
+
+Compared with traditional tests, in which a univariate response is
+
+solving processes of different performance groups. A correlation
+
+observed for each item, detailed response process records from
+
+study was performed to investigate the consistency of behavioural
+
+computer-based tests contain much richer information concerning the
+
+patterns across items.
+
+respondents. Dynamic records of actions generated during the itemresponse process form a distinct sequence derived from test-taker
+input. Appropriate analysis of these process/sequence responses pro-
+
+1.1
+
+|
+
+PIAAC and PSTRE
+
+motes the understanding of how people plan, evaluate, and select
+operations to achieve certain problem-solving goals. This advance in
+
+As the largest and most innovative international assessment of adult
+
+technology offers a great opportunity to enhance educational assess-
+
+skills ever conducted, the PIAAC, organized by the Organization for
+
+ment and presents great challenges, both conceptually and technically,
+
+Economic Co-operation and Development (OECD), has been adminis-
+
+to education researchers (Tang et al., 2020).
+
+tered in over 40 countries targeting adult populations, ranging from
+
+The existing methods that engage in extracting meaningful infor-
+
+age 16 to 65 (Schleicher, 2008). There are three core assessment
+
+mation from complex process data in educational assessments could be
+
+13652729, 2021, 5, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/jcal.12559 by Beykent University, Wiley Online Library on [24/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+1233
+
+XIAO ET AL.
+
+XIAO ET AL.
+
+F I G U R E 1 An example item with a single environment used in the PIAAC PSTRE test (OECD, 2012) [Colour figure can be viewed at
+wileyonlinelibrary.com]
+
+roughly classified into three categories: feature-based approach, gram-
+
+sequence patterns from process data in one PSTRE item and deter-
+
+based approach, and sequence-based approach. The feature-based
+
+mined the most robust grams using the chi-square feature selection
+
+approach often starts with generating features or deriving variables
+
+method (Oakes et al., 2001) to differentiate behaviours of successful
+
+from certain log events from process data (Goldhammer et al., 2017),
+
+and unsuccessful test-takers during the problem-solving process. Given
+
+such as the number of tool usage on one page, or time spent on one
+
+the straightforwardness in deriving features from observed sequences,
+
+webpage. A typical example of a generated feature is the “vary one
+
+n-gram based approaches have been often employed in recent studies
+
+thing at a time” strategy (VOTAT) generated in problem solving items in
+
+related to process data (e.g., Han et al., 2019; Liao et al., 2019; Stadler
+
+Programme for International Student Assessment (PISA) 2012 (Greiff
+
+et al., 2019). These studies demonstrate the effectiveness of the n-
+
+et al., 2015). In this study, a behavioural indicator—whether the respon-
+
+gram method in analyzing process data and comparing behavioural pat-
+
+dent followed a VOTAT strategy or not—was found to be highly corre-
+
+terns across groups. However, this method unavoidably divides the
+
+lated with correctness in solving the task.
+
+action sequence into independent pieces. While the order of observed
+
+The gram-based approach on process data mainly refers to dis-
+
+actions is partly retained within n-gram based mini-sequences, the
+
+assembling a long action sequence into mini-sequences with n-grams
+
+entire behavioural process is often broken down and information may
+
+(i.e., unigrams, bigrams, trigrams, and even higher-order) in each unit.
+
+not be completely preserved (He et al., 2019).
+
+The grams are generally assumed to be independent of each other
+
+The sequence-based approach features in regarding the entire
+
+while the elements within the gram (e.g., bigram) may show the depen-
+
+sequence as an input with considerations on local dependencies
+
+dence when taking the action co-occurrence and order into account.
+
+between actions, which can further be roughly divided into two cate-
+
+This approach is sourced from the n-gram linguistic feature representa-
+
+gories. In the first category of sequence-based analysis, distances
+
+tive method (Damashek, 1995) in natural language processing. He and
+
+between two or multiple sequences are often computed. For instance,
+
+von Davier (2015, 2016) first introduced the n-gram model to extract
+
+He et al. (2019, 2021) applied the longest common subsequence
+
+13652729, 2021, 5, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/jcal.12559 by Beykent University, Wiley Online Library on [24/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+1234
+
+method (Hirschberg, 1975, 1977; Sukkarieh et al., 2012) to identify
+
+HMM provides a framework for this. The task states learned in HMM
+
+how different the action sequence taken by a test taker to solve an
+
+can be treated as different problem-solving stages or subtasks.
+
+item is from the action sequence that subject matter experts consider
+
+Therefore, the present study aims to explore the latent states of
+
+optimal to solve the problem. The longer the distance from the
+
+test-takers' problem-solving processes underlying the observed action
+
+predefined action sequences, the less likelihood of a correct response.
+
+sequences. In particular, we are interested in three research questions:
+
+The second category of sequence-based approach is to model the
+
+(1) what latent states can be extracted under one PSTRE scenario-
+
+relationship between every two actions according to the input
+
+based environment and how these latent states are transitioned;
+
+sequences of all respondents, like social network analysis (SNA; Zhu
+
+(2) whether these latent states can be well reflected by action
+
+et al., 2016), Bayesian Networks (BNs; Levy, 2014, 2019), and hidden
+
+sequences and validated by predefined problem-solving strategies;
+
+Markov model (HMM; Rabiner, 1989; see also Boyer et al., 2011;
+
+and (3) whether the test takers show differences in behaviours and/or
+
+Jeong et al., 2008). Biswas et al. (2010) used HMM as a direct proba-
+
+engagement by their problem-solving competence in the latent states
+
+bilistic representation of the internal states and interpret these states
+
+and whether their behaviour patterns show consistency across items.
+
+in terms of theoretical learning strategies, which facilitated identifica-
+
+Given these research objectives, we employed the HMM to identify
+
+tion, interpretation, and comparison of student learning behaviours at
+
+test takers' hidden states during the problem-solving process and ana-
+
+an aggregate level. Like students' mental processes, the states of an
+
+lyzed the behaviour characteristics of different performance groups.
+
+HMM are hidden, meaning they cannot be directly observed but pro-
+
+We conducted comparable studies in two PSTRE items with a focus
+
+duce observable output (e.g., actions in a learning environment).
+
+on the US sample (N = 1355) that was collected in PIAAC 2012.
+
+Among those, Markov and hidden Markov models are increasingly
+
+The remainder of this article is structured as follows. In Section 2,
+
+popular in educational measurement (e.g., LaMar, 2018; Li et al., 2016;
+
+we introduce the instrument, data, theoretical model and application
+
+Wang et al., 2018) and in analyses of process data with serial depen-
+
+of HMM conducted in this study. In the following section, we present
+
+dence (e.g., Bergner et al., 2017; Dutilh et al., 2010; Shu et al., 2017). The
+
+the results from the HMM analysis by showing the latent state plots
+
+assumption of the Markov property in the model can describe the
+
+by each item, comparing the transition paths against predefined
+
+dependence between actions. Compared with Markov models, HMMs
+
+problem-solving strategies, and comparing results between perfor-
+
+that were also used in this paper can further capture an underlying layer
+
+mance groups and between items. Finally, we discuss the findings of
+
+of unobservable stochastic structures that is thought to influence obser-
+
+this study and its generalizability.
+
+vations. These structures are referred to task states or behaviour states,
+and can be related to and interpreted as cognitive states or problemsolving strategies (e.g., Biswas et al., 2010; Boyer et al., 2011).
+
+2
+
+METHOD
+
+|
+
+In educational research, HMM is commonly used in the form of
+Bayesian Knowledge Tracing (BKT; Corbett & Anderson, 1994; van de
+
+2.1
+
+|
+
+Instrument and sample
+
+Sande, 2013) to model the student's changing knowledge state during
+learning process. As a special case of an HMM (Pelanek, 2017), BKT
+
+A total of 14 items were administrated in the PSTRE assessment by two
+
+assumes the known or unknown state of each skill as a binary variable.
+
+clusters. Each cluster had seven items, all in a fixed sequence order. Two
+
+The observations are the outcomes (correct or incorrect) of the stu-
+
+PSTRE items, U19a and U19b, which located as the first two items in
+
+dent's item responses and each hidden state are the updated skill
+
+the second PSTRE cluster (PS2) were used in this study. These two items
+
+mastery state of the student at each time node. The state transition
+
+shared a common context (bike club membership) but required respon-
+
+probability reveals the probability of learning a skill if the student does
+
+dents to use different strategies to solve the tasks, respectively.
+
+not know the skill previously. In the application of this paper, we used
+
+Item U19a involved two environments, a spreadsheet and email.
+
+only the generic form of HMMs to model respondents' action
+
+Respondents were asked to find the ID of a particular member from
+
+sequences to one item. The observations in our study are unordered
+
+the spreadsheet and then to send it by email to a pre-specified email
+
+categorical actions and the hidden states may uncover the different
+
+address. The spreadsheet entailed four columns of information for
+
+stages during the process of solving items, which could indicate
+
+each club member. The length of the table was sufficient for attracting
+
+respondents' behavioural patterns or characteristics.
+
+respondents to use tools (searching or sorting) to facilitate the identification process. This item was dichotomously scored according to
+whether the correct ID was sent. Item U19b shared the same spread-
+
+1.3
+
+|
+
+The present study
+
+sheet environment as U19a and involved another word processor
+environment. The respondents were asked to identify the members
+
+A problem-solving task usually involves several necessary stages
+
+who meet multiple conditions in the spreadsheet and mark their
+
+(or subtasks) to achieve the solution. At each stage, test-takers would
+
+records (click checkbox). The information could most efficiently be
+
+exhibit different observable behaviours. Finding these stages behind
+
+located within the long spreadsheet by using a sorting function. The
+
+the observed action sequence will help us gain a deeper
+
+information about those conditions was given in the word processor
+
+understanding of test-takers' problem-solving processes. As a specific
+
+(OECD, 2017). There were four rows satisfying all the conditions, thus
+
+probabilistic generative model with a “built-in” state transition system,
+
+recorded as correct answers. To better profile the behavioural
+
+13652729, 2021, 5, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/jcal.12559 by Beykent University, Wiley Online Library on [24/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+1235
+
+XIAO ET AL.
+
+XIAO ET AL.
+
+patterns by respondents with different proficiency levels, we used
+
+HMM, each observation in an input sequence is assumed to be gener-
+
+finer-grained scoring rules by counting the number of correct identifi-
+
+ated by a hidden state according to the emission probability distribu-
+
+cation (i.e., 0—no correct row marked, 1—one correct row marked, 2—
+
+tion of that state. The observations are conditionally independent
+
+two correct rows marked, 3—three correct rows marked, and 4—total
+
+given the underlying hidden state sequence, and the state sequence is
+
+four correct rows marked).1 There was no penalty on the incorrect
+
+often a first-order Markov chain with a finite number of latent states.
+
+rows marked. It is noted that respondents typically had only one visit
+
+Figure 2 shows a time-slice representation of an HMM. Each round
+
+to each item. No re-visit allowed when the respondent confirmed to
+
+node represents a hidden state St at time point t and each square
+
+proceed to the next item.
+
+node denotes an observation Yt. The arrows denote the conditional
+
+A total of 1355 test-takers of the United States who responded
+
+probability that the hidden state evokes the observation or that the
+
+to both items U19a and U19b were focused in this study. Among this
+
+previous hidden state transits to the current state. Given
+
+PIAAC subsample, 46.5% of them were male. Approximately half of
+
+the sequence of length T, the joint likelihood of observable actions
+
+the respondents attained a level of education higher than a high-
+
+Y1 : T = (Y1, Y2, …, YT) and latent states S1 : T = (S1, S2, …, ST) can be writ-
+
+school diploma, while the other half, that is, 40.3% and 9.2% of the
+
+ten as (Ghahramani, 2001):
+
+respondents reported the high-school and lower than high school as
+
+YT
+PðY 1:T , S1:T Þ ¼ PðS1 Þ PðY 1 jS1 Þ t¼2 PðSt jSt1 ÞPðY t jSt Þ
+
+their highest level of education, respectively.
+
+2.2
+
+|
+
+Action sequence
+
+ð1Þ
+
+where St belongs to a set of K latent states, P(S1) represents the
+probability of the initial state, P(Ytj St) represents the conditional
+
+Action sequences that were collected in U19a and U19b were re-coded
+
+probabilities of the action Yt given the latent state St (which is
+
+in this study,2 which resulted in 39 and 47 unique action types for these
+
+called emission probability), and P(Stj St  1) provides the transition
+
+two items (U19a and U19b), respectively. A list of actions and their
+
+probability between states, independent to the time point t. These
+
+corresponding interpretations, as well as their frequencies, are summa-
+
+three types of probability values are the parameters to be esti-
+
+rized in Appendix A. Based on the recoded actions, the length of
+
+mated by the model given the observed sequences and the number
+
+observed sequences followed a slightly positively skewed distribution in
+
+of possible states.
+
+both items. In U19a, respondents averagely used 8.73 actions (median = 8
+
+Model estimation can be implemented through the expectation–
+
+actions), with a minimum of 3 actions and 46 as the maximum. Compara-
+
+maximization (EM) algorithm for a given number K of latent states.
+
+tively, the length of action sequences in U19b followed a sparser distri-
+
+The HMMs with different number of states can be compared through
+
+bution with a longer tail in the end of large value. On average,
+
+two
+
+respondents used 19.72 actions (median = 14 actions) to solve the item,
+
+Akaike, 1973) and BIC (Bayesian information criterion; Konishi
+
+with a minimum 3 actions and 263 as the maximum.
+
+et al., 2004). A lower value of AIC or BIC indicates a better model fit,
+
+To solve these two PSTRE items, respondents can and are
+
+model
+
+fit
+
+indexes,
+
+AIC
+
+(Akaike
+
+information
+
+criterion;
+
+which helps determine the optimal number of states.
+
+expected to use interactive tools such as searching and sorting engine
+
+Due to the assumption that observable actions are probabilisti-
+
+to speed up identifying key information. A typical example of a test-
+
+cally emitted by hidden states, given the trained model, the most
+
+taker's action sequence in U19a is listed in the box below.
+
+probable sequence of states underlying an observed action sequence
+can be found by the Viterbi algorithm (Forney, 1973; Rabiner, 1989;
+
+Example: START, SS, SS_TYPE_FN, MC, MC_SEND, NEXT, NEXT_OK.
+
+Viterbi, 1967). This algorithm determines the sequence of states
+which maximizes the likelihood of the joint distribution of the hidden
+states given the entire observed sequence.
+
+This action sequence could be interpreted as: the test taker starts
+
+In the current study, the HMM was learned on the action
+
+an item (START), clicks on the spreadsheet page (SS), and types in the
+
+sequences of 1355 respondents in U19a and U19b separately. It was
+
+full name of a specified person to execute a search (SS_ TYPE_FN).
+
+noted that there were 15 missing responses in U19a, thus only 1340
+
+Then, the test taker switches to the email environment (MC) to fill in
+
+respondents' performance scores were used in analyzing the relation-
+
+the answer and sends the email out (MC_SEND). Finally, the test taker
+
+ship between the latent states derived from HMM and respondents'
+
+clicks on the forward-arrow button in navigation pane to move on to
+
+problem-solving proficiency in this item. Also, the missing responses
+
+the next item (NEXT) and confirms the choice in a pop-up dialogue
+
+were not included in the study to investigate the consistency of
+
+box (NEXT_OK).
+
+behaviours between the two items.
+Considering only marginal differences were reported between
+results with and without sampling weights in previous studies using
+
+2.3
+
+|
+
+Modelling
+
+the same PSTRE item (U19a) in process data analyses (He & von
+Davier, 2015, 2016), we did not expect a substantial difference in sim-
+
+HMMs are useful when one can think of underlying events probabilis-
+
+ilar settings in the current study, hence, we conducted the whole set
+
+tically generating surface events (Manning & Schütze, 2002). In an
+
+of analyses without sampling weights.
+
+13652729, 2021, 5, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/jcal.12559 by Beykent University, Wiley Online Library on [24/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+1236
+
+F I G U R E 2 A representation of the
+HMM. the square nodes denote the
+observed data sequence while the round
+nodes represent hidden states
+
+2.4
+
+Analytic procedure
+
+|
+
+the principle of model selection of the minimized value from AIC and
+BIC, a 7-state HMM resulted in the best fit in U19a given its lowest
+
+Given concerns on the different number of unique action types
+
+values in the two indexes. More complicated results were found in
+
+(i.e., 39 and 47 in U19a and U19b respectively) and knowledge on a
+
+U19b. Valley points in AIC and BIC were both shown at two states—
+
+variety of respondents' underlying strategies learned from the previ-
+
+the 8-state model and 11-state model. However, the 11-state model
+
+ous studies (He et al., 2019, 2021), we pre-specified the number of
+
+was far more challenging in meaningful interpretation than the 8-state
+
+states in HMM in a range from 1 to 9 in U19a and a bit broader range
+
+model. Therefore, to keep the model simple and interpretable, we
+
+from 1 to 12 in U19b because of its higher complexity. The optimal
+
+selected the 8-state model for U19b, and will only report 8-state-
+
+number of hidden states in each item was determined by the mean-
+
+model results for U19b thereafter.
+
+ingful interpretations on the derived model and the common model
+selection criteria AIC and BIC, where lower values are preferred in
+both criteria, to assess comparative model fit. All computations of
+
+3.2
+
+Model interpretation
+
+|
+
+HMM learning on respondents' action sequences were performed
+using the depmixS4 package (Visser & Speekenbrink, 2010) in
+
+Per the first research question, we extracted the hidden states for the
+
+Program R.
+
+two items U19a and U19b by their best fit model (stated above),
+
+The parameter learning task in HMMs is to find, given an output
+
+7 states and 8 states, respectively. The estimated response and transi-
+
+sequence or a set of such sequences, the best set of state transition
+
+tion model parameters for U19a and U19b are respectively displayed
+
+and emission probabilities. That is, we were interested in the most
+
+in Appendix B and Appendix C in the form of probabilities. Each hid-
+
+likely sequence of hidden states that could have produced the output
+
+den state was interpreted based on its emission structure
+
+action sequences. This could be evaluated by the joint probability of
+
+(i.e., response model), as well as the state transition matrix. Following
+
+both the state sequence and the observations for each case. We sum-
+
+each hidden state, we could get a better understanding on respon-
+
+marized the frequencies of states and state transitions given each
+
+dents' problem-solving strategies at the group level. To facilitate
+
+respondent's action sequence per item, and compared the distribution
+
+understanding in a more intuitive way, Figure 3 and Figure 4 show the
+
+of frequencies of hidden states between different performance
+
+main results of two learned HMMs in a graphic fashion.
+
+groups. Specifically, we used the Wilcoxon rank-sum test (Mann &
+Whitney, 1947; Wilcoxon, 1945) to compare the frequency of states
+and/or state transitions between two groups (correct vs. incorrect) in
+
+3.2.1
+
+|
+
+Item U19a
+
+U19a, and used the Kruskal-Wallis test (Kruskal & Wallis, 1952), an
+extension of Wilcoxon rank-sum test among more than two groups, in
+
+Figure 3 presents the seven hidden states and corresponding actions
+
+U19b, where five scoring groups were defined (0—incorrect, 1 to 4 as
+
+in item U19a. Each box represents a state (abbreviated as “St” in the
+
+the number of correct marked entries). The Bonferroni correction for
+
+figure), and all actions that would be emitted with a probability of
+
+the p-value were also performed for comparisons among more than
+
+greater than 0.1 in that state are listed inside, as well as the
+
+two groups. Because the two PSTRE items U19a and U19b has par-
+
+corresponding probability values. Arrows indicate transitions between
+
+tially shared similar subtasks, we further computed the Spearman cor-
+
+states, and the numbers next to them are the corresponding transition
+
+relation between the state (transition) frequencies to investigate
+
+probabilities. For clarity, the transitions with probabilities less than 0.1
+
+behavioural consistency across items.
+
+are not shown.
+When the actions and transitions of the resulting states were
+inspected from Figure 3, the following observations could be made
+
+3
+
+RESULTS
+
+|
+
+for item U19a. The initial state was State 1 with a probability of
+1, and State 1 contained only one action START, so we labelled this
+
+3.1
+
+|
+
+Model selection
+
+state as “Start”. State 2 mainly included the correct markup of the
+required member record (SS_flag_T with the emission probability of
+
+We first checked the model fit statistics to ensure the data could be
+
+0.571) and the start of searching and sorting engines on spreadsheet
+
+well explained under the HMM with the best optimal number of latent
+
+page (SS_Se and SS_So with a probability of 0.237 and 0.142 respec-
+
+states. The model fit results were summarized in Table 1. Aligned with
+
+tively), indicating the “Use of tools”. State 3, basically, involved the
+
+13652729, 2021, 5, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/jcal.12559 by Beykent University, Wiley Online Library on [24/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+1237
+
+XIAO ET AL.
+
+XIAO ET AL.
+
+U19a
+
+U19b
+
+AIC
+
+BIC
+
+AIC
+
+BIC
+
+1-state model
+
+59613.32
+
+59893.68
+
+1-state model
+
+141341.80
+
+141718.70
+
+2-state model
+
+51309.88
+
+51892.73
+
+2-state model
+
+133351.20
+
+134129.60
+
+3-state model
+
+45827.79
+
+46727.89
+
+3-state model
+
+115480.30
+
+116676.50
+
+4-state model
+
+42690.44
+
+43922.55
+
+4-state model
+
+112235.50
+
+113866.00
+
+5-state model
+
+39240.01
+
+40818.88
+
+5-state model
+
+102098.20
+
+104179.30
+
+6-state model
+
+39197.58
+
+41137.97
+
+6-state model
+
+98452.15
+
+101000.30
+
+7-state model
+
+34512.75
+
+36829.41
+
+7-state model
+
+95427.63
+
+98459.20
+
+8-state model
+
+35752.81
+
+38460.49
+
+8-state model
+
+84521.88
+
+88053.25
+
+9-state model
+
+37341.34
+
+40454.80
+
+9-state model
+
+87041.94
+
+91089.50
+
+10-state model
+
+80340.22
+
+84920.35
+
+11-state model
+
+79598.69
+
+84727.77
+
+12-state model
+
+80773.64
+
+86468.07
+
+T A B L E 1 Model fit of HMMs with
+different numbers of states for U19a
+and U19b
+
+F I G U R E 3 A diagram summarizing the main results of the learned HMM for U19a each box represents a state (abbreviated as “St” in the
+figure, the same below), and all actions that would be emitted with a probability of greater than 0.1 in that state are listed inside, as well as the
+corresponding probability values. Arrows indicate transitions between states, and the numbers next to them are the corresponding transition
+probabilities. For clarity, the transitions with probabilities less than 0.1 are not shown [Colour figure can be viewed at wileyonlinelibrary.com]
+
+conditions specified by the respondent for sorting or searching,
+
+of “Email delivery”. State 6 emitted NEXT in the probability of 1, rep-
+
+among which sorting by the second column (“Name”) in the first
+
+resenting the “Request to end”. State 7 was comprised of the confir-
+
+choice (SS_So_1B) and searching with the surname or spelling mis-
+
+mation and cancellation of ending this item, representing a selection
+
+takes (SS_TYPE_SM, SS_TYPE_SN) were more common. We referred
+
+state after a respondent clicks on NEXT, so we called it “End state” in
+
+to this state as “Tool settings”. State 4 indicated environment
+
+this study.
+
+“Switching and Exploration”, as it was dominated by switching to
+
+Then we focused on the transition between states with probabili-
+
+spreadsheet or email pages and clicking on non-useful options in the
+
+ties greater than 0.1. The transition probability from State 1 to State
+
+toolbar. State 5 was dominated by the actions of sending email and
+
+2 was 0.716, over three times of the probability of the transition from
+
+switching to the email page, in which the emission probability of the
+
+State 1 directly to State 4. This suggested that, after starting the item
+
+former action was 0.743, more than three times of the probability of
+
+(State 1), respondents had a high probability of using tools to assist
+
+the latter. Therefore, this state could be regarded as a representation
+
+problem solving (State 2), such as flagging the record or starting the
+
+13652729, 2021, 5, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/jcal.12559 by Beykent University, Wiley Online Library on [24/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+1238
+
+1239
+
+F I G U R E 4 A diagram summarizing the main results of the learned HMM for U19b. Only the actions with probability larger than 0.05 are
+shown in the plot of each state. A solid arrow indicates that the transition probability is greater than 0.15, a dashed arrow means that the
+transition probability is between 0.05 and 0.15, and the transitions with a probability less than 0.05 are not shown [Colour figure can be viewed
+at wileyonlinelibrary.com]
+
+sorting or searching engine. However, the respondents might also
+
+As shown in Figure 3, the remaining states following State 4, that
+
+explore different environments before figuring out solutions (State 4).
+
+is, from State 4 to State 5, then to State 6, and finally to State 7, cor-
+
+The transitions from State 2 to States 3 and from State 2 to State
+
+responded to the second half of the efficient solution: switching to
+
+4 were both in a moderate probability of 0.471. The change from
+
+email page, sending the mail, requesting to end the item, and then
+
+State 2 to State 4 mainly indicated that the respondent proceeded to
+
+confirming the end. We examined the original process data and found
+
+the next step after marking the record. Because State 2 might also be
+
+that respondents usually clicked on MC (switch to email page) or SS
+
+the start of sorting or searching, it was logical that State 2 could
+
+(switch to spreadsheet page) several times in a row. This partly
+
+be followed by State 3 that represented the settings of sorting or
+
+explained the high probability (0.643) of State 4 to stay in itself, which
+
+searching. The State 3 could be followed by either State 2 or State
+
+was almost three times higher than the probability of transition from
+
+4 or even stay in the same state, and the probabilities of all these tran-
+
+State 4 to State 5. The transition from State 4 to State 5 might also
+
+sitions were about 0.3 to 0.4. Staying in State 3 implied that the
+
+indicate continuous clicks of the MC button as State 5 had a probabil-
+
+respondent set more than one sorting condition (since we recoded
+
+ity of 0.23 to emit MC (switching to email page). These showed the
+
+the three options of sorting as separate actions) or searched more
+
+inefficient actions of respondents. The transition from State 4 to State
+
+than one time with different keywords. The transition from State 3 to
+
+6 meant that the respondent switched the environment or explored
+
+State 2 or State 4 indicated that the respondent moved forward (for
+
+the toolbar and then clicked on NEXT, which had a low probability of
+
+example, flagged or switched the environment) after finding an
+
+0.101. This also indicated some inefficient behaviours, or mistakes
+
+answer; there was also a possibility that the respondent restarted the
+
+due to a lack of understanding of the item content or carelessness.
+
+searching or sorting. As shown in Figure 3, States 1, State 2, and State
+
+After State 6 (Request to end), if the respondent regretted and can-
+
+3 eventually were converted to State 4. Among these transitions, the
+
+celled in State 7 (End state), it was likely to change to State 4, State
+
+path from State 1 to State 2 (to State 3 and back, if searching or
+
+5, or State 6 in a similar probability around 0.3. The transition from
+
+sorting is used) and then to State 4 corresponded to the first half of
+
+State 7 to State 4 (Switching environment and Exploration) showed
+
+the correct solution: starting the item, selecting the right member, and
+
+that the respondent was unsure about the previous response behav-
+
+switching to the email environment.
+
+iours and came back to check the information in the spreadsheet. The
+
+13652729, 2021, 5, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/jcal.12559 by Beykent University, Wiley Online Library on [24/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+XIAO ET AL.
+
+XIAO ET AL.
+
+transition from State 7 to State 6 indicated that the respondent
+
+between State 2 and State 3 was in a high value, suggesting a com-
+
+requested to end the item again after cancelling the move to the next
+
+mon pattern of switching environment to solve this item. Respon-
+
+item. As the probability was 0.346, it was more likely to represent the
+
+dents might repeatedly check the requirements on the word
+
+hesitation to end the item rather than a remedy for the previous
+
+processor page when searching for information in the spreadsheet.
+
+wrong cancellation. However, respondents in this transition did not
+
+The sum of the probabilities of transitions from State 2 to State 6 and
+
+make new contributions to solve this item. Finally, the transition from
+
+State 5 (both related to markup behaviours) was about 0.30, which
+
+State 7 to State 5 possibly suggested the respondent recognized that
+
+was higher than the probability of 0.1 from State 2 to State 4 (Use of
+
+he/she had not completed a key step (i.e., sending mail).
+
+sorting). This was primarily because respondents might switch back to
+the spreadsheet multiple times to mark records or change previous
+marks. Additionally, we noticed that a few respondents did not use
+
+3.2.2
+
+|
+
+Item U19b
+
+sorting function but merely used their eyes to screen for the key
+information in the long spreadsheet. This also resulted in the transi-
+
+Item U19b shares similar content with U19a but with a more complex
+
+tion from State 2 directly to states related to markup behaviours.
+
+problem-solving procedure to label the key information in request.
+
+The most likely transition from State 4 (Use of sorting) was
+
+Analogously to the analysis in item U19a, we present the eight hidden
+
+remaining in itself with a high emission probability of over 0.8, which
+
+states and corresponding actions in item U19b in Figure 4. Similar as
+
+implied respondents usually employed the sorting function by multiple
+
+U19a, this item started with an initial state which was labelled as
+
+times.3 The transition from State 4 to State 6 represented an efficient
+
+“Start”. Both State 2 and State 3 indicated environment switching and
+
+strategy to get the potential correct response, which could be inter-
+
+exploration because they were dominated by the switch to spread-
+
+preted as the respondents found results in spreadsheet using sorting
+
+sheet and word processor pages respectively, with a probability of
+
+function, and then correctly marked them. In addition, State 4 and
+
+exceeding 0.7, and both of them could also emit a non-useful action
+
+State 6 had relatively low emission probabilities to transit to State
+
+TOOLBAR with a probability of around 0.1. For convenience, we
+
+3, which might show a latent checking behaviour, for instance, a
+
+labelled State 2 and State 3 as “SS” and “WP”, respectively. State
+
+respondent might switch to the word processor to double-check the
+
+4 mainly represented the “Use of sorting”, as it involved the start and
+
+instruction and the task requirements. Similar as State 4, the most
+
+confirmation of the sorting engine and the specific settings in sorting.
+
+likely transition from both State 5 (incorrect markup) and State 6 (cor-
+
+Both State 5 and State 6 were related to the mark of records. State
+
+rect markup) also remained in themselves with a high emission proba-
+
+5 specifically reflected the flagging of incorrect records because the
+
+bility as 0.963 and 0.768 respectively. It suggested respondents
+
+emission probability of SS_flag_F exceeded 0.9, so we labelled it
+
+usually adopted multiple trials in flagging correct or incorrect entries.
+
+“Incorrect mark”. State 6 included incorrect markup (SS_flag_F), cor-
+
+After the main process of problem-solving, we arrived at the end-
+
+rect markup (SS_flag_T1 to SS_flag_T4), and cancellation of incorrect
+
+ing states in U19b. The shortest transition sequence from State 6 was
+
+markup (SS_flag_FC). The latter two both belonged to correct markup
+
+to State 7, finally to State 8, corresponding to the request to end the
+
+behaviours, and their emission probabilities added up to more than
+
+item after marking the records, and then a confirmation of the end.
+
+0.7. Thus, State 6 could be considered as a representation of “Correct
+
+However, respondents might also request to end after switching envi-
+
+markup behaviors”. State 7 could be seen as the “Request to end”
+
+ronments, for instance, from States 2 or 3 to State 7 in a quite low
+
+since it was dominated by NEXT with the emission probability nearly
+
+probability though with 0.07 and 0.11 respectively), possibly due to
+
+1. State 8 was the “End state”, which was the same as State
+
+the checking or aimless behaviours. The transitions from State 8 (End
+
+7 in U19a.
+
+state) to State 7 (Request to end), or to State 2 (SS) or State
+
+According to the task content of U19b, the main part of the opti-
+
+3 (WP) had the similar interpretations as those in results of U19a,
+
+mal sequence could be mapped onto the path from State 1 to State
+
+revealing hesitative behaviours. However, the transition from State
+
+2, to State 4, then to State 6. It corresponded to starting and checking
+
+8 to State 4 might cause an extra attention. After cancelling the
+
+the requirement in the word processor page, switching to spreadsheet
+
+request to end the item, the respondent went back to use the sorting
+
+page, using sorting to find the correct records, and then marking them.
+
+function and this transition had a probability of 0.239. This uncom-
+
+It is noted that the default interface upon starting the item was the
+
+mon path might suggest the possibility of an unintentional click
+
+word processor page, hence, respondents did not need to deliberately
+
+on NEXT.
+
+switch environment to word processor, that is, transitioning to State
+3, at the beginning. However, respondents might still click the word
+processor page immediately after starting the item but with a quite
+low probability of 0.089, as shown in Figure 4. The more likely transi-
+
+3.3 | Comparison of hidden states with expertpredefined sequences
+
+tions from the initial state (State 1) were switching to spreadsheet
+page (State 2) with a probability of 0.759, or directly requiring ending
+
+Per the second research question, we validated the underlying states
+
+the item (State 7), of which the probability was 0.152. The latter tran-
+
+derived from HMM with the optimal strategies predefined by item
+
+sition indicated an aberrant solving behaviour of a small group of test-
+
+designers and experts, which were also regarded as “gold standards”
+
+takers. The emission probability of transition in both directions
+
+when measuring the similarity between individual problem-solving
+
+13652729, 2021, 5, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/jcal.12559 by Beykent University, Wiley Online Library on [24/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+1240
+
+F I G U R E 5 Average frequencies of seven
+states for incorrect and correct groups in U19a.
+The asterisk indicates that for the state, the
+frequency difference between the two groups is
+significant (p < 0.05) with the Bonferroni
+correction under the Wilcoxon test [Colour figure
+can be viewed at wileyonlinelibrary.com]
+
+F I G U R E 6 Average frequencies of eight states for groups with different scores of U19b. The asterisk indicates that for the state, the
+frequency difference between the five groups is significant (p < 0.05) with the Bonferroni correction under the Kruskal-Wallis test [Colour figure
+can be viewed at wileyonlinelibrary.com]
+
+sequence and reference sequences (He et al., 2019, 2021). According
+
+The optimal strategy to solve the item U19b could be summarized
+
+to the predefined optimal sequences, there were four optimal strate-
+
+as: After starting the item, respondents should switch to the spread-
+
+gies to solve the item U19a: using searching function through either
+
+sheet page (word processor page is the default opening page), sort the
+
+toolbar or menu and using sorting function through either toolbar or
+
+records by two conditions, then mark the correct records, and require
+
+menu. To map onto the latent stages, the core stages to extract key
+
+and confirm the end of the item. This corresponded to the hidden
+
+information concentrated on State 2 and State 3 back and forth. The
+
+states with the transition from State 1 to State 8 (i.e., State 1 ! State
+
+whole predefined optimal strategies were mainly explained by
+
+2 ! State 4 ! State 6 ! State 7 ! State 8). It was noted that State
+
+the latent state in sequential order, except that the transition from
+
+3 (switch back to word processer environment) and State 5 (incorrect
+
+State 4 was the highest emission probability to itself, implying higher
+
+mark) were not compulsory in the predefined strategy, which made a
+
+chances for respondents to execute repetitive behaviours in switching
+
+good sense. These two states exhibited the diversity of problem-
+
+and exploration.
+
+solving sequences in the sample.
+
+13652729, 2021, 5, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/jcal.12559 by Beykent University, Wiley Online Library on [24/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+1241
+
+XIAO ET AL.
+
+TABLE 2
+
+XIAO ET AL.
+
+Spearman correlations between state frequencies of two items
+U19a
+
+U19b
+
+St2(Use of
+tools)
+
+St3(Tool
+settings)
+
+St4(Switching &
+Exploration)
+
+St5(Email
+delivery)
+
+St6(Request
+to end)
+
+St7(End
+state)
+
+St2 (SS)
+
+0.29**
+
+0.27**
+
+0.32**
+
+0.34**
+
+0.09**
+
+0.09**
+
+St3 (WP)
+
+0.27**
+
+0.23**
+
+0.28**
+
+0.30**
+
+St4 (Use of sorting)
+
+0.34**
+
+0.48**
+
+0.12**
+
+0.13**
+
+St5 (Incorrect mark)
+
+0.08**
+
+0.04
+
+0.11**
+
+0.07**
+
+0.09**
+
+0.08**
+
+St6 (Correct markup
+behaviours)
+
+0.16**
+
+0.18**
+
+0.24**
+
+0.26**
+
+0.05**
+
+0.06**
+
+St7 (Request to end)
+
+0.11**
+
+0.03
+
+0.12**
+
+0.09**
+
+0.15**
+
+0.15**
+
+St8 (End state)
+
+0.10**
+
+0.03
+
+0.12**
+
+0.09**
+
+0.16**
+
+0.15**
+
+0.08**
+0.01
+
+0.07**
+0.01
+
+Note: Values greater than or equal to 0.30 are in bold.
+p < 0.01.
+
+**
+
+3.4 | Associations between hidden states and
+performance
+
+switched more often between environments than the zero-score
+group (i.e., fully incorrect group), reflected by more involvement in
+State 2 and State 3. The frequency of State 4 varied significantly
+
+To address the third research question, we explored the relationships
+
+among groups with different scores. The full credit group (score = 4)
+
+between respondents' performance and extracted hidden states, as
+
+used the efficient tool (i.e., sorting) significantly more often than the
+
+well as the transition between states by each item. For U19a, the cor-
+
+partial credit groups (score = 1, 2, or 3). The fully incorrect group
+
+rect and incorrect groups had 882 and 458 respondents, respectively.
+
+resulted in the lowest frequency in this state, on average lower than
+
+For U19b, the groups with scores of 0, 1, 2, 3, and 4 had 437, 31, 113,
+
+1, suggesting this group barely used the efficient tool when solving
+
+189, and 585 respondents, respectively. The average frequencies of
+
+the task. Interestingly, the groups with partial and full credits had high
+
+states for two groups in U19a are shown in Figure 5 and the frequen-
+
+frequencies in both State 6 (correct markup) and State 5 (incorrect
+
+cies for five groups in U19b are in Figure 6, in which asterisks indicate
+
+markup). Their frequencies in State 5 were even higher than those in
+
+the significance test results. The figures for state transitions of two
+
+State 6, which might indicate the respondents retained marks for
+
+items are attached in Appendix D.
+
+some incorrect rows in addition to the correct rows. Within our
+
+As Figure 5 shows, in U19a, the correct group had a higher fre-
+
+expectation, the group with no credit took fewer actions in State
+
+quency than the incorrect group in four states (State 2, State 3, State
+
+5 and State 6 and their most actions occurred in State 5. Contras-
+
+4, and State 5). According to these states' interpretations, the correct
+
+tively, in U19b, on average, the frequencies in State 7 (Request to
+
+group was found to use tools more frequently and switched between
+
+end) and State 8 (End state) were resulted both as 1 and no significant
+
+environments more often, which may indicate their repeatedly check-
+
+differences were found between performance groups in these two
+
+ing behaviours in the solving process. The correct group was also
+
+states. It suggested that the hesitative behaviour clicking on the can-
+
+found more likely to execute key actions (i.e., actions that are highly
+
+cellation button were not obvious in this item.
+
+related to credits). The incorrect group had a higher frequency in State
+
+When examining the difference in transition frequency between
+
+6 and State 7, which suggested the respondents were more likely to
+
+performance groups in U19b, we got the similar information as the
+
+click cancel button when approaching to end the task. We further
+
+state frequency. For the transition from State 1 (Start) to State
+
+examined the frequency of transitions between states by each group.
+
+7 (Request to end), the frequency of the group with no credit was
+
+The transition from State 4 to State 6 was observed more often in the
+
+higher than that of other groups, suggesting a direct skipping behav-
+
+incorrect group, showing that these respondents more often chose to
+
+iour in this item. The group with no credit also showed low transition
+
+end the item immediately after some explorations. These explorations
+
+frequencies between State 2 and State 3, indicating limited explora-
+
+were likely to be non-targeted ones probably because of respondents'
+
+tions in this item probably because of low motivation or lack of knowl-
+
+misunderstanding on the content of the task or lack of motivation to
+
+edge in understanding the task.
+
+solve the item attentively. The incorrect group was also found to have
+more transitions from State 1 to State 6, suggesting that many
+respondents clicked the “NEXT” button immediately after starting the
+
+3.5
+
+|
+
+Link between results of U19a and U19b
+
+item, which resulted in a direct skip without any efforts in the task.
+As Figure 6 shows, in U19b, the five performance groups signifi-
+
+The correlations of the state frequency are shown in Table 2.
+
+cantly differed in the frequency of five states. Like the findings in
+
+Because the starting states were adopted by all the respondents in
+
+U19a, the non-zero score groups (i.e., partial or full credit group)
+
+each item, the correlation was always 1. We excluded this state
+
+13652729, 2021, 5, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/jcal.12559 by Beykent University, Wiley Online Library on [24/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+1242
+
+1243
+
+F I G U R E 7 The heatmap of spearman correlations between state transition frequencies of two items. The horizontal axis corresponds to the
+transitions in U19a, shown by the suffix “(a)” in the horizontal axis labels. The vertical axis corresponds to transitions in U19b, denoted by the
+suffix “(b)” in the labels. The colour of each cell indicates the magnitude and direction of the correlation between the frequencies of two
+transitions from different items, as illustrated by the legend [Colour figure can be viewed at wileyonlinelibrary.com]
+
+from both of the items when computing the correlation of state fre-
+
+The correlations of the state transition frequency are shown in
+
+quency. State 2 (Use of tools) and State 3 (Tool settings) in U19a
+
+the form of a heatmap (see Figure 7). The consistency of behaviours
+
+are moderately correlated with State 4 in U19b (Use of sorting).
+
+between the two items were illustrated more clearly. First, the transi-
+
+These states revealed the use of efficient tools for solving the
+
+tion from “Start” directly to “Request to end” had the highest correla-
+
+corresponding items. State 4 (Switching & Exploration) and State
+
+tion (0.50) between two items (St1 ! St6 in U19a and St1 ! St7 in
+
+5 (Email delivery) in U19a has the correlations of about 0.3 with
+
+U19b). And this transition in each item was negatively correlated to
+
+State 2 and State 3 in U19b, suggesting that the behaviour of
+
+productive actions in another item, such as St4 ! St5 (email delivery
+
+switching between environments was moderately consistent in the
+
+after environment switch) and St5 ! St6 (from email delivery to
+
+two items.
+
+NEXT) in U19a, and St1 ! St2 in U19b (switch to spreadsheet page
+
+13652729, 2021, 5, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/jcal.12559 by Beykent University, Wiley Online Library on [24/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+XIAO ET AL.
+
+XIAO ET AL.
+
+after START). Second, strategic behaviours were positively correlated
+
+responses from each task and accumulating evidence across theme.
+
+between items. For example, St2 ! St3 in U19a (indicating the use of
+
+Evidence models under the CAF provide detailed instructions on how
+
+searching or sorting functions) was correlated with the transitions
+
+we should update our information about person-level variables given
+
+related to St4 (Use of sorting) in U19b. Also, St3! St2 and St3 !
+
+a performance in the form of examinees' work products from tasks.
+
+St4 in U19a, the flagging action and environment switch after
+
+An evidence model contains two parts, which play distinct roles in the
+
+searching or sorting, were positively correlated with St2 ! St4
+
+assessment argument: first, evidence rules describe how observable
+
+(sorting after switching to spreadsheet page) and St4 ! St4 (Use of
+
+variables summarize an examinee's performance in a particular task
+
+sorting) in U19b.
+
+from the work product that the examinee produced for that task; and
+second, the measurement model provides information about the connection between person-level variables and observable variables
+
+4
+
+|
+
+DISCUSSION
+
+(Mislevy et al., 2003). In the current study, in fact, the work products
+are presented in the form of process data, specifically, time-stamped
+
+The response processes of problem-solving items contain rich infor-
+
+action sequences in our study. An application of HMM produced a
+
+mation about respondents' behaviours and cognitive process in the
+
+hidden layer under the observational variables of work products.
+
+digital tasks. In this study, we exploited the HMM on time-stamped
+
+Looking ahead, a joint model containing both the person-level
+
+action sequence data to identify the latent states and transitions
+
+(response) variables and observable variables (i.e., action sequences
+
+between states underlying the problem-solving process in two PSTRE
+
+and derived hidden states and transition probability from the HMM) is
+
+items in PIAAC. We found significant differences in behaviour pat-
+
+the machinery that effects probability-based accumulation and syn-
+
+terns across latent states by response groups. The groups with correct
+
+thesis of evidence over task performances.
+
+responses in both items were found more engaged in tasks and more
+
+In this study, different behaviour characteristics were detected in
+
+often to use efficient tools to solve problems, while the group with
+
+successful and unsuccessful groups. These findings are consistent with
+
+incorrect responses was found more likely to use shorter action
+
+the previous results of He and von Davier (2015, 2016), who applied n-
+
+sequences and exhibit hesitative behaviours. Consistent behavioural
+
+grams model to explore the process data of the item U19a. In their study,
+
+patterns were also identified through a correlation study across the
+
+respondents in the correct groups were found to be more likely to
+
+two items.
+
+employ efficient tools, while those in the incorrect group were more
+
+This study demonstrated the advantages of HMM in process data
+
+likely to display cancellation-related behaviours and/or skip the items
+
+analysis from both person-level and item-level perspectives. From the
+
+without executing any efforts. Unlike the n-gram model to segment the
+
+person-level aspect, HMM presented a deep insight of an underlying
+
+observable long action sequences into mini-sequences to facilitate the
+
+layer from the observed action sequences by segmenting each long
+
+analysis, the application of HMM not only kept the action sequence as a
+
+problem-solving process into latent subtasks. This helped characterize
+
+complete set, but also provided latent states underneath the observable
+
+response profiles and test-taking behaviours of people by different
+
+sequences, thus, made a further contribution to understanding the test-
+
+response groups (success and failure), thus providing potential fea-
+
+takers' behaviour in solving a digital task with various constrains and
+
+tures to cluster people with homogeneous behaviour patterns. For
+
+steps, especially in multiple environments related to spreadsheets and
+
+instance, Fincham et al. (2019) employed HMM to generate latent
+
+emails.
+
+learning state sequences, based on which, learners were clustered into
+
+The latent states derived from the HMM corresponded to the sub-
+
+different learning strategy patterns. From the item-level aspect, the
+
+tasks disassembled from the problem-solving cognitive dimensions
+
+output from HMM blueprinted the transition path between latent
+
+(e.g., setting sub-goals, using tools, acquiring information, and utilizing
+
+states to help screening the abnormal behaviours that run out of item
+
+derived information) (OECD, 2012). For instance, the results related to
+
+designers' expectation. For instance, respondents might not need to
+
+tool use in different performance groups supported the theoretical
+
+transit to the latent state of using tools (which is a compulsory step in
+
+importance of cognitive tools in assisting human problem solving
+
+predefined strategy created by item developers and content experts)
+
+(Jonassen & Reeves, 1996). The sorting and/or searching functions in
+
+but still could make correct responses following other strategies
+
+both items in this study could help narrow the searching range, thereby
+
+(e.g., scanning spreadsheet by rows with eyes). In such a case, the
+
+reducing cognitive load of problem solvers to save cognitive resources
+
+HMM could play an important role in examining the validity of a
+
+for higher-order thinking skills. The results of the current study are also
+
+problem-solving item and help readjust the predefined strategies if
+
+aligned with the findings in Liu and Bera (2005) where problem-solvers
+
+they were too far away from the common individual problems-solving
+
+in the higher performance levels were found more likely to make appro-
+
+process.
+
+priate use of cognitive tools than those at the bottom level.
+
+Evidence-centered design (ECD) that was first introduced in Mis-
+
+The application of HMM also disclosed a variety of transition path
+
+levy et al. (1999, 2003, 2006) presents the high-level models of the
+
+through latent states in the unsuccessful group, which could help pin-
+
+conceptual assessment framework (CAF) and four-process delivery
+
+point some reasons for respondents' failure. One possible reason
+
+architecture - examinee by examinee, the functions of selecting and
+
+could be the respondents' low motivation to solve the digital tasks. A
+
+administering tasks, interacting as required with the examinee to pre-
+
+typical low motivation of the skipping behaviour was following limited
+
+sent materials and capture work products, and then evaluating
+
+transition paths in latent states or simply from the state of start
+
+13652729, 2021, 5, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/jcal.12559 by Beykent University, Wiley Online Library on [24/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+1244
+
+directly to the end. The low motivation might reduce an allocation of
+
+sequences to provide deeper insights of behavioural patterns in
+
+attentional resources to the task (Weith, 2005), thus resulted in a poor
+
+complex problem-solving tasks. Note that the HMM method is not
+
+performance. An increasing number of recent studies have paid atten-
+
+restricted to time-stamped action sequences from complex problem-
+
+tions to the association between behaviour patterns and motivations
+
+solving tasks but might be employed to understand behavioural pat-
+
+by different performance groups, mostly focused on using observable
+
+terns in various psychological assessment and digital learning set-
+
+variables though. For instance, Sahin and Colvin (2020) suggested to
+
+tings with interactive modes such as collaborative, game- and
+
+combine information on the time spent on task with information on
+
+simulation-based tasks, scenario-based environments, or learning
+
+the number of performed actions to classify responses as rapid, disen-
+
+apps. As such, the present study may serve as a blueprint for
+
+gaged responses. Ulitzsch, He, and Pohl (2021) proposed using
+
+researchers seeking a better understanding of behavioural patterns
+
+sequence mining techniques by combining action sequences and time
+
+in various types of interactive tasks. The application of HMM in pro-
+
+intervals between actions to understand the incorrect behavioural
+
+cess data analysis holds promise in better visualizing and dis-
+
+patterns on interactive tasks. It would be interesting to leverage these
+
+assembling the problem-solving process into latent subtasks, which
+
+observable variables with the latent states and transitions from the
+
+could be helpful in evaluating the mastery of subskills from the com-
+
+HMM application in the future studies.
+
+plex problem-solving competence. As showcased in the present
+study, combining insights gained from the HMM application and
+expert-predefined sequences may support examining the item valid-
+
+4.1
+
+|
+
+Limitations and future directions
+
+ity and complementing insights into different aspects of behavioural
+patterns and is therefore strongly advised.
+
+Some limitations also worth merit in this study. First, the extracted
+HMM states were interpreted according to actions with high emission
+
+AC KNOW LEDG EME NT
+
+probability. The validity of the latent states and transitions between
+
+The authors thank the OECD-PIAAC (Programme for the Interna-
+
+states would be recommended for a further check with item devel-
+
+tional Assessment of Adult Competencies) team for granting
+
+opers and content experts. It was noted that the actions with low
+
+access to the data source and instruments in this study and thank
+
+probabilities were not discussed in the current study, which might
+
+the Center for Psychometrics, Statistics, and Data Science and
+
+lead to ignorance of some useful information in special cases
+
+the Center for Global Assessments at the Educational Testing Ser-
+
+(e.g., some meaningful behaviour patterns that only occurred in a lim-
+
+vice for their support in this research project. This project is par-
+
+ited number of respondents).
+
+tially supported by National Science Foundation grants IIS-
+
+Second, the two problem-solving tasks used in this study were
+relatively easy items with an over 60% correct rate (including partial
+
+1633353 and by National Natural Science Foundation of China
+(32071091).
+
+credits) among respondents. The problem-solving strategies in
+these items were rather straightforward compared with the com-
+
+CONFLICTS OF INTEREST
+
+plex items. He et al. (2019) found that the task difficulty could lead
+
+The authors claim there has no known conflict of interest to disclose.
+
+to different degrees of complexity in forming problem-solving strategies, thus impacting respondents' behaviours. It would be interest-
+
+ENDNOTES
+
+ing to expand the difficulty range in a future study to evaluate how
+
+1
+
+In PIAAC, the item U19b was originally scored in a polytomous way as
+0 – no credit (no correct rows marked), 1 – half credit (partially correct),
+and 2 – full credit (all correct) based on the number of correctly
+marked rows.
+
+2
+
+The raw process data are openly available from the OECD website:
+http://www.oecd.org/skills/piaac/data/piaaclogfiles/.
+
+3
+
+Each sorting option (i.e., change the sorting column name of sequence of
+order) was recoded as one single action.
+
+respondents' behaviours would change under different situations.
+Further, more evidence is expected to be collected from multiple
+items across the PSTRE domain. A refined HMM approach would
+be valuable to generalize findings across multiple tasks in a further
+study.
+Finally, because the current study only focused on using the process data from one participating country in PIAAC, the culture and
+country effects might not be revealed. An interesting direction for the
+future work could be leveraging covariates (e.g., age, gender, country,
+
+PE ER RE VIEW
+
+and low- and high- basic skills in literacy and numeracy) into the
+
+The peer review history for this article is available at https://publons.
+
+HMM to compare the different behavioural patterns in transitions and
+
+com/publon/10.1111/jcal.12559.
+
+emission probabilities of latent states.
+DATA AVAILABILITY STAT EMEN T
+The raw process data that support the findings of this study are
+
+5
+
+|
+
+C O N CL U S I O N S
+
+openly available from the OECD website: http://www.oecd.org/skills/
+piaac/data/piaaclogfiles/, while the corresponding item documenta-
+
+This study presents the value of data-driven approach of HMM to
+
+tion is not publicly available and is granted access upon reasonable
+
+reveal latent states and transitions underneath the observable action
+
+request and with the permission of the OECD.
+
+13652729, 2021, 5, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/jcal.12559 by Beykent University, Wiley Online Library on [24/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+1245
+
+XIAO ET AL.
+
+XIAO ET AL.
+
+ORCID
+Yue Xiao
+
+https://orcid.org/0000-0002-2836-2906
+
+Qiwei He
+
+https://orcid.org/0000-0001-8942-2047
+
+Bernard Veldkamp
+Hongyun Liu
+
+https://orcid.org/0000-0003-3543-2164
+
+https://orcid.org/0000-0002-3472-9102
+
+RE FE R ENC E S
+Akaike, H. (1973). Information theory and an extension of the maximum
+likelihood principle. In B. N. Petrov & F. Csaki (Eds.), Second international symposium on information theory (pp. 267–281). Akadémiai
+Kiad 
+o.
+Arieli-Attali, M., Ou, L., & Simmering, V. R. (2019). Understanding test
+Takers' choices in a self-adapted test: A hidden Markov modeling of
+process data. Frontiers in Psychology, 10, 83. https://doi.org/10.3389/
+fpsyg.2019.00083
+Bennett, R. E., Persky, H., Weiss, A. R., & Jenkins, F. (2007). Problem solving
+in technology-rich environments. A report from the NAEP technologybased assessment project, research and development series (NCES
+2007-466). National Center for Education Statistics.
+Bennett, R. E., Persky, H., Weiss, A., & Jenkins, F. (2010). Measuring problem solving with technology: A demonstration study for NAEP. The
+Journal of Technology, Learning and Assessment, 8(8), 1–44. https://
+ejournals.bc.edu/index.php/jtla/article/view/1627
+Bergner, Y., Walker, E., & Ogan, A. (2017). Dynamic Bayesian network
+models for peer tutoring interactions. In A. A. von Davier, M. Zhu, &
+P. C. Kyllonen (Eds.), Innovative assessment of collaboration (pp. 249–
+268). Springer.
+Biswas, G., Jeong, H., Kinnebrew, J. S., Sulcer, B., & Roscoe, R. (2010).
+Measuring self-regulated learning skills through social interactions in a
+teachable agent environment. Research and Practice in Technology
+Enhanced Learning, 5(02), 123–152. https://doi.org/10.1142/
+S1793206810000839
+Boyer, K. E., Phillips, R., Ingram, A., Ha, E. Y., Wallis, M., Vouk, M., &
+Lester, J. (2011). Investigating the relationship between dialogue structure and tutoring effectiveness: A hidden Markov modeling approach.
+International Journal of Artificial Intelligence in Education, 21(1–2), 65–
+81. https://doi.org/10.3233/JAI-2011-018
+Corbett, A. T., & Anderson, J. R. (1994). Knowledge tracing: Modeling the
+acquisition of procedural knowledge. User Modeling and User-Adapted
+Interaction., 4(4), 253–278.
+Damashek, M. (1995). Gauging similarity with n-grams: Languageindependent categorization of text. Science, 267(5199), 843–848.
+https://doi.org/10.1126/science.267.5199.843
+Dutilh, G., Wagenmakers, E., Visser, I., & van der Maas, H. L. J. (2010). A
+phase transition model for the speed-accuracy trade-off in response
+time experiments. Cognitive Science, 35(2), 211–250. https://doi.org/
+10.1111/j.1551-6709.2010.01147.x
+Fincham, E., Gaševi'c, D., Jovanovi'c, J., & Pardo, A. (2019). From study tactics to learning strategies: An analytical method for extracting interpretable representations. IEEE Transactions on Learning Technologies,
+12(1), 59–72. https://doi.org/10.1109/TLT.2018.2823317
+Forney, G. D. (1973). The viterbi algorithm. Proceedings of the IEEE, 61(3),
+268–278. https://doi.org/10.1109/PROC.1973.9030
+Ghahramani, Z. (2001). An introduction to hidden Markov models and
+Bayesian networks. In Hidden Markov models: applications in computer
+vision (pp. 9–41). World Scientific Publishing.
+Goldhammer, F., Naumann, J., & Keßel, Y. (2013). Assessing individual differences in basic computer skills. European Journal of Psychological
+Assessment, 29(4), 263–275. https://doi.org/10.1027/1015-5759/
+a000153
+Goldhammer, F., Naumann, J., Rölke, H., Stelter, A., & T
+oth, K. (2017).
+Relating product data to process data from computer-based
+
+competency assessment. In D. Leutner, J. Fleischer, J. Grünkorn, & E.
+Klieme (Eds.), Competence Assessment in Education (pp. 407–425).
+Springer.
+Greiff, S., Wüstenberg, S., & Avvisati, F. (2015). Computer-generated logfile analyses as a window into students' minds? A showcase study
+based on the PISA 2012 assessment of problem solving. Computers &
+Education, 91, 92–105. https://doi.org/10.1016/j.compedu.2015.
+10.018
+Han, Z., He, Q., & von Davier, M. (2019). Predictive feature generation and
+selection using process data from PISA simulation-based environment:
+An application of tree-based ensemble methods. Frontiers in Psychology, 10, 2461. https://doi.org/10.3389/fpsyg.2019.02461
+He, Q., Borgonovi, F., & Paccagnella, M. (2019). Using Process Data to
+Understand Adults' Problem-Solving Behaviour in the Programme for
+the International Assessment of Adult Competencies (PIAAC): Identifying Generalised Patterns Across Multiple Tasks with Sequence Mining. OECD Publishing; OECD Education Working Papers. http://doi.
+org/10.1787/650918f2-en
+He, Q., Borgonovi, F., & Paccagnella, M. (2021). Leveraging process data to
+assess adults' problem-solving skills: Identifying generalized behavioral
+patterns with sequence mining. Computers & Education, 166, 104170.
+https://doi.org/10.1016/j.compedu.2021.104170
+He, Q., & von Davier, M. (2015). Identifying feature sequences from process data in problem-solving items with n-grams. In L. A. van der Ark,
+D. M. Bolt, W.-C. Wang, J. A. Douglas, & S.-M. Chow (Eds.), Quantitative psychology research (pp. 173–190). Springer. https://doi.org/10.
+1007/978-3-319-19977-1_13
+He, Q., & von Davier, M. (2016). Analyzing process data from problemsolving items with n-grams: Insights from a computer-based largescale assessment. In Y. Rosen, S. Ferrara, & M. Mosharraf (Eds.), Handbook of research on technology tools for real-world skill development
+(pp. 750–777). IGI Global.
+Hirschberg, D. S. (1975). A linear space algorithm for computing maximal
+common subsequences. Communications of the ACM, 18(6), 341–343.
+https://doi.org/10.1145/360825.360861
+Hirschberg, D. S. (1977). Algorithms for the longest common subsequence
+problem. Journal of the ACM, 24(4), 664–675. https://doi.org/10.
+1145/322033.322044
+Jeong, H., Gupta, A., Roscoe, R., Wagster, J., Biswas, G., & Schwartz, D.
+(2008). Using hidden Markov models to characterize student behaviors in learning-by-teaching environments. In B. P. Woolf, E. Aïmeur, R.
+Nkambou, & S. Lajoie (Eds.), Intelligent tutoring systems. Lecture notes in
+computer science (Vol. 5091, pp. 614–625). Springer. https://doi.org/
+10.1007/978-3-540-69132-7_64
+Jonassen, D. H., & Reeves, T. C. (1996). Learning with technology: Using
+computers as cognitive tools. In D. H. Jonassen (Ed.), Handbook of
+research for educational communications and technology (pp. 693–719).
+Macmillan.
+Konishi, S., Ando, T., & Imoto, S. (2004). Bayesian information criteria and
+smoothing parameter selection in radial basis function networks. Biometrika, 91(1), 27–43. https://doi.org/10.1093/biomet/91.1.27
+Kroehne, U., & Goldhammer, F. (2018). How to conceptualize, represent,
+and analyze log data from technology-based assessments? A generic
+framework and an application to questionnaire items. Behaviormetrika,
+45(2), 527–563. https://doi.org/10.1007/s41237-018-0063-y
+Kruskal, W. H., & Wallis, W. A. (1952). Use of ranks in one-criterion variance analysis. Journal of the American Statistical Association, 47(260),
+583–621. https://doi.org/10.1080/01621459.1952.10483441
+LaMar, M. M. (2018). Markov decision process measurement model.
+Psychometrika, 83(1), 67–88. https://doi.org/10.1007/s11336-0179570-0
+Levy, R. (2014). Dynamic Bayesian network modeling of game-based diagnostic
+assessments (CRESST report 837). University of California, National Center for Research on Evaluation, Standards, and Student Testing (CRESST).
+
+13652729, 2021, 5, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/jcal.12559 by Beykent University, Wiley Online Library on [24/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+1246
+
+Levy, R. (2019). Dynamic Bayesian network modeling of game-based diagnostic assessments. Multivariate Behavioral Research, 54(6), 771–794.
+http://doi.org/10.1080/00273171.2019.1590794
+Li, F., Cohen, A., Bottge, B., & Templin, J. (2016). A latent transition analysis model for assessing change in cognitive skills. Educational and Psychological Measurement, 76(2), 181–204. https://doi.org/10.1177/
+0013164415588946
+Liao, D., He, Q., & Jiao, H. (2019). Mapping background variables with
+sequential patterns in problem-solving environments: An investigation
+of US Adults' employment status in PIAAC. Frontiers in Psychology, 10,
+646. https://doi.org/10.3389/fpsyg.2019.00646
+Liu, M., & Bera, S. (2005). An analysis of cognitive tool use patterns in a
+hypermedia learning environment. Educational Technology Research
+and Development, 53(1), 5–21.
+Mann, H. B., & Whitney, D. R. (1947). On a test of whether one of two
+random variables is stochastically larger than the other. The Annals of
+Mathematical Statistics, 18(1), 50–60. https://www.jstor.org/stable/
+2236101
+Manning, C. D., & Schütze, H. (2002). Foundations of statistical natural language processing. MIT Press.
+Mislevy, R. J., Almond, R. G., & Lukas, J. F. (2003). A brief introduction to
+evidence-centered design. ETS Research Report Series, 2003(1), 1–29.
+https://doi.org/10.1002/j.2333-8504.2003.tb01908.x
+Mislevy, R. J., Steinberg, L. S., &Almond, R. G. (1999). On the roles of task
+model variables in assessment design (CSE Tech. Rep. No. 500). University of California, Center for the Study of Evaluation, Graduate School
+of Education & Information Studies.
+Mislevy, R. J., Steinberg, L. S., Almond, R. G., & Lukas, J. F. (2006). Concepts, terminology, and basic models of evidence-centered design. In
+D. M. Williamson, R. J. Mislevy, & I. I. Bejar (Eds.), Automated scoring of
+complex tasks in computer-based testing (pp. 15–47). Lawrence Erlbaum
+Associates.
+Oakes, M., Gaizauskas, R., Fowkes, H., Jonsson, W. A. V., & Beaulieu, M.
+(2001). A method based on chi-square test for document classification.
+In D. H. Kraft, W. B. Croft, D. J. Harper, & J. Zobel (Eds.), Proceedings
+of the 24th Annual International ACM SIGIR Conference on Research and
+Development in Information Retrieval (pp. 440–441). ACM.
+OECD. (2009). PIAAC problem solving in technology-rich environments: A
+conceptual framework. OECD Publishing. https://doi.org/10.1787/
+220262483674
+OECD. (2011). PIAAC conceptual framework of the background questionnaire
+main survey. OECD Publishing. http://www.oecd.org/skills/piaac/
+PIAAC(2011_11)MS_BQ_ConceptualFramework_1%20Dec%
+202011.pdf
+OECD. (2012). Literacy, numeracy and problem solving in technology-rich
+environments: Framework for the OECD survey of adult skills. OECD
+Publishing. https://doi.org/10.1787/9789264128859-en
+OECD. (2017). PIAAC 2012 item documentation. OECD Publishing. https://
+doi.org/10.4232/1.12569
+Pelanek, R. (2017). Bayesian knowledge tracing, logistic models, and
+beyond: An overview of learner modeling techniques. User Modeling
+and User-Adapted Interaction, 27(3), 313–350.
+Rabiner, L. R. (1989). A tutorial on hidden Markov models and selected
+applications in speech recognition. Proceedings of the IEEE, 77(2), 257–
+286. https://doi.org/10.1109/5.18626
+Sahin, F., & Colvin, K. (2020). Enhancing response time thresholds with response
+behaviors for detecting disengaged examinees. Large-scale Assessment in
+Education, 8(5), 1–24. https://doi.org/10.1186/s40536-020-00082-1
+
+Schleicher, A. (2008). PIAAC: A new strategy for assessing adult competencies. International Review of Education, 54(5–6), 627–650. https://
+doi.org/10.1007/s11159-008-9105-0
+Shu, Z., Bergner, Y., Zhu, M., Hao, J., & von Davier, A. A. (2017). An item
+response theory analysis of problem-solving processes in scenario-based
+tasks. Psychological Test and Assessment Modeling, 59(1), 109–131.
+Stadler, M., Fischer, F., & Greiff, S. (2019). Taking a closer look: An exploratory analysis of successful and unsuccessful strategy use in complex
+problems. Frontiers in Psychology, 10, 777. https://doi.org/10.3389/
+fpsyg.2019.00777
+Sukkarieh, J. Z., von Davier, M., & Yamamoto, K. (2012). From biology to
+education: Scoring and clustering multilingual text sequences and
+other sequential tasks. ETS Research Report Series, 2012(2), i–43.
+Tang, X., Wang, Z., He, Q., Liu, J., & Ying, Z. (2020). Latent feature extraction for process data via multidimensional scaling. Psychometrika, 85,
+378–397. https://doi.org/10.1007/s11336-020-09708-3
+Ulitzsch, E., He, Q., Ulitzsch, V., Nichterlein, A., Molter, H., Niedermeier, R., &
+Pohl, S. (2021). Combining clickstream analyses and graph-modeled data
+clustering for identifying common response processes. Psychometrika, 86,
+190–214. https://doi.org/10.1007/s11336-020-09743-0
+Ulitzsch, E., He, Q., & Pohl, S. (2021). Using sequence mining techniques
+for understanding incorrect behavioral patterns on interactive tasks.
+Journal of Educational and Behavioral Statistics, Advance online publication, https://doi.org/10.3102/10769986211010467
+van de Sande. (2013). Properties of the Bayesian knowledge tracing
+model. Journal of Educational Data Mining, 5(2), 1–10.
+Visser, I., & Speekenbrink, M. (2010). depmixS4: an R package for hidden
+Markov models. Journal of Statistical Software, 36(7), 1–21.
+Viterbi, A. J. (1967). Error bounds for convolutional codes and an asymptotically optimum decoding algorithm. IEEE Transactions on Information
+Theory, 13(2), 260–269. https://doi.org/10.1109/TIT.1967.1054010
+Wang, S., Yang, Y., Culpepper, S. A., & Douglas, J. A. (2018). Tracking skill
+acquisition with cognitive diagnosis models: A higher-order, hidden
+markov model with covariates. Journal of Educational and Behavioral
+Statistics, 43(1), 57–87. https://doi.org/10.3102/1076998617719727
+Weith, M. (2005). The influence of motivation on cognitive mechanisms
+involved in problem solving (Doctoral dissertation). http://www.pqdtcn.
+com/thesisDetails/8DEB1024F95C875CB58827371B34678A
+Wilcoxon, F. (1945). Individual comparisons by ranking methods. Biometrics Bulletin, 1(6), 80–83.
+Zhu, M., Shu, Z., & von Davier, A. A. (2016). Using networks to visualize
+and analyze process data for educational assessment. Journal of
+Educational Measurement, 53, 190–211. https://doi.org/10.1111/
+jedm.12107
+
+SUPPORTING INF ORMATION
+Additional supporting information may be found online in the
+Supporting Information section at the end of this article.
+
+How to cite this article: Xiao, Y., He, Q., Veldkamp, B., & Liu,
+H. (2021). Exploring latent states of problem-solving
+competence using hidden Markov model on process data.
+Journal of Computer Assisted Learning, 37(5), 1232–1247.
+https://doi.org/10.1111/jcal.12559
+
+13652729, 2021, 5, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/jcal.12559 by Beykent University, Wiley Online Library on [24/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+1247
+
+XIAO ET AL.
+
+

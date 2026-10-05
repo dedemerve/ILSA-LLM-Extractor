@@ -1,0 +1,886 @@
+www.nature.com/scientificreports
+
+OPEN
+
+Discovering action insights from
+large-scale assessment log data
+using machine learning
+Minyoung Yun1,4, Minjeong Jeon2 & Heyoung Yang3
+This study introduces a novel machine learning algorithm that combines natural language processing
+techniques, such as Word2Vec and Doc2Vec, with neural networks to identify and validate significant
+actions within human action sequences. Using the 2012 Program for the International Assessment of
+Adult Competencies dataset, the algorithm visualizes and analyzes action sequences in a 2D vector
+space to uncover high-impact behaviors that influence performance. The methodology, validated
+across two problem sets (“Party Invitation” and “Club Membership”), successfully distinguishes
+performance groups by focusing on critical actions, leading to enhanced classification accuracy (up to
+94.6%) and clustering coherence (silhouette score of 0.491). This approach demonstrates potential
+applications in personalized education, healthcare diagnostics, and consumer behavior prediction,
+advancing the understanding of human behavior through digital footprints.
+
+Keywords Human action sequence, Meaningful actions, Machine learning, Natural language processing,
+PIAAC log data
+
+Understanding human behavior through digital interactions has become increasingly critical across various
+fields, including education, healthcare, and marketing. As human interactions continue to migrate to digital
+platforms, the ability to analyze and interpret behavioral patterns has transitioned from theoretical exploration to
+practical application, enabled by large-scale datasets. Action sequences, representing series of user interactions,
+provide a unique lens through which decision-making and performance can be examined.
+The availability of vast digital interaction data allows researchers to uncover nuanced patterns and
+relationships that were previously inaccessible. For instance, analyzing sequences of actions performed during
+problem-solving tasks can reveal significant insights into cognitive strategies, decision-making processes, and
+behavioral tendencies. This information has profound implications for improving outcomes in domains such as
+personalized education1–5, early medical diagnostics6–12, and customer behavior prediction13–22.
+Traditional analytical methods, such as adjacent action analysis or n-grams23–25, often fall short of capturing
+the complexity of non-linear and non-consecutive relationships within sequences. These limitations hinder the
+ability to uncover deeper behavioral insights necessary for accurate predictions and meaningful interventions.
+Additionally, conventional methods struggle to integrate diverse and dynamic datasets, further limiting their
+applicability in real-world scenarios.
+Recent research has applied natural language processing (NLP) and vectorization techniques to improve
+the representation and interpretation of log data. For example, Xiao et al. (2024) proposed a vectorizationbased framework for system log parsing that enables deeper pattern discovery35. Similarly, Kampik et al. (2023)
+demonstrated the utility of NLP for extracting semantic insights from business process logs, while RamosGutiérrez et al. (2021) emphasized improving log quality through linguistic analysis for more robust downstream
+inference37. These works highlight the expanding role of NLP in understanding behavioral patterns from event
+logs.
+This study addresses these gaps by introducing a novel algorithm that leverages advanced natural language
+processing (NLP) techniques, specifically Word2Vec and Doc2Vec, combined with neural networks26,27
+and random forest28. Neural network is a recently popular machine learning algorithm, and random forest
+is a traditional algorithm. Neural networks are powerful machine learning tools designed to classify data
+by identifying complex patterns. Modeled after the structure of the human brain, they consist of layers of
+interconnected nodes that learn from data through training. In this study, neural networks were employed for
+classification, utilizing their capacity to model non-linear relationships and adapt to various input features.
+1Laboratory PIMM, Arts et Métieres Paris Tech, Paris, France. 2School of Education and Information Studies,
+
+University of California, Los Angeles, LA, USA. 3Center for Future Technology Analysis, Korea Institute of Science
+and Technology Information, Seoul, Korea. 4IntelWind, Berkeley, USA. email: hyyang@kisti.re.kr
+Scientific Reports |
+
+(2025) 15:30412
+
+| https://doi.org/10.1038/s41598-025-14802-6
+
+1
+
+www.nature.com/scientificreports/
+We apply the two algorithms to see how consistently the results are derived. The proposed approach identifies
+meaningful actions within sequences that significantly impact outcomes, enabling better understanding and
+prediction of human behavior26,29. By embedding actions into high-dimensional vector spaces, the algorithm
+captures contextual relationships between actions, facilitating the discovery of critical behaviors that influence
+performance27,30.
+Using the 2012 Program for the International Assessment of Adult Competencies (PIAAC) dataset31, this
+study validates its methodology on two distinct problem sets—“Party Invitation” and "Club Membership." These
+problem sets provide diverse contexts for testing the algorithm’s robustness and effectiveness. The findings
+demonstrate the algorithm’s ability to uncover high-impact actions that distinguish high-performing individuals
+from their peers. These insights have practical applications across disciplines, including developing adaptive
+feedback systems in education, predictive models in healthcare, and behavioral analytics in marketing.
+Overall, this research highlights the transformative potential of action sequence analysis in advancing our
+understanding of human behavior. By addressing existing methodological limitations and leveraging cuttingedge NLP techniques, this study paves the way for innovative applications that bridge the gap between theoretical
+models and practical interventions.
+
+Methods
+
+Data collection
+
+The study used the 2012 PIAAC dataset, focusing on two problem sets: “Party Invitation” and "Club Membership."
+The “Party Invitation” dataset involved 1394 participants who performed 35 distinct actions, while the “Club
+Membership” dataset included 1345 participants carrying out 25 distinct actions. In the “Party Invitation”,
+participants performed actions sequentially to solve the problem, selecting from the 35 available actions.
+Similarly, in the “Club Membership” task, participants performed actions in sequence from the 25 actions. The
+total number of actions ranged from 10 to 348 (with a median of 31) for the “Party Invitation” task, and from
+10 to 253 (with a median of 48) for the “Club Membership” task. Figure 1 Histogram of the number of actions
+of `Party Invitation’ and `Club Membership’ problem sets across participants shows the distribution of the total
+number of actions across participates for both tasks. The participant age and gender details are provided in
+Table 1. The age groups in the 10 s and 60 s and above are slightly smaller, but the remaining age groups are
+fairly evenly distributed. The dataset is also balanced in terms of gender. Participant scores are categorized into
+performance levels in Tables 2 and 3, which form the basis for identifying high-impact actions. Tables 4 and 5
+provide examples of action sequences for the score0 and score3 groups, as well as for the correct and incorrect
+groups.
+To ensure consistency and reliability, the dataset was preprocessed to remove incomplete logs or sequences
+with missing actions. The preprocessed data were then stratified by performance levels to facilitate comparisons
+between high- and low-performing groups. These problem sets provided diverse contexts for evaluating the
+methodology’s robustness and generalizability across different types of tasks.
+
+Fig. 1. Histogram of the number of actions of `Party Invitation’ and `Club Membership’ problem sets across
+participants.
+
+Scientific Reports |
+
+(2025) 15:30412
+
+| https://doi.org/10.1038/s41598-025-14802-6
+
+2
+
+www.nature.com/scientificreports/
+
+‘Party Invitation’ problem dataset
+
+‘Club Membership’ problem dataset
+
+1394
+
+1345
+
+10 ~ 19
+
+154
+
+142
+
+20 ~ 29
+
+291
+
+289
+
+30 ~ 39
+
+282
+
+254
+
+40 ~ 49
+
+310
+
+323
+
+50 ~ 59
+
+255
+
+245
+
+60 ~
+
+102
+
+92
+
+Male
+
+702
+
+675
+
+Female
+
+692
+
+670
+
+Total
+Age
+
+Gender
+
+Table 1. Data details of participants for two problem sets.
+
+Score
+
+Number of participants
+
+0 (zero score)
+
+371 (26.7%)
+
+1 (partial score)
+
+65 (4.6%)
+
+2 (partial score)
+
+158 (10.9%)
+
+3 (full score)
+
+800 (57.6%)
+
+Total
+
+1394 (100%)
+
+Table 2. Score and number of participants for ‘Party Invitation’ problem set.
+
+Score
+
+Number of participants
+
+0 (correct)
+
+935 (69.5%)
+
+7 (incorrect)
+
+410 (30.4%)
+
+Total
+
+1345
+
+Table 3. Score and number of participants for ‘Club Membership’ problem set.
+
+Group
+
+Sequences
+[Example 1]
+START, MAIL_VIEWED, MAIL_VIEWED, FOLDER_VIEWED, FOLDER_VIEWED, FOLDER_VIEWED, MAIL_VIEWED, MAIL_VIEWED, NEXT_INQUIRY,
+NEXT_BUTTON, CONFIRMATION_OPENED, BUTTON, DOACTION, BUTTON, CONFIRMATION_CLOSED, NEXT_ITEM, END
+
+Score0
+
+Score3
+
+[Example 2]
+START, MAIL_VIEWED, MAIL_VIEWED, MAIL_VIEWED, MAIL_VIEWED, MAIL_VIEWED, MAIL_DRAG, MAIL_VIEWED, MAIL_VIEWED, MAIL_
+VIEWED, MAIL_VIEWED, FOLDER_VIEWED, MAIL_VIEWED, MAIL_VIEWED, FOLDER_VIEWED, MAIL_VIEWED, FOLDER_VIEWED, NEXT_INQUIRY,
+NEXT_BUTTON, CONFIRMATION_OPENED, BUTTON, DOACTION, BUTTON, CONFIRMATION_CLOSED, NEXT_ITEM, END
+[Example 3]
+START, MAIL_DRAG, MAIL_VIEWED, FOLDER_VIEWED, MAIL_DROP, MAIL_MOVED, MAIL_DRAG, FOLDER_VIEWED, MAIL_DROP, MAIL_MOVED,
+MAIL_VIEWED, MAIL_VIEWED, MAIL_VIEWED, MAIL_DRAG, MAIL_VIEWED, FOLDER_VIEWED, MAIL_DROP, MAIL_MOVED, MAIL_VIEWED,
+MAIL_VIEWED, NEXT_INQUIRY, NEXT_BUTTON, CONFIRMATION_OPENED, BUTTON, DOACTION, BUTTON, CONFIRMATION_CLOSED, NEXT_
+ITEM
+[Example 4]
+START, MAIL_DRAG, MAIL_VIEWED, FOLDER_VIEWED, MAIL_DROP, MAIL_MOVED, MAIL_DRAG, MAIL_VIEWED, FOLDER_VIEWED, MAIL_DROP,
+MAIL_MOVED, MAIL_VIEWED, MAIL_VIEWED, MAIL_VIEWED, MAIL_DRAG, MAIL_VIEWED, FOLDER_VIEWED, MAIL_DROP, MAIL_MOVED,
+MAIL_VIEWED, MAIL_VIEWED, MAIL_VIEWED, NEXT_INQUIRY, NEXT_BUTTON, CONFIRMATION_OPENED, BUTTON, DOACTION, BUTTON,
+CONFIRMATION_CLOSED, NEXT_ITEM, END
+
+Table 4. The examples of action sequences of the Score0 and Score3 groups.
+
+Feature selection
+
+The feature selection process aimed to convert raw action sequences into meaningful vector representations
+that capture contextual relationships. Word2Vec, with a vector size of 100 and a window size of 5, was used to
+embed individual actions into high-dimensional vector spaces, utilizing the skip-gram model to learn contextual
+relationships from co-occurrence patterns26,29. This approach allowed for the identification of both adjacent
+and non-adjacent relationships, addressing limitations of traditional n-grams24. Dimensionality reduction
+
+Scientific Reports |
+
+(2025) 15:30412
+
+| https://doi.org/10.1038/s41598-025-14802-6
+
+3
+
+www.nature.com/scientificreports/
+
+Group
+
+Correct
+
+Sequences
+[Example 1]
+START, TOOLBAR, ENVIRONMENT, DOACTION, DOACTION, DOACTION, DOACTION, TOOLBAR, ENVIRONMENT, DOACTION,
+DOACTION, DOACTION, DOACTION, TEXTBOX_ONFOCUS, KEYPRESS, KEYPRESS, KEYPRESS, KEYPRESS, TEXTBOX_KILLFOCUS, NEXT_
+INQUIRY, NEXT_BUTTON, CONFIRMATION_OPENED, BUTTON, DOACTION, TEXTBOX_ONFOCUS, TEXTBOX_KILLFOCUS, BUTTON,
+CONFIRMATION_CLOSED, NEXT_ITEM, END
+[Example 2]
+START, TOOLBAR, ENVIRONMENT, DOACTION, DOACTION, DOACTION, DOACTION, TEXTBOX_ONFOCUS, KEYPRESS, KEYPRESS,
+KEYPRESS, KEYPRESS, TEXTBOX_KILLFOCUS, TOOLBAR, DOACTION, TEXTBOX_ONFOCUS, TEXTBOX_KILLFOCUS, NEXT_INQUIRY,
+NEXT_BUTTON, CONFIRMATION_OPENED, BUTTON, DOACTION, TEXTBOX_ONFOCUS, TEXTBOX_KILLFOCUS, BUTTON,
+CONFIRMATION_CLOSEDM, NEXT_ITEM, END
+[Example 3]
+START, TOOLBAR, DOACTION, MENU, MENUITEM, COMBOBOX, BUTTON, SS_SORT, DOACTION, DOACTION, CELL_CHANGE, TOOLBAR,
+ENVIRONMENT, DOACTION, DOACTION, DOACTION, DOACTION, TOOLBAR, DOACTION, NEXT_INQUIRY, NEXT_BUTTON, END
+
+Incorrect
+
+[Example 4]
+START, TOOLBAR, DOACTION, COMBOBOX, RADIO_BTN, BUTTON, SS_SORT, DOACTION, DOACTION, TOOLBAR, ENVIRONMENT,
+DOACTION, START, TOOLBAR, ENVIRONMENT, DOACTION, DOACTION, DOACTION, DOACTION, TEXTBOX_ONFOCUS, TEXTBOX_
+KILLFOCUS, NEXT_INQUIRY, NEXT_BUTTON, CONFIRMATION_OPENED, BUTTON, DOACTION, TEXTBOX_ONFOCUS, TEXTBOX_
+KILLFOCUS, BUTTON, CONFIRMATION_CLOSED, DOACTION, NEXT_INQUIRY, NEXT_BUTTON CONFIRMATION_OPENED, BUTTON,
+DOACTION, BUTTON, CONFIRMATION_CLOSED, DOACTION, GET_HELP, NEXT_INQUIRY, NEXT_BUTTON, CONFIRMATION_OPENED,
+BUTTON, DOACTION, BUTTON, CONFIRMATION_CLOSED, NEXT_ITEM, END
+
+Table 5. The examples of action sequences of the correct and incorrect groups.
+
+techniques, such as PCA and t-SNE, were applied to these embeddings to visualize clusters and patterns
+associated with different performance levels32,33.
+
+Feature verification
+
+To represent entire sequences holistically, Doc2Vec was employed, specifically the Distributed Bag-of-Words
+(PV-DBOW) architecture26,30. This approach facilitated sequence-level comparisons by embedding sequences
+based on their constituent actions, enabling deeper insights into group-level differences. Hyperparameters,
+including vector sizes and training epochs, were optimized to enhance embedding quality, like a vector size of
+100, a window size of 5, training epochs of 100, ensuring robust feature selection across diverse contexts27.
+To validate the significance of identified actions, a structured verification process was conducted using three
+distinct scenarios. In the first scenario, original sequences containing all actions were analyzed as a baseline.
+The second scenario focused exclusively on sequences comprising only the identified meaningful actions, which
+were determined through clustering and visualization30,33. In the third scenario, sequences were modified to
+exclude these meaningful actions, allowing for an assessment of their absence on clustering coherence and
+classification accuracy.
+The validation process involved calculating silhouette scores to measure the quality of clustering within
+the embedded vector space32. Higher silhouette scores indicated better-defined clusters, signifying clearer
+distinctions between high- and low-performing groups27. Additionally, sequence embeddings were visualized
+to qualitatively assess spatial separation between clusters, further corroborating the quantitative findings33.
+We also applied Neural Network and Random Forest for group classification, and verified how well the group
+classification was performed depending on the presence or absence of the features suggested in feature selection.
+Figure 2 shows the process of the feature selection and feature verification.
+
+Results
+
+The feature selection and verification processes have been conducted with the two problem sets, ‘Party Invitation’
+and ‘Club Membership’ from the PIAAC problem-solving test.
+
+Party invitation
+
+‘Party Invitation’ is a problem-solving set in which the task is to place emails into folders according to their pars.
+This task requires reading comprehension and familiarity with the working environment.
+Feature selection—Word2Vec result
+Vectorized actions of the participants of the score 0 group and the score 3 group are presented in Figs. 3, 4,
+respectively. We concentrated on the score 0 and score 3 groups to better highlight the differences in action
+sequences between the two groups, where the variations in the vector space are most significant. To compare
+the two groups, the vector space for the score 0 group was divided into three clusters. Cluster 1, comprising
+three mail-moving actions (MAIL_DROP, MAIL_MOVED, and MAIL_DRAG), exhibits a notable difference:
+the mail-moving actions are positioned far apart from other actions in the score 0 vector space, unlike the score
+3 vector space. Cluster 2 reveals differences in both the component actions and the structure of actions. In the
+score 0 group’s vector space, Cluster 2 is tightly grouped without any sub-clusters, while in the score 3 group’s
+vector space, it is more dispersed with potential sub-clusters. Additionally, mail-moving actions are positioned
+with other actions in the score 3 group’s vector space, unlike the score 0 group. Lastly, Cluster 3 in both group’s
+vector spaces does not show significant differences, as they form clusters themselves in both cases.
+The mail-moving actions, as highlighted in Fig. 4, which exhibit the most significant differences between
+the score 0 and 3 groups, were selected as potentially meaningful actions to distinguish these groups. One
+example of action sequences from score 3 group is like [START, MAIL_DRAG, MAIL_VIEWED, FOLDER_
+Scientific Reports |
+
+(2025) 15:30412
+
+| https://doi.org/10.1038/s41598-025-14802-6
+
+4
+
+www.nature.com/scientificreports/
+
+Fig. 2. How to identify meaningful actions from sequences of actions in two steps: feature selection and
+feature verification.
+
+Fig. 3. Word2Vec vector space for the score 0 group.
+
+VIEWED, MAIL_DROP, MAIL_MOVED, MAIL_DRAG, FOLDER_VIEWED, MAIL_DROP, MAIL_MOVED,
+MAIL_VIEWED, MAIL_VIEWED, MAIL_VIEWED, MAIL_DRAG, MAIL_VIEWED, FOLDER_VIEWED,
+MAIL_DROP, MAIL_MOVED, MAIL_VIEWED, MAIL_VIEWED, NEXT_INQUIRY, NEXT_BUTTON,
+CONFIRMATION_OPENED, BUTTON, DOACTION, BUTTON, CONFIRMATION_CLOSED, NEXT_
+ITEM] which shows the position of the potential meaningful actions and their varying context actions.
+
+Scientific Reports |
+
+(2025) 15:30412
+
+| https://doi.org/10.1038/s41598-025-14802-6
+
+5
+
+www.nature.com/scientificreports/
+
+Fig. 4. Word2Vec vector space for the score 3 group.
+
+Silhouette score
+
+Case 1:
+35 actions
+
+Case 2:
+Mail-moving actions
+
+Case 3:
+32 actions without mail-moving actions
+
+0.362
+
+0.491
+
+0.216
+
+Table 6. Silhouette scores for Doc2Vec vectorization three cases.
+
+Feature verification—Doc2Vec, NN and RF result
+Consequently, we used the mail-moving actions to create three distinct case studies to assess the significance of
+mail-moving actions in distinguishing between the score 0 and 3 groups: original sequences (case1), subsequences
+consisting only of mail-moving actions (case2), and subsequences consisting of actions without mail-moving
+actions (case3). Each case, except for case 1, involves subsequences. Doc2Vec is then used to generate vectors
+from these subsequences. Silhouette score for each case study is presented in Table 6. Visualization of sequences
+of actions by Doc2Vec is presented in Fig. 5. In Fig. 5, purple dots indicate sequences by participants in the score
+0 group and yellow dots indicate sequences by participants in the score 3 group. In Case 1, which encompasses
+all 35 actions, the degree of separation, as evidenced by a silhouette score of 0.36, can be visually observed
+in Fig. 5a. Case 2, focusing solely on mail-moving actions, demonstrates an enhanced degree of separation,
+reflected in a silhouette score of 0.491, as presented in Fig. 5b. Case 3, which excludes mail-moving actions,
+exhibits a lower degree of separation between the two groups compared to Case 1 and Case 2, indicated by a
+reduced silhouette score of 0.216 (see Fig. 5c).
+Although the silhouette score may appear relatively low, this can be reasonably attributed to two key
+factors: distortions introduced by dimensionality reduction techniques and variations in intra-cluster density.
+In particular, dimensionality reduction methods such as t-SNE or PCA—commonly used for visualization—
+often distort the original high-dimensional distance relationships, leading to discrepancies between visual
+interpretation and quantitative clustering metrics. Additionally, intra-cluster density variation refers to the
+phenomenon where some clusters are tightly packed while others are more dispersed. This heterogeneity
+increases the average intra-cluster distance, thereby reducing the silhouette score, even if the clusters are visually
+well-separated.
+Moreover, due to the inherently noisy and overlapping nature of behavioral log data, it is challenging to
+obtain ideally high silhouette scores in unsupervised clustering settings. Nevertheless, among the three
+experimental cases, Case 2 clearly exhibits the most distinct cluster separation in the 2D projection, and from
+a relative performance perspective, it demonstrates the most coherent and interpretable clustering structure.
+These findings provide empirical evidence supporting the validity of the clustering configuration employed in
+Case 2.
+The neural network (NN) results using Doc2Vec vectors as input are displayed in Table 7, showing the
+prediction efficiencies ranging from 0.850 to 0.962 for both F1 and accuracy. Consistent with the Doc2Vec
+visualization results and silhouette scores, Case 2, which exhibit better separation than Case 1, demonstrate
+higher prediction efficiencies compared to Case 1. Conversely, the prediction efficiency of Case 3 is the lowest,
+Scientific Reports |
+
+(2025) 15:30412
+
+| https://doi.org/10.1038/s41598-025-14802-6
+
+6
+
+www.nature.com/scientificreports/
+
+Fig. 5. Doc2Vec vectorization results for three cases of a Case 1, b Case 2 and c Case 3.
+
+falling below 0.9 for both F1 and accuracy. The random forest (RF) results were derived not much different from
+the NN results.
+In the “Party Invitation” problem set, mail-moving actions were pivotal for organizing emails into folders,
+with participants scoring 3 executing all such actions, while those scoring 0 performed few or none. Analysis
+revealed differences in the frequency, sequence placement, and contextual relationships of these actions,
+reflecting disparities in participants’ skills and strategies. Using Word2Vec, mail-moving actions in the score 3
+group showed strong contextual coherence with 10 adjacent actions, forming tight clusters, whereas the score
+Scientific Reports |
+
+(2025) 15:30412
+
+| https://doi.org/10.1038/s41598-025-14802-6
+
+7
+
+www.nature.com/scientificreports/
+
+Case 1:
+35 actions
+
+Case 2:
+Mail-moving actions
+
+Case 3:
+32 actions without mail-moving actions
+
+F1 SCORE
+
+0.944
+
+0.962
+
+0.894
+
+ACCURACY
+
+0.920
+
+0.946
+
+0.850
+
+F1 SCORE
+
+0.951
+
+0.949
+
+0.893
+
+ACCURACY
+
+0.930
+
+0.923
+
+0.852
+
+Neural network
+
+Random forest
+
+Table 7. F1 scores and accuracies for Doc2Vec vectorization three cases from Neural Network and Random
+Forest methods.
+
+Fig. 6. Word2Vec vector space for the incorrect group.
+
+0 group exhibited dispersed patterns. Feature verification reinforced the importance of mail-moving actions,
+with Case 2 (focusing solely on these actions) achieving the highest silhouette score (0.491) and classification
+accuracy (94.6%), while Case 3 (excluding these actions) showed reduced performance. These findings highlight
+the capability of Word2Vec to capture non-consecutive relationships and the critical role of mail-moving actions
+in distinguishing performance levels, contributing to improved data coherence and predictive accuracy.
+
+Club membership
+
+In the ‘Club Membership’ problem set, participants are tasked with finding a membership ID number for a given
+name and emailing it. This task evaluates their familiarity with both a lookup system and a mailing system.
+Feature selection—Word2Vec result
+The vectorized actions of the correct group and the incorrect group are presented in Figs. 6, 7, respectively. As
+in ‘Party Invitation’ problem set, the vector space for incorrect group is divided into 3 clusters for comparison.
+The cluster 1 displays notable difference between the correct group and the incorrect group, in terms of the
+sorting actions (SS_SORT, COMBOBOX, RADIO_BTN), the mail-sending actions (TEXTBOX_KILLFOCUS
+and TEXTBOX_ONFOCUS), and environment actions (ENVIRONMENT and TOOLBAR). In the incorrect
+group, cluster 1 exists, whereas in the correct group, sorting actions form their cluster, and mail-sending actions,
+along with environment actions (cluster 2 actions), form distinct clusters. The cluster 3 doesn’t show discernible
+differences in two vector spaces as it forms its own cluster in both cases.
+Sorting actions were excluded from consideration for feature verification as they were infrequent in both
+groups, occurring only 204 times out of 934 in the correct group and 18 times out of 410 in the incorrect
+group. It was deemed inadequate to utilize sorting actions to compare the correct and incorrect groups due to
+their infrequency. Consequently, cluster 2 actions, which include mail-sending actions and environment actions
+highlighted in Fig. 7, were chosen as potential meaningful actions to differentiate between the correct and incorrect
+Scientific Reports |
+
+(2025) 15:30412
+
+| https://doi.org/10.1038/s41598-025-14802-6
+
+8
+
+www.nature.com/scientificreports/
+
+Fig. 7. Word2Vec vector space for the correct group.
+
+Silhouette score
+
+Case 1:
+25 actions
+
+Case 2:
+Mail-sending and environment actions
+
+Case 3:
+21 actions without mail-sending and environment actions
+
+0.180
+
+0.333
+
+0.129
+
+Table 8. Silhouette scores for Doc2Vec vectorization three cases.
+
+groups One example of action sequences from correct group is like [START, TOOLBAR, ENVIRONMENT,
+DOACTION, DOACTION, DOACTION, DOACTION, TOOLBAR, ENVIRONMENT, DOACTION,
+DOACTION, DOACTION, DOACTION, TEXTBOX_ONFOCUS, KEYPRESS, KEYPRESS, KEYPRESS,
+KEYPRESS, TEXTBOX_KILLFOCUS, NEXT_INQUIRY, NEXT_BUTTON, CONFIRMATION_OPENED,
+BUTTON, DOACTION, TEXTBOX_ONFOCUS, TEXTBOX_KILLFOCUS, BUTTON, CONFIRMATION_
+CLOSED, NEXT_ITEM, END] which shows the position of the potential meaningful actions and their varying
+context actions.
+Feature verification—Doc2Vec, NN and RF result
+Similar to the ‘Party Invitation’ problem set, three cases were created, and each case involved subsequence
+generation, except for case 1. Case 1 encompasses all 25 actions; case 2 focuses exclusively on mail-sending
+actions, and case 3 involves all 21 actions, excluding mail-sending actions. Silhouette score for each case study
+is presented in Table 8. Visualization of sequences of actions by Doc2Vec is presented in Fig. 8. In Fig. 8, purple
+dots indicate sequences by participants in the correct group and yellow dots indicate sequences by participants
+in the incorrect group. Notably, the differences between the two groups became more pronounced in case 2
+with the higher silhouette score compared to case 1 as shown in Fig. 8 a and b. In contrast, the absence of mailsending actions in sequences in case 3 led to a decrease in the degree of separation between the two groups, as
+evidenced by a silhouette score of 0.129 and visualized in Fig. 8c.
+Even in this case, the silhouette score value is not that high. However, as described in the previous ‘Party
+Invitation’ problem, it may be a limitation due to the intrinsic characteristics of the data and the intra-cluster
+density variation. In particular, as shown in the two-dimensional figure, the intra-cluster density variation is
+large. Nevertheless, a notable point in the silhouette scores is that among the scores of the three cases of the
+experiment, the score of case 2 tends to be considerably higher than that of the other two cases. This suggests that
+the action sequences we detected are sufficiently meaningful compared to other action sequences.
+In all three cases, NN efficiency, F1, and accuracy range from 0.862 to 0.917 in Table 9. Notably, when
+exclusively considering the mail-sending and environment actions in case 2, the efficiency is as good as the
+one of case 1 with a maximum F1 score of 0.917 and an accuracy of 0.876. Case 3, which omits the meaningful
+actions in sequences, exhibits a slightly reduced F1 score and accuracy. As with the party invitation problem, the
+RF results show very similar consistency with the NN results.
+In the “Club Membership” problem set, mail-sending actions were critical for task completion, as participants
+needed to email membership information. Correct group participants consistently executed these actions at the
+Scientific Reports |
+
+(2025) 15:30412
+
+| https://doi.org/10.1038/s41598-025-14802-6
+
+9
+
+www.nature.com/scientificreports/
+
+Fig. 8. Doc2Vec vectorization results for three cases of a Case 1, b Case 2 and c Case 3.
+
+end of sequences, aligning with task requirements, while the incorrect group performed them less frequently
+and at inconsistent points in sequences. Analysis using Word2Vec revealed that correct group participants
+demonstrated stronger contextual relationships between mail-sending and adjacent actions, forming cohesive
+clusters. Feature verification further highlighted the significance of these actions, with Case 2 (focusing on
+meaningful actions) achieving superior silhouette scores and NN prediction efficiency compared to Case 1 (all
+actions) and Case 3 (excluding meaningful actions). Although the improvement was less pronounced than in the
+“Party Invitation” set, focusing on four key actions achieved comparable prediction accuracy, underscoring their
+Scientific Reports |
+
+(2025) 15:30412
+
+| https://doi.org/10.1038/s41598-025-14802-6
+
+10
+
+www.nature.com/scientificreports/
+
+Case 1:
+25 actions
+
+Case 2:
+Mail-sending and environment actions
+
+Case 3:
+21 actions without mail-sending and environment actions
+
+F1 SCORE
+
+0.915
+
+0.917
+
+0.908
+
+ACCURACY
+
+0.872
+
+0.876
+
+0.862
+
+F1 SCORE
+
+0.901
+
+0.923
+
+0.761
+
+ACCURACY
+
+0.846
+
+0.880
+
+0.652
+
+Neural network
+
+Random forest
+
+Table 9. F1 scores and accuracies for Doc2Vec vectorization three cases from Neural Network and Random
+Forest methods.
+
+importance. These findings suggest that the trained NN model can generalize to new datasets, enabling score
+predictions and comparisons across various features like completion time.
+
+Discussion and conclusion
+
+This study introduced a novel algorithm leveraging NLP techniques, specifically Word2Vec and Doc2Vec, to
+identify and validate meaningful actions in action sequences using the 2012 PIAAC dataset. These NLP methods
+enabled the vectorization of individual actions and sequences, facilitating visual inspections to uncover key
+action sequences. The algorithm was tested on two problem sets, successfully identifying meaningful actions
+through the visual examination of word vectors in a 2D space.
+A significant advantage of employing Word2Vec is its ability to uncover action relationships independently of
+their relative positioning, which is challenging for conventional methods like n-grams. The proposed algorithm
+demonstrated the effectiveness of combining action sequence vectorization with neural networks for binary
+classification, as evidenced by improved prediction accuracy and clustering coherence. Silhouette scores
+confirmed the spatial differentiation between high-score and low-score groups, reinforcing the robustness of the
+identified meaningful actions.
+In both problem sets, our methodology successfully identified actions critical to participant performance. For
+the “Party Invitation” problem, three key actions were identified among 35 behaviors, distinguishing participants
+scoring 0 and 3. Similarly, in the “Club Membership” problem, four key actions were identified among 25
+behaviors, effectively differentiating correct and incorrect groups. These findings suggest that individuals who
+do not perform these critical actions well are significantly more likely to achieve lower scores.
+
+Implications and applications
+
+The findings of this study demonstrate substantial implications across various fields, showcasing the versatility of
+the proposed methodology. In education, the algorithm enables the development of adaptive feedback systems
+that guide individuals by identifying critical actions they fail to perform, thereby improving learning outcomes.
+In healthcare, the approach provides a framework for detecting behavioral patterns linked to conditions such as
+depression or dementia, offering potential for early intervention and personalized treatment plans. Similarly, in
+marketing, the algorithm can analyze clickstream data to predict consumer purchasing intentions, optimizing
+customer targeting and enhancing campaign effectiveness. These applications underline the broader utility of
+action sequence analysis, providing a pathway for translating behavioral data into actionable insights across
+disciplines.
+Furthermore, our method is computationally efficient and suitable for real-time applications, even when
+executed on moderately resourced hardware. In practice, each experiment was completed within half a day, and
+with optimized data handling, we anticipate scalability to datasets involving tens or even hundreds of thousands
+of sequences. This efficiency supports the applicability of our approach to large-scale behavioral data analysis
+across various domains.
+
+Limitations
+
+Despite its strengths, this study has certain limitations that should be acknowledged. The analysis relies on the
+Belgian PIAAC dataset, which may restrict the generalizability of the findings to other cultural or demographic
+contexts. Additionally, the sequences analyzed were relatively short and structured, which may not fully
+represent the complexity of real-world behaviors. Temporal dynamics, such as transitions between actions, were
+not explicitly modeled, potentially overlooking critical sequential patterns. Furthermore, the computational
+cost associated with vectorization and clustering processes raises concerns about scalability when applying
+the algorithm to larger datasets or real-time applications. Addressing these limitations is essential for broader
+adoption and improved robustness of the methodology.
+One important limitation of this study is the potential bias in action sequence patterns arising from
+demographic differences among participants. While prior research has shown that factors such as age, gender,
+and digital familiarity can influence interaction behaviors e.g.34, our analysis could not incorporate subgroupspecific comparisons due to insufficient demographic labeling in the available dataset. Future studies should
+incorporate fairness-aware modeling approaches to assess whether the algorithm performs equitably across
+diverse user populations and mitigate any unintended bias.
+
+Scientific Reports |
+
+(2025) 15:30412
+
+| https://doi.org/10.1038/s41598-025-14802-6
+
+11
+
+www.nature.com/scientificreports/
+Future research directions
+
+To overcome these limitations and enhance the applicability of the proposed approach, future research should
+focus on several key areas. First, the algorithm should be validated using datasets from diverse cultural and
+demographic backgrounds to ensure robustness and generalizability. In particular, subgroup analyses based
+on age, gender, and digital literacy could help identify whether certain demographic groups exhibit distinct
+behavioral patterns, thereby improving the fairness and interpretability of the model. Second, predictive modeling
+using advanced temporal architectures—such as Long Short-Term Memory (LSTM) networks and Transformerbased models—should be explored to capture long-range dependencies and improve outcome prediction
+based on action sequences. These architectures may also provide greater expressiveness in modeling complex
+behavioral transitions over time. Third, the methodology should be extended to analyze unstructured or longer
+action sequences, which are more representative of real-world scenarios. Additionally, improving computational
+efficiency through algorithmic optimization will address scalability concerns, enabling applications to larger
+datasets and real-time settings. Finally, integrating multimodal data such as text inputs, physiological signals,
+action lengths, and timestamps per action enriches analytics and expands the scope of behavioral insights,
+opening the way to innovative applications in human behavior modeling and predictive models.
+
+Conclusion
+
+This study makes a significant contribution to the field of human behavior analysis by introducing a novel NLPdriven methodology that captures the complexity of action sequences. By uncovering meaningful actions, the
+proposed algorithm enhances prediction accuracy and provides actionable insights across diverse domains.
+Through continued refinement and expansion of this approach, future research can unlock further potential
+in understanding and influencing human behavior, enabling innovative solutions in education, healthcare, and
+beyond.
+
+Data availability
+
+The OECD PIAAC Log data in this study is available from the OECD site ​h​t​t​p​s​:​​/​/​w​w​w​.​​o​e​c​d​.​o​​r​g​/​s​k​i​​l​l​s​/​p​​i​a​a​c​/​d​​a​t​
+a​/​p​i​​a​a​c​l​o​g​​f​i​l​e​s​/ and the code from GitHub ​h​t​t​p​s​:​​/​/​g​i​t​h​​u​b​.​c​o​m​​/​h​y​y​a​n​​g​k​i​s​t​​i​/​h​u​m​a​​n​-​a​c​t​i​​o​n​-​s​e​q​​u​e​n​c​e.
+Received: 15 January 2025; Accepted: 4 August 2025
+
+References
+
+1. Gao, W. et al. RCD : Relation map driven cognitive diagnosis for intelligent education systems. 501–510 (2021). ​h​t​t​p​s​:​/​/​d​o​i​.​o​r​g​/​1​0​
+.​1​1​4​5​/​3​4​0​4​8​3​5​.​3​4​6​2​9​3​2​​​​.​​​
+2. Huang, Z. et al. Exploring multi-objective exercise recommendations in online education systems. 1261–1270 (2019) ​h​t​t​p​s​:​/​/​d​o​i​.​o​
+r​g​/​1​0​.​1​1​4​5​/​3​3​5​7​3​8​4​.​3​3​5​7​9​9​5​​​​.​​​
+3. Urdaneta-Ponte, M. C., Mendez-Zorrilla, A. & Oleagordia-Ruiz, I. Recommendation systems for education : Systematic review.
+Electronic 10, 14 (2021).
+4. Guo, Q., Zhuang, F., Qin, C., Zhu, H. & Member, S. A survey on knowledge graph-based recommender systems. IEEE Trans.
+Knowl. Data Eng. 34, 3549–3568 (2022).
+5. Liu, S., Liu, S., Yang, Z. & Sun, J. Heterogeneous evolution network embedding with temporal extension for intelligent tutoring
+systems. 42, (2023).
+6. Abd-Alrazaq, A., AlSaad, R. & Shuweihdi, F. Systematic review and meta-analysis of performance of wearable artificial intelligence
+in detecting and predicting depression. npj Digit. Med. 1–16 (2023) https://doi.org/10.1038/s41746-023-00828-5.
+7. Strawbridge, R., Young, A. H. & Cleare, A. J. Neuropsychiatric Disease and Treatment Dovepress Biomarkers for depression:
+Recent insights, current challenges and future prospects. Neuropsychiatr. Dis. Treat. 13, 1245–1262 (2017).
+8. Kang, S. G. & Cho, S. E. Neuroimaging biomarkers for predicting treatment response and recurrence of major depressive disorder.
+Int. J. Mol. Sci. 21, (2020).
+9. Hochman, E. et al. Development and validation of a machine learning-based postpartum depression prediction model: A
+nationwide cohort study. Depress. Anxiety 38, 400–411 (2021).
+10. Moshe, I. et al. Predicting symptoms of depression and anxiety using smartphone and wearable data. Front. Psychiatry 12, 1–12
+(2021).
+11. Vidal, C. et al. Social media use and depression in adolescents : A scoping review. Int. Rev. Psychiatry. 1–19 (2020).
+12. Yun, M., Jeon, M. & Yang, H. A novel machine learning-based prediction method for patients at risk of developing depressive
+symptoms using a small data. PLoS ONE 19(5), e0303889 (2024).
+13. Requena, B., Cassani, G., Tagliabue, J., Greco, C. & Lacasa, L. Shopper intent prediction from clickstream e-commerce data with
+minimal browsing information. Sci. Rep. 10, 1–23 (2020).
+14. Sakar, C. O. Real-time prediction of online shoppers’ purchasing intention using multilayer perceptron and LSTM recurrent neural
+networks. Neural Comput. Appl. (2018).
+15. Diamantaras, K., Salampasis, M. & Katsalis, A. Predicting Shopping Intent of e-Commerce Users using LSTM Recurrent Neural
+Networks. in Proceedings International Conference on Data Science, Technology and Applications DATA. 252–259 (2021) ​h​t​t​p​s​:​/​/​d​o​
+i​.​o​r​g​/​1​0​.​5​2​2​0​/​0​0​1​0​5​5​4​1​0​2​5​2​0​2​5​9​​​​.​​​
+16. Khandokar, I. A., Islam, A. M., Islam, S. & Shatabda, S. A gradient boosting classifier for purchase intention prediction of online
+shoppers. Heliyon 9. 4 (2023).
+17. Prayogo, R. D. & Karimah, S. A. Feature selection and adaptive synthetic sampling approach for optimizing online shopper
+purchase intent prediction. In 2021 8th International Conference on Advanced Informatics: Concepts, Theory and Applications
+(ICAICTA). IEEE. 1–5 (2021).
+18. Kabir, R., Ashraf, F. B. & Ajwad, R. Analysis of different predicting model for online shoppers ’ purchase intention from empirical
+data. in 22nd International Conference on Computer and Information Technology. 1–6 (2019).
+19. Cunningham, S., Hudson, C. C. & Harkness, K. Social media and depression symptoms : A meta—analysis. J. Abnorm. Child
+Psychol. 241–253 (2021) https://doi.org/10.1007/s10802-020-00715-7.
+20. Sinha, T., Jermann, P., Li, N. & Dillenbourg, P. Your click decides your fate: Inferring information processing and attrition behavior
+from MOOC video clickstream interactions. (2014).
+21. Crossley, S., Mcnamara, D. S. & Baker, R. S. Combining click-stream data with NLP tools to better understand MOOC completion.
+6–14 (2016) https://doi.org/10.1145/2883851.2883931.
+
+Scientific Reports |
+
+(2025) 15:30412
+
+| https://doi.org/10.1038/s41598-025-14802-6
+
+12
+
+www.nature.com/scientificreports/
+22. Yu, C.-H., Wu, J. & Liu, A.-C. predicting learning outcomes with MOOC clickstreams. Educ. Sci. 9, 104 (2019).
+23. Han, Z., He, Q. & von Davier, M. Predictive feature generation and selection using process data from PISA interactive problemsolving items: An application of random forests. Front. Psychol. 10, 1–15 (2019).
+24. He, Q. & Von Davier, M. Identifying feature sequences from process data in problem-solving items with N -grams. Quant. Psychol.
+Res. 140, 173–190 (2015).
+25. He, Q. & Von Davier, M. Analyzing process data from problem-solving items with n-grams: Insights from a computer-based largescale assessment. in Handbook of Research on Technology Tools for Real-World Skill Development 750–777. (IGI Global, 2016).
+26. Le, Q. V. & Mikolov, T. [Paragraph2Vec] [Doc2Vec] [seminal] Distributed Representations of Sentences and Documents. Proc. Int.
+Conf. Mach. Learn. 32, 1188–1196 (2014).
+27. Yelmen, İ. Multi-class document classification based on deep neural network and Word2Vec. J. Aeronaut. Space Technol. 15(1),
+59–65 (2022).
+28. Breiman, L. Random forests. Mach. Learn. 45, 5–32 (2001).
+29. Al-Rfou, R., Perozzi, B. & Skiena, S. Polyglot: Distributed word representations for multilingual NLP. in CoNLL 2013 - 17th
+Conference on Computational Natural Language Learning. 183–192 (2013).
+30. Budiarto, A. et al. Unsupervised news topic modelling with Doc2Vec and spherical clustering. Procedia Comput. Sci. 179, 40–46
+(2021).
+31. ​h​t​t​p​s​:​​​/​​/​w​w​​w​.​o​e​c​​d​.​o​​r​g​/​​e​​n​/​a​b​​o​​u​t​/​p​r​o​​g​r​a​m​​m​​e​s​/​p​​i​​a​a​c​/​p​​i​a​a​c​​-​d​a​t​a​.​h​t​m​l
+32. Abdi, H. & Williams, L. J. Principal component analysis. Wiley Interdiscip. Rev. Comput. Stat. 2, 433–459 (2010).
+33. Maaten, Laurens van der, G. H. Visualizing Data using t-SNE. J. Mach. Learn. Res. 2579–2605 (2008).
+34. Raza, S., Qureshi, R., Zahid, A., Fioresi, J., Sadak, F., Saeed, M. & Shoman, M. Who is responsible? the data, models, users or
+regulations? responsible generative ai for a sustainable future. arXiv preprint arXiv:2502.08650. (2025)
+35. Xiao, Yi, Van-Hoang Le, and Hongyu Zhang. "free: Towards more practical log parsing with large language models." Proceedings
+of the 39th IEEE/ACM International Conference on Automated Software Engineering. https://doi.org/10.1145/3691620.369499
+153-165 (2024)
+36. Kampik, T., Warmuth, C., Rebmann, A., Agam, R., Egger, L. N., Gerber, A., ... & Weidlich, M. (2023). Large process models:
+business process management in the age of generative AI.
+37. Ramos-Gutiérrez, Belén, et al. A NLP-oriented methodology to enhance event log quality. International Conference on Business
+Process Modeling, Development and Support. Cham: Springer International Publishing, (2021).
+
+Author contributions
+
+All authors did conceptualization of the study. Minjeong Jeon did data curation and investigation. Minyoung
+Yun did formal data analysis and visualization. Heyoung Yang developed research methodology and project
+administration. Minyoung Yun wrote the main manuscript text. All authors reviewed the manuscript.
+
+Funding
+
+This work has been supported by the Korea Institute of Science and Technology Information (grants K-23L03-C02 and K24L3M1C2).
+
+Declarations
+Competing interests
+
+The authors declare no competing interests.
+
+Additional information
+
+Correspondence and requests for materials should be addressed to H.Y.
+Reprints and permissions information is available at www.nature.com/reprints.
+Publisher’s note Springer Nature remains neutral with regard to jurisdictional claims in published maps and
+institutional affiliations.
+Open Access This article is licensed under a Creative Commons Attribution-NonCommercial-NoDerivatives
+4.0 International License, which permits any non-commercial use, sharing, distribution and reproduction in
+any medium or format, as long as you give appropriate credit to the original author(s) and the source, provide
+a link to the Creative Commons licence, and indicate if you modified the licensed material. You do not have
+permission under this licence to share adapted material derived from this article or parts of it. The images or
+other third party material in this article are included in the article’s Creative Commons licence, unless indicated
+otherwise in a credit line to the material. If material is not included in the article’s Creative Commons licence
+and your intended use is not permitted by statutory regulation or exceeds the permitted use, you will need to
+obtain permission directly from the copyright holder. To view a copy of this licence, visit ​h​t​t​p​:​/​/​c​r​e​a​t​i​v​e​c​o​m​m​o​
+n​s​.​o​r​g​/​l​i​c​e​n​s​e​s​/​b​y​-​n​c​-​n​d​/​4​.​0​/​​​​.​​
+© The Author(s) 2025
+
+Scientific Reports |
+
+(2025) 15:30412
+
+| https://doi.org/10.1038/s41598-025-14802-6
+
+13
+
+

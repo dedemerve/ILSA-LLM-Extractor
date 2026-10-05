@@ -1,0 +1,2445 @@
+Computers & Education 223 (2024) 105166
+
+Contents lists available at ScienceDirect
+
+Computers & Education
+journal homepage: www.elsevier.com/locate/compedu
+
+Uncovering student profiles. An explainable cluster analysis
+approach to PISA 2022
+Miguel Alvarez-Garcia a,*, Mar Arenas-Parra a, Raquel Ibar-Alonso b
+a
+b
+
+Department of Quantitative Economics, University of Oviedo, 33006, Oviedo, Spain
+Department of Applied Economics I, Rey Juan Carlos University, 28032, Madrid, Spain
+
+A R T I C L E I N F O
+
+A B S T R A C T
+
+Keywords:
+Educational data mining
+Explainable cluster analysis
+Student profiles
+International large-scale assessments
+PISA
+
+Educational data mining (EDM) applied to the wealth of data generated from international largescale assessments (ILSAs) shows potential for identifying successful educational initiatives.
+Despite limited research on clustering methods in ILSAs, leveraging these methods to uncover
+student profiles can help decision-making in designing tailored programs. This study aims to
+identify and characterize 15-year-old student profiles using PISA 2022 data and reveal insights
+into the relationship between these profiles and factors such as ICT availability and use, gender,
+academic performance, and educational expectations. We analyzed PISA 2022 Spanish student
+data (n = 30,800) with a selection of 74 contextual variables, applying an end-to-end explainable
+cluster analysis methodology that integrates different machine learning (ML) and explainable
+artificial intelligence (XAI) techniques. This methodology covered data pre-processing, dimensionality reduction, clustering, and classification to ensure data quality and result explainability.
+We obtained 16 derived variables, 7 student clusters, and an optimal XGBoost classifier with a
+global accuracy of 0.8643. Using local and global SHAP values, we interpreted clusters, finding
+that socio-economic status and ICT availability and use at home are the most important factors
+differentiating student profiles. Our findings suggest the need to emphasize (i) proper ICT
+accessibility and use, as well as student support networks to improve academic performance, (ii)
+gender-specific well-being programs, and (iii) the encouragement of educational expectations
+tailored to students’ gender and their exposure to higher education. These results pave the way
+for personalized academic policies and programs through ML-based tools for uncovering student
+profiles.
+
+1. Introduction
+The use of international large-scale assessments (ILSAs) has increased significantly in recent decades. ILSAs serve as valuable tools
+for policymakers and education stakeholders to understand how educational systems, policies, and contexts influence educational and
+social outcomes across schools and countries, which in turn help key players make informed decisions (Hernández-Torrano &
+Courtney, 2021). This growing interest coincides with global efforts to achieve universal education and improve standards (Cresswell
+et al., 2015), as exemplified by the Sustainable Development Goals of the 2030 Agenda (United Nations, 2015). Specifically, Goal 4
+focuses on ensuring inclusive and equitable quality education and promoting lifelong learning opportunities for all. To monitor
+
+* Corresponding author.
+E-mail addresses: uo291291@uniovi.es (M. Alvarez-Garcia), mariamar@uniovi.es (M. Arenas-Parra), raquel.ibar@urjc.es (R. Ibar-Alonso).
+https://doi.org/10.1016/j.compedu.2024.105166
+Received 11 July 2024; Received in revised form 12 September 2024; Accepted 16 September 2024
+Available online 20 September 2024
+0360-1315/© 2024 The Authors.
+Published by Elsevier Ltd.
+This is an open access article under the CC BY-NC license
+(http://creativecommons.org/licenses/by-nc/4.0/).
+
+Computers & Education 223 (2024) 105166
+
+M. Alvarez-Garcia et al.
+
+progress toward this goal, ILSAs such as the Programme for International Student Assessment (PISA), the Trends in International
+Mathematics and Science Study (TIMSS), and the International Computer and Information Literacy Study (ICILS) have been employed
+(Boeren, 2019).
+The proliferation of ILSAs has increased awareness among different stakeholders; however, there is still no conclusive evidence of
+their direct impact on academic performance (Fischman et al., 2019). According to these authors, these assessments are not yet being
+used effectively to improve educational systems because they are not translating into concrete policies. Nevertheless, they emphasize
+that the wealth of data generated from these assessments provides a valuable resource for conducting robust research, ultimately
+facilitating evidence-based decision-making in educational policy. This perspective is shared by other authors, such as Elliott et al.
+(2019), and Gamazo and Martínez-Abad (2020), who stress the significant potential of these databases due to their scale and
+periodicity.
+It is precisely the scale and cyclical nature of these assessments that have made them so attractive for educational data mining
+(EDM), an interdisciplinary field that combines education, computer science, and statistics. EDM, which seeks to comprehend how
+contextual factors shape educational outcomes, has experienced a surge in popularity in recent years, paralleling the rapid growth of
+machine learning (ML) (Boztaş et al., 2023; Bu & Chen, 2023). This connection is logical, as many ML techniques find use in EDM.
+Consequently, the application of EDM methods to ILSA databases holds immense potential for uncovering valuable insights and
+translating them into effective policy-making, aligning with their ultimate objective.
+Despite the popularity of EDM, a significant proportion of research and applications predominantly employs supervised learning
+methods (Boztaş et al., 2023). In particular, the prominent focus in the literature involves predicting academic performance by
+considering cognitive and non-cognitive contextual factors. In contrast, unsupervised learning methods remain relatively underexplored. Additionally, existing studies usually include only a handful of variables and often a limited sample of students, making it
+challenging to find research that effectively combines a wide range of students and variables for a more holistic analysis. It is also worth
+noting that EDM studies frequently overlook data quality issues and model explainability, a critical aspect within the emerging field of
+explainable artificial intelligence (XAI). Recently introduced to EDM (Guleria & Sood, 2023; Livieris et al., 2023), XAI aims to ensure
+transparency in data processing and facilitate the interpretability of results. Addressing data quality and model explainability is
+essential for producing reliable results that can be easily translated into actionable insights by different stakeholders.
+In this context, this study proposes a novel approach for creating student profiles that could serve as the foundation for more
+targeted and personalized educational initiatives. This approach is inspired by similar methodologies successfully applied in sectors
+such as e-commerce (Sari et al., 2016), finance (Kaishev et al., 2013), and insurance (Qadadeh & Abdallah, 2018), where creating a
+limited number of customer profiles is essential for effective decision-making. We can make a clear analogy with the education sector,
+where millions of students exhibit unique characteristics influenced by a multitude of contextual variables.
+Our approach adapts and applies the end-to-end framework proposed by Alvarez-Garcia et al. (2024) for explainable cluster
+analysis, which involves applying XAI methods to clustering results. This adaptation addresses the gaps in the literature related to
+unsupervised techniques applied to ILSA databases for large and mixed-type data, with a focus on explainability. This is achieved
+through four key stages that combine different techniques from statistics, machine learning, and XAI:
+
+Fig. 1. Evolution of publications and citations of articles applying EDM methods to ILSA databases. Bibliometric search criteria detailed
+in Appendix A.
+2
+
+Computers & Education 223 (2024) 105166
+
+M. Alvarez-Garcia et al.
+
+1. Data pre-processing to ensure data completeness and quality, particularly important when working with ILSA data (Quintano et al.,
+2008).
+2. Dimensionality reduction: This stage aims to enhance interpretability by reducing the number of variables to a level manageable for
+human comprehension (Halford et al., 2005). It also mitigates the curse of dimensionality in the clustering stage.
+3. Student clustering to identify similar groups of students and extract meaningful patterns from the data.
+4. Classification of student clusters to facilitate cluster interpretability and provide a tool for classifying future students.
+By adapting and applying this framework to the PISA 2022 Spanish student data, our research aims to identify profiles of 15-yearold students and discern the key factors that best characterize each profile. Building on this objective, we aim to extract valuable
+insights related to gender, performance in PISA 2022 tests, and educational aspirations for each profile. This is intended to demonstrate
+the potential of student clustering to identify educational programs and policies tailored to the specific characteristics of each profile.
+Given that ILSAs are typically conducted on a national scale across various countries, using representative samples of students, our
+work seeks to provide a tool for categorizing large populations of students, laying the foundation for more targeted and personalized
+educational initiatives.
+The remainder of the paper is organized as follows: Section 2 provides a literature review, Section 3 describes the data, methods and
+tools used, Section 4 presents results and discussion, and the paper ends with the conclusions in Section 5.
+2. Related work
+2.1. EDM methods applied to ILSA databases
+In recent years, there has been a notable increase in research concentrating on ILSAs and EDM, as evidenced by the works of
+Hernández-Torrano and Courtney (2021) and Boztaş et al. (2023), respectively. This trend is also reflected by the growing relevance of
+studies exploring the intersection of these two fields, particularly in the application of EDM methods to ILSA databases, as illustrated in
+Fig. 1.
+These studies cover a variety of methods and applications, as summarized in Table 1. It should be noted that while prediction,
+clustering, and discovery with models are well-established methods applied to ILSA databases, examples of studies applying outlier
+detection or process mining to ILSAs are scarce. Furthermore, no works were found using ILSA databases with other techniques
+outlined by Romero and Ventura (2013), such as text mining or knowledge tracing. This aligns with the nature of the questionnaires in
+these studies, in which no text is generated, and students participate only once, impeding the possibility of tracing.
+Prediction and discovery with models are the most commonly applied EDM techniques to ILSA databases, with PISA and TIMSS
+databases being the most frequently used. Table 2 compiles the ten most cited articles on EDM methods applied to ILSA databases. All
+of these articles use discovery with methods to discern relationships between student or teacher performance/behavior and their
+contextual characteristics. Regression stands out as the predominant method in these studies, used to predict student performance or
+other target variables, such as students’ tendency to consider a science-related career (Kjærnsli & Lie, 2011) or the frequency with
+which teachers use the computer in class (Drossel et al., 2017). The primary goal of these studies is usually to discover relevant
+predictors from a preselected set of factors.
+The top-cited articles reveal three main research directions. Firstly, multilevel models to measure the proportion of variance in
+academic performance explained at the student, school, or country level, as shown by Lorah (2018) and Sun et al. (2012). The second
+line of research involves comparing factors and characteristics by country, either using the multilevel approach or fitting independent
+models and comparing model coefficients by country, demonstrated in the work of Sandoval-Hernández and Białowolski (2016). The
+third line of research includes studies focused on students’ socio-economic status (SES). Recognizing SES as a well-established predictor of academic achievement (Coleman et al., 1966, pp. 1–32), efforts are made to identify key predictors beyond SES
+(Sandoval-Hernández & Białowolski, 2016) or to understand how this relationship can be mitigated (Gustafsson et al., 2018).
+2.2. Approaches for educational profiles with mixed-type multivariate data: A review
+ILSA databases provide an extensive selection of numeric and categorical data, which facilitates analyses with a large number of
+variables. Despite this potential, studies dealing with mixed-type data and a considerable number of variables are scarce. We can find
+some examples in the literature, such as the works of Chen et al. (2021) and Zheng et al. (2023), which identify the most important
+contextual predictors among more than one hundred variables for predicting student academic achievement of top-performing and
+resilient students, respectively. These authors applied support vector machine recursive feature elimination (SVM-RFE) to the PISA
+2015 and PISA 2018 databases, respectively.
+While clustering is a well-established EDM method, its application to ILSA databases remains significantly low (25 articles)
+compared to prediction methods (267 articles). Additionally, there is a lack of studies where clustering is applied to a considerable
+number of variables from an ILSA database. The studies conducted by She et al. (2019) and Gamazo and Martínez-Abad (2020) are two
+examples of student profile creation using a reduced number of variables. In their respective works, clustering serves as a discretization
+technique of student performance at the student and school levels. They then apply decision trees to classify these clusters based on a
+set of focus variables selected from the PISA student questionnaires.
+Another line of research involves creating student groups through latent profile analysis (LPA) with a limited selection of variables.
+The work of Radišić et al. (2021) serves as an example, applying LPA to all Italian students who participated in PISA 2015. This study
+3
+
+Computers & Education 223 (2024) 105166
+
+M. Alvarez-Garcia et al.
+
+Table 1
+EDM methods applied to ILSA databases.
+EDM method
+
+Objective
+
+Key applications with ILSA databases
+
+Most cited article
+
+Prediction
+
+To infer a student characteristic (target variable) from the
+combination of contextual factors (predictors). Regression
+and classification: key techniques for prediction
+To identify groups of similar observations and patterns that
+best describe observations
+To identify observations that are anomalous or significantly
+different from the rest of the data
+
+Prediction of academic performance and
+detection of student behaviors
+
+Sandoval-Hernández and
+Białowolski (2016)
+
+Grouping of similar materials or students
+based on their learning patterns
+Detection of students with learning
+difficulties or particularly challenging
+learning characteristics
+Identification of relationships in students’
+learning behavior and different
+contextual factors
+Analysis and interpretation of the
+structure and relations in collaborative
+tasks and interactions with tools
+Reflecting students’ behavior in terms of
+their examination traces
+Assisting educators in visualizing and
+analyzing students’ course activities and
+usage information
+Identification of relationships between
+student behaviors and student
+characteristics or contextual variables
+
+Pedder and Opfer (2013)
+
+Clustering
+Outlier detection
+Relationship mining
+Social network
+analysis
+Process mining
+Distillation of data
+for human
+judgment
+Discovery with
+models
+
+To identify relationships between variables and encode
+them into rules, using methods such as association rules or
+causal discovery
+To understand and measure the relationships between
+entities in networked information
+To extract process-related knowledge from event logs
+recorded by an information system
+To represent data in intelligible ways using summarization,
+visualization, and interactive dashboards to highlight
+useful information and support decision-making
+To use a previously validated model of a phenomenon as a
+component in another analysis
+
+Deimel et al. (2020)
+Konstantopoulos and
+Traynor (2014)
+Steiner-Khamsi et al. (2020)
+Teig (2023)
+Mohadjer and Edwards
+(2018)
+De Witte and Kortelainen
+(2013)
+
+Source: Bibliometric search criteria detailed in Appendix A for the period starting from 2013
+Table 2
+Top 10 cited articles of EDM methods applied to ILSA databasesa.
+Reference
+
+Purpose of the study
+
+ILSA
+
+Results
+
+Lorah (2018)
+
+Provide guidance regarding choice and interpretation of
+effect size measures for multilevel models (two and threelevel models: students, schools, and countries)
+Estimate Dutch students’ performance and the influence of
+their background characteristics (continuous and discrete
+factors)
+Identify what contextual factors determine secondary
+school teachers’ frequency of computer use in class across
+five European countries
+Evaluate whether variations in opportunities to learn and
+intensity of schooling are associated with achievement
+inequality independently of family background
+Investigate the factors that impact science achievement of
+15-year-old students in Hong Kong
+
+TIMSS
+
+Kjærnsli and Lie (2011)
+
+Study 15-year-old students’ tendencies to consider a
+future science-related career across OECD countries
+
+PISA
+
+Gustafsson et al. (2018)
+
+Identify school characteristics that can reduce the relation
+between socio-economic status (SES) and achievement
+across 50 countries
+Identify factors and conditions associated with academic
+success independent of student SES, and examine those
+specific to academic resilience across different countries
+Test whether formal education’s structure affects
+students’ shadow education participation in Japan
+Explore the relationships among gender, parental
+characteristics, and student’s self-concept and
+achievement in mathematics across 32 countries
+
+TIMSS
+
+26% of the variance in math scores is accounted for at the
+country level, 21% at the school level, and the remainder
+at the student level
+Family- and student-specific characteristics have a
+statistically significant effect on the educational
+efficiency, while school-level variables do not
+School ICT resources, teacher’s ICT self-efficacy, and
+teacher collaboration in ICT teaching development are the
+strongest predictors of computer use in class
+Greater homogeneity in teacher quality across the school
+system and the absence of tracking might reduce
+achievement inequality
+At the student level, gender, SES, motivation, selfefficacy, and parents’ views on science are the strongest
+predictors. At the school level, enrolment size, SES
+composition, and instruction time
+The emerging factors behind the country clustering
+contribute to the literature of similarities and differences
+between countries
+School SES composition is the most significant
+determinant of whether the educational system
+compensates for student SES
+A group of variables was identified to be associated with
+greater chances of academic success across countries. In
+addition, country-specific factors were also identified
+Higher student and school SES is related to higher rates of
+shadow education lessons
+Gender differences in students’ self-concept in math are
+significant in most countries. These persist even when
+controlling for the effects of student achievement and
+parental involvement
+
+De Witte and Kortelainen
+(2013)
+Drossel et al. (2017)
+Montt (2011)
+Sun et al. (2012)
+
+Sandoval-Hernández and
+Białowolski (2016)
+Matsuoka (2015)
+Mejía-Rodríguez et al.
+(2021)
+
+a
+
+PISA
+ICILS
+PISA
+PISA
+
+TIMSS
+PISA
+TIMSS
+
+For all works, the EDM method used is Discovery with methods.
+
+considered a limited number of numeric variables along with student gender, revealing five student profiles primarily characterized by
+achievement and environmental awareness. Similarly, Scherer et al. (2017) employed LPA to identify student profiles by their use of
+information and communications technology (ICT) using the Norwegian ICILS 2013 data. They identified two independent user
+profiles and demonstrated the significant role of background characteristics and motivational constructs in determining profile
+4
+
+Computers & Education 223 (2024) 105166
+
+M. Alvarez-Garcia et al.
+
+membership. Additional clustering approaches include student profiling using log files, such as the work by Roski et al. (2024), and the
+application of clustering to ILSA log files as demonstrated by Gao et al. (2022).
+Recently, XAI has been introduced to EDM, and it is increasingly common to find studies where explainability is applied to supervised methodologies (Guleria & Sood, 2023; Livieris et al., 2023). For instance, Kruger et al. (2023) applied explainability to
+understand why students may drop out. In the context of unsupervised learning, some early works, such as that of Feng and Fan (2024),
+have transformed a clustering problem into a classification one for results interpretability, although no XAI-specific techniques were
+applied.
+Despite the limited attention given to clustering leveraging the rich and diverse set of variables generated in ILSAs, the creation of
+student profiles based on a large amount of different numeric and categorical contextual factors has great potential. With the objectives
+presented in Section 1, this work seeks to address this gap in the literature, all while effectively tackling the challenges related to large
+and mixed-type data, data quality, and results interpretability associated with PISA data modeling.
+3. Material and methods
+To address the research objectives of this study, we used the data presented in Section 3.1. Section 3.2 provides a brief overview of
+the key statistical and ML techniques, which are later combined as described in Section 3.3. Finally, Section 3.4 outlines the tools used
+for programming and explainability.
+3.1. Data
+Data collected through three PISA instruments were used in this study: student,1 ICT,2 and well-being questionnaires.3 The student
+questionnaire included a variety of questions about students’ backgrounds, beliefs, attitudes, feelings, behaviors, and academic habits.
+The ICT questionnaire covered aspects of students’ electronic and digital device usage, along with their confidence and attitudes
+toward ICT. The well-being questionnaire addressed students’ health, well-being, and activities with friends and family.
+In our study, we used the available sample of all Spanish students who participated in PISA 2022 (n = 30,800). This sample
+represents Spanish students aged between 15 years and 3 months and 16 years and 2 months who have been enrolled in an educational
+program for at least the preceding six years. Data was collected between March 28, 2022, and May 10, 2022.
+In addition, student performance in the PISA 2022 tests in mathematics, science, and reading was also used. Performance is
+represented through ten plausible values for each student and discipline. These values are extracted from the posterior distribution
+built upon a Bayesian method. For further technical details related to data collection and plausible values, refer to the PISA 2022
+Technical Report (OECD, 2022).
+The three questionnaires considered in this study comprise over 1000 variables. The majority, more than 90%, are observable
+variables employed to measure latent variables. These latent variables are constructed using one of three methods: arithmetic
+transformation and recoding, item response theory (IRT), or composite score methods (OECD, 2022). For our study, we selected all
+latent variables with a non-zero variance, resulting in 73 variables (64 numeric and 9 categorical). Additionally, we included the
+observable variable ”gender” due to its relevance in education, bringing the total to 74 variables. It is important to note that these
+variables do not account for student representative sample weights or performance plausible values. Throughout the manuscript, we
+refer to the selected PISA variables as ”original variables” for clarity, distinguishing them from the derived variables calculated in our
+analysis. Table B.1 and B.2 contain a complete list of the numeric and categorical variables, along with some descriptive statistics,
+respectively.
+3.2. Statistics and ML techniques
+In this section, we provide a description of the key statistical and ML techniques of the methodology.
+3.2.1. Hot deck imputation
+Hot deck imputation identifies, for each observation with some missing value (recipient), a set of observations that do have a value
+informed for the corresponding variable (donors), and imputes a value based on those of the donors (Little, 2024, and references
+therein). There are numerous versions of this method depending on the donor selection technique and the criterion for selecting the
+value to be imputed. In this study, we used k-nearest neighbors (KNN) for donor selection and randomly select values using either the
+uniform or the empirical distribution.
+1
+
+https://www.oecd.org/content/dam/oecd/en/data/datasets/pisa/pisa-2022-datasets/questionnaires/COMPUTER-BASED%20STUDENT%
+20questionnaire%20PISA%202022.pdf
+2
+https://www.oecd.org/content/dam/oecd/en/data/datasets/pisa/pisa-2022-datasets/questionnaires/ICT%20QUESTIONNAIRE%20PISA%
+202022.pdf
+3
+https://www.oecd.org/content/dam/oecd/en/data/datasets/pisa/pisa-2022-datasets/questionnaires/WELL-BEING%20QUESTIONNAIRE%
+20PISA%202022.pdf
+5
+
+Computers & Education 223 (2024) 105166
+
+M. Alvarez-Garcia et al.
+
+3.2.2. SPCA and MCA
+Sparse principal component analysis (SPCA) and multiple correspondence analysis (MCA) are two dimensionality reduction
+techniques for numeric and categorical data, respectively. SPCA is a variant of principal component analysis (PCA) wherein the
+problem is formulated as a PCA with L1 regularization on the components (Mairal et al., 2010). As a result, each extracted component
+is a linear combination of a reduced number of original variables, enhancing explainability. MCA is a variant of correspondence
+− 1(
+analysis (CA) for handling multiple categorical variables in which the singular value decomposition (SVD) of the matrix Dv2r X −
+) − 21
+vr v⊤
+c Dvc is calculated, where X is the one-hot encoding matrix, and vr and vc are the row and column totals of matrix X (Abdi &
+Valentin, 2007).
+3.2.3. K-means
+K-means (Hartigan & Wong, 1979) is a centroid-based partitioning algorithm that iteratively minimizes the within-sum of squares
+(WSS) for a given number of clusters. The algorithm starts with an initial guess for the cluster centers and each observation is assigned
+to the cluster with the closest centroid. Centroids are then updated and the entire process is repeated until some stopping criterion is
+reached, such as the maximum number of iterations or the improvement in WSS between consecutive iterations. In this study,
+k-means++ (Arthur & Vassilvitskii, 2007) was used for centroid initialization. The algorithm starts by selecting the first cluster’s
+centroid uniformly at random from the set of observations, X, and iteratively selects the following centroid, ck, from X giving a higher
+probability to observations far from the set of already selected centroids. Due to its dependence on centroid initialization, the algorithm is run a configurable number of times, each with different centroid seeds, and the single run with the lowest WSS is kept.
+3.2.4. Random forest
+Random forest (Breiman, 2001) is a tree-based ensemble method in which mutually independent decision trees are generated using
+two sources of randomization: bootstrapping – each tree is generated using a random sample with replacement of the original training
+dataset – and attribute sampling at node split. We used the implementation of scikit-learn (Pedregosa et al., 2011) in which final
+predictions of the ensemble are obtained by averaging the probabilistic predictions of the decision trees.
+3.2.5. XGBoost
+Boosting algorithms combine weak learners into a strong learner iteratively. When the weak learners are decision tree models,
+these algorithms are called tree boosting algorithms. Extreme gradient boosting (XGBoost) (Chen & Guestrin, 2016) is a scalable ML
+method for tree boosting in which the model is trained following an additive approach with a regularized loss function that penalizes
+the complexity of the model and smooths the final larned weights to avoid overfitting. XGBoost has two sources of randomization,
+bootstrapping and attribute sampling, which can be configured to be applied at the tree construction, level generation, and node
+splitting.
+
+Fig. 2. Method summary.
+6
+
+Computers & Education 223 (2024) 105166
+
+M. Alvarez-Garcia et al.
+
+3.2.6. SMOTE for handling imbalanced data
+The synthetic minority oversampling technique (SMOTE) (Chawla et al., 2002) is a widely used oversampling method in research
+for imbalanced classification (Pradipta et al., 2021). In SMOTE, the minority class is oversampled by generating synthetic observations
+along the segments that connect any of the k nearest neighbors within the minority class. To create synthetic samples, the algorithm
+calculates the difference between the feature vector (sample) being considered and its nearest neighbors. This difference is then
+multiplied by a random number between 0 and 1, and the result is added to the feature vector under consideration. This approach
+effectively broadens the decision region of the minority class, making it more general.
+3.2.7. SHAP values
+SHapely Additive exPlanations (SHAP) (Lundberg & Lee, 2017) is considered to be the state-of-the-art method for explainability of
+ML models (Marcílio & Eler, 2020). It is an additive feature attribution method that calculates the unique combination of predictor
+contributions for every model output. These contributions are the so-called SHAP values and are the approximate Shapley values
+(Shapley, 1953, pp. 307–318), a concept from game theory, computed using weighted linear regression. They represent the importance
+of each feature in each prediction. In addition to these local importances, a model’s global feature importances can be obtained by
+averaging the absolute value of the local SHAP values. SHAP is a model-agnostic method with a novel version, Tree SHAP (Lundberg
+et al., 2020), that also provides exact solutions and that is specifically designed to work efficiently with tree-based models, even in
+cases with tight associations between variables.
+3.3. Method
+A five-stage process based on the framework proposed by Alvarez-Garcia et al. (2024) and summarized in Fig. 2 was carried out.
+Data collection, as detailed in Section 3.1, was the initial stage.
+3.3.1. Data preparation and pre-processing
+For data preparation and pre-processing, the following steps were taken:
+1. Data filtering to include only Spanish students.
+2. Data formatting to ensure correct variable types and identify missing values.
+3. Recoding of certain categorical variables to simplify classes and enhance interpretability:
+(a) The variable LANGN (language spoken at home) was categorized into three classes: Spanish (0), other languages of Spain (1),
+and other languages (2).
+(b) Variables related to International Standard Classification of Education (ISCED) levels (EXPECEDU, FISCED, HISCED, and
+MISCED) were categorized into four classes: levels 0 and 1 (0), levels 2 through 4 (1), level 5 (2), and levels 6 through 8 (4).
+4. Missing value imputation. Due to the design of the PISA test and questionnaires, it is common to find missing values, as not all
+students answer all questions (OECD, 2022). In our dataset, missing value rates varied from 0% in variables AGE and ST004D01T to
+37.02% in SDLEFF. The mean and median missing value rates were 11.13% and 8.88%, respectively (see Table B.3 in Appendix B
+for further detail).
+For imputation, we followed an approach that aims to leverage the underlying relationships between variables to ensure that the
+imputed values align closely with the patterns observed in students with similar characteristics, thereby preserving the natural
+variance and patterns in the data. First, we identified pairs of strongly associated variables for one-to-one imputation. For numeric
+pairs, linear regression was applied. For pairs of categorical or mixed-type variables, hot deck imputation with KNN for donor
+selection and the empirical distribution for value selection were used. Subsequently, clusters of strongly associated variables were
+identified using graph theory to mitigate the curse of dimensionality. Imputation within each cluster involved hot deck imputation
+with KNN and the uniform distribution. The remaining missing values were imputed following the cluster approach, considering all
+variables in the study.
+It is important to note that outlier detection was not applied because all students were considered relevant for the study.
+3.3.2. Dimensionality reduction
+The dimensionality reduction stage had a two-fold objective: to enhance the interpretability of results by reducing the number of
+variables and to mitigate the curse of dimensionality in the subsequent steps of the methodology. We used SPCA for numeric variables,
+after standardization, and MCA for categoricals. Pearson’s correlation coefficient and partial eta squared were used to quantify how
+much each component explained the original variables and to label them accordingly. To determine the number of derived variables to
+create, we applied two criteria: the elbow method (Satopaa et al., 2011) to obtain the optimal number, and a minimum threshold on
+the cumulative explained variance and inertia, respectively. Note that for numeric variables, we determined the number of components to be extracted from SPCA by applying the prior criteria to PCA to reduce computational complexity.
+3.3.3. Clustering
+In the clustering stage, we applied weighted k-means to the derived variables obtained in the previous stage. This approach helps
+address the curse of dimensionality associated with k-means using Euclidean distance (Xia et al., 2015). Student representative sample
+weights were used as observation weights and k-means++ as initialization algorithm. We assessed the quality of the clustering using
+7
+
+Computers & Education 223 (2024) 105166
+
+M. Alvarez-Garcia et al.
+
+WSS as a validity metric and determined the optimal number of clusters through the elbow method applied to the normalized WSS. In
+addition to evaluating clusters based on total WSS and the corresponding normalized curve from the elbow method, we compared
+intracluster means of each derived variable with global means. This comparison provides insights into how each cluster differs from the
+overall population and helps identify distinctive characteristics for each cluster.
+3.3.4. Classification
+In the classification stage, we have a dual objective: achieving cluster interpretability through local and global SHAP values, and
+developing a tool for classifying future students. For the classification model, we used the original variables to ensure more interpretable results. We built two pipelines based on the proposal introduced by Alvarez-Garcia et al. (2024), with an improvement to
+handle imbalanced classes. These pipelines rely on the train-validation-test framework with cross-validation and consist of the steps
+specified below, designed to prevent overfitting and ensure that our model generalizes well, capturing the true patterns in the data. The
+difference between the two pipelines lies in the feature selection step; only one includes this step. The pipeline with the best performance was selected to extract SHAP values.
+1. Random splitting of data into train (80%) and test (20%) subsets. Steps 2, 3, 4, and model training in step 5 are executed using only
+the train split.
+2. Class balancing using SMOTE.
+3. Feature selection using random forest and recursive feature elimination with cross-validation (RFECV). The variable ESCS is kept
+due to its relevance to the study.
+4. Hyperparameter optimization through exhaustive grid search with cross-validation.
+5. Model training, evaluation, and interpretation. We used XGBoost with the area under the curve (AUC) (Equation (1)) as the
+performance metric for model fitting.
+We assessed model performance through accuracy, precision, and recall:
+∫1
+AUC =
+ROC(t)dt
+0
+
+(1)
+
+Accuracy =
+
+Correct ​ predictions
+All ​ predictions
+
+(2)
+
+Precisionk =
+
+TPk
+TPk + FPk
+
+(3)
+
+Recallk =
+
+TPk
+TPk + FNk
+
+(4)
+
+where ROC(t) is the value of the ROC curve at point t, TPk denotes the number of correctly predicted observations of class k, FPk is the
+number of observations predicted to belong to class k that belong to a different one, and FNk refers to the number of observations of
+
+Fig. 3. SHAP beeswarm summary plot.
+8
+
+Computers & Education 223 (2024) 105166
+
+M. Alvarez-Garcia et al.
+
+class k predicted to belong to a different class.
+Results were interpreted using global SHAP values and local SHAP values via SHAP beeswarm summary plots (see Section 3.4.2).
+3.4. Tools
+3.4.1. Clust-learn
+For this study, we used Clust-learn (Alvarez-Garcia et al., 2024), an open-source Python package for explainable cluster analysis.
+This package effectively aids in addressing data quality and explainability issues in large and high-dimensional mixed-type data. It
+implements all the steps of the method explained earlier and provides flexibility by exposing various of these steps for easy tailoring to
+our analysis. In this study, we used Clust-learn version 0.2.5 (https://github.com/malgar/clust-learn/releases/tag/v0.2.5) with Python 3.9.7.
+3.4.2. SHAP beeswarm summary plot
+The beeswarm plot is designed to display an information-dense summary of how the features with the highest predictive power in a
+dataset impact the model’s output. Each dot represents an observation, positioned along the x-axis according to its SHAP value. Dots
+accumulate along each feature row to show density. A higher SHAP value corresponds to a greater contribution of the feature to
+belonging to a specific class. Color is used to display the original value of a feature. In the beeswarm plot in Fig. 3, STRESAGR is the
+most important feature, with lower values (blue) implying a higher likelihood of belonging to the STU_4 class. Feature ANXMAT is the
+fourth most important predictor and higher values of this variable (red) imply a higher likelihood of belonging to this class. Features
+are ordered using the mean absolute value of the SHAP values for each feature.
+4. Results and discussion
+Following the methodology presented above, this section presents the results obtained from its application to the data described in
+Section 3.1, along with the findings derived from the study. The section is structured into three subsections: derived student variables,
+student clusters, and additional discussion topics based on the study’s findings.
+
+Fig. 4. Explained variance curves. Cumulative explained variance for numeric ((a) top) and categorical variables ((b) top). Normalized explained
+variance used by the elbow method for numeric ((a) bottom) and categorical variables ((b) bottom).
+9
+
+Computers & Education 223 (2024) 105166
+
+M. Alvarez-Garcia et al.
+
+4.1. Derived student variables
+For dimensionality reduction, we applied SPCA to the 64 continuous variables and decided to retain 15 principal components. This
+decision was based on two criteria: optimal number obtained through the elbow method (10 components) and a 50% minimum
+explained variance threshold (see Fig. 4a). These 15 derived variables explain 48.42% of the variance of the original numeric variables.
+It is worth noting that this value is slightly below the 50% threshold, attributed to the regularization applied in SPCA (see Section
+3.3.2). Additionally, every original numeric variable has a statistically significant correlation with at least one derived variable.
+For categorical variables, MCA was used, and, consistent with the numeric approach, we set the threshold at 50%, resulting in one
+derived variable explaining 55.60% of the adjusted total inertia of the original 10 categorical variables with 26 total classes (see
+Fig. 4b).
+Table 3
+Derived variables.
+Derived variable (from original numeric variables)
+
+Original variablea
+
+ρ
+
+DV_01
+
+Economic, social, and cultural status
+
+DV_02
+
+Psychological resilience
+
+DV_03
+
+Cognitive engagement and academic perseverance
+
+DV_04
+
+Family and social well-being
+
+DV_05
+
+Mathematics self-efficacy and confidence
+
+DV_06
+
+Integrated ICT use in education
+
+DV_07
+
+Frequency of ICT activity for non-academic purposes
+
+DV_08
+
+Cognitive empowerment in mathematics instruction
+
+DV_09
+
+Availability and usage of ICT at school
+
+DV_10
+
+Availability and usage of ICT at home
+
+DV_11
+
+After-school responsibilities and activities
+
+DV_12
+
+Psychosocial challenges
+
+DV_13
+
+Mathematical exposure
+
+DV_14
+
+Remote learning environment and support
+
+DV_15
+
+Interpersonal skills
+
+ESCS
+HISEI
+BMMJ1
+PAREDINT
+BFMJ2
+HOMEPOS
+STRESAGR
+PSYCHSYM
+EMOCOAGR
+BODYIMA
+PERSEVAGR
+CURIOAGR
+SOCONPA
+FAMSUP
+SOCCON
+LIFESAT
+MATHEFF
+MATHEF21
+FAMCON
+ICTENQ
+ICTOUT
+ICTFEED
+ICTSUBJ
+ICTQUAL
+ICTWKDY
+ICTWKEND
+COGACMCO
+COGACRCO
+TEACHSUP
+ICTSCH
+ICTAVSCH
+ICTAVHOM
+ICTHOME
+WORKHOME
+EXERPRAC
+STUDYHMW
+BULLIED
+DISCLIM
+EXPOFA
+EXPO21ST
+LEARRES
+SCHSUST
+FAMSUPSL
+EMPATAGR
+
+0.9667
+0.9020
+0.8203
+0.6888
+0.6825
+0.6421
+0.7411
+− 0.6797
+0.6565
+0.5328
+0.6363
+0.5926
+0.7534
+0.6977
+0.6357
+0.5809
+0.7498
+0.7220
+0.5957
+0.7355
+0.7290
+0.6757
+0.6026
+0.5589
+0.8951
+0.8907
+0.7737
+0.6827
+0.6739
+0.9897
+0.9896
+− 0.9829
+− 0.9827
+0.7075
+0.6031
+0.5826
+− 0.6128
+0.5518
+− 0.8353
+− 0.7889
+0.7791
+0.6174
+0.5080
+0.5556
+
+Derived variable (from original categorical variables)
+
+Original variableb
+
+η2p
+
+Cultural and educational background
+
+IMMIG
+LANGN
+REPEAT
+HISCED
+EXPECEDU
+
+0.4654
+0.3953
+0.3665
+0.2829
+0.2044
+
+DV_16
+
+a
+b
+
+Original numeric variables with a correlation above 0.5 in absolute value.
+Original categorical variables with a η2p larger than 0.14.
+
+10
+
+Computers & Education 223 (2024) 105166
+
+M. Alvarez-Garcia et al.
+
+Consequently, the original set of 74 variables was effectively reduced to 16 derived variables. Table 3 shows these derived variables
+alongside the original variables they are most associated with. These new variables are sorted by the variance they explain. It is
+observed that the top three variables are the economic, social, and cultural status of students, their psychological resilience, and their
+cognitive engagement and academic perseverance.
+The derived variables fall into four key student context areas:
+● Socio-economic and cultural factors: Economic, social, and cultural status; Cultural and educational background.
+● Psychological factors: Psychological resilience; Family and social well-being; After-school responsibilities and activities; Psychosocial challenges; Interpersonal skills.
+● Cognitive and academic factors: Cognitive engagement and academic perseverance; Mathematics self-efficacy and confidence;
+Cognitive empowerment in mathematics instruction; Mathematical exposure.
+● ICT factors: Integrated ICT use in education; Frequency of ICT activity for non-academic purposes; Availability and usage of ICT at
+school; Availability and usage of ICT at home; Remote learning environment and support.
+4.2. Student clusters
+Student clusters were computed using the 16 derived variables. The optimal number of clusters (k) was determined within the
+range 1–21, choosing WSS as validity metric. We obtained k = 7 as the optimal number of clusters, with respective sizes and total
+weights as shown in Table 4. It can be noted that clusters are generally well-balanced, except for cluster STU_1, representing 20.34% of
+students, and STU_5, a more specialized cluster comprising only 3.82% of students.
+To understand and interpret the obtained clusters appropriately, the following subsections are structured to present results from
+cluster comparison analysis and SHAP values obtained from the classification model. First, we compare internal cluster means against
+global values and discuss key insights. Then, we assess the performance of the fitted classification model. Finally, we integrate the
+initial cluster analysis and SHAP values to label and describe the clusters. This comprehensive exploration ensures proper cluster
+explainability.
+4.2.1. Comparative cluster analysis
+We compared the internal cluster means and standard deviations of the derived variables with their respective global ones. Since
+the derived variables are standardized with zero mean and varying variances due to the dimensionality reduction process, our specific
+focus lies in comparing these means without further normalization. Fig. 5 shows a heatmap of intracluster means, facilitating the
+identification of the primary differentiators for each cluster (refer to Table B.4 for additional details).
+Clusters STU_1 and STU_2 are characterized by significantly high economic, social, and cultural statuses (1.60 and 1.44, respectively) compared to the global mean of all students. However, these clusters differ markedly. Students in cluster STU_1 exhibit a low
+frequency of non-academic ICT activity (− 0.72) and low after-school responsibilities and activities (− 0.69). In contrast, students in
+cluster STU_2 deviate from the global mean in all indices that reflect advantages for academic achievement. They show high levels of
+cognitive engagement and academic perseverance (1.42), integrated ICT use in education (1.37), mathematics self-efficacy and
+confidence (1.23), family and social well-being (1.09), remote learning environment and support (0.67), cognitive empowerment in
+mathematics instruction (0.66), and interpersonal skills (0.66).
+Students in the third cluster (STU_3) have, on average, a high frequency of non-academic ICT activity (1.34), psychosocial challenges (− 1.13), and after-school responsibilities and activities (0.76). Conversely, they present low levels of cognitive engagement and
+academic perseverance (− 1.22), as well as family and social well-being (− 0.74). Despite these adverse conditions for educational
+achievement, these students present the highest average in psychological resilience (0.65). It is important to note that some of the
+derived variables correlate negatively with the original ones, which explains why the third cluster is considered to have high levels of
+psychosocial challenges with an intracluster mean of − 1.13 (see correlation detail in Table 3).
+The fourth cluster (STU_4) is characterized by significantly low psychological resilience (− 2.20), representing the only cluster with
+a negative mean. Cluster STU_5 comprises students with very low availability and usage of ICT at school and at home (− 2.74 and 5.69,
+respectively), although high within-cluster variability is observed. Interestingly, this group shows the second highest frequency of ICT
+activity for leisure (0.77), suggesting that their only access to ICT devices may be their cell phones.
+Finally, clusters STU_6 and STU_7 show significantly low economic, social, and cultural statuses (− 1.84 and − 2.39, respectively).
+Table 4
+Cluster sizes.
+Cluster code
+STU_1
+STU_2
+STU_3
+STU_4
+STU_5
+STU_6
+STU_7
+
+W=
+
+Size (Ni)
+
+Total weight (Wi)
+
+Relative weight (Wi/W)
+
+6367
+3978
+3540
+4570
+1032
+5138
+3956
+
+85174.01
+57567.25
+55994.14
+66378.10
+16008.95
+73957.81
+63684.48
+
+20.34%
+13.75%
+13.37%
+15.85%
+3.82%
+17.66%
+15.21%
+
+∑
+
+iWi.
+
+11
+
+Computers & Education 223 (2024) 105166
+
+M. Alvarez-Garcia et al.
+
+Fig. 5. Heatmap of the cluster internal means where global means are 0 for all variables.
+
+However, these two clusters differ substantially. While students in cluster STU_6 exhibit high levels of family and social well-being
+(0.85) and slightly elevated values in cognitive-related variables, students in cluster STU_7 deviate from the global mean in indices
+reflecting a disadvantage for academic achievement. These indices include family and social well-being (− 1.22), integrated ICT use in
+education (− 0.94), and cognitive engagement and academic perseverance (− 0.89).
+4.2.2. Classifying cluster labels. Model performance
+Using the approach outlined in Section 3.3.4, we trained a classifier to predict student clusters. Table 5 shows the 3-fold crossvalidation average performance obtained from the two classification pipelines (with and without feature selection) and for
+different combinations of hyperparameters: number of estimators (30 and 60), eta (0.15 and 0.25), and maximum tree depth (5, 7, and
+9). The optimal hyperparameter configuration was achieved when no feature selection is performed and for 60 estimators, an eta of
+0.25, and a maximum tree depth of 7.
+Fig. 6 presents the confusion matrix of the XGBoost classifier with the optimal combination of hyperparameters. It is computed on
+the test set. A global accuracy of 0.8643 was achieved. Precision values range from 0.8401 for cluster STU_7 to 0.9321 for cluster
+STU_5, and recall values from 0.8055 for cluster STU_3 to 0.9406 for cluster STU_5. No significant misclassification between pairs of
+clusters is observed.
+Fig. 7 exhibits the ten factors that exhibit the highest predictive power for classifying students globally. It can be noted that the
+economic, social, and cultural status (ESCS), and the availability and usage of ICT at home and outside school (ICTAVHOM and
+ICTHOME) have significantly larger SHAP importances than the remaining predictors.
+
+Table 5
+Hyperparameter optimization performance results.
+XGBClassifier hyperparameters
+
+Model performance
+
+eta
+
+max_depth
+
+n_estimators
+
+w/feature selection
+
+w/o feature selection
+
+0.15
+0.15
+0.15
+0.15
+0.15
+0.15
+0.25
+0.25
+0.25
+0.25
+0.25
+0.25
+
+5
+5
+7
+7
+9
+9
+5
+5
+7
+7
+9
+9
+
+30
+60
+30
+60
+30
+60
+30
+60
+30
+60
+30
+60
+
+0.8554 (0.0329)
+0.8905 (0.0318)
+0.8738 (0.0360)
+0.9024 (0.0327)
+0.8805 (0.0366)
+0.9031 (0.0337)
+0.8788 (0.0322)
+0.9048 (0.0311)
+0.8934 (0.0345)
+0.9118 (0.0317)
+0.8940 (0.0354)
+0.9087 (0.0324)
+
+0.8621 (0.0321)
+0.8972 (0.0304)
+0.8804 (0.0334)
+0.9087 (0.0311)
+0.8872 (0.0362)
+0.9086 (0.0325)
+0.8850 (0.0320)
+0.9142 (0.0286)
+0.8965 (0.0330)
+0.9171 (0.0299)
+0.8995 (0.0344)
+0.9157 (0.0303)
+
+Performance metrics show mean accuracy and standard deviation in parenthesis.
+12
+
+Computers & Education 223 (2024) 105166
+
+M. Alvarez-Garcia et al.
+
+Fig. 6. Confusion matrix computed on the test set.
+
+Fig. 7. Global SHAP importances.
+
+4.2.3. Cluster labeling and description
+We extracted local SHAP values to understand which original variables best characterize each cluster (see Fig. 8). This analysis
+complements the previous comparison in Section 4.2.1, where we compared intracluster means and global means, and is used to assign
+meaningful cluster labels and descriptions. Cluster labels are derived by analyzing the top ten variables with the highest predictive
+power within each cluster, considering their impact on the SHAP values. For guidance on interpreting SHAP beeswarm plots, refer to
+13
+
+Computers & Education 223 (2024) 105166
+
+M. Alvarez-Garcia et al.
+
+Fig. 8. Local SHAP values summary for all clusters.
+
+14
+
+Computers & Education 223 (2024) 105166
+
+M. Alvarez-Garcia et al.
+
+Section 3.4.2. The clusters, along with their assigned labels and descriptions, are presented below.
+STU_1. Socio-economically advantaged students with moderate ICT use and limited math encouragement. Students from
+socio-economically advantaged backgrounds, with parents holding high occupational statuses. These students are less involved in
+household responsibilities, experience lower levels of bullying, and show moderate use of ICT for leisure. Moreover, they receive less
+academic support via ICT and perceive their teachers as not encouraging mathematical thinking.
+STU_2. Socio-culturally supported and academically engaged students. Students from families with elevated socio-economic
+and cultural status. These students display high levels of academic engagement, including dedication, self-directed learning abilities,
+curiosity, perseverance, and strong mathematics self-efficacy. Additionally, they actively use technology for academic purposes. They
+also reflect positive well-being and social connections, with high life satisfaction, positive social connections to parents, and supportive
+relationships with teachers.
+STU_3. Students with high use of technologies for leisure, limited support structures, and academic disengagement.
+Students from mid-high socio-economic backgrounds. They spend large amounts of time to non-academic activities, such as using ICT
+for leisure (participating in social networks, playing video games, or creating digital content), practicing sports, and working for pay.
+They show a lack of educational discipline, with above average tardiness rates and face self-directed learning problems. They also
+express lower expectations for their future occupation status and perceive less family support.
+STU_4. Emotionally vulnerable students. Students with challenges in stress resistance, emotional control, and mathematics
+anxiety. They also express lower levels of life satisfaction and experienced well-being from the previous day. However, a positive
+aspect is noted with higher levels of empathy and family support.
+STU_5. Students with limited access to ICT. Students from mid-low socio-economic and cultural backgrounds. They are primarily
+characterized by limited access to ICT both at school and at home. Interestingly, this group shows a relatively high frequency of ICT
+activity for leisure, suggesting that their only access to ICT devices may be their cell phones. Additionally, they exhibit a relatively
+active lifestyle, engaging in sports.
+STU_6. Socio-economically disadvantaged students with strong support networks. Students from low socio-economic and
+cultural backgrounds. Despite socio-economic challenges, students in this cluster benefit from strong support networks, positive relationships with parents and teachers, and higher life satisfaction. Additionally, they express a relatively high dedication to their
+studies.
+STU_7. Socio-economically disadvantaged students with limited support networks. Students from low socio-economic and
+cultural backgrounds with strained relationships at home and limited support in both domestic and in educational aspects. They
+present higher rates of grade repetition. Notably, more than one third (35.3%) of the students in this cluster are first and secondgeneration immigrants. This percentage is significantly higher compared to all the other clusters, where it consistently remains
+below 20%, and is seven times larger than in clusters STU_1 and STU_2.
+4.3. A closer look at student clusters: Insights into gender, academic performance, and educational aspirations
+As stated in our research objectives, the uncovering of 15-year-old student profiles serves as a strategic tool for policymakers. In this
+section, we further examine the identified student clusters based on gender, academic performance, and highest expected education.
+By analyzing these dimensions within and across clusters, our goal is to reveal relevant insights with the potential to inform the
+customization of educational programs, providing a targeted approach to address the unique characteristics and needs of each cluster.
+4.3.1. Psychological factors and gender
+While gender (ST004D01T) is a variable considered in our study, its relevance in cluster computation was minimal because none of
+the derived variables obtained in the dimensionality reduction phase showed a strong relationship with it. This is expected, given the
+gender division that evenly splits students, making it irrelevant in terms of student variance. Consequently, the discovery of two
+
+Fig. 9. Gender distribution by cluster.
+15
+
+Computers & Education 223 (2024) 105166
+
+M. Alvarez-Garcia et al.
+
+clusters, STU_3 with 68.2% male and STU_4 with 84.5% female (Fig. 9) takes on particular significance.
+Cluster STU_4, in particular, is noteworthy. It is characterized by emotionally vulnerable students facing challenges in various
+psychological factors, and its gender distribution aligns with existing discussions linking female students and psychological challenges,
+such as those by Esidio et al. (2023), Nogueira et al. (2022), and Mo et al. (2020). Given that this cluster constitutes 15.85% of the
+students and is predominantly composed of girls, this finding demands special attention and highlights the potential need for
+gender-specific programs tailored to the well-being of students.
+Interestingly, students in cluster STU_4 express higher levels of empathy and family support. A potential future line of work could
+involve quantifying the extent to which this emotional vulnerability can be explained by contextual factors such as a discriminatory
+school environment or competitive learning environments.
+4.3.2. Academic performance and economic, social, and cultural status
+While our approach is inherently unsupervised, the contextual factors employed in our study have been extensively used in
+
+Fig. 10. Average performance in mathematics, science, and reading in the PISA tests across clusters in relation to their average value for DV_01.
+16
+
+Computers & Education 223 (2024) 105166
+
+M. Alvarez-Garcia et al.
+
+supervised methods to explain and predict academic achievement, as illustrated in the literature review. Therefore, it is pertinent to
+explore whether, under an unsupervised framework, the observed differences in academic performance among clusters are statistically
+significant.
+Fig. 10 presents the average performance in mathematics, science, and reading in the PISA tests across clusters. Given that economic, social, and cultural status stood out as the primary determinant of student clusters – a factor consistently acknowledged as the
+most influential predictor of academic achievement since the work of Coleman et al. (1966, pp. 1–32) – we assessed the average
+performance of student clusters in relation to their average value for DV_01, which is strongly correlated with the economic, social, and
+cultural status of students (ρ = 0.9667). We considered the 10 plausible values of each student and discipline in the computation of
+average performances (refer to Table B.5 for detailed figures on actual and expected performance by cluster and discipline).
+One notable observation is the substantial disparity in average performance across clusters, with variations of up to 90 points
+between the best and worst-performing clusters in all three disciplines. Given that a 20-point difference in PISA tests roughly corresponds to one year of schooling (Schleicher, 2022), these variations are striking, especially considering that the clusters were
+computed without factoring in performance in PISA tests.
+In the top tier of academic performance, clusters STU_1 and STU_2 show very similar average performances across the three
+disciplines, both around 20 points above the expected performance. However, STU_1 consistently performs better than STU_2. Despite
+both clusters having a high ESCS, STU_2 stands out with significantly better outcomes in other contextual factors that indicate advantages in academic achievement (e.g. DV_03, DV_04, and DV_05 – see Fig. 5). This raises an interesting line of investigation: whether,
+for high-ESCS students, academic achievement is less dependent on other cognitive or psychological factors.
+On the opposite end of the ESCS spectrum, cluster STU_6 consistently exceeds the expected performance in all three disciplines (by
+8.37, 6.95, and 8.76 points, respectively), while cluster STU_7 consistently falls below (by − 5.61, − 4.35, and − 9.49 points, respectively). Overall, differences of around 20 points between these two clusters across all three disciplines are observed. One notable
+difference between these clusters, when accounting for students’ contextual factors, is their support networks – how they perceive their
+relationships with their parents and teachers – and the psychosocial challenges they face. Students in cluster STU_6 express one of the
+highest average satisfaction in these factors compared to all other clusters, while students in cluster STU_7 express one of the lowest
+(refer to Fig. 5, variables DV_04 and DV_12). Although certain differences between these clusters, such as higher levels of immigration
+in cluster STU_7 (35.3% of first and second-generation students in STU_7 compared to 19.3% in cluster STU_6), cannot be altered, there
+seems to be ample opportunity to create safer school environments and enhance how support networks are cultivated for these students. Targeted educational programs should focus on improving conditions for disadvantaged students, as there is evidence that
+support networks, including family, ethnic and religious affiliations, friends, and faculty, play a role in academic success (Mishra,
+2020; Olszewski-Kubilius et al., 1994).
+Cluster STU_4 presents a distinctive pattern, with an average performance below expectations in mathematics (− 7.13 points), at the
+expected level in science (+0.22 points), and significantly above expectations in reading (+16.30 points). This can be attributed to the
+gender composition of the cluster, with a majority of female students (84.5%), as girls typically perform slightly worse than boys in
+math and significantly higher in reading (OECD, 2019).
+Finally, clusters STU_3 and STU_5 deserve special attention. Students in these clusters have average performances more than 40 and
+30 points below the expected performance in the three disciplines, respectively. There is a clear need for targeted intervention with
+these students, as their academic performance seems to be influenced more strongly by factors other than ESCS. These two clusters are
+distinguished for spending more time on leisure activities using ICT (DV_07), after-school responsibilities and activities (DV_11), and
+rank highest and third-highest in psychosocial challenges (DV_12).
+4.3.3. Highest expected educational level
+When examining the distribution of expected education within clusters illustrated in Fig. 11, notable differences emerged. Despite
+similarities in the performance levels of clusters STU_1 and STU_2, their educational expectations diverge significantly. While 69.8% of
+students in cluster STU_2 anticipate achieving a tertiary education level, this figure drops to 53.9% in cluster STU_1. The difference in
+these expectations suggests that factors beyond ESCS may be influencing the divergence between these two clusters.
+Clusters STU_1 and STU_4 present similar distribution patterns despite significant differences in ESCS, psychological resilience
+(DV_02), and frequency of ICT activity for leisure (DV_07). Students in cluster STU_4 have a notably lower ESCS, indicating potential
+limited exposure to parents with university degrees. This suggests that specific gender-oriented policies may be influencing the
+educational expectations within this cluster, given the cluster’s predominantly female composition.
+Clusters STU_6 and STU_7 have lower educational aspirations, with fewer than 50% of students expecting an ISCED 5 or higher
+degree, possibly due to lower exposure to individuals with such education levels (Mishra, 2020; Olszewski-Kubilius et al., 1994).
+5. Conclusion
+Applying EDM techniques to ILSA databases holds promising potential for achieving ILSA’s ultimate goal of enhancing educational
+systems by facilitating the identification of effective policies and programs. Among the different EDM techniques applied to ILSA
+databases, unsupervised methods remain relatively underexplored, especially for large amounts of variables. However, leveraging
+clustering techniques to identify student profiles offers significant promise for designing tailored educational programs, provided that
+results are interpretable.
+In this study, we have applied an explainable cluster analysis methodology to PISA 2022 Spanish student data. We have used the
+entire sample of students (n = 30,800) with a selection of 74 variables describing different student contextual areas. Our approach
+17
+
+Computers & Education 223 (2024) 105166
+
+M. Alvarez-Garcia et al.
+
+Fig. 11. Highest expected educational level distribution by cluster.
+
+encompasses various EDM and ML techniques. It spans from data pre-processing to dimensionality reduction, clustering, and classification, with a focus on data quality and ensuring interpretability throughout the process.
+The dimensionality reduction process yielded 16 derived variables from the original set of 74, categorized into four main student
+context areas: socio-economic and cultural factors, psychological factors, cognitive and academic factors, and ICT factors. By applying
+k-means clustering to the derived variables, we obtained an optimal number of 7 student clusters, each representing varying proportions of the 15-year-old Spanish student population. Subsequently, we compared different classification pipelines with different
+configurations of feature selection and hyperparameters. We obtained the best-performing model with a global accuracy of 0.8643 on
+the test set, with precision values ranging from 0.8401 to 0.9321 and recall values ranging from 0.8055 to 0.9406. Cluster interpretability was achieved through global and local SHAP values. It was found that ESCS and ICT use at home and school are the three
+features with the highest predictive power to categorize students. Local SHAP values allowed for detailed cluster descriptions.
+Our analysis revealed significant insights into the relationship between student clusters and factors such as gender, academic
+performance, and educational expectations. Specifically, we observed a strong relationship between female students and emotional
+and psychological vulnerability, suggesting a need for tailored, gender-specific programs to address student well-being effectively. We
+also observed significant differences in academic performance across clusters. This result is especially relevant because PISA test scores
+were not used for clustering. These disparities revealed the importance of support networks in academic achievement for students from
+lower socio-economic backgrounds.
+Moreover, our findings highlighted the minimal impact of factors other than ESCS on academic achievement among students with
+the highest socio-economic backgrounds. Additionally, we identified the significant influence of ICT usage on educational outcomes,
+spotlighting the urgency of regulating leisure ICT use and ensuring equitable access to technology for educational purposes. Lastly,
+differences in educational expectations among clusters revealed the multifaceted nature of educational aspirations and the influence of
+social and environmental factors.
+These findings have important implications for both practitioners and researchers. Leveraging ML and XAI, advanced tools can be
+developed to identify and understand complex student profiles in large multivariate databases. For practitioners, including educators
+and policymakers, these insights provide a data-driven foundation for designing educational programs and policies tailored to the
+needs of specific student profiles, enhancing the effectiveness of interventions and potentially improving educational outcomes.
+For researchers, this study demonstrates the potential of advanced analytical techniques in educational research, encouraging
+further exploration and adaptation of these methods in diverse educational settings.
+However, a primary limitation of our study is its focus on a single country, Spain, despite PISA being conducted in more than 75
+countries and regions. Our decision to focus on Spanish data was intentional, aiming to explore and validate in depth the application of
+the proposed methodology within a specific context. Controlling for the diverse cultural, social, and educational contexts of multiple
+countries would have deviated from our goal of developing a robust analysis to validate the methodology for extracting meaningful
+student profiles. We acknowledge that this limits the generalizability of our findings and encourages further exploration.
+Moving forward, we plan to expand our research to include data from multiple countries, enabling cross-cultural comparisons and a
+broader understanding of how student profiles differ across diverse educational contexts. This expansion offers several research opportunities, such as comparing profiles across countries to identify common factors linked to educational success or challenges.
+Additionally, it will allow us to explore the adaptability of ML algorithms to different contexts, contributing to the development of
+more robust models.
+Additionally, future work will delve deeper into specific clusters to refine our understanding of student characteristics and inform
+more targeted educational interventions. Expanding our analysis to include data from the PISA school and teacher databases also holds
+potential for developing holistic educational initiatives that involve not only students but also schools, teachers, and parents.
+
+18
+
+Computers & Education 223 (2024) 105166
+
+M. Alvarez-Garcia et al.
+
+Data, material and/or code availability
+The data that support the findings of this study are openly available in PISA 2022 Database at https://www.oecd.org/pisa/data/
+2022database/. The code that supports the findings of this study is available from the corresponding author, M. A., upon reasonable
+request.
+CRediT authorship contribution statement
+Miguel Alvarez-Garcia: Writing – review & editing, Writing – original draft, Visualization, Validation, Software, Methodology,
+Formal analysis, Data curation, Conceptualization. Mar Arenas-Parra: Writing – review & editing, Validation, Supervision, Project
+administration, Funding acquisition, Conceptualization. Raquel Ibar-Alonso: Writing – review & editing, Validation, Supervision,
+Project administration, Conceptualization.
+Declaration of competing interest
+The authors declare that they have no known competing financial interests or personal relationships that could have appeared to
+influence the work reported in this paper.
+Acknowledgments
+This work was partially supported by Vicerrectorado de Investigación - Universidad de Oviedo. PAPI-23-GR-2011-0049.
+Appendix A. Bibliometric search criteria
+In this study, we used the Web of Science (WoS) database, applying the criteria outlined in Table A 1.
+Table A 1
+Bibliometric search criteria.
+Criteria
+
+Value
+
+Date of search
+Database
+Query
+
+November 19th, 2023
+Web of Science (WoS)
+(ALL=(”education”)) AND (ALL=(”large-scale assessments”) OR ALL=(”international large scale assessments”) OR ALL=(”Programme for
+International Student Assessment”) OR ALL=(” Programme for the International Assessment of Adult Competencies”) OR ALL=(”Teaching and
+Learning International Survey”) OR ALL=(”Trends in International Mathematics and Science Study”) OR ALL=(”Progress in International
+Reading Literacy Study”) OR ALL=(”International Civic and Citizenship Education Study”) OR ALL=(”International Computer and Information
+Literacy Study ”)) AND (ALL=(”data mining”) OR ALL=(”educational data mining”) OR ALL=(”machine learning”) OR ALL=(”clustering”) OR
+ALL=(”cluster analysis”) OR ALL=(”segmentation”) OR ALL=(”predictive”) OR ALL=(”prediction”) OR ALL=(”regression”) OR ALL=
+(”learning analytics”) OR ALL=(”outlier detection”) OR ALL=(”social network analysis”) OR ALL=(”process mining”) OR ALL=(”text mining”)
+OR ALL=(”relationship mining”) OR ALL=(”visualization”) OR ALL=(”knowledge discovery”) OR ALL=(”knowledge tracing”))
+All
+
+Publication
+years
+Document type
+
+Article
+
+Appendix B. Tables
+
+Table B.1
+Numeric variables used in the study.
+Name
+
+Description
+
+x
+
+s
+
+AGE
+ANXMAT
+ASSERAGR
+BELONG
+BFMJ2
+BMMJ1
+BODYIMA
+BSMJ
+BULLIED
+COGACMCO
+COGACRCO
+
+Students’ age
+Mathematics Anxiety (WLE)
+Assertiveness (agreement) (WLE)
+Sense of belonging (WLE)
+Father’s occupational status (ISEI) based on 4-digit human coded ISCO
+Mother’s occupational status (ISEI) based on 4-digit human coded ISCO
+Body Image (WLE)
+Expected occupation status (free response)- 4 digits
+Being bullied (WLE)
+Cognitive activation in mathematics: Encourage mathematical thinking Version B (WLE)
+Cognitive activation in mathematics: Foster reasoning Version B (WLE)
+
+15.8042
+0.3581
+− 0.1527
+0.3156
+43.9662
+44.1666
+− 0.1207
+67.8634
+− 0.4280
+0.0442
+− 0.0864
+
+0.2908
+1.0811
+0.9556
+1.1420
+23.7383
+24.4144
+0.8459
+17.8089
+0.9267
+0.9776
+0.9425
+
+(continued on next page)
+
+19
+
+Computers & Education 223 (2024) 105166
+
+M. Alvarez-Garcia et al.
+
+Table B.1 (continued )
+Name
+
+Description
+
+x
+
+s
+
+COOPAGR
+CURIOAGR
+DISCLIM
+DURECEC
+EMOCOAGR
+EMPATAGR
+ESCS
+EXERPRAC
+EXPO21ST
+EXPOFA
+EXPWB
+FAMCON
+FAMSUP
+FAMSUPSL
+HISEI
+HOMEPOS
+ICTAVHOM
+ICTAVSCH
+ICTDISTR
+ICTEFFIC
+ICTENQ
+ICTFEED
+ICTHOME
+ICTINFO
+ICTOUT
+ICTQUAL
+ICTREG
+ICTSCH
+ICTSUBJ
+ICTWKDY
+ICTWKEND
+LEARRES
+LIFESAT
+MATHEASE
+MATHEF21
+MATHEFF
+MATHPERS
+PAREDINT
+PERSEVAGR
+PROBSELF
+PSYCHSYM
+RELATST
+SCHSUST
+SDLEFF
+SOCCON
+SOCONPA
+STRESAGR
+STUBMI
+STUDYHMW
+TARDYSD
+TEACHSUP
+WORKHOME
+WORKPAY
+
+Cooperation (agreement) (WLE)
+Curiosity (agreement) (WLE)
+Disciplinary climate in mathematics (WLE)
+Duration in early childhood education and care
+Emotional control (agreement) (WLE)
+Empathy (agreement) (WLE)
+Index of economic, social and cultural status
+Exercise or practice a sport before or after school
+Exposure to Mathematical Reasoning and 21st century mathematics tasks (WLE)
+Exposure to Formal and Applied Mathematics Tasks (WLE)
+Experienced Well-being (Previous Day) (WLE)
+Subjective familiarity with mathematics concepts (WLE)
+Family support (WLE)
+Family support for self-directed learning (WLE)
+Highest parental occupational status (ISEI) based on 4-digit human coded ISCO
+Home possessions (WLE)
+Availability and Usage of ICT at Home
+Availability and Usage of ICT at School
+Distress from online content and cyberbullying
+Self-efficacy in digital competencies (WLE)
+Use of ICT in enquiry-based learning activities (WLE)
+Support or feedback via ICT (WLE)
+ICT availability outside of school (WLE)
+Students’ practices regarding online information (WLE)
+Use of ICT for school activities outside of the classroom (WLE)
+Quality of access to ICT (WLE)
+Views of regulated ICT use in school (WLE)
+ICT availability at school (WLE)
+Subject-related ICT Use During Lessons (WLE)
+Frequency of ICT activity (weekday) (WLE)
+Frequency of ICT activity (weekend) (WLE)
+Types of learning resources used while school was closed (WLE)
+Students’ Life Satisfaction across Domains (WLE)
+Perception of Mathematics as easier than other subjects
+Mathematics self-efficacy: mathematical reasoning and 21st century skills (WLE)
+Mathematics self-efficacy: formal and applied mathematics - response options reversed in 2022 (WLE)
+Effort and Persistence in Mathematics (WLE)
+Index highest parental education (international years of schooling scale)
+Perseverance (agreement) (WLE)
+Problems with self-directed learning (WLE)
+Psychosomatic Symptoms (WLE)
+Quality of student-teacher relationships (WLE)
+School actions/activities to sustain learning (WLE)
+Self-directed learning self-efficacy (WLE)
+Social Connections: Ease of Communication About Worries and Concerns (WLE)
+Social connection to Parents (WLE)
+Stress resistance (agreement) (WLE)
+Body Mass Index (BMI)
+Studying for school or homework before or after school
+Arriving late for school stricter definition
+Mathematics Teacher Support (WLE)
+Working in household/take care of family members before or after school
+Working for pay before or after school
+
+0.1690
+0.1205
+− 0.0370
+2.9951
+0.0854
+0.2248
+0.0235
+4.6226
+− 0.0475
+0.1544
+− 0.1673
+0.5115
+0.1576
+0.0732
+51.3245
+0.0739
+5.7179
+6.2864
+6.2872
+0.0881
+0.1676
+− 0.0564
+0.0216
+0.1057
+0.1009
+− 0.0162
+0.2616
+− 0.1051
+− 0.0903
+− 0.1691
+− 0.1069
+0.0039
+0.0386
+0.1220
+0.0102
+− 0.1922
+0.0032
+14.4474
+0.1379
+− 0.0899
+− 0.0928
+0.1496
+0.0855
+0.1914
+0.0821
+0.2310
+− 0.0160
+21.2616
+5.8256
+0.5145
+0.0343
+5.2471
+0.6774
+
+1.0450
+1.0028
+0.9171
+0.9252
+0.9557
+1.0248
+0.9710
+3.1870
+0.9115
+0.8305
+0.9855
+1.1901
+1.0047
+0.9379
+24.0114
+0.8047
+0.8562
+1.4383
+3.4099
+0.9225
+0.8572
+0.9094
+0.9355
+0.9492
+0.8973
+0.8927
+0.8185
+0.9595
+0.9291
+0.9129
+0.8837
+0.9153
+0.9909
+0.3273
+0.9524
+1.0853
+0.9370
+2.7213
+0.9931
+0.9594
+0.9193
+1.0193
+0.8827
+0.9169
+0.9758
+1.1493
+0.9296
+4.0278
+2.8090
+0.7195
+1.1340
+3.4438
+1.9239
+
+Table B.2
+Categorical variables used in the study.
+Name
+
+Description
+
+Category
+
+EXPECEDU
+
+Highest expectededucational level
+
+HISCED
+
+Highest level of education of parents (ISCED)
+
+IMMIG
+
+Index on immigrant background (OECD definition)
+
+Less than ISCED Level 2
+ISCED Levels 2 through 4
+ISCED Level 5
+ISCED Level 6 or higher
+Less than ISCED Level 2
+ISCED Levels 2 through 4
+ISCED Level 5
+ISCED Level 6 or higher
+Native student
+Second-Generation student
+First-Generation student
+
+Code
+0
+1
+2
+3
+0
+1
+2
+3
+1
+2
+3
+
+f
+1035
+7783
+4718
+12789
+883
+5848
+3459
+19204
+25241
+2225
+1599
+
+(continued on next page)
+
+20
+
+Computers & Education 223 (2024) 105166
+
+M. Alvarez-Garcia et al.
+
+Table B.2 (continued )
+Name
+
+Description
+
+Category
+
+LANGN
+
+Language spoken at home
+
+MATHMOT
+
+Motivation to do wellin mathematics
+
+MATHPREF
+
+Preference of mathematics over other core subjects
+
+REPEAT
+
+Grade repetition
+
+SISCO
+
+Clear idea about future job
+
+SKIPPING
+
+Skipping classes or days of school
+
+ST004D01T
+
+Student (Standardized) Gender
+
+Spanish
+Other languages of Spain
+Other languages
+Not more motivated than in other subjects
+More motivated than in other subjects
+No preference
+Preference
+Never repeated
+Repeated at lease once
+No clear idea of future job
+Clear idea of future job
+No classes skipped in the prior two weeks
+At lease one class skipped in the prior two weeks
+Female
+Male
+
+Code
+0
+1
+2
+0
+1
+0
+1
+0
+1
+0
+1
+0
+1
+1
+2
+
+f
+25232
+2886
+1700
+26801
+1503
+24304
+4080
+24133
+5642
+4057
+20913
+18169
+11404
+15239
+15561
+
+Table B.3
+Rate of missing values per variable.
+Variable name
+SDLEFF
+FAMSUPSL
+PROBSELF
+LEARRES
+SCHSUST
+EXPWB
+BSMJ
+ICTDISTR
+BFMJ2
+SISCO
+DURECEC
+BODYIMA
+BMMJ1
+STUBMI
+EXPECEDU
+ICTEFFIC
+ICTWKEND
+ICTSUBJ
+FAMSUP
+ICTINFO
+ICTREG
+ICTOUT
+ICTQUAL
+ICTWKDY
+ANXMAT
+ICTFEED
+MATHEF21
+MATHPERS
+ICTENQ
+SOCONPA
+FAMCON
+ICTHOME
+SOCCON
+HISEI
+EXPO21ST
+ICTAVHOM
+MATHEFF
+
+Missing value rate (%)
+
+Variable name
+
+Missing value rate (%)
+
+37.02
+36.26
+36.15
+35.84
+34.69
+33.85
+32.10
+21.01
+20.19
+18.93
+18.10
+17.84
+16.11
+16.00
+14.53
+14.47
+14.01
+13.65
+13.00
+12.59
+10.82
+10.55
+10.50
+10.50
+10.24
+10.21
+10.16
+10.04
+9.97
+9.77
+9.74
+9.61
+9.46
+9.39
+9.25
+9.23
+9.06
+
+COGACMCO
+EXPOFA
+PSYCHSYM
+LIFESAT
+MATHEASE
+MATHMOT
+COGACRCO
+MATHPREF
+ICTSCH
+STRESAGR
+EMOCOAGR
+ASSERAGR
+TEACHSUP
+DISCLIM
+EMPATAGR
+ICTAVSCH
+CURIOAGR
+COOPAGR
+IMMIG
+PERSEVAGR
+TARDYSD
+PAREDINT
+HISCED
+BELONG
+BULLIED
+WORKPAY
+SKIPPING
+RELATST
+WORKHOME
+ESCS
+STUDYHMW
+EXERPRAC
+REPEAT
+LANGN
+HOMEPOS
+AGE
+ST004D01T
+
+8.70
+8.32
+8.23
+8.23
+8.14
+8.10
+7.85
+7.84
+7.80
+6.83
+6.78
+6.74
+6.55
+5.99
+5.92
+5.90
+5.86
+5.73
+5.63
+5.31
+4.63
+4.56
+4.56
+4.07
+4.04
+3.99
+3.98
+3.86
+3.81
+3.74
+3.69
+3.66
+3.33
+3.19
+3.06
+0.00
+0.00
+
+Table B.4
+Intracluster means and standard deviations (in parenthesis).
+Global
+STU_1
+STU_2
+STU_3
+
+DV_01
+
+DV_02
+
+DV_03
+
+DV_04
+
+DV_05
+
+DV_06
+
+DV_07
+
+DV_08
+
+0.00
+(1.93)
+1.60
+(1.05)
+1.44
+(1.17)
+0.53
+
+0.00
+(1.65)
+0.53
+(1.17)
+0.42
+(1.54)
+0.65
+
+0.00
+(1.52)
+0.00
+(1.20)
+1.42
+(1.48)
+− 1.22
+
+0.00
+(1.50)
+− 0.08
+(1.25)
+1.09
+(1.22)
+− 0.74
+
+0.00
+(1.48)
+− 0.05
+(1.29)
+1.23
+(1.46)
+− 0.11
+
+0.00
+(1.47)
+− 0.37
+(1.19)
+1.37
+(1.56)
+0.12
+
+0.00
+(1.41)
+− 0.72
+(1.12)
+− 0.08
+(1.28)
+1.34
+
+0.00
+(1.41)
+− 0.46
+(1.26)
+0.66
+(1.35)
+0.26
+
+(continued on next page)
+
+21
+
+Computers & Education 223 (2024) 105166
+
+M. Alvarez-Garcia et al.
+
+Table B.4 (continued )
+
+STU_4
+STU_5
+STU_6
+STU_7
+
+Global
+STU_1
+STU_2
+STU_3
+STU_4
+STU_5
+STU_6
+STU_7
+
+DV_01
+
+DV_02
+
+DV_03
+
+DV_04
+
+DV_05
+
+DV_06
+
+DV_07
+
+DV_08
+
+(1.37)
+0.27
+(1.41)
+− 0.65
+(1.90)
+− 1.84
+(1.08)
+− 2.39
+(1.28)
+
+(1.31)
+− 2.20
+(1.13)
+0.14
+(1.61)
+0.26
+(1.39)
+0.24
+(1.46)
+
+(1.20)
+0.09
+(1.30)
+− 0.12
+(1.75)
+0.50
+(1.28)
+− 0.89
+(1.32)
+
+(1.29)
+− 0.43
+(1.40)
+0.00
+(1.62)
+0.85
+(1.17)
+− 1.22
+(1.38)
+
+(1.45)
+− 0.32
+(1.30)
+− 0.05
+(1.65)
+0.09
+(1.33)
+− 0.85
+(1.42)
+
+(1.27)
+− 0.37
+(1.22)
+0.29
+(2.03)
+0.34
+(1.32)
+− 0.94
+(1.32)
+
+(1.29)
+0.16
+(1.09)
+0.77
+(2.05)
+0.07
+(1.30)
+− 0.18
+(1.60)
+
+(1.26)
+− 0.46
+(1.41)
+0.05
+(1.62)
+0.62
+(1.31)
+− 0.12
+(1.38)
+
+DV_09
+
+DV_10
+
+DV_11
+
+DV_12
+
+DV_13
+
+DV_14
+
+DV_15
+
+DV_16
+
+0.00
+(1.39)
+0.08
+(1.23)
+0.11
+(1.21)
+0.14
+(1.20)
+− 0.06
+(1.35)
+− 2.74
+(2.40)
+0.17
+(1.17)
+0.04
+(1.36)
+
+0.00
+(1.38)
+− 0.26
+(0.65)
+− 0.28
+(0.64)
+− 0.08
+(0.88)
+− 0.19
+(0.78)
+5.69
+(2.43)
+− 0.26
+(0.64)
+− 0.04
+(0.97)
+
+0.00
+(1.31)
+− 0.69
+(1.08)
+− 0.01
+(1.33)
+0.76
+(1.35)
+0.14
+(1.16)
+0.45
+(1.36)
+0.34
+(1.25)
+− 0.17
+(1.27)
+
+0.00
+(1.30)
+0.29
+(1.05)
+0.35
+(1.25)
+− 1.13
+(1.18)
+− 0.21
+(1.18)
+− 0.48
+(1.50)
+0.53
+(1.14)
+− 0.70
+(1.23)
+
+0.00
+(1.21)
+0.34
+(0.99)
+− 0.54
+(1.24)
+− 0.11
+(1.26)
+0.00
+(1.15)
+− 0.06
+(1.55)
+− 0.21
+(1.12)
+0.31
+(1.30)
+
+0.00
+(1.21)
+− 0.22
+(1.01)
+0.67
+(1.23)
+0.10
+(1.17)
+0.12
+(1.01)
+0.14
+(1.63)
+0.12
+(1.16)
+− 0.77
+(1.30)
+
+0.00
+(1.20)
+− 0.17
+(1.05)
+0.66
+(1.29)
+0.02
+(1.21)
+− 0.11
+(1.20)
+0.14
+(1.42)
+0.04
+(1.16)
+− 0.28
+(1.14)
+
+0.00
+(0.94)
+− 0.41
+(0.55)
+− 0.51
+(0.54)
+0.12
+(0.90)
+− 0.26
+(0.68)
+0.36
+(1.05)
+0.34
+(0.94)
+1.15
+(1.12)
+
+Table B.5
+Observed and expected performance by cluster and discipline in PISA 2022 tests.
+Mathematics
+
+Science
+
+xw (sw )
+Global
+STU_1
+STU_2
+STU_3
+STU_4
+STU_5
+STU_6
+STU_7
+
+477.88 (85.18)
+526.46 (75.91)
+523.01 (77.35)
+444.60 (75.93)
+476.28 (72.24)
+439.44 (83.69)
+458.23 (75.81)
+435.53 (84.05)
+
+xw (sw )
+
+504.49
+501.96
+487.50
+483.41
+468.76
+449.86
+441.15
+
+489.16 (90.97)
+535.82 (81.66)
+530.63 (82.51)
+450.01 (82.83)
+494.45 (79.79)
+444.89 (89.20)
+470.38 (82.86)
+451.09 (92.22)
+
+​
+
+̂
+Y
+
+Reading
+xw (sw )
+
+513.58
+511.25
+497.99
+494.23
+480.78
+463.44
+455.44
+
+480.75 (94.70)
+525.42 (84.07)
+521.94 (85.41)
+431.14 (88.71)
+502.27 (82.48)
+436.50 (94.78)
+463.08 (82.89)
+436.61 (94.99)
+
+​
+
+̂
+Y
+
+̂
+Y
+​
+
+505.86
+503.46
+489.83
+485.96
+472.14
+454.31
+446.10
+
+References
+Abdi, H., & Valentin, D. (2007). Multiple correspondence analysis. Encyclopedia of Measurement and Statistics, 2, 651–657.
+Alvarez-Garcia, M., Ibar-Alonso, R., & Arenas-Parra, M. (2024). A comprehensive framework for explainable cluster analysis. Information Sciences, 663, Article
+120282. https://doi.org/10.1016/j.ins.2024.120282
+Arthur, D., & Vassilvitskii, S. (2007). K-means plus plus : The advantages of careful seeding. In Proceedings of the eighteenth annual ACM-SIAM symposium on discrete
+algorithms (pp. 1027–1035).
+Boeren, E. (2019). Understanding sustainable development goal (sdg) 4 on “quality education” from micro, meso and macro perspectives. International Review of
+Education, 65, 277–294. https://doi.org/10.1007/s11159-019-09772-7
+Boztaş, G. D., Berigel, M., & Altınay, F. (2023). A bibliometric analysis of educational data mining studies in global perspective. Education and Information Technologies,
+1–25doi. https://doi.org/10.1007/s10639-023-12170-0
+Breiman, L. (2001). Random forests. Machine Learning, 45, 5–32. https://doi.org/10.1023/A:1010933404324
+Bu, Y., & Chen, F. (2023). What key contextual factors contribute to students’ reading literacy among top-performing countries and economies? Statistical and
+machine learning analyses. International Journal of Educational Research, 122, Article 102267. https://doi.org/10.1016/j.ijer.2023.102267
+Chawla, N. V., Bowyer, K. W., Hall, L. O., & Kegelmeyer, W. P. (2002). Smote: Synthetic minority over-sampling technique. Journal of Artificial Intelligence Research,
+16, 321–357. https://doi.org/10.1613/jair.953
+Chen, T., & Guestrin, C. (2016). Xgboost: A scalable tree boosting system. In Proceedings of the 22nd ACM SIGKDD international conference on knowledge discovery and
+data mining (pp. 785–794). https://doi.org/10.1145/2939672.2939785
+Chen, J., Zhang, Y., Wei, Y., & Hu, J. (2021). Discrimination of the contextual features of top performers in scientific literacy using a machine learning approach.
+Research in Science Education, 51, 129–158. https://doi.org/10.1007/s11165-019-9835-y
+Coleman, J. S., Campbell, E. Q., Hobson, C. J., McPartland, J., Mood, A. M., Weinfeld, F. D., & York, R. L. (1966). Equality of educational opportunity Washington (pp.
+1–32). DC: US Government Printing Office.
+Cresswell, J., Schwantner, U., & Waters, C. (2015). A review of. International Large-Scale Assessments in Education. https://doi.org/10.1787/9789264248373-en
+De Witte, K., & Kortelainen, M. (2013). What explains the performance of students in a heterogeneous environment? Conditional efficiency estimation with
+continuous and discrete environmental variables. Applied Economics, 45, 2401–2412. https://doi.org/10.1080/00036846.2012.665602
+
+22
+
+Computers & Education 223 (2024) 105166
+
+M. Alvarez-Garcia et al.
+
+Deimel, D., Hoskins, B., & Abs, H. J. (2020). How do schools affect inequalities in political participation: Compensation of social disadvantage or provision of
+differential access? Educational Psychology, 40, 146–166. https://doi.org/10.1080/01443410.2019.1645305
+Drossel, K., Eickelmann, B., & Gerick, J. (2017). Predictors of teachers’ use of ict in school–the relevance of school characteristics, teachers’ attitudes and teacher
+collaboration. Education and Information Technologies, 22, 551–573. https://doi.org/10.1007/s10639-016-9476-y
+Elliott, J., Stankov, L., Lee, J., & Beckmann, J. F. (2019). What did pisa and timss ever do for us?: The potential of large scale datasets for understanding and improving
+educational practice. Comparative Education, 55, 133–155. https://doi.org/10.1080/03050068.2018.1545386
+Esidio, E. C., França, M. T. A., & Frio, G. S. (2023). Differences between genders in the subjective well-being of students participating in pisa 2018. Child Indicators
+Research, 16, 1781–1809. https://doi.org/10.1007/s12187-023-10034-0
+Feng, G., & Fan, M. (2024). Research on learning behavior patterns from the perspective of educational data mining: Evaluation, prediction and visualization. Expert
+Systems with Applications, 237, Article 121555. https://doi.org/10.1016/j.eswa.2023.121555
+Fischman, G. E., Topper, A. M., Silova, I., Goebel, J., & Holloway, J. L. (2019). Examining the influence of international large-scale assessments on national education
+policies. Journal of Education Policy, 34, 470–499. https://doi.org/10.1080/02680939.2018.1460493
+Gamazo, A., & Martínez-Abad, F. (2020). An exploration of factors linked to academic performance in pisa 2018 through data mining techniques. Frontiers in
+Psychology, 11, Article 575167. https://doi.org/10.3389/fpsyg.2020.575167
+Gao, Y., Zhai, X., Bulut, O., Cui, Y., & Sun, X. (2022). Examining humans’ problem-solving styles in technology-rich environments using log file data. Journal of
+Intelligence, 10, 38. https://doi.org/10.3390/jintelligence10030038
+Guleria, P., & Sood, M. (2023). Explainable ai and machine learning: Performance evaluation and explainability of classifiers on educational data mining inspired
+career counseling. Education and Information Technologies, 28, 1081–1116. https://doi.org/10.1007/s10639-022-11221-2
+Gustafsson, J. E., Nilsen, T., & Hansen, K. Y. (2018). School characteristics moderating the relation between student socio-economic status and mathematics
+achievement in grade 8. evidence from 50 countries in timss 2011. Studies In Educational Evaluation, 57, 16–30. https://doi.org/10.1016/j.stueduc.2016.09.004
+Halford, G. S., Baker, R., McCredden, J. E., & Bain, J. D. (2005). How many variables can humans process? Psychological Science, 16, 70–76. https://doi.org/10.1111/
+j.0956-7976.2005.00782
+Hartigan, J. A., & Wong, M. A. (1979). A k-means clustering algorithm. JSTOR: Applied Statistics, 28, 100–108.
+Hernández-Torrano, D., & Courtney, M. G. (2021). Modern international large-scale assessment in education: An integrative review and mapping of the literature.
+Large-Scale Assessments in Education, 9, 17. https://doi.org/10.1186/s40536-021-00109-1
+Kaishev, V. K., Nielsen, J. P., & Thuring, F. (2013). Optimal customer selection for cross-selling of financial services products. Expert Systems with Applications, 40,
+1748–1757. https://doi.org/10.1016/j.eswa.2012.09.026
+Kjærnsli, M., & Lie, S. (2011). Students’ preference for science careers: International comparisons based on pisa 2006. International Journal of Science Education, 33,
+121–144. https://doi.org/10.1080/09500693.2010.518642
+Konstantopoulos, S., & Traynor, A. (2014). Class size effects on reading achievement using pirls data: Evidence from Greece. Teachers College Record, 116, 1–29.
+https://doi.org/10.1177/016146811411600202
+Kruger, J. G. C., de Souza Britto Jr, A., & Barddal, J. P. (2023). An explainable machine learning approach for student dropout prediction. Expert Systems with
+Applications, 233, Article 120933. https://doi.org/10.1016/j.eswa.2023.120933
+Little, R. J. (2024). Missing data analysis. Annual Review of Clinical Psychology, 20, 149–173. https://doi.org/10.1146/annurev-clinpsy-080822-051727
+Livieris, I. E., Karacapilidis, N., Domalis, G., & Tsakalidis, D. (2023). An advanced explainable and interpretable ml-based framework for educational data mining. In
+Methodologies and intelligent systems for technology enhanced learning, workshops - 13th international conference (pp. 87–96). Springer. https://doi.org/10.1007/9783-031-42134-1_9.
+Lorah, J. (2018). Effect size measures for multilevel models: Definition, interpretation, and timss example. Large-scale Assessments in Education, 6, 1–11. https://doi.
+org/10.1186/s40536-018-0061-2
+Lundberg, S. M., Erion, G., Chen, H., DeGrave, A., Prutkin, J. M., Nair, B., Katz, R., Himmelfarb, J., Bansal, N., & Lee, S. I. (2020). From local explanations to global
+understanding with explainable ai for trees. Nature Machine Intelligence, 2, 56–67. https://doi.org/10.1038/s42256-019-0138-9
+Lundberg, S. M., & Lee, S. I. (2017). A unified approach to interpreting model predictions. In I. Guyon, U. V. Luxburg, S. Bengio, H. Wallach, R. Fergus,
+S. Vishwanathan, & R. Garnett (Eds.), Advances in neural information processing systems. Curran Associates, Inc.
+Mairal, J., Bach, F., Ponce, J., & Sapiro, G. (2010). Online learning for matrix factorization and sparse coding. Journal of Machine Learning Research, 11, 19–60.
+Marcílio, W. E., & Eler, D. M. (2020). From explanations to feature selection: Assessing shap values as feature selection mechanism. In 2020 33rd SIBGRAPI conference
+on graphics, patterns and images (SIBGRAPI) (pp. 340–347). https://doi.org/10.1109/SIBGRAPI51738.2020.00053
+Matsuoka, R. (2015). School socioeconomic compositional effect on shadow education participation: Evidence from Japan. British Journal of Sociology of Education, 36,
+270–290. https://doi.org/10.1080/01425692.2013.820125
+Mejía-Rodríguez, A. M., Luyten, H., & Meelissen, M. R. (2021). Gender differences in mathematics self-concept across the world: An exploration of student and parent
+data of timss 2015. International Journal of Science and Mathematics Education, 19, 1229–1250. https://doi.org/10.1007/s10763-020-10100-x
+Mishra, S. (2020). Social networks, social capital, social support and academic success in higher education: A systematic review with a special focus on
+‘underrepresented’ students. Educational Research Review, 29, Article 100307. https://doi.org/10.1016/j.edurev.2019.100307
+Mo, P. K., Chan, V. W., Wang, X., & Lau, J. T. (2020). Gender difference in the association between internet addiction, self-esteem and academic aspirations among
+adolescents: A structural equation modelling. Computers & Education, 155, Article 103921. https://doi.org/10.1016/j.compedu.2020.103921
+Mohadjer, L., & Edwards, B. (2018). Paradata and dashboards in piaac. Quality Assurance in Education, 26, 263–277. https://doi.org/10.1108/QAE-06-2017-0031
+Montt, G. (2011). Cross-national differences in educational achievement inequality. Sociology of Education, 84, 49–68. https://doi.org/10.1177/0038040710392717
+Nogueira, M. J., Sequeira, C., & Sampaio, F. (2022). Gender differences in mental health, academic life satisfaction and psychological vulnerability in a sample of
+college freshmen: A cross-sectional study. Journal of Gender Studies, 31, 895–904. https://doi.org/10.1080/09589236.2021.1979945
+OECD. (2019). PISA 2018 results (Volume II). https://doi.org/10.1787/b5fd1b8f-en. . (Accessed 29 December 2023)
+OECD. (2022). PISA 2022 technical Report. Technical Report. Organisation for Economic Co-operation and Development. https://www.oecd.org/pisa/data/
+pisa2022technicalreport/. (Accessed 29 December 2023).
+Olszewski-Kubilius, P., Grant, B., & Seibert, C. (1994). Social support systems and the disadvantaged gifted: A framework for developing programs and services. Roeper
+Review, 17, 20–25. https://doi.org/10.1080/02783199409553612
+Pedder, D., & Opfer, V. D. (2013). Professional learning orientations: Patterns of dissonance and alignment between teachers’ values and practices. Research Papers in
+Education, 28, 539–570. https://doi.org/10.1080/02671522.2012.706632
+Pedregosa, F., Varoquaux, G., Gramfort, A., Michel, V., Thirion, B., Grisel, O., Blondel, M., Prettenhofer, P., Weiss, R., Dubourg, V., Vanderplas, J., Passos, A.,
+Cournapeau, D., Brucher, M., Perrot, M., & Duchesnay, E. (2011). Scikit-learn: Machine learning in python. Journal of Machine Learning Research, 12, 2825–2830.
+Pradipta, G. A., Wardoyo, R., Musdholifah, A., Sanjaya, I. N. H., & Ismail, M. (2021). Smote for handling imbalanced data problem : A review. In 2021 sixth
+international conference on informatics and computing (ICIC) (pp. 1–8). IEEE. https://doi.org/10.1109/ICIC54025.2021.9632912.
+Qadadeh, W., & Abdallah, S. (2018). Customers segmentation in the insurance company (tic) dataset. Procedia Computer Science, 144, 277–290. https://doi.org/
+10.1016/j.procs.2018.10.529
+Quintano, C., Castellano, R., & Longobardi, S. (2008). Imputation strategies and impact indexes to improve the data accuracy from students’ pisa survey. Scritti di
+Statistica Economica, 15, 71–96.
+Radišić, J., Selleri, P., Carugati, F., & Baucal, A. (2021). Are students in Italy really disinterested in science? A person-centered approach using the pisa 2015 data.
+Science Education, 105, 438–468. https://doi.org/10.1002/sce.21611
+Romero, C., & Ventura, S. (2013). Data mining in education. Wiley Interdisciplinary Reviews: Data Mining and Knowledge Discovery, 3, 12–27. https://doi.org/10.1002/
+widm.1075
+Roski, M., Sebastian, R., Ewerth, R., Hoppe, A., & Nehring, A. (2024). Learning analytics and the universal design for learning (udl): A clustering approach. Computers
+& Education, 214, Article 105028. https://doi.org/10.1016/j.compedu.2024.105028
+
+23
+
+Computers & Education 223 (2024) 105166
+
+M. Alvarez-Garcia et al.
+
+Sandoval-Hernández, A., & Białowolski, P. (2016). Factors and conditions promoting academic resilience: A timss-based analysis of five asian education systems. Asia
+Pacific Education Review, 17, 511–520. https://doi.org/10.1007/s12564-016-9447-4
+Sari, J. N., Nugroho, L. E., Ferdiana, R., & Santosa, P. I. (2016). Review on customer segmentation technique on ecommerce. Advanced Science Letters, 22, 3018–3022.
+https://doi.org/10.1166/asl.2016.7985
+Satopaa, V., Albrecht, J., Irwin, D., & Raghavan, B. (2011). Finding a ”kneedle” in a haystack: Detecting knee points in system behavior. In 2011 31st international
+Conference on distributed computing systems Workshops (pp. 166–171). https://doi.org/10.1109/ICDCSW.2011.20
+Scherer, R., Rohatgi, A., & Hatlevik, O. E. (2017). Students’ profiles of ict use: Identification, determinants, and relations to achievement in a computer and
+information literacy test. Computers in Human Behavior, 70, 486–499. https://doi.org/10.1016/j.chb.2017.01.034
+Schleicher, A. (2022). Pisa 2022: Insights and interpretations. URL: https://www.oecd.org/pisa. (Accessed 29 December 2023).
+Shapley, L. S. (1953). 17. A value for n-Person Games (pp. 307–318). Princeton: Princeton University Press. https://doi.org/10.1515/9781400881970-018
+She, H. C., Lin, H.s., & Huang, L. Y. (2019). Reflections on and implications of the programme for international student assessment 2015 (pisa 2015) performance of
+students in taiwan: The role of epistemic beliefs about science in scientific literacy. Journal of Research in Science Teaching, 56, 1309–1340. https://doi.org/
+10.1002/tea.21553
+Steiner-Khamsi, G., Karseth, B., & Baek, C. (2020). From science to politics: Commissioned reports and their political translation into white papers. Journal of
+Education Policy, 35, 119–144. https://doi.org/10.1080/02680939.2019.1656289
+Sun, L., Bradley, K. D., & Akers, K. (2012). A multilevel modelling approach to investigating factors impacting science achievement for secondary school students: Pisa
+Hong Kong sample. International Journal of Science Education, 34, 2107–2125. https://doi.org/10.1080/09500693.2012.708063
+Teig, N. (2023). Uncovering student strategies for solving scientific inquiry tasks: Insights from student process data in pisa. Research in Science Education, 1–20.
+https://doi.org/10.1007/s11165-023-10134-5
+United Nations. (2015). Transforming our world: The 2030 agenda for sustainable development. A/RES/70/1 (21 October 2015) . (Accessed 29 October 2023).
+Xia, S., Xiong, Z., Luo, Y., Wei, Xu, & Zhang, G. (2015). Effectiveness of the euclidean distance in high dimensional spaces. Optik, 126, 5614–5619. https://doi.org/
+10.1016/j.ijleo.2015.09.093
+Zheng, J.q., Cheung, K.c., & Sit, P.s. (2023). Identifying key features of resilient students in digital reading: Insights from a machine learning approach. Education and
+Information Technologies, 1–25. https://doi.org/10.1007/s10639-023-11908-0
+
+24
+
+
