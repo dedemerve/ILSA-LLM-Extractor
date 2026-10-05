@@ -40,7 +40,13 @@ logging.basicConfig(level=logging.INFO, format="%(levelname)s  %(message)s")
 log = logging.getLogger(__name__)
 
 PROJECT_ROOT = pathlib.Path(__file__).resolve().parents[1]
-ILSA_BASE    = pathlib.Path("/Users/mrved/Desktop/ILSA Datasets")
+try:
+    from scripts.ilsa_common import microdata_root
+except ImportError:
+    import sys
+    sys.path.insert(0, str(PROJECT_ROOT))
+    from scripts.ilsa_common import microdata_root
+ILSA_BASE    = microdata_root()
 OUT_DIR      = PROJECT_ROOT / "outputs" / "stage5"
 OUT_CSV      = OUT_DIR / "covariate_estimates.csv"
 OUT_DIR.mkdir(parents=True, exist_ok=True)
@@ -85,6 +91,11 @@ SPECS: list[CovSpec] = [
     CovSpec("PISA", 2015,
         variables=["ESCS", "HOMEPOS", "BELONG", "ICTAVHOM", "ICTAVSCH"],
         filepath=str(PISA_BASE / "PISA 2015 Data/PUF_SPSS_COMBINED_CMB_STU_QQQ/CY6_MS_CMB_STU_QQQ.sav"),
+        glob_dir=None, country_col="CNT", weight_col="W_FSTUWT",
+    ),
+    CovSpec("PISA", 2018,
+        variables=["ESCS", "HOMEPOS", "BELONG", "ICTAVHOM", "ICTAVSCH"],
+        filepath=str(PISA_BASE / "PISA 2018 Data/CY07_MSU_STU_QQQ.sav"),
         glob_dir=None, country_col="CNT", weight_col="W_FSTUWT",
     ),
     CovSpec("PISA", 2022,

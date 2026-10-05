@@ -46,7 +46,12 @@ sys.path.insert(0, str(PROJECT_ROOT / "scripts"))
 import run_loco_forecasting as loco
 
 STAGE5_DIR = PROJECT_ROOT / "outputs" / "stage5"
-ICCS_BASE  = Path("/Users/mrved/Desktop/ILSA Datasets/ICCS Datasets")
+try:
+    from scripts.ilsa_common import microdata_root, load_forecast_weights
+except ImportError:
+    sys.path.insert(0, str(PROJECT_ROOT))
+    from scripts.ilsa_common import microdata_root, load_forecast_weights
+ICCS_BASE  = microdata_root() / "ICCS Datasets"
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s  %(message)s")
 log = logging.getLogger(__name__)
@@ -385,11 +390,14 @@ def run_iccs_loco(panel: pd.DataFrame, weights: dict) -> pd.DataFrame:
 
 
 # ---------------------------------------------------------------------------
-# 4. Forward predictions (2022→2027)
+# 4. Forward predictions (2022→2029; IEA announced ICCS 2029)
 # ---------------------------------------------------------------------------
 
+ICCS_NEXT_CYCLE = 2029
+
+
 def run_iccs_forward(panel: pd.DataFrame, weights: dict) -> pd.DataFrame:
-    """Train on all available pairs, predict next cycle (2027)."""
+    """Train on all available pairs, predict next cycle (ICCS 2029)."""
     target_col = "ICCS_civic_knowledge"
     all_feat   = [c for c in panel.columns
                   if c not in ("country_iso3", "cycle", "program", "domain")]
@@ -431,7 +439,7 @@ def run_iccs_forward(panel: pd.DataFrame, weights: dict) -> pd.DataFrame:
 
     # Test = last cycle countries → predict next cycle
     last_df   = panel[panel["cycle"] == last_cycle].set_index("country_iso3")
-    dummy_df  = last_df.copy()  # predict "2027" using last cycle values as lag
+    dummy_df  = last_df.copy()  # next-cycle covariates unavailable; reuse last lag
     countries = last_df.index.tolist()
     score_cols = [f for f in all_feat if not f.startswith("lag_") and f in last_df.columns]
     cov_cols   = [f for f in all_feat if f.startswith("lag_") and f in dummy_df.columns]
@@ -468,7 +476,7 @@ def run_iccs_forward(panel: pd.DataFrame, weights: dict) -> pd.DataFrame:
             "program": "ICCS", "domain": "civic_knowledge",
             "country_iso3": cnt, "last_cycle": last_cycle,
             "last_score": round(float(last_score), 4) if not np.isnan(last_score) else np.nan,
-            "predicted_cycle": 2027,
+            "predicted_cycle": ICCS_NEXT_CYCLE,
             "y_M0": round(float(y_m0[j]), 4),
             "y_M1": round(float(y_m1[j]), 4),
         })
@@ -484,10 +492,8 @@ def run_iccs_forward(panel: pd.DataFrame, weights: dict) -> pd.DataFrame:
 # ---------------------------------------------------------------------------
 
 def main():
-    # Load weights
-    wdf = pd.read_csv(STAGE5_DIR / "predictor_weights_v2.csv")
-    key_col = "feature_name" if "feature_name" in wdf.columns else "variable"
-    weights: dict[str, float] = dict(zip(wdf[key_col], wdf["w_norm"]))
+    # Unified W_j (literature_priority W_j_forecast + aliases)
+    weights = load_forecast_weights()
 
     log.info("=== Step 1: Extract ICCS estimates ===")
     est = extract_iccs_estimates()
@@ -500,10 +506,10 @@ def main():
     log.info("=== Step 3: LOCO forecasting ===")
     loco_res = run_iccs_loco(panel, weights)
 
-    log.info("=== Step 4: Forward predictions (→2027) ===")
+    log.info("=== Step 4: Forward predictions (→%d) ===", ICCS_NEXT_CYCLE)
     fwd = run_iccs_forward(panel, weights)
     if not fwd.empty:
-        print(f"\nForward predictions: {len(fwd)} countries → 2027")
+        print(f"\nForward predictions: {len(fwd)} countries → {ICCS_NEXT_CYCLE}")
         print(fwd[["country_iso3", "last_score", "y_M0", "y_M1"]].head(10).to_string(index=False))
 
 

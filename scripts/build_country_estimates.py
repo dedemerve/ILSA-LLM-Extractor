@@ -35,7 +35,13 @@ OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 logging.basicConfig(level=logging.INFO, format="%(levelname)s  %(message)s")
 log = logging.getLogger(__name__)
 
-ILSA_BASE = Path("/Users/mrved/Desktop/ILSA Datasets")
+try:
+    from scripts.ilsa_common import microdata_root
+except ImportError:
+    sys.path.insert(0, str(PROJECT_ROOT))
+    from scripts.ilsa_common import microdata_root
+
+ILSA_BASE = microdata_root()
 
 # ---------------------------------------------------------------------------
 # Sabitler
@@ -95,13 +101,22 @@ CATALOG: list[CycleSpec] = [
         [f"PV{i}SCIE" for i in range(1, 11)],
         "W_FSTURWT", (1, 80), "BRR_FAY"),
 
-    # PISA 2018 ana student dosyası (CY07_MSU_STU_QQQ) indirmede eksik kalmış;
-    # dosya temin edildiğinde buraya tam yolu ekle ve satırın başındaki # kaldır.
-    # CycleSpec("PISA", 2018, "mathematics",
-    #     str(ILSA_BASE / "PISA Datasets/PISA 2018 Data/CY07_MSU_STU_QQQ.sav"),
-    #     "CNT", "W_FSTUWT",
-    #     [f"PV{i}MATH" for i in range(1, 11)],
-    #     "W_FSTURWT", (1, 80), "BRR_FAY"),
+    # PISA 2018 international student QQQ (OECD SPSS_STU_QQQ.zip → CY07_MSU_STU_QQQ.sav)
+    CycleSpec("PISA", 2018, "mathematics",
+        str(ILSA_BASE / "PISA Datasets/PISA 2018 Data/CY07_MSU_STU_QQQ.sav"),
+        "CNT", "W_FSTUWT",
+        [f"PV{i}MATH" for i in range(1, 11)],
+        "W_FSTURWT", (1, 80), "BRR_FAY"),
+    CycleSpec("PISA", 2018, "reading",
+        str(ILSA_BASE / "PISA Datasets/PISA 2018 Data/CY07_MSU_STU_QQQ.sav"),
+        "CNT", "W_FSTUWT",
+        [f"PV{i}READ" for i in range(1, 11)],
+        "W_FSTURWT", (1, 80), "BRR_FAY"),
+    CycleSpec("PISA", 2018, "science",
+        str(ILSA_BASE / "PISA Datasets/PISA 2018 Data/CY07_MSU_STU_QQQ.sav"),
+        "CNT", "W_FSTUWT",
+        [f"PV{i}SCIE" for i in range(1, 11)],
+        "W_FSTURWT", (1, 80), "BRR_FAY"),
 
     CycleSpec("PISA", 2022, "reading",
         str(ILSA_BASE / "PISA Datasets/PISA 2022 Data"
@@ -471,15 +486,27 @@ def load_sav(path: str, needed_cols: list[str]) -> pd.DataFrame:
 
 
 def get_rep_cols(df: pd.DataFrame, prefix: str, rep_range: tuple | None) -> list[str]:
+    """Resolve replicate-weight columns.
+
+    PISA OECD files use unpadded names (W_FSTURWT1..80); some exports use
+    zero-padded W_FSTURWT001. Prefer a format that yields the full expected set.
+    """
+    colnames = set(df.columns) if hasattr(df, "columns") else set(df)
     if rep_range:
         lo, hi = rep_range
-        cols = [f"{prefix}{i:03d}" for i in range(lo, hi + 1)]
-        # Sadece gerçekten var olanları döndür
-        present = [c for c in cols if c in df.columns]
-        if present:
-            return present
-    # Prefix ile başlayan tüm sütunlar
-    return sorted(c for c in df.columns if c.startswith(prefix))
+        expected = hi - lo + 1
+        best: list[str] = []
+        # Unpadded first (OECD PISA 2015+), then padded variants
+        for fmt in ("{prefix}{i}", "{prefix}{i:02d}", "{prefix}{i:03d}"):
+            cols = [fmt.format(prefix=prefix, i=i) for i in range(lo, hi + 1)]
+            present = [c for c in cols if c in colnames]
+            if len(present) == expected:
+                return present
+            if len(present) > len(best):
+                best = present
+        if best:
+            return best
+    return sorted(c for c in colnames if c.startswith(prefix))
 
 # ---------------------------------------------------------------------------
 # Tek cycle × tek ülke tahmini
@@ -629,22 +656,34 @@ def process_cycle(spec: CycleSpec) -> list[dict]:
 
     log.info("→ %s %d  (%s)", spec.program, spec.cycle, path.name)
 
-    all_vars = [spec.country_var, spec.weight_var] + list(spec.pv_vars)
-    # Replicate ön ek tahminini ekle — yoksa sonra filtreleyeceğiz
-    df = load_sav(str(path), None)   # tüm sütunlar, sonra filtre
-    rep_cols = get_rep_cols(df, spec.rep_prefix, spec.rep_range)
+    # Metadata-first: only load country / weight / PV / replicate columns
+    # (critical for multi-GB PISA student files).
+    try:
+        _, meta = pyreadstat.read_sav(str(path), metadataonly=True)
+        colset = set(meta.column_names)
+    except Exception as exc:
+        log.error("Meta okunamadı %s: %s", path.name, exc)
+        return []
+
+    # Probe replicate naming without loading the full frame
+    # (OECD PISA: W_FSTURWT1..80 unpadded; some exports zero-pad to 001)
+    rep_cols = get_rep_cols(colset, spec.rep_prefix, spec.rep_range)
 
     if not rep_cols:
         log.error("Replicate weight bulunamadı prefix=%s", spec.rep_prefix)
         return []
 
-    log.info("   Replicate: %d  |  PV: %d", len(rep_cols), len(spec.pv_vars))
+    needed = [spec.country_var, spec.weight_var] + list(spec.pv_vars) + rep_cols
+    needed = [c for c in needed if c in colset]
+    missing_pv = [p for p in spec.pv_vars if p not in colset]
+    if missing_pv:
+        log.error("PV değişkenleri bulunamadı: %s", missing_pv)
+        return []
 
-    # Sadece ihtiyaç duyulan sütunları tut
-    keep = [spec.country_var, spec.weight_var] + list(spec.pv_vars) + rep_cols
-    df   = df[[c for c in keep if c in df.columns]].copy()
+    df = load_sav(str(path), needed)
+    log.info("   Replicate: %d  |  PV: %d  |  rows: %d",
+             len(rep_cols), len(spec.pv_vars), len(df))
 
-    # Ülke sütununu string yap
     df[spec.country_var] = df[spec.country_var].astype(str).str.strip()
     countries = df[spec.country_var].unique()
 

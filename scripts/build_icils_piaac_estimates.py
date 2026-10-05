@@ -24,7 +24,14 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 STAGE5_DIR   = PROJECT_ROOT / "outputs" / "stage5"
 STAGE5_DIR.mkdir(parents=True, exist_ok=True)
 
-ILSA_BASE = Path("/Users/mrved/Desktop/ILSA Datasets")
+try:
+    from scripts.ilsa_common import microdata_root
+except ImportError:
+    import sys
+    sys.path.insert(0, str(PROJECT_ROOT))
+    from scripts.ilsa_common import microdata_root
+
+ILSA_BASE = microdata_root()
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s  %(message)s")
 log = logging.getLogger(__name__)

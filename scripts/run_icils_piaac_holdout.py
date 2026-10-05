@@ -143,23 +143,59 @@ def run_piaac_holdout(weights: dict) -> list[dict]:
 
         lit_w = np.array([_piaac_feat_weight(f) for f in feature_cols])
 
-        preds_m0, alpha_m0 = fit_ridge_holdout(X, y, X, lit_weights=None)
-        preds_m1, alpha_m1 = fit_ridge_holdout(X, y, X, lit_weights=lit_w)
+        # Leave-one-country-out on the single 2012→2017 transition (best available OOS)
+        countries = df["country_iso3"].tolist()
+        y_m0_loo = np.zeros(n)
+        y_m1_loo = np.zeros(n)
+        for i in range(n):
+            mask = np.ones(n, dtype=bool)
+            mask[i] = False
+            if mask.sum() < 3:
+                y_m0_loo[i] = y[i]
+                y_m1_loo[i] = y[i]
+                continue
+            preds_m0, _ = fit_ridge_holdout(
+                X[mask].copy(), y[mask], X[i : i + 1].copy(), lit_weights=None
+            )
+            preds_m1, _ = fit_ridge_holdout(
+                X[mask].copy(), y[mask], X[i : i + 1].copy(), lit_weights=lit_w
+            )
+            y_m0_loo[i] = preds_m0[0]
+            y_m1_loo[i] = preds_m1[0]
 
-        # Note: train=test here because only 1 transition → reported as in-sample diagnostic
-        mae_m0 = float(np.mean(np.abs(preds_m0 - y)))
-        mae_m1 = float(np.mean(np.abs(preds_m1 - y)))
+        mae_m0 = float(np.mean(np.abs(y_m0_loo - y)))
+        mae_m1 = float(np.mean(np.abs(y_m1_loo - y)))
 
-        log.info("  PIAAC %s: M0_MAE=%.4f M1_MAE=%.4f (in-sample, n=%d)", domain, mae_m0, mae_m1, n)
+        log.info(
+            "  PIAAC %s: LOOCV M0_MAE=%.4f M1_MAE=%.4f (n=%d countries, 2012→2017)",
+            domain, mae_m0, mae_m1, n,
+        )
+
+        pred_rows = []
+        for i, cnt in enumerate(countries):
+            pred_rows.append({
+                "program": "PIAAC",
+                "domain": domain,
+                "test_cycle": 2017,
+                "country_iso3": cnt,
+                "y_true": round(float(y[i]), 4),
+                "y_M0": round(float(y_m0_loo[i]), 4),
+                "y_M1": round(float(y_m1_loo[i]), 4),
+                "validation_design": "single_transition_LOOCV",
+            })
+        pred_df = pd.DataFrame(pred_rows)
+        out_pred = STAGE5_DIR / f"piaac_holdout_predictions_{domain}.csv"
+        pred_df.to_csv(out_pred, index=False)
+        log.info("Saved %s", out_pred.name)
 
         rows.append({
             "program": "PIAAC", "domain": domain,
             "train_cycles": "2012", "test_cycle": 2017,
             "n_overlap": n, "n_features": len(feature_cols),
-            "design": "single_transition_in_sample",
+            "design": "single_transition_LOOCV",
             "MAE_M0": round(mae_m0, 4), "MAE_M1": round(mae_m1, 4),
             "delta_MAE": round(mae_m1 - mae_m0, 4),
-            "note": "in-sample fit; not generalizable; diagnostic only",
+            "note": "LOOCV on 2012→2017 transition; only 2 PIAAC cycles — no forward forecast",
         })
     return rows
 
@@ -256,6 +292,25 @@ def run_icils_holdout(weights: dict) -> list[dict]:
     mae_m1 = float(np.mean(np.abs(preds_m1 - y_te)))
     log.info("  M0_MAE=%.4f  M1_MAE=%.4f  Δ=%.4f", mae_m0, mae_m1, mae_m1 - mae_m0)
 
+    # Per-country hold-out predictions (for per_country_accuracy rebuild)
+    test_countries = list(common_te[mask_te])
+    pred_rows = []
+    for j, cnt in enumerate(test_countries):
+        pred_rows.append({
+            "program": "ICILS",
+            "domain": "computer_literacy",
+            "test_cycle": test_cycle,
+            "country_iso3": cnt,
+            "y_true": round(float(y_te[j]), 4),
+            "y_M0": round(float(preds_m0[j]), 4),
+            "y_M1": round(float(preds_m1[j]), 4),
+            "validation_design": "pooled_train_holdout_test",
+        })
+    pred_df = pd.DataFrame(pred_rows)
+    pred_path = STAGE5_DIR / "icils_holdout_predictions.csv"
+    pred_df.to_csv(pred_path, index=False)
+    log.info("Saved %s (%d countries)", pred_path.name, len(pred_df))
+
     return [{
         "program": "ICILS", "domain": "computer_literacy",
         "train_cycles": "2013+2018 pooled", "test_cycle": 2023,
@@ -270,19 +325,21 @@ def run_icils_holdout(weights: dict) -> list[dict]:
 def icils_feat_weight(f: str, weights: dict) -> float:
     _ICILS_MAP = {
         "lag_SES_COMPOSITE":          "SES_COMPOSITE",
-        "lag_PARENTAL_EDUCATION":     "PARENTAL_EDU",
+        "lag_PARENTAL_EDUCATION":     "PARENTAL_EDUCATION",
         "lag_HOME_LITERACY_ACTIVITIES": "HOME_LITERACY_ACTIVITIES",
     }
     canonical = _ICILS_MAP.get(f)
     if canonical:
-        return weights.get(canonical, 1.0)
+        return weights.get(canonical, weights.get("PARENTAL_EDU", 1.0))
     return 1.0
 
 
 def main():
-    wdf = pd.read_csv(STAGE5_DIR / "predictor_weights_v2.csv")
-    key_col  = "feature_name" if "feature_name" in wdf.columns else "variable"
-    weights  = dict(zip(wdf[key_col], wdf["w_norm"]))
+    try:
+        from scripts.ilsa_common import load_forecast_weights
+    except ImportError:
+        from ilsa_common import load_forecast_weights
+    weights = load_forecast_weights()
 
     rows = []
     rows.extend(run_icils_holdout(weights))

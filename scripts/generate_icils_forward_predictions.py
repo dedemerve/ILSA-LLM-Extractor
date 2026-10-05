@@ -11,7 +11,7 @@ Design rationale:
   (2013→2018 and 2018→2023) to maximise training signal, then predict 2028
   from 2023 scores.
 - M0: Ridge, no literature weights.
-- M1: Ridge, √W_j feature scaling (W_j from construct_frequency.csv).
+- M1: Ridge, √W_j feature scaling (unified W_j_forecast via ilsa_common).
 """
 from __future__ import annotations
 
@@ -30,6 +30,13 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 STAGE5 = PROJECT_ROOT / "outputs" / "stage5"
 STAGE4 = PROJECT_ROOT / "outputs" / "stage4"
 
+try:
+    from scripts.ilsa_common import load_forecast_weights
+except ImportError:
+    import sys
+    sys.path.insert(0, str(PROJECT_ROOT))
+    from scripts.ilsa_common import load_forecast_weights
+
 OUTCOME_COL = "ICILS_computer_literacy"
 PREDICTED_CYCLE = 2028
 LAST_CYCLE = 2023
@@ -45,17 +52,12 @@ FEATURE_TO_CONSTRUCT = {
 
 def load_wj_map() -> dict[str, float]:
     """Return {feature_col: sqrt(W_j)} for each ICILS feature."""
-    wj_path = STAGE5 / "construct_frequency.csv"
-    defaults = {k: 1.0 for k in FEATURE_TO_CONSTRUCT}
-    if not wj_path.exists():
-        return defaults
-    wj = pd.read_csv(wj_path)
-    col = "W_j_forecast" if "W_j_forecast" in wj.columns else "w_F_raw"
-    lookup = wj.set_index("canonical_construct")[col].to_dict()
+    weights = load_forecast_weights()
     result = {}
     for feat, construct in FEATURE_TO_CONSTRUCT.items():
-        w = lookup.get(construct, 1.0)
-        # normalise to [0, 1] by dividing by max observed weight
+        w = weights.get(construct, weights.get(feat, 1.0))
+        if w <= 0:
+            w = 1.0
         result[feat] = float(w) ** 0.5
     return result
 

@@ -45,51 +45,22 @@ OUT_DIR.mkdir(parents=True, exist_ok=True)
 
 # Tüm JSON kaynak dizinleri
 JSON_SOURCES = [
-    OUTPUTS_DIR / "ilsa_survey_articles" / "json",  # survey makaleleri (132)
-    OUTPUTS_DIR / "Scopus",                          # Scopus (423)
-    OUTPUTS_DIR / "Web of Science",                  # WoS (302)
+    OUTPUTS_DIR / "ilsa_survey_articles" / "json",
+    OUTPUTS_DIR / "Scopus",
+    OUTPUTS_DIR / "Web of Science",
+    OUTPUTS_DIR / "OECD",
+    OUTPUTS_DIR / "IEA",
 ]
+
+try:
+    from scripts.canonical_predictor_map import canonical_map
+except ImportError:
+    import sys
+    sys.path.insert(0, str(PROJECT_ROOT))
+    from scripts.canonical_predictor_map import canonical_map
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s  %(message)s")
 log = logging.getLogger(__name__)
-
-# ---------------------------------------------------------------------------
-# Canonical predictor taxonomy — ILSA forecasting'e uygun değişkenler
-# ---------------------------------------------------------------------------
-CANONICAL_PREDICTORS = {
-    # SES ailesi
-    "SES_COMPOSITE":      ["escs", "ses", "socioeconomic", "socio-economic"],
-    "HOME_RESOURCES":     ["homepos", "home resources", "hedres", "books at home", "cultural possessions"],
-    "PARENTAL_EDUCATION": ["parental education", "misced", "fisced", "mother education", "father education"],
-    # Motivasyon / tutum
-    "BELONGING":          ["belonging", "school belonging", "sense of belonging"],
-    "MOTIVATION":         ["motivation", "intrinsic motivation", "student motivation"],
-    "SELF_EFFICACY":      ["self-efficacy", "self efficacy", "academic self"],
-    "ANXIETY":            ["anxiety", "test anxiety", "math anxiety"],
-    # Okul / öğretmen
-    "TEACHER_QUALITY":    ["teacher quality", "teacher effectiveness", "instructional quality"],
-    "SCHOOL_CLIMATE":     ["school climate", "disciplinary climate", "school environment"],
-    "SCHOOL_RESOURCES":   ["school resources", "infrastructure", "facilities"],
-    # Teknoloji
-    "ICT_ACCESS":         ["ict", "computer", "internet access", "digital"],
-    # Cinsiyet
-    "GENDER":             ["gender", "sex", "male", "female", "girls", "boys"],
-    # Öğretim
-    "INSTRUCTIONAL_TIME": ["instructional time", "teaching time", "homework"],
-    # Çapraz-program/geçmiş başarı
-    "PRIOR_ACHIEVEMENT":  ["prior achievement", "previous score", "lag", "past performance"],
-    # Ülke düzeyi
-    "GDP_EXPENDITURE":    ["gdp", "expenditure", "education spending", "economic"],
-}
-
-def canonical_map(predictor_str: str) -> str:
-    """Serbest metin predictor → canonical etiket"""
-    s = predictor_str.lower()
-    for canon, kws in CANONICAL_PREDICTORS.items():
-        if any(kw in s for kw in kws):
-            return canon
-    return "OTHER"
-
 
 # ---------------------------------------------------------------------------
 # LLM çağrısı
