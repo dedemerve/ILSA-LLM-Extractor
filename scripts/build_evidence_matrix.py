@@ -31,8 +31,22 @@ logging.basicConfig(level=logging.INFO, format="%(levelname)s  %(message)s")
 log = logging.getLogger(__name__)
 
 PROJECT_ROOT = pathlib.Path(__file__).resolve().parents[1]
-JSON_DIR     = PROJECT_ROOT / "outputs" / "ilsa_survey_articles" / "json"
 OUT_DIR      = PROJECT_ROOT / "outputs" / "stage5"
+
+JSON_ROOTS = [
+    PROJECT_ROOT / "outputs" / "OECD",
+    PROJECT_ROOT / "outputs" / "IEA",
+    PROJECT_ROOT / "outputs" / "Scopus",
+    PROJECT_ROOT / "outputs" / "Web of Science",
+    PROJECT_ROOT / "outputs" / "ilsa_survey_articles" / "json",
+]
+
+try:
+    from scripts.canonical_predictor_map import canonical_map as _canonical_map
+except ImportError:
+    import sys
+    sys.path.insert(0, str(PROJECT_ROOT))
+    from scripts.canonical_predictor_map import canonical_map as _canonical_map
 
 # ── Canonical construct → ILSA variable crosswalk ────────────────────────────
 # Serbest metin predictor'ları → canonical construct eşleme
@@ -180,12 +194,15 @@ def _normalize(text: str) -> str:
     return text.lower().strip() if text else ""
 
 
-def _match_construct(predictor_text: str) -> str:
-    pt = _normalize(predictor_text)
-    for kw, construct in PREDICTOR_TO_CONSTRUCT.items():
-        if kw in pt:
-            return construct
-    return "UNMATCHED"
+def _match_construct(predictor_text: str, variable_code: str = "", category: str = "") -> str:
+    canon = _canonical_map(predictor_text, variable_code=variable_code or None, category=category or None)
+    if canon == "OTHER":
+        pt = _normalize(predictor_text)
+        for kw, construct in PREDICTOR_TO_CONSTRUCT.items():
+            if kw in pt:
+                return construct
+        return "UNMATCHED"
+    return canon
 
 
 def _detect_programs(text: str) -> list[str]:
@@ -270,19 +287,19 @@ def process_article(json_path: pathlib.Path) -> list[dict]:
     data = d.get("data", {})
 
     study_id  = meta.get("file_name", json_path.stem)
-    title     = meta.get("title", "")
+    title     = str(meta.get("title") or "")
     year      = meta.get("year")
     doi       = meta.get("doi", "")
     venue     = meta.get("venue", "")
 
     # Program ve cycle tespiti (title + main_findings birleşimi)
-    full_text_for_detection = title
+    full_text_for_detection = str(title or "")
     main_findings = data.get("main_findings", [])
     if isinstance(main_findings, list):
         for mf in main_findings:
             if isinstance(mf, dict):
-                full_text_for_detection += " " + mf.get("dataset_used", "")
-                full_text_for_detection += " " + mf.get("standardized_conclusion", "")
+                full_text_for_detection += " " + str(mf.get("dataset_used") or "")
+                full_text_for_detection += " " + str(mf.get("standardized_conclusion") or "")
 
     programs = _detect_programs(full_text_for_detection)
     cycles   = _extract_cycles(full_text_for_detection)
@@ -342,8 +359,9 @@ def process_article(json_path: pathlib.Path) -> list[dict]:
             if not isinstance(conf, dict):
                 continue
             vname    = conf.get("variable_name", conf.get("variable_code", ""))
+            vcode    = conf.get("variable_code", "")
             category = conf.get("category", "")
-            construct = _match_construct(vname)
+            construct = _match_construct(vname, variable_code=vcode, category=category)
             # Sadece zaten ana satır olarak eklenmemişleri ekle
             if construct != "UNMATCHED":
                 rows.append({
@@ -370,23 +388,34 @@ def process_article(json_path: pathlib.Path) -> list[dict]:
     return rows
 
 
-def main():
-    json_files = sorted(JSON_DIR.glob("*.json"))
-    # "(1).json" versiyonları tercih et (genişletilmiş extraction)
-    # Duplicate basename'leri filtrele: "(1)" varsa diğerini atla
-    seen_base: dict[str, pathlib.Path] = {}
-    for f in json_files:
-        base = re.sub(r"\s*\(1\)\.json$", "", f.name)
-        base = re.sub(r"\.json$", "", base)
-        if base not in seen_base:
-            seen_base[base] = f
+def _collect_corpus_json() -> list[pathlib.Path]:
+    seen_keys: set[str] = set()
+    selected: list[pathlib.Path] = []
+    for root in JSON_ROOTS:
+        if not root.exists():
+            continue
+        if root.name == "json":
+            candidates = sorted(root.glob("*.json"))
         else:
-            # (1) versiyonu tercih et
-            if "(1)" in f.name:
-                seen_base[base] = f
+            candidates = sorted(root.rglob("json/*.json"))
+        for fpath in candidates:
+            if "(1)" in fpath.name:
+                continue
+            try:
+                meta = json.load(open(fpath, encoding="utf-8")).get("metadata", {})
+                key = (meta.get("doi") or meta.get("title") or fpath.stem)[:120]
+            except Exception:
+                key = fpath.stem
+            if key in seen_keys:
+                continue
+            seen_keys.add(key)
+            selected.append(fpath)
+    return selected
 
-    selected = sorted(seen_base.values())
-    log.info("%d benzersiz article JSON'u bulundu", len(selected))
+
+def main():
+    selected = _collect_corpus_json()
+    log.info("%d benzersiz corpus JSON bulundu (OECD+IEA+Scopus+WoS+survey)", len(selected))
 
     all_rows = []
     for fpath in selected:

@@ -79,6 +79,14 @@ def main() -> None:
             "scripts/run_icils_piaac_holdout.py to generate them"
         )
 
+    for domain in ("literacy", "numeracy"):
+        ppath = STAGE5 / f"piaac_holdout_predictions_{domain}.csv"
+        if ppath.exists() and ppath.stat().st_size > 1:
+            piaac = pd.read_csv(ppath)
+            piaac = piaac.dropna(subset=["y_M0", "y_M1", "y_true"])
+            parts.append(_agg_country(piaac, "y_true", "y_M0", "y_M1"))
+            log.info("PIAAC %s countries: %d", domain, len(parts[-1]))
+
     if not parts:
         raise SystemExit("No prediction sources found under outputs/stage5/")
 
