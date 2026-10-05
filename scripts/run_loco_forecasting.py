@@ -49,10 +49,10 @@ except ImportError:
 PROJECT_ROOT  = Path(__file__).resolve().parents[1]
 STAGE4_DIR    = PROJECT_ROOT / "outputs" / "stage4"
 STAGE5_DIR    = PROJECT_ROOT / "outputs" / "stage5"
-# enriched_panel varsa onu kullan, yoksa eski country_estimates'e düş
+# Her zaman country_estimates.csv kullan (tüm 7 program + legacy PISA cycle'ları dahil)
 _ENRICHED     = STAGE5_DIR / "enriched_panel.csv"
 _ESTIMATES    = STAGE4_DIR / "country_estimates.csv"
-ESTIMATES_CSV = _ENRICHED if _ENRICHED.exists() else _ESTIMATES
+ESTIMATES_CSV = _ESTIMATES
 # v2 ağırlıklar varsa onu kullan, yoksa v1'e düş
 _WEIGHTS_V2   = STAGE5_DIR / "predictor_weights_v2.csv"
 _WEIGHTS_V1   = STAGE4_DIR / "predictor_weights.csv"
