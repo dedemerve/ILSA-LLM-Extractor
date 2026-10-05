@@ -38,6 +38,14 @@ bash scripts/run_stage5_corpus_pipeline.sh
 
 PIAAC forward exclusion is explicit in `outputs/stage5/piaac_forward_status.csv` (requires Cycle 3 microdata).
 
+**Chaos / survey rationale:** ILSA scores emerge from many student–school–system
+parameters; literature + survey constructs are fused into `W_j` and lag covariates
+intentionally — see [`docs/ilsa_chaos_survey_rationale.md`](ilsa_chaos_survey_rationale.md).
+
+**PISA forecast vs actual:**
+- PISA **2025**: full M0/M1/M2 vs actual → `outputs/stage5/pisa_2025_forecast_vs_actual.csv`
+- PISA **2022**: actual exists; Ridge unavailable (thin history) → persistence-only file
+
 ---
 
 ## Architecture (final)
