@@ -217,7 +217,7 @@ def read_cycle(spec: dict) -> pd.DataFrame:
         colspecs=colspecs,
         names=names,
         encoding=spec["encoding"],
-        na_values=["", " ", "9", "99", "999", "9999", "99999", "999999"],
+        na_values=["", " ", "9", "99", "999", "9997", "9998", "9999", "99999", "999999"],
         dtype=str,
     )
     log.info("  Okunan: %d satır", len(df))
