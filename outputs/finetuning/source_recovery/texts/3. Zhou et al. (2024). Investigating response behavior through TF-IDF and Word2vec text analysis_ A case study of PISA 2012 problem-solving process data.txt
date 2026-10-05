@@ -1,0 +1,1323 @@
+                                                                   Heliyon 10 (2024) e35945
+
+
+                                                          Contents lists available at ScienceDirect
+
+
+                                                                           Heliyon
+                                                       journal homepage: www.cell.com/heliyon
+
+
+Research article
+
+Investigating response behavior through TF-IDF and Word2vec
+text analysis: A case study of PISA 2012 problem-solving
+process data
+Jing Zhou , Zhanliang Ye , Sheng Zhang , Zhao Geng , Ning Han , Tao Yang *
+Collaborative Innovation Center of Assessment Towards Basic Education Quality, Beijing Normal University, No. 19, XinJieKouWai St., HaiDian
+District, Beijing, 100875, PR China Beijing, China
+
+
+
+
+A R T I C L E I N F O                                   A B S T R A C T
+
+Keywords:                                               The process data in computer-based problem-solving evaluation is rich in valuable implicit in­
+Problem-solving                                         formation. However, its diverse and irregular structure poses challenges for effective feature
+Process data                                            extraction, leading to varying degrees of information loss in existing methods. Process-response
+Feature extraction
+                                                        behavior exhibits similarities to textual data in terms of the key units and contextual relation­
+TF-IDF
+                                                        ships. Despite the scarcity of relevant research, exploring text analysis methods for feature
+Word2vec
+Machine learning                                        recognition in process data is significant. This study investigated the efficacy of Term Frequency-
+                                                        Inverse Document Frequency (TF-IDF) and Word to Vector (Word2vec) in extracting response
+                                                        behavior features and compared the predictive, analytical, and clustering effects of classical
+                                                        machine learning methods (supervised and unsupervised) on response behavior. An analysis of
+                                                        the PISA 2012 computer-based problem-solving dataset revealed that TF-IDF effectively extracted
+                                                        key response behaviors, whereas Word2vec captured effective features from sequenced response
+                                                        behaviors. In addition, in supervised machine learning using both methods, the random forest
+                                                        model based on TF-IDF performed the best, followed by the SVM model based on Word2vec.
+                                                        Word2vec-based models outperformed TF-IDF-based ones in the F1-score, accuracy, and recall
+                                                        (except for precision) across the logistic regression, k-nearest neighbor, and support vector ma­
+                                                        chine algorithms. In unsupervised machine learning, the k-means algorithm effectively clustered
+                                                        different response behavior patterns extracted by these methods. The findings underscore the
+                                                        theoretical and methodological transferability of these text analysis methods in educational and
+                                                        psychological assessment contexts. This study offers valuable insights for research and practice in
+                                                        similar domains by yielding rich feature representations, supplementing fine-grained assessment
+                                                        evidence, fostering personalized learning, and introducing novel insights for educational
+                                                        assessment.
+
+
+
+
+1. Introduction
+
+   Although the abundant cognitive information and strategies inherent in problem-solving processes hold significant value [1,2],
+their extraction poses challenges in traditional data analysis methods [3]. Computer-based assessments, as highlighted by international
+assessments such as the Programme for International Student Assessment (PISA) and Trends in International Mathematics and Science
+
+
+ * Corresponding author.
+   E-mail address: yangtao@bnu.edu.cn (T. Yang).
+
+https://doi.org/10.1016/j.heliyon.2024.e35945
+Received 8 March 2023; Received in revised form 1 August 2024; Accepted 6 August 2024
+Available online 10 August 2024
+2405-8440/© 2024 The Authors.          Published by Elsevier Ltd.    This is an open access article under the CC BY-NC-ND license
+(http://creativecommons.org/licenses/by-nc-nd/4.0/).
+J. Zhou et al.                                                                                                          Heliyon 10 (2024) e35945
+
+
+Study (TIMSS) [1,4,5], enable the recording of behavior sequences and response processes. These sequences are rich in implicit in­
+formation, including strategies, thinking processes, and metacognition [6], and marked by complexity, high noise, and irregularity [7,
+8], making them ill-suited for conventional analysis techniques. Converting unstructured behavior sequences into structured nu­
+merical data through feature extraction is critical for the accuracy and reliability of model analysis. However, traditional methods fall
+short in this regard, thereby necessitating the exploration of new, effective feature extraction techniques.
+    Despite ongoing research into feature extraction methods in educational assessment, current technologies face challenges and
+opportunities in extracting and generalizing behavioral information [9]. The main challenges encountered in our investigation stem
+from the intricate and diverse nature of the data, as well as the demand for precise analytical methods. Process data not only capture
+the final responses of students but also document their entire problem-solving process, including tool usage, temporal sequences, and
+interactive choices [10]. In addition, process-based responses typically manifest as sequences, exhibiting significant variations in
+length, structure, and complexity. For example, when tackling mathematical problems, each student may employ distinct strategies,
+resulting in differing numbers of steps. This complexity and irregularity necessitate the use of advanced data analysis approaches, such
+as machine learning, deep learning, network analysis, and text analysis, to standardize and extract pertinent feature information [9,
+11].
+    Data structure similarities enable interdisciplinary application of analytical techniques. Process-response data shares many simi­
+larities with textual data regarding attribute characteristics. Firstly, both exhibit a serialized nature, being collections of elements (such
+as words, sentences, or user actions) arranged in a specific sequence, thus imbuing significance not just to individual elements but also
+to their order and combination. Secondly, both types of data are unstructured, lacking fixed patterns or formats. Textual data may vary
+in sentence lengths and structures, while process-response data can include various types of user interactions and operations, making
+them difficult to represent using conventional structured database tables. Thirdly, both types of data are multidimensional, encom­
+passing various levels or dimensions of information. Textual data conveys not only surface-level text but also sentiment, semantic
+structure, and context. Similarly, process-response data can reflect strategy choices, problem-solving processes, and cognitive patterns,
+beyond recording operation sequences. Fourthly, the interpretation of both types of data often depends on contextual cues. Textual
+data may be influenced by surrounding text or broader topics, while understanding process-response data can require considering the
+specific task or goal of user operations. These similarities facilitate interdisciplinary exchange and methodological integration to
+address the analytical demands of process data.
+    The impact of text analysis methods on feature extraction are worthy of in-depth exploration [9,12]. The effectiveness of such
+methods in extracting behavior characteristics within complex problem-solving contexts remains uncertain. Moreover, given the
+diverse attributes of these methods, determining the most suitable approach for extracting behavior features with sequential relations
+remains a topic of ongoing exploration. This study employed two text feature extraction methods—Term Frequency-Inverse Document
+Frequency (TF-IDF) and Word to Vector (Word2vec)—to advance research in behavioral sequence feature extraction and achieve more
+precise extraction of procedural cognitive information during problem-solving. These techniques were applied to analyze the effects of
+feature extraction based on answer-behavior sequences in PISA 2012 [6]. Additionally, supervised machine learning methods were
+employed to predict and elucidate the answering performance of respondents, while an unsupervised machine learning method was
+used to cluster behavior sequences, thereby facilitating the differentiation and analysis of respondent groups with distinct behavioral
+patterns.
+
+2. Literature review
+
+   This section first provides an overview of the current state of computer-based assessment for evaluating problem-solving abilities
+and identifies the need for advancements in this field. Second, it introduces the background of analyzing process-oriented response
+behavior sequences generated by computer-based assessment, including process data, behavior feature extraction, text-based methods,
+and statistical models, is introduced.
+
+2.1. Computer-based assessment of problem-solving competency
+
+    Computer-based assessments have been applied to evaluate higher-order cognitive abilities, including problem-solving [6,13–16],
+providing both theoretical and practical evidence. Firstly, realistic and complex problem situations can be presented [17]. Secondly,
+the process data collected via a computer-based assessment can provide an effective implicit judgment basis for the cognitive process in
+problem-solving that cannot be measured via conventional assessments [18,19]. This enhances the validity of the interpretation of
+assessment scores [20] and provide a reliable basis for improvement in the accurate diagnosis of learning and the enhancement of
+learning development [1,21]. The Organization for Economic Co-operation and Development (OECD) conducted computer-based
+assessments and studies on process behaviors focusing on problem-solving and collaborative problem-solving skills in 2012, 2015,
+and 2022 [4–6]. Other large-scale international assessments have also placed significant emphasis on these areas [1,22].
+
+2.2. Behavioral sequence data analysis
+
+    Sequential data from process-based answering behaviors exhibit complexity and interrelatedness, challenging traditional statistical
+analysis methods. With recent technological advancements, researchers are exploring novel approaches for feature extraction. Text
+analysis methods have gained attention as interdisciplinary avenues for analysis. Given their potential in capturing attributes relating
+to key behaviors and action correlations within behavioral sequences, further exploration and validation of these text methods for
+
+                                                                      2
+J. Zhou et al.                                                                                                          Heliyon 10 (2024) e35945
+
+
+feature extraction are justified.
+
+2.2.1. Process data
+    Process data can reflect information besides the total score [8,23]. In the problem-solving process of human-computer interaction,
+the process data is in the form of a series of log files with time, action, and other attributes, such as the respondent’s behavioral pattern,
+speed, answering strategy, solution thinking, answer patience, and even learning trajectory [24,25]. Compared to time and strategy
+indicators, behavior sequences are less dependent on the specific topic and a researcher’s prior educational domain knowledge.
+Feature extraction research on behavioral sequences has better scalability and can be extended to other topics, thereby assisting re­
+searchers in capturing evidence of cognitive processes from respondents from a data-driven perspective.
+    However, owing to the structural irregularity of behavioral sequences, their unstructured nature poses several challenges to
+conventional evaluation and analysis methods. Unstructured data refers to data whose structure is irregular, i.e., there is no predefined
+data analysis model, and the data cannot be represented using a two-dimensional logical table of the database [8], and a matrix cannot
+be easily generated [26]. It is difficult to extract meaningful results from the large amount of information generated during the
+interaction of respondents [3]. As a result, existing measurement models and standard statistical methods cannot be directly applied.
+The reliable extraction of potential information from behavior sequences and the conversion of the sequences into structured data is an
+active area of research.
+
+2.2.2. Behavior sequence feature extraction
+    Feature extraction is crucial in analyzing unstructured behavior sequences. It involves extracting potential information using data-
+driven methods, converting the sequences into structured data that computers can understand. This process greatly impacts the ac­
+curacy and reliability of subsequent model analysis. A review of the relevant literature has shown that response behavior sequence
+feature extraction methods include.
+
+1) Frequency statistics: Counts the occurrences of different behaviors in a sequence to realize the numerical representation of the
+   behavior sequence data. Many studies on the response behavior sequence utilize this method for feature extraction of the behavior
+   sequences [27–29].
+2) N-gram: This method is derived from text feature extraction, which refers to the occurrences of N consecutive words in a text. In the
+   sequence of answer-behaviors, it refers to the number of times N continuous behaviors appear in a sequence, which is a derivative
+   of the frequency statistics method. Analysis of behavioral sequences via N-gram methods has been shown to successfully identify
+   strategy changes [30].
+3) Longest common subsequence: This involves finding the common longest subsequence in a sequence set of two sequences. For the
+   behavior sequence, this involves finding the longest subsequence that is common between each answer-behavior sequence and the
+   optimal answer-behavior sequence, and calculating the distance and similarity with the optimal answer-behavior sequence on this
+   basis. The longest common subsequence can be used to establish valuable strategies by using the distance and similarity between
+   different response sequences [31].
+4) Multi-dimensional scaling: This method builds features based on relative differences, and locates them in vector space so that
+   similar elements are closer and different elements are further apart. If the difference between two behavior sequences is appro­
+   priately summarized by the difference measure, the coordinates obtained at the multi-dimensional scale can be regarded as the
+   characteristics of storing the original process information. Interpretable latent variables can be extracted from different similarity
+   matrices of the answering process via multi-dimensional scaling transformation [32].
+5) Autoencoder: This method is an unsupervised artificial neural network that compresses the original input data and reshapes the
+   input features. The autoencoder can compress the response sequence information matrix into a standard numerical vector, from
+   which valuable information can be extracted [26].
+
+   The aforementioned methods have their advantages and disadvantages in terms of feature extraction of behavior sequences.
+Frequency statistics focus on the occurrence count of behaviors in a sequence, which is easy to use and understand. However,
+sequential behavior order might be overlooked, limiting data comprehension depth. Additionally, complex inter-behavior relation­
+ships or patterns may not be captured by relying solely on behavior occurrence counts, resulting in incomplete information extraction.
+The N-gram method, which is based on frequency statistics, considers behavior sequences but exhibits an increased feature dimen­
+sionality with a larger N, leading to greater model complexity. Moreover, it may inadequately capture the long-term dependencies or
+behavior sequence complexity, as illustrated in climate control data with over 5000 bi-gram behaviors corresponding to 128 unigram
+behaviors. The longest common subsequence method can capture information beyond temporal and action frequency aspects.
+However, its effectiveness relies on the presence of an optimal or benchmark answer sequence for comparison, which may not always
+be feasible or clearly defined across all contexts. Furthermore, its scalability is limited and it may not be suitable for all types of
+problems. Although multidimensional scaling is effective in identifying data structures or clusters, it may pose interpretability chal­
+lenges as the resulting dimensions or latent variables may not directly correspond to intuitive or easily understandable features of
+behavioral sequences. Similarly, autoencoders, adept at handling complex, high-dimensional data, encounter significant interpret­
+ability issues with their compressed features. The design of the transformation process is not intended for easy human comprehension
+and the quality of the extracted features is heavily reliant on the architecture and training of the autoencoder, thus requiring careful
+tuning and validation [26].
+   It is evident that achieving effective analysis of process data is strongly dependent on matching the structural characteristics of the
+
+                                                                      3
+J. Zhou et al.                                                                                                      Heliyon 10 (2024) e35945
+
+
+data with the attributes of the methods used. As discussed previously, process data share structural similarities with textual data in
+terms of the sequential nature, unstructured format, multidimensionality, and contextual dependence. These similarities make it
+feasible to apply text analysis methods to the analysis of process-oriented response data. Furthermore, the complexity and volume of
+elements in text data provide favorable conditions for text analysis methods to handle process-oriented response data effectively and
+mitigate the limitations of the aforementioned methods. However, there remains a significant lack of exploration and experimentation
+in this area, underscoring the need for further investigation.
+
+2.2.3. Text analysis and behavior sequence feature extraction
+    In the behavior sequence, the recognition of operation features is similar to the recognition of text features, and more evidence is
+needed. Unlike data mining which deals with well-structured data, text data mining deals with unstructured documents. Thus, one of
+the objectives of text data mining research is to convert text into numeric vectors, i.e., the numerical representation of text [33]. The
+logic of this transformation is very close to the requirement of transforming unstructured response data into structured features for
+extraction. Although text feature extraction methods have been applied in numerous fields to numerically represent text-like sequence
+data to achieve superior results [34–36], thus far, few studies have applied text methods to feature extraction in behavioral sequences,
+and the implemented methods (such as N-gram) are limited by the feature dimension. In addition, the order information that can be
+reflected is limited [30]. To investigate more effective feature recognition methods and to exploit the application value of text analysis
+methods in sequence analysis, it is worth exploring and verifying the recognition effects of other text methods in this process.
+    Text analysis methods need to capture key behaviors and explore the sequential relationships between them adeptly for more
+effective feature extraction from behavioral sequences. Different text analysis methods place distinct emphases on attribute charac­
+teristics. For instance, FastText emphasizes subword decomposition, making it suitable for handling variations within words, such as
+plurals, tenses, and other inflections. Bag-of-words (BOW) represents text with word vectors, but it only considers word frequency and
+cannot capture the sequential or semantic relationships between words. GloVe optimizes word vectors using global co-occurrence
+information to capture both the local and global semantics. It excels on large-scale corpora, effectively handling rare words and
+long-tail distributions. N-grams capture the relationships in text based on consecutive sequences of n words or characters and have
+been used in similar research [10], [11]. However, they pose the risk of dimensionality explosion in the feature space. Thus, feature
+selection or dimensionality reduction is necessary and warrants further exploration. In comparison, TF-IDF and Word2vec are suitable
+for capturing the feature extraction needs of analyzing process data from answering behaviors, specifically in terms of capturing key
+behaviors and behavioral relationships. Therefore, they are worth considering for feature extraction in this context.
+    TF-IDF has shown promising potential in extracting key features relating to response behaviors. As a typical text analysis method,
+TF-IDF evolved from IDF (Inverse Document Frequency), and is a derivative method of frequency statistics [37]. The basic idea of
+TF-IDF originates from language modeling theory, where words in documents are divided into two categories: keywords and
+non-keywords [38]. The keywords are closely related to the topic of the document, and the criticality of the words can be evaluated
+using TF-IDF. TF-IDF compensates for the shortcomings of the frequency statistical method and focuses on the value of key behaviors.
+The TF-IDF algorithm with a criticality attribute for evaluating keywords has been used to automatically score essays [39], for cur­
+riculum model optimization [40] and test question classification [31]. In the complicated sequence of answer-behaviors, judgments
+are made on key and non-critical behaviors, analogous to textual data. However, common behaviors that appear repeatedly in many
+sequences are not necessarily a good key discriminant behavior and should be given a lower weight. However, research utilizing this
+method to identify key behaviors is scarce. This operational principle is worth exploring in the field of psychological and educational
+assessment.
+    Word2vec word embeddings offer the potential to facilitate the nuanced contextual analysis of process-oriented response data by
+extracting the semantic relationships among words. Based on neural networks, Word2vec have greatly improved the efficacy of text
+feature extraction [41,42] and has been extended to other domains beyond textual data [34,43]. The network method is trained and
+maps words to a low-dimensional vector space, capturing the semantic relationship between them, so that semantically similar words
+are close in space, and word vectors are used to represent the semantic information of words. Among these approaches, the Word2vec
+method excels at various textual tasks [41]. As a word embedding method, the Word2vec model represents each word using the hidden
+layer weight after training, mapping each word to a vector to represent the relationship between words. It should be emphasized that
+Word2vec extends its underlying principles to action sequences through the vectorization of words, thereby enabling the vectorization
+of actions. According to the similarity in the structure of the behavior sequence and the text data, there may be potential "context"
+relationships between actions in action sequences. Thus, Word2vec can be extended to the feature extraction of behavior sequences.
+This logic has also been applied and evaluated in related research [36].
+    As mentioned previously, the principles of Word2vec can be applied to action sequences to vectorize actions. Given the similarity in
+the structure of the behavior sequence and the text data, there may be potential "context" relationships between actions in action
+sequences. Thus, Word2vec can be extended to the feature extraction in behavior sequences. This logic has also been applied and
+evaluated in related research [36]. Behaviors can be mapped to a low-dimensional vector space to capture potential relationships via
+the "context" of the behaviors, forming the basis for the feature extraction of Word2vec in behavior sequence data. This transferable
+application has not been investigated in the study of problem-solving behavior sequences and is worth exploring and verifying.
+    However, research on extracting procedural answer-behavior features in the fields of education and psychological assessment using
+these two methods remains scarce. Although the advantages of Word2vec and TF-IDF have been progressively validated in education
+and psychology, such as patterns of language use on social media [44–46] and insights into user psychology and behavior [47,48],
+most of these validations were based on text material analysis. Research focusing on log file analysis behavior, such as examining the
+interactive behaviors of students on online learning platforms to identify learning patterns [49], remains relatively rare. A review of
+
+                                                                    4
+J. Zhou et al.                                                                                                    Heliyon 10 (2024) e35945
+
+
+the existing literature indicates that employing these two approaches to study student response behaviors within educational and
+psychological assessment is very uncommon.
+    Thus, further research is needed to explore the value of TF-IDF and Word2vec in the feature extraction and analysis of process data
+from answering behaviors. Considering the theoretical characteristics of text feature extraction methods, their wide application in
+related fields, and the similarity between the structure of behavior sequences and text data, TF-IDF can identify keywords, thereby
+aiding in understanding crucial content and facilitating classification or clustering analysis of student behaviors. Meanwhile,
+Word2vec captures semantic relationships, assisting in recognizing similar patterns or error modes in answering behaviors. Therefore,
+both methods offer valuable insights for analyzing process data.
+
+2.2.4. Statistical modeling
+    After effectively extracting features from behavior sequences, subsequent statistical model analysis is necessary to test feature
+extraction and validity. Compared with conventional measurement methods for analyzing process data, machine learning is more
+suitable for behavioral sequence data with complex structure and high noise, and has demonstrated effective analysis results [50]. In
+educational evaluation, machine learning methods can be used to analyze the learning and interaction behaviors of students and to
+establish student models [51].
+    Machine learning have been proven to be effective in process data analysis, but not based on features extracted from text analysis.
+Supervised learning methods used for process data analysis include neural networks, decision trees, random forests, support vector
+machines (SVM), Naive Bayes, and k-nearest neighbor (KNN) [52,53]. For unsupervised learning, cluster analysis is one of its main
+applications, with the k-means algorithm being one of the most widely used [53,54]. However, there are few studies on feature
+extraction based on text analysis for problem-solving process data, and both supervised and unsupervised machine learning are still
+used to model analysis.
+
+2.3. Research questions
+
+    This study aimed to evaluate the feasibility of TF-IDF and Word2vec for analyzing response behavior sequence, to extract valuable
+information from the response behavior sequence for problem-solving, to utilize machine learning models to predict the response
+
+
+
+
+                                        Fig. 1. PISA 2012 Problem-Solving item: Climate control.
+
+                                                                   5
+J. Zhou et al.                                                                                                                                         Heliyon 10 (2024) e35945
+
+
+performance of respondents, and to further analyze the behaviors and strategies required for responses. Groups with different response
+behaviors and strategies will then be distinguished and analyzed. This helps to identify different types of respondents more accurately
+and facilitates subsequent model analysis. Moreover, the predictions hold theoretical value and practical significance in the identi­
+fication and accuracy of procedural response behavior sequences. Therefore, the following research questions are proposed.
+
+1) Can TF-IDF and Word2vec effectively extract key behaviors and behavior sequence features from problem-solving process-response
+   data?
+2) Can supervised machine learning models, utilizing behavior features extracted by TF-IDF and Word2vec, accurately predict re­
+   spondents’ performance and strategies?
+3) Can unsupervised k-means clustering analysis, using behavior features derived from TF-IDF and Word2vec, effectively differentiate
+   behavior patterns and success rates?
+
+3. Materials and design
+
+    The dataset, research design, and analysis methods employed in the study are outlined in the following subsections.
+
+3.1. Data set
+
+    The dataset for this study was obtained from the PISA 2012 computer-based assessment of complex problem-solving. The
+assessment series demonstrated strong reliability and validity [6]. The process data were validated to reflect the internal cognitive
+processes involved in complex problem-solving, and they are extensively used in research and analysis in the fields of education and
+psychological assessment [55–58].
+    The specific action sequences analyzed were derived from the problem-solving task "climate control (CP02501)" within the
+assessment, as shown in Fig. 1 [6]. Problem scenarios were presented via computer simulations. The left side of the page provided the
+scenario for problem-solving, in which students were tasked with exploring changes in temperature and humidity within a room by
+autonomously adjusting certain sliders, without instructions for a new air conditioner. The right side featured an interactive area
+displaying three sliders—the top, central, and bottom controls—for adjusting positions with values ranging from − 2 to 2, along with
+the corresponding temperature and humidity change trends. Students observed the changes by adjusting the position of one or more
+sliders, and finally drew a connecting line to indicate the connection between the input and output. They could click "Apply" to observe
+the effect of the settings, and observe the temperature and humidity changes, or reset the settings by clicking the ‘Reset’ button.
+Clicking the "Draw" button drew lines to answer the connecting questions in the bottom-right corner. All these click operations were
+meticulously recorded in the form of log files, serving as the raw data for the behavioral sequences during the problem-solving process.
+    The climate control dataset comprises a total of 16,763 samples. Answers were scored as incorrect (0 points), partially correct (1
+point), and correct (2 points). In this study, a binary scoring format (0/1) was used to address the task-specific nature of the response
+data and the research objectives. Partial completion, which did not lead to the resolution of the problem context, was considered
+incorrect. Given the complexity of processing procedural response behaviors using text analysis methods, the scoring format was
+consolidated to investigate the effectiveness of text methods in extracting features of correct response behaviors. In the dataset, 9129
+samples (54 %) answered correctly (counted as 1), and 46 % answered incorrectly (counted as 0). This database is publicly available
+and can be obtained from the following link: https://www.oecd.org/pisa/data/pisa2012database-downloadabledata.htm. The climate
+control dataset originated from the ProcData package in R language [26].
+    Table 1 shows a sample of behavior sequence data after preprocessing. Each line represents the number and behavior sequence of
+the respondent. “Start” indicates the initiation of the answering process, “end” indicates the termination of the answering process,
+“reset” refers to the resetting of the scroll bar, and “draw” describes the operation of drawing connecting lines. Since the study focused
+on the answering process, the “draw” behavior was not included in the behavior sequence after preprocessing. Other actions recorded
+in Table 2, such as "1_-1_0″, represent a series of actions by a student where the top slider was moved to "+", the middle slider to "-",
+followed by the clicking of the "Apply" button.
+
+
+
+
+Table 1
+Examples of response behavior sequences after preprocessing.
+  Respondent number   Behavior sequence
+
+  ARE000000200039     [start, 0_0_0, 1_2_-2, 2_2_2, 2_2_2, 2_2_2, 2_2_2, 2_2_2, 2_2_-2, 2_2_-2, 2_-2_-2, − 2_-2_-2, − 2_-2_-2, − 2_-2_-2, − 2_-2_-2, − 2_-2_-2, − 2_-2_0, − 2_-
+                      2_0, − 2_-2_0, − 2_0_1, − 2_0_1, − 2_0_1, − 2_0_1, − 2_0_1, 0_0_1, 0_0_1, 0_0_1, 0_0_1, 0_0_1, 0_0_1, 0_0_1, 0_0_1, 0_0_1, 0_0_1, 0_0_1, end]
+  ARE000000200051     [start, reset, − 1_0_0, − 1_-1_0, − 1_-1_-1, − 1_0_0, − 1_0_0, reset, 2_0_0, reset, 0_2_0, reset, 0_0_2, reset, 0_1_0, reset, 0_-1_0, reset, − 1_0_0, reset,
+                      end]
+  ARE000000300079     [start, 1_1_1, reset, 0_0_1, reset, 0_1_0, reset, 1_0_0, end]
+  ARE000000400093     [start, 1_0_0, 0_0_0, reset, 0_0_0, 0_0_1, 0_0_2, reset, 0_1_0, 0_2_0, − 1_2_0, reset, 2_0_0, reset, 2_0_0, 2_0_0, 2_0_0, reset, 0_2_0, 0_2_0, 0_2_0,
+                      reset, 0_0_2, 0_0_2, 0_0_2, reset, 1_1_1, end]
+  ARE000000400117     [start, − 2_2_-2, − 2_-2_-2, − 1_-1_-1, 2_0_0, 0_2_0, 0_0_2, end]
+
+
+                                                                                     6
+J. Zhou et al.                                                                                                            Heliyon 10 (2024) e35945
+
+
+Table 2
+Sample of frequency statistical features.
+  Respondent number              start           0_0_0            1_2_-2           2_2_2            2_2_-2          2_-2_-2            − 2_-2_-2
+
+  ARE000000200039                1               1                1                5                2               0                  0
+  ARE000000200051                1               0                0                0                0               0                  0
+  ARE000000300079                1               0                0                0                0               0                  0
+  ARE000000400093                1               2                0                0                0               0                  0
+  ARE000000400117                1               0                0                0                0               0                  0
+
+
+
+3.2. Research design
+
+    The design for research question 1 is depicted in Fig. 2. This part involved extracting behavioral features from process-based
+response data using the TF-IDF and Word2vec text methods, and comparing them with traditional rating statistics. Subsequently,
+logistic regression was applied to the extracted features using the different methods to analyze their differences and advantages in
+behavioral feature extraction. To validate the effectiveness of TF-IDF and Word2vec in feature extraction, the absolute values of the
+logistic model coefficients were used to generate frequency variables and differences in the TF-IDF model scores to verify the iden­
+tification of key behaviors. In addition, to assess whether Word2vec successfully captured latent behavioral relationships, the cosine
+similarity and t-distributed stochastic neighbor embedding (t-SNE) visualization methods were used to investigate the relationships
+between the behavior vectors generated by Word2vec.
+    The design for research question 2 is shown in Fig. 3. Based on the behavior features and vectors extracted from TF-IDF and
+Word2vec, supervised machine learning with the KNN, SVM, and random forest algorithms was performed separately to predict and
+analyze the response reactions, and the optimal hyperparameters of each model were determined using a grid search. Based on the
+evaluation index F1-score and 5-fold cross-validation, the performance of the model was compared to that of the logistic regression as
+the baseline. To determine which behaviors and strategies were required to correctly answer the question, the output of the study was
+analyzed based on the random forest feature importance of TF-IDF.
+    The design for research question 3 is shown in Fig. 4. Using the behavior features and vectors extracted from TF-IDF and Word2vec,
+unsupervised machine learning with k-means clustering was conducted separately to explore the clustering patterns of the extracted
+behavior features. The parameter K was determined using the elbow rule, and the proportional Z test was used to ascertain if there was
+a significant difference in the correct answer rate among the K groups of respondents, to explain the behavior sequence characteristics
+between the groups, and to compare the performance of the k-means algorithm based on TF-IDF and Word2vec.
+
+
+3.3. Methods and evaluation
+
+   The TF-IDF and Word2vec text methods were used to handle feature extraction requirements in complex problem-solving response
+sequences. Subsequently, both supervised models (KNN, SVM, and random forest) and an unsupervised model (k-means) were
+employed for evaluation.
+
+3.3.1. TF-IDF
+    TF-IDF is an optimization method for frequency statistics, which demonstrates superior performance compared to the frequency
+statistical method under specific conditions. This approach utilizes the IDF as a weight to calculate the TF (Term Frequency) by weight.
+IDF assumes that the importance of a word relative to a document is inversely proportional to its frequency in all the documents. The
+equation for determining the TF-IDF is as follows:
+                           (       )
+                               N
+        wi,j = tfi,j × log                                                                                                           (1)
+                            dfi + 1
+
+In equation (1), wi,j is the numerical representation of the i-th word in the j-th document, tfi,j is the frequency of the i-th word in the j-th
+                                                (     )
+document, that is, the word frequency TF; log dfiN+1 calculates the IDF, where N is the number of documents, and dfi is the number of
+
+documents that contain the i-th word.
+   In this study, wi,j is the numerical representation of the i-th behavior in the j-th sequence, tfi,j is the frequency of the i-th behavior in
+the j-th sequence, and N is the number of sequences in the sequence set, and dfi is the number of sequences in the set that contains the i-
+
+
+
+
+                                     Fig. 2. Research design for Q1: Comparison of feature extraction methods.
+
+                                                                           7
+J. Zhou et al.                                                                                                         Heliyon 10 (2024) e35945
+
+
+
+
+                                 Fig. 3. Research design for Q2: Model comparison with supervised learning.
+
+
+
+
+                               Fig. 4. Research design for Q3: Model comparison with unsupervised learning.
+
+
+th behavior.
+    There are a total of 128 unique behaviors in the climate control behavior sequence dataset. The sample data of the frequency
+statistics feature is shown in Table 2, and the sample data of the TF-IDF feature is shown in Table 3. In the frequency statistics feature,
+since the value of each feature is the frequency of the behavior, the value of “start” in each sequence is consistent. However, for the TF-
+IDF feature, the value of “start” in each sequence is inconsistent. According to equation (1), the TF-IDF variables of “start” and “end”
+contain the sequence length information, which is inversely proportional to the sequence length.
+
+3.3.2. Word2vec
+    Word2vec [59] is a neural network probabilistic model for generating word vectors. Its core is a shallow neural network, which uses
+a sliding window to specify fixed-size context, and attempts to predict the context for the current word or to use the context to predict
+the current word. The algorithm contains two training models, the CBOW model (Continuous bag-of-words model) and the Skip-gram
+model (Continuous skip-gram model), both of which are shallow layers composed of an input layer, a hidden layer, and an output
+layer. The structure of the layer neural network model is shown in Fig. 5.
+    The CBOW and skip-gram models both use hidden layer weights that are acquired during training to represent word vectors.
+Although their objectives are similar, they differ in terms of training methods. The CBOW model predicts the current word based on its
+context, using multiple context words as input to predict the center word. This approach is effective on small datasets and training is
+quick owing to its use of context word distributional information. Conversely, the skip-gram model predicts the surrounding context
+based on a given word, using the center word as input to predict its surrounding context words. While skip-gram excels with large
+datasets and rare words or phrases, its training proceeds at a relatively slower pace compared to CBOW.
+    In this study, Word2vec was used to convert actions in answer sequences into vectors by treating these actions as words. Given the
+scale of the dataset and the need to identify patterns within answer sequences, the CBOW model was selected based on several key
+factors: (1) Small-scale dataset: CBOW is preferred for its rapid convergence on smaller datasets due to its contextual smoothing
+approach [60]. (2) Computational efficiency: CBOW offers faster training by predicting a single word per sample, which makes it
+suitable for resource-constrained scenarios. (3) High-frequency word processing: CBOW trains effectively on high-frequency words
+through context-based predictions. (4) Semantic accuracy: CBOW potentially achieves better semantic precision by considering the
+entire context, which is particularly important for understanding word meanings. The selection of the CBOW model was driven by the
+relatively small size of the dataset and the aforementioned considerations.
+
+3.3.3. Statistical modeling methods and evaluation
+    To validate the efficacy of the two text analysis methods in extracting behavioral features further, several well-established su­
+pervised machine learning techniques were used, including KNN, SVM, and random forest, along with the unsupervised machine
+learning method k-means for prediction and clustering analysis based on the behavioral features. These machine learning
+
+Table 3
+Sample of TF-IDF features.
+  Respondent number           start           0_0_0           1_2_-2           2_2_2            2_2_-2          2_-2_-2             − 2_-2_-2
+
+  ARE000000200039             0.02            0.04            0.12             0.30             0.19            0.10                0.39
+  ARE000000200051             0.06            0.00            0.00             0.00             0.00            0.00                0.00
+  ARE000000300079             0.16            0.00            0.00             0.00             0.00            0.00                0.00
+  ARE000000400093             0.05            0.20            0.00             0.00             0.00            0.00                0.00
+  ARE000000400117             0.12            0.00            0.00             0.00             0.00            0.00                0.45
+
+
+                                                                       8
+J. Zhou et al.                                                                                                         Heliyon 10 (2024) e35945
+
+
+
+
+                                                Fig. 5. Structure of the CBOW and Skip-gram models.
+
+
+methodologies have been applied and validated extensively within the psychology and education domains.
+    The KNN algorithm, which is recognized for its simplicity, intuitiveness, lack of training requirements, flexibility, and high cus­
+tomizability, is a straightforward yet potent supervised learning method for classification and regression tasks. Its operational principle
+hinges on the concept of distance or similarity: given a query point (i.e., the data point to be classified or predicted), KNN identifies the
+"k" closest neighbors within the training dataset and predicts the label or value of the query point based on the information of these
+neighbors [60]. The KNN algorithm has exhibited significant potential for identifying and predicting patterns in student behavior,
+learning outcomes, and psychological states within the fields of psychology and education [60–62].
+    SVM is a powerful supervised learning algorithm that used for both classification and regression tasks. The core principle of SVM is
+to determine an optimal hyperplane that maximally separates the data points of different classes, making it particularly effective for
+high-dimensional data classification. SVMs are renowned for their performance in situations where the data dimensionality exceeds
+the number of samples, as they can maintain high accuracy [63]. SVM can be applied to various tasks, such as predicting academic
+performance, classifying student behaviors, and recognizing emotional states, in the fields of education and psychometrics. Its ability
+to handle complex patterns in high-dimensional feature spaces and maintain accuracy with limited samples makes it a valuable tool for
+these areas [64].
+    Random Forest is an ensemble learning method that constructs multiple decision trees for classification or regression tasks. It
+generates different training sets using random sampling and selects features randomly at each node of the decision trees for splitting.
+The final prediction is made by aggregating the results from multiple decision trees. Random forest is known for its efficient training
+speed, good generalization ability, and resistance to overfitting [65]. Random forest is used for analyzing and predicting the psy­
+chological states and behavioral patterns of individuals in the field of psychometrics. For instance, random forest can aid researchers in
+identifying factors such as mental health issues and personality traits by examining data from surveys and social media behavior [64].
+    K-means, which is a prevalent clustering algorithm, partitions data into K clusters based on the proximity to the nearest centroid,
+performing iterative optimization until criteria such as stable cluster assignments or a set iteration count are met. Its simplicity, ef­
+ficiency, and scalability make it apt for large datasets [54]. K-means facilitates the analysis of the learning behaviors, performance, and
+psychological states of students to categorize those with similar traits in educational psychology. This aids in tailoring educational
+strategies and interventions, allowing for the identification of students at varying learning stages or those requiring extra support [9,
+53].
+    To further evaluate the performance of the model, the commonly used model evaluation method — k-fold cross-validation was
+utilized to improve the generalization of the model and suppress the influence of randomness on the evaluation. The average value of
+the K evaluation indicators was used as the final evaluation metric for k-fold cross-validation. The F1-score, accuracy, precision, and
+recall were employed to assess the effectiveness of the model [66], with the respective formulas provided in equations (2)–(5):
+                                   2                precision × recall
+         F1 − score =                            =2                                                                                        (2)
+                        recall− 1 + precision− 1    precision + recall
+
+
+
+
+                                                                         9
+J. Zhou et al.                                                                                                         Heliyon 10 (2024) e35945
+
+
+                       Number of correct predictions        TP + TN
+         Accuracy =                                  =                                                                                        (3)
+                        Total number of predictions    TP + TN + FP + FN
+
+                       True positive       TP
+         Precision =                  or                                                                                                      (4)
+                       Actual results    TP + FP
+
+                     True positive         TP
+         Recall =                     or                                                                                                      (5)
+                    Predicted results    TP + FN
+
+Where TP is true positive, TN is true negative, FP is false positive, and FN is false negative. The hyperparameters of the model were
+optimized using the grid search method. Among the selected candidate parameters, the hyperparameters with the smallest error in the
+test set were selected as the optimal hyperparameters using loop traversal. All methods were implemented in Python’s Sklearn library.
+
+4. Results
+
+    The research findings are structured into three main sections. First, a comparative analysis of the feature extraction performance of
+the two methods is presented. Subsequently, the predictions, analyses, and classifications that were performed based on the behavior
+features extracted by the two methods utilizing the supervised and unsupervised learning methods are discussed in sequence.
+
+
+4.1. Analysis of behavioral sequence feature extraction
+
+   The analysis of the feature extraction performance for key behaviors and inter-behavior relationships in response action sequences
+based on the TF-IDF and Word2vec methods is presented in the following subsections.
+
+4.1.1. Behavior sequence feature extraction based on TF-IDF
+    The extraction of key behaviors by the TF-IDF method was validated through feature statistics and logistic model establishment.
+Initially, uninformative variables were removed from the response behaviors. Specifically, in frequency analysis, ’start’ and ’end’
+variables were excluded, while in TF-IDF analysis, ’end’ actions completely correlated with the ’start’ variable were eliminated.
+Subsequently, logistic model regression was conducted separately based on TF-IDF and frequency statistics. The coefficients of the
+logistic model were output and sorted according to absolute values, as shown in Table 4 and Fig. 6.
+    The results reveal that, compared to the frequency logistic model, the TF-IDF logistic model exhibited the highest absolute coef­
+ficient value for the ’start’ variable, indicating a negative correlation with the probability of a correct answer. This suggests that longer
+sequences associated with the ’start’ variable corresponded to higher probabilities of correct answers. The absolute coefficient value of
+the ’reset’ variable in the TF-IDF logistic model was relatively low. About 70 % of respondents performed the ’reset’ behavior, with an
+IDF of 0.36, indicating its common occurrence. TF-IDF effectively suppressed the impact of this action variable on the model.
+    The Varying One Thing at A Time (VOTAT) strategy is prominent in the feature extraction process. VOTAT, which is widely
+acknowledged in the educational and psychological assessment domains, is pivotal for assessing effective answering behavior and
+outcomes of students [52,56]. It refers to the practice of VOTAT during problem-solving actions to explore the relationship between
+different variables or solution paths more clearly. In the "climate control" item of PISA 2012, the VOTAT strategy is manifested in two
+manners: for individual actions, students adjusted only one slider while maintaining the other two at their initial positions (e.g., "1_0_0,
+" "0_1_0″), and for action sequences, students could fix the positions of two sliders while adjusting only one slider (e.g., “0_2_0” and
+“0_1_0”) to determine the effect of the current slider on the temperature or humidity.
+    In the key response actions extracted by TF-IDF (Table 4), apart from the "start" and "reset" variables, the top-ranking coefficients by
+absolute value were associated with the VOTAT series of behaviors, such as ’1_0_0′ and ’0_1_0′, which control other sliders to their
+initial state while changing only one slider. Conversely, in the frequency statistical logistic model, among the top 10 coefficients by
+absolute value, only two were VOTAT behaviors, namely ’0_2_0′ and ’0_1_0’. Logistic regression analysis demonstrates the effec­
+tiveness of TF-IDF in identifying key actions compared to traditional frequency statistics.
+
+  Table 4
+  Comparative logistics coefficients (sorted by absolute value).
+    Frequency statistical variable                       Coefficient                     TF-IDF variable                        Coefficient
+
+    2_1_-2                                               − 0.33                          start                                  − 4.61
+    reset                                                0.27                            0_2_0                                  2.88
+    − 1_2_0                                              − 0.25                          0_1_0                                  2.75
+    0_2_0                                                0.23                            0_0_2                                  2.26
+    0_1_0                                                0.22                            0_0_1                                  2.13
+    − 1_0_-2                                             − 0.21                          reset                                  2.04
+    0_-1_1                                               − 0.19                          0_-2_0                                 1.81
+    − 2_-1_2                                             − 0.17                          0_0_-2                                 1.75
+    2_-1_-2                                              − 0.16                          0_-1_0                                 1.62
+    2_2_0                                                − 0.16                          2_0_0                                  1.56
+
+
+                                                                       10
+J. Zhou et al.                                                                                                     Heliyon 10 (2024) e35945
+
+
+
+
+                                Fig. 6. Comparison of absolute values of top 10 action logistic coefficients.
+
+
+
+4.1.2. Behavior sequence feature extraction Based on Word2vec
+     Based on the Word2vec method, a 100-dimensional behavior vector was generated for all behaviors, and the average of the
+behavior vectors was used as the numerical representation of the sequence to establish a logistic model. In general, logistic regression
+based     on     Word2vec      exhibited    superior    performance     over    TF-IDF:      F1Word2vec = 0.8224 > F1TF− IDF =  0.8169,
+AccuracyWord2vec = 0.8017 > AccuracyTF− IDF = 0.7993 and RecallWord2vec = 0.8360 > RecallTF− IDF = 0.8149.
+     The cosine similarity of each VOTAT behavior vector generated using Word2vec is shown in Table 5. The results show that “2_0_0”
+has the highest similarity with “-2_0_0”, “-2_0_0” has the highest similarity with “-1_0_0”, “0_1_0” has the highest similarity with
+“1_0_0”, and “2_0_0” is most similar to “0_2_0 ”. Based on behavior vector analysis, it was determined that the VOTAT behavior with the
+highest similarity for each given VOTAT behavior was also the VOTAT behavior.
+     The behavior vector generated by Word2vec was further reduced in 2 dimensions based on T-SNE, and the scatter plot is shown in
+Fig. 7. The distance between the VOTAT series behavior vectors is closer, and there is a clear linear division between them and the
+other behavior vectors. Combined with the results shown in Table 5, the VOTAT behavior with the highest similarity to each VOTAT
+behavior is also the VOTAT behavior. This indicated that Word2vec was successful in capturing latent relationships between behaviors,
+i.e., capturing a range of potential VOTAT behaviors.
+
+4.2. Prediction and analysis of response performance using supervised learning models
+
+   Based on the behavior features extracted using these two text methods, the results of predicting the response performance and
+analyzing correct response behaviors and strategies using the supervised learning models are presented in the following subsections.
+
+4.2.1. Predicting answering performance based on supervised learning model
+   Based on Word2vec and TF-IDF, KNN, SVM, and random forest were utilized. A total of 6 supervised learning models were used.
+The optimal hyperparameters of the models were searched using the grid search method based on 5-fold cross-validation. The F1-score,
+accuracy, precision, and recall of the models are shown in Table 6 and Fig. 8.
+   In the supervised learning model analysis, the combination of TF-IDF with Random Forest exhibited the best performance,
+
+
+                               Table 5
+                               Cosine similarity of VOTAT behavior vectors.
+                                VOTAT behavior                            Most similar behavior to left behavior
+
+                                − 2_0_0                                   2_0_0 (0.5786)
+                                − 1_0_0                                   − 2_0_0 (0.5198)
+                                1_0_0                                     0_1_0 (0.6745)
+                                2_0_0                                     0_2_0 (0.7297)
+                                0_-2_0                                    0_0_-2 (0.5836)
+                                0_-1_0                                    0_0_-1 (0.5638)
+                                0_1_0                                     0_0_1 (0.7735)
+                                0_2_0                                     0_0_2 (0.7900)
+                                0_0_-2                                    0_0_2 (0.6260)
+                                0_0_-1                                    0_-1_0 (0.5639)
+                                0_0_1                                     0_1_0 (0.7735)
+                                0_0_2                                     0_2_0 (0.7900)
+
+
+                                                                     11
+J. Zhou et al.                                                                                                           Heliyon 10 (2024) e35945
+
+
+
+
+                                             Fig. 7. T-SNE 2D scatter plot of Word2vec behavior vectors.
+
+
+
+Table 6
+Supervised machine learning analysis using TF-IDF and Word2vec feature extraction.
+  Indicators       Indicators                          Indicators                      Indicators                    Indicators
+
+                   TF-IDF           Word2vec           TF-IDF         Word2vec         TF-IDF         Word2vec       TF-IDF          Word2vec
+
+  F1-score         0.8169           0.8224             0.8008         0.8187           0.8160         0.8312         0.8419          0.8221
+  Accuracy         0.7993           0.8017             0.7814         0.7948           0.7987         0.8091         0.8231          0.8020
+  Precision        0.8189           0.8092             0.8019         0.7956           0.8194         0.8082         0.8271          0.8116
+  Recall           0.8149           0.8360             0.7997         0.8431           0.8127         0.8556         0.8572          0.8328
+
+
+
+
+                            Fig. 8. Supervised machine learning analysis using TF-IDF and Word2vec feature extraction.
+
+
+outperforming models based on Word2vec feature extraction and others in terms of the parameters : RF F1TF− IDF = 0.8419 >
+RF F1Word2vec =      0.8221, RF PrecisionTF− IDF = 0.8271 > RF PrecisionWord2vec =     0.8116,   RF AccuracyTF− IDF =      0.8231 >
+RF AccuracyWord2vec = 0.8020, and RF RecallTF− IDF = 0.8572 > RF RecallWord2vec = 0.8328. Overall, the second-best performing
+model was the SVM based on Word2vec. Word2vec performed better than TF-IDF using the logistic regression, KNN, and SVM models,
+except in the precision. In general, both KNN models based on these two methods performed worse than the baseline (logistics) model.
+See Table 6 and Fig. 8 for details.
+
+4.2.2. Correct answer-behavior and strategy analysis
+    The behaviors and strategies required to provide correct answers were analyzed using the feature importance of random forest
+based on TF-IDF. The feature importance of the random forest model is shown in Fig. 9. The results show that the most important
+instances are “0_2_0”, “0_0_2”, “0_1_0”, “0_0_1”, “2_0_0” and “1_0_0”. Except for “reset”, “start” and “0_0_0”, the behaviors in Fig. 9 are
+all VOTAT behaviors and include all VOTAT behaviors (13 behaviors in total). This indicates that among the 128 unique behaviors,
+these 13 VOTAT behaviors, “reset”, “start”, and “0_0_0” have the greatest impact on the random forest model. Thus, these behaviors
+help the random forest model to accurately predict response performance.
+    In addition, TF-IDF encoded “start” had a high impact on correct answers. The sequence length had an impact on the correct
+answer, and a longer sequence corresponded to a higher probability of obtaining a correct answer. “Reset” also had an impact on the
+
+
+                                                                         12
+J. Zhou et al.                                                                                                      Heliyon 10 (2024) e35945
+
+
+
+
+                                                   Fig. 9. Importance of random forest features.
+
+
+correct answers. When the number of “resets” increased, the probability of correct answers also increased. It was determined that
+“0_0_0” played a role in correct answering. Further investigation revealed that there were many datasets including [“start”, “0_0_0”,
+“0_0_0”, “0_0_0”, “reset”, “0_0_0”, “0_0_0”, “0_0_0”, “end”] as response sequences. Thus, some respondents who frequently performed or
+only performed the “0_0_0” behavior lacked the interactive exploration process necessary for correct answers and could not answer the
+question correctly.
+
+4.3. Cluster analysis of answer-behavior using K-means
+
+   Based on the behavior features extracted using the two text methods, the results of the unsupervised clustering analysis are pre­
+sented in the following subsections.
+
+4.3.1. K-means sequence clustering based on TF-IDF
+    The k-means model was established using TF-IDF. Based on the elbow principle, the optimal K value was selected as 3, and the
+descriptive statistics of k-means clustering are shown in Table 7 and Fig. 10. The Z test of proportions shows that the correct rate of
+cluster A is significantly greater than the other two clusters (cluster A vs cluster B: Z = 46.37, p < 0.001; cluster A vs cluster C: Z =
+40.27, p < 0.001). In this context, "correct rate" refers to the proportion of students in a given group who answered the question
+correctly, whereas "behavioral patterns" refer to the identified key response behaviors and strategies (such as VOTAT) and their
+corresponding performance, as well as their relationship with the correct rate.
+    The descriptive statistics of the behavior frequency of each cluster are shown in Table 8. Cluster A has the highest average fre­
+quency of the VOTAT series behaviors, and 92 % of respondents exhibited VOTAT behaviors at least twice. In cluster B, the average
+frequency of the other behaviors was the highest, and only 59 % of respondents exhibited the VOTAT series behavior at least twice. The
+“0_0_0” behavior had the highest mean frequency in cluster C, and 83 % of respondents exhibited the “0_0_0” behavior at least twice.
+    The characteristics of the answer-behavior sequences in the three clusters were further analyzed, and the sample behavior se­
+quences of each cluster were selected for observation, as shown in Table 9. The response behavior sequence of cluster A contains more
+VOTAT series behaviors; the behavior sequence of cluster B lacks the VOTAT series of the behaviors that are necessary for correct
+answers, and its behaviors are scattered and disordered. The behavior sequence of cluster C contains frequent “0_0_0” behavior.
+    In summary, the k-means algorithm based on TF-IDF can cluster respondents based on their behavior sequence. There were dif­
+ferences in the correct rate between cluster A and clusters B and C. In addition, different answer-behavior patterns affected correct
+answering in the sequences of the three clusters.
+
+4.3.2. K-means sequence clustering Based on Word2vec
+   A k-means model was built based on Word2vec. Using the elbow principle, the optimal K value was 3. The descriptive statistics of
+the population are shown in Table 10. The Z test of the proportions shows that the correct rate of cluster A is significantly higher than
+that of the other two clusters (cluster A vs cluster B: Z = 45.16, p < 0.001; cluster A vs cluster C: Z = 61.59, p < 0.001).
+   The descriptive statistics of the behavior frequency of each cluster are shown in Table 11 and Fig. 11. In clusters A, B, and C, the
+
+Table 7
+TF-IDF-based k-means clustering: descriptive statistics.
+  Cluster                           Respondent count                         Correct answer count                Correct answer percentage
+
+  Cluster A                         5833                                     4713                                81 %
+  Cluster B                         8411                                     3520                                42 %
+  Cluster C                         2519                                     896                                 36 %
+
+
+                                                                        13
+J. Zhou et al.                                                                                                                                          Heliyon 10 (2024) e35945
+
+
+
+
+                                                Fig. 10. TF-IDF-based k-means clustering: descriptive statistics.
+
+
+
+Table 8
+Descriptive statistics of the behavior frequency of each cluster (TF-IDF).
+  Cluster            Behavior              Mean                Std                Min              25 %              50 %              75 %               Max              Ratio
+
+  Cluster A          VOTAT                 7.91                8.29               0                4                 6                 9                  96               92 %
+                     reset                 4.60                2.90               0                3                 4                 6                  33               94 %
+                     0_0_0                 0.54                1.13               0                0                 0                 1                  21               12 %
+                     others                3.14                2.02               2                0                 2                 4                  26               100 %
+  Cluster B          VOTAT                 7.19                12.73              0                0                 3                 8                  189              59 %
+                     reset                 1.42                2.18               0                0                 1                 2                  32               32 %
+                     0_0_0                 1.14                2.92               0                0                 0                 1                  52               18 %
+                     others                11.33               13.58              2                3                 7                 13                 176              100 %
+  Cluster C          VOTAT                 3.66                7.84               0                0                 0                 4                  105              41 %
+                     reset                 1.65                2.31               0                0                 1                 2                  28               36 %
+                     0_0_0                 7.65                7.66               1                2                 5                 11                 72               83 %
+                     others                3.65                4.58               2                2                 2                 3                  102              100 %
+
+Remarks: VOTAT means 12 VOTAT behaviors; others refers to 114 behaviors except for VOTAT, “reset,” and “0_0_0”; ratio refers to the proportion of
+respondents who exhibited the behavior at least twice in the group. If the ratio is 50 %, this means that half of the respondents in the group exhibited
+the behavior at least twice.
+
+
+
+Table 9
+Sequence of response behaviors of samples in each cluster (TF-IDF).
+  Cluster         Behavior sequence
+  coding
+
+  Cluster A       [start, reset, − 1_0_0, − 1_-1_0, − 1_-1_-1, − 1_0_0, − 1_0_0, reset, 2_0_0, reset, 0_2_0, reset, 0_0_2, reset, 0_1_0, reset, 0_-1_0, reset, − 1_0_0, reset, end]
+                  [start, 1_1_1, reset, 0_0_1, reset, 0_1_0, reset, 1_0_0, end]
+                  [start, 1_0_0, 2_0_0, − 1_0_0, − 2_0_0, − 1_0_0, 0_0_0, reset, 0_1_0, 0_2_0, 0_-2_0, 0_2_0, 0_-2_0, reset, 0_0_2, 0_0_-2, 0_0_-1, 0_0_2, reset, end]
+                  [start, − 1_0_0, reset, 1_0_0, reset, 2_0_0, reset, − 2_0_0, reset, 0_1_0, reset, 0_2_0, reset, 0_0_1, reset, 0_0_2, reset, 0_0_-2, reset, end]
+  Cluster B       [start, 0_0_0, 1_2_-2, 2_2_2, 2_2_2, 2_2_2, 2_2_2, 2_2_2, 2_2_-2, 2_2_-2, 2_-2_-2, − 2_-2_-2, − 2_-2_-2, − 2_-2_-2, − 2_-2_-2, − 2_-2_-2, − 2_-2_0, − 2_-2_0,
+                  − 2_-2_0, − 2_0_1, − 2_0_1, − 2_0_1, − 2_0_1, − 2_0_1, 0_0_1, 0_0_1, 0_0_1, 0_0_1, 0_0_1, 0_0_1, 0_0_1, 0_0_1, 0_0_1, 0_0_1, 0_0_1, end]
+                  [start, − 2_2_-2, − 2_-2_-2, − 1_-1_-1, 2_0_0, 0_2_0, 0_0_2, end]
+                  [start, reset, reset, 1_-1_1, − 2_-2_-2, reset, − 2_-2_-2, − 1_-1_-1, 0_0_0, 1_1_1, 2_2_2, end]
+                  [start, 1_-1_1, 1_0_1, 1_-1_1, 1_0_1, 1_0_1, reset, 1_0_1, 2_1_2, 2_0_2, reset, 2_0_2, end]
+  Cluster C       [start, reset, 0_0_0, 0_0_0, 0_0_0, 0_0_0, 0_0_0, 0_0_0, reset, 0_0_0, 0_0_0, 0_0_0, 0_0_0, 0_0_0, end]
+                  [start, 0_0_0, 0_0_0, 0_0_0, 0_0_0, 0_0_0, 0_0_0, 0_0_0, 0_0_0, 0_0_0, 0_0_0, 0_0_0, 0_0_0, 0_0_0, 0_0_0, end]
+                  [start, 0_0_0, 0_0_0, 0_0_0, reset, 0_0_0, 0_0_0, 0_0_0, end]
+                  [start, 0_0_0, 0_0_0, 0_0_0, 0_0_0, 0_0_0, 0_0_0, 0_0_0, 0_0_0, 0_0_0, 0_0_0, reset, 0_0_0, 0_0_0, 0_0_0, 0_0_0, 0_0_0, 0_0_0, 0_0_0, 0_0_0, 0_0_0, 0_0_0,
+                  0_0_0, 0_0_0, 0_0_0, end]
+
+
+
+behaviors with the highest frequency mean are the VOTAT series behaviors, “0_0_0” and other behaviors. The proportion of re­
+spondents who exhibited VOTAT behaviors at least twice in clusters A, B, and C are 94 %, 29 % and 37 %, respectively.
+    In summary, the k-means algorithm based on Word2vec can cluster respondents based on their behavior sequence. There was a
+significant difference in the correct rate between cluster A and clusters B and C, and the answering sequences of the three clusters had
+different answer-behavior patterns.
+
+
+                                                                                        14
+J. Zhou et al.                                                                                                                      Heliyon 10 (2024) e35945
+
+
+Table 10
+Word2vec-based k-means clustering: descriptive statistics.
+  Cluster                              Respondent count                              Correct answer count                        Correct answer percentage
+
+  Cluster A                            9245                                          7175                                        78 %
+  Cluster B                            2115                                          569                                         27 %
+  Cluster C                            5403                                          1385                                        26 %
+
+
+
+
+Table 11
+Descriptive statistics of behavior frequency of each cluster (Word2vec).
+  Cluster              Behavior           Mean            Std          Min                  25 %            50 %   75 %              Max           Ratio
+
+  Cluster A            VOTAT              10.45           12.60        0                    4               6      12                189           94 %
+                       reset              3.54            3.05         0                    1               3      5                 33            74 %
+                       0_0_0              0.99            2.43         0                    0               0      1                 61            19 %
+                       others             4.16            4.68         2                    2               3      4                 102           100 %
+  Cluster B            VOTAT              2.44            6.20         0                    0               0      3                 87            29 %
+                       reset              1.52            2.24         0                    0               1      2                 21            32 %
+                       0_0_0              8.24            7.93         1                    2               6      12                72            81 %
+                       others             3.81            4.72         2                    2               2      3                 69            100 %
+  Cluster C            VOTAT              2.59            5.15         0                    0               1      3                 65            37 %
+                       reset              1.29            2.07         0                    0               1      2                 25            28 %
+                       0_0_0              0.99            2.75         0                    0               0      1                 50            15 %
+                       others             14.11           15.40        3                    5               9      17                176           100 %
+
+Remarks: VOTAT means 13 VOTAT behaviors, others refer to 114 behaviors except for VOTAT, “reset” and “0_0_0”; Ratio refers to the proportion of
+respondents who exhibited the behavior at least twice in the group. If the ratio is 50 %, which means that half of the respondents in the group
+exhibited the behavior at least twice.
+
+
+
+
+                                           Fig. 11. Word2vec-based k-means clustering: descriptive statistics.
+
+
+4.3.3. Comparison of K-means sequence clustering
+    Comparing the k-means classification results of the Word2vec and TF-IDF methods, the k-means algorithm of Word2vec demon­
+strates superior group separation ability (accuracy: 78 % vs 27 % vs 26 %) compared to the k-means algorithm of TF-IDF (accuracy: 81
+% vs 42 % vs 36 %). While both algorithms produce high-accuracy clusters with similar response accuracy, Word2vec′s k-means al­
+gorithm outperforms TF-IDF’s k-means algorithm in segregating low-accuracy groups.
+
+
+        Table 12
+        Comparison of VOTAT strategy ratios based on k-means clustering.
+                                                                           Cluster                                        VOTAT personnel pratio
+
+            K-means algorithm based on TF-IDF                              A (correct rate: 81 %)                         92 %
+                                                                           B (correct rate: 42 %)                         59 %
+                                                                           C (correct rate: 36 %)                         41 %
+            K-means algorithm based on Word2vec                            A (correct rate: 78 %)                         94 %
+                                                                           B (correct rate: 27 %)                         29 %
+                                                                           C (correct rate: 26 %)                         37 %
+
+        Remarks: VOTAT Personnel Ratio refers to the proportion of respondents who have implemented the VOTAT strategy in the cluster.
+
+                                                                             15
+J. Zhou et al.                                                                                                          Heliyon 10 (2024) e35945
+
+
+    To further explore the reasons for this difference, the use of the VOTAT strategy [56] of each group in the TF-IDF-based k-means
+algorithm and the Word2vec-based k-means algorithm was analyzed. The results are shown in Table 12. The VOTAT strategy in this
+study involved the top, middle, and bottom three sliders, each of which had at least one operation in the zero state of the other two
+sliders. When this strategy was utilized, the top slider and the middle slider states were set as the initial state and the bottom slider state
+was changed at least once, for example, “0_0_1”. In addition, the top slider and bottom slider states were set as the initial state, and the
+middle slider state was changed at least once, for example, “0_1_0. Finally, the middle slider and the bottom slider states were set as the
+initial state and the top slider state was changed at least once, for example, “1_0_0”.
+    The clustering results based on Word2vec and K-means exhibited lower frequencies of VOTAT usage for classes B and C with lower
+accuracy (Fig. 12) compared to the TF-IDF method. This suggests that the Word2vec-based k-means algorithm is better suited for
+identifying and distinguishing response sequences based on the VOTAT strategy than TF-IDF.
+
+5. Discussion
+
+   Building upon the research results outlined above, separate discussions are presented for the feature extraction performance of the
+two methods, as well as the outcomes of the supervised prediction analysis and unsupervised clustering.
+
+5.1. Effective extraction of behavioral sequence features based on TF-IDF and Word2vec
+
+    The analysis of the key behaviors extracted based on TF-IDF demonstrates superiority over the logistic model. The essence of TF-IDF
+is the utilization of the IDF as a weight to calculate the term frequency by weight. IDF assumes that the importance of a word relative to
+a document is inversely proportional to its frequency of appearance in all the documents, which is intuitive. TF-IDF can identify
+keywords that are closely related to the topic, distinguishing them from non-keywords [38]. In addition to the sequence length in­
+formation contained in the TF-IDF, a possible reason for the observed results is that the TF-IDF method could reduce the effect of the
+commonly used behavior (reset) [37], and can also highlight the key behaviors that reflect answering strategies and contribute to
+correct answer, such as the VOTAT series behaviors [56]. Compared to frequency variables, the advantage of TF-IDF attenuation of
+commonly used behaviors with low discrimination was validated.
+    Word2vec outperformed the frequency statistics feature in the logistic model, as evidenced by the similarity of the VOTAT be­
+haviors (Table 5) and the 2D scatterplot of the behavior vectors (Fig. 7). According to the adaptation environment of Word2vec, it
+captures potential relationships between actions and identifies a range of potential VOTAT actions. These latent behaviors can be
+captured using Word2vec because of the underlying “context” relationship between the VOTAT series of behaviors required for correct
+answers. Specifically, to answer correctly, it is necessary to perform several VOTAT series behaviors. A single VOTAT series action
+cannot result in a correct answer. VOTAT series behaviors often appear together, rather than individually in a behavior sequence,
+which is consistent with Word2vec′s theory of focusing on context and establishes the feasibility of the theoretical logic [59].
+    Compared to TF-IDF, Word2vec is more sensitive to policy behavior in a sequence of behaviors. Although TF-IDF is an optimization
+method for frequency statistics, it still has limitations in extracting position information, context information, and the distribution
+characteristics of some words. These attributes are particularly important in text recognition and cannot be ignored. In the field of text
+feature extraction, much of the work is focused on the construction of distributed low-dimensional dense word vectors, i.e., word
+vector representations [67], which are based on the assumption that contextually similar words have similar semantics [68]. This
+method maps words in a text into a fixed-length word vector via a training process, and all vectors form a word vector space. Each
+vector can be regarded as a point in space, and the distance between words with similar semantics in that space is closer [69].
+Word2vec is more contextual, which may also explain why it is more sensitive to strategic actions in a sequence of behaviors.
+    In summary, TF-IDF and Word2vec successfully extracted the latent information in the sequence of question-solving answer-be­
+haviors. First, TF-IDF and Word2vec outperformed the frequency statistical feature in the logistic model. Secondly, compared with the
+frequency statistical features, the advantage of TF-IDF was verified, and the influence of the common behavior “reset” on the model
+decreased. The most discriminative VOTAT series behaviors were highlighted. Thirdly, Word2vec successfully captured the potential
+relationship between behaviors. In this series, behavior vectors are closer in the vector space, and there is a clear linear division
+compared to other behaviors. Therefore, the first research question of this study was affirmatively answered.
+
+5.2. Prediction of different answering performances by supervised learning model
+
+    To answer research question 2, supervised machine learning methods (KNN, SVM, and random forest) were applied to analyze the
+behavior features extracted by TF-IDF and Word2vec. The results reveal that the random forest model based on TF-IDF outperformed
+the others overall and surpassed Word2vec. SVM performed better on the Word2vec-derived behavior features compared to TF-IDF.
+This suggests that random forest with TF-IDF and SVM with Word2vec can effectively predict the response behaviors of respondents.
+    The potential reasons for the superior performance of the TF-IDF and random forest models are as follows: (1) TF-IDF charac­
+teristics: TF-IDF effectively captures key terms by providing importance scores based on the word frequency and distribution in the
+document collection, filtering out common words. (2) Adaptability of random forest: Random forest enhances the model performance
+by constructing multiple decision trees. Decision tree models excel with sparse data and the high-dimensional sparse matrix of TF-IDF
+aligns well with this feature, enabling effective feature selection. In contrast, Word2vec generates dense vectors that capture semantic
+relationships but may not be as directly useable in decision tree models as the sparse features of TF-IDF. (3) Direct correlation of
+features: The TF-IDF features directly correlate with the decision criteria used in random forest, facilitating effective differentiation
+
+                                                                      16
+J. Zhou et al.                                                                                                      Heliyon 10 (2024) e35945
+
+
+
+
+                                Fig. 12. Comparison of VOTAT strategy ratios based on k-means clustering.
+
+
+between data classes. These features, which reflect the word frequency and distribution, align well with the ability of random forest to
+handle such features. (4) Model randomness and feature selection: The randomness of random forest entails random feature selection
+during decision tree construction, with features that offer clearer data splits preferred. This gives TF-IDF features an edge over
+Word2vec features. In summary, the high-dimensional sparsity, relevance to the task, and compatibility with random forest of TF-IDF
+may contribute to its superior performance over Word2vec. However, when selecting TF-IDF or Word2vec, the specific requirements
+and characteristics of the task at hand should be considered.
+    The superior performance of the Word2vec method over TF-IDF in the SVM model analysis can be attributed to the following
+factors: (1) Capturing of semantic information: Word2vec represents words as dense vectors, capturing the semantic relationships
+between words. In contrast, TF-IDF generates sparse high-dimensional vectors without capturing the semantic similarity. (2)
+Dimensionality and sparsity of feature vectors: Word2vec generates dense feature vectors with smaller dimensions, aiding SVM in
+effectively learning the data distribution, whereas the high-dimensional sparse vectors of TF-IDF may pose challenges for SVM
+training. (3) Ability to recognize complex patterns: SVM with Word2vec-encoded features can identify complex data distribution
+patterns more effectively than TF-IDF owing to its capability to determine optimal decision boundaries in high-dimensional space.
+SVM is a hyperplane-based classifier, which is better suited to the Word2vec method that maps behaviors to a vector space [70,71]. (4)
+Task demand for semantic information: Word2vec-based models excel in tasks requiring an understanding of the semantic relation­
+ships between words, such as sentiment analysis or text similarity matching, in which TF-IDF may fall short owing to its focus on
+statistical word occurrences. In summary, Word2vec-based SVM outperforms TF-IDF-based models in certain scenarios owing to its
+rich semantic information and efficient data processing. However, the choice of method should depend on the task requirements and
+data characteristics.
+    The F1-score, accuracy, and recall metrics for the Word2vec features outperformed those of the TF-IDF features using the logistic
+regression, KNN, and SVM models, except in the precision. Possible reasons for this phenomenon include the following: (1) Positive
+class recognition: Precision measures the ratio of actual positive samples among those predicted as positive. Capturing more true
+positives may increase the false positives, lowering the precision. TF-IDF tends to predict positive samples conservatively, yielding
+higher precision than Word2vec. Despite the lower recall for positive samples, TF-IDF ensures that the predicted positives are indeed
+positive, leading to higher precision. (2) Semantic richness and overfitting: Word2vec captures semantic relationships, enhancing the
+model accuracy but risking overfitting with complex models or limited data. Overfitting may lower the precision on unseen data. The
+simpler features of TF-IDF help to prevent overreliance on specific semantics, leading to higher precision. (3) Model preference and
+decision boundaries: The logistic regression, KNN, and SVM models tend to learn complex decision boundaries with Word2vec fea­
+tures, enhancing the recall and accuracy. However, this complexity may lead to more aggressive classification near the boundary,
+reducing the precision. TF-IDF features, which are high-dimensional and sparse, result in simpler or more conservative decision
+boundaries, improving the precision at the expense of the recall. (4) Dataset imbalance: In datasets with imbalanced labels (i.e., a large
+difference in the number of positive and negative samples), models may favor predicting the larger class. Word2vec features, which
+have rich context, may sacrifice precision for higher recall. Conversely, TF-IDF features, which are more conservative, tend to maintain
+better precision when handling imbalanced data. In conclusion, various performance metrics must be considered during feature se­
+lection and model training, while balancing the importance of the precision and recall.
+    In addition, this study underscores the efficacy of TF-IDF and Word2vec text methods in extracting features for process-based
+answering performance. By delving into VOTAT strategies and typical answering behaviors [56,72,73], the research unveils crucial
+connections between these behaviors and the answer accuracy, offering valuable insights for enhancing educational assessments and
+understanding student answering behaviors. Furthermore, the study revealed correlations between the action sequence length and
+reset frequency with the probability of correct answers [72], as well as the "0_0_0″ resetting behavior and low correct answer rates [73].
+These findings highlight the importance of considering the multidimensionality of data, harnessing the potential of behavioral data,
+ensuring model fairness and minimizing biases, leveraging models for practical applications, and continuous iteration and
+
+
+                                                                   17
+J. Zhou et al.                                                                                                     Heliyon 10 (2024) e35945
+
+
+improvement when designing and implementing machine learning solutions.
+   In conclusion, Supervised learning methods, including KNN, SVM, and Random Forest, were employed to analyze behavior features
+extracted by TF-IDF and Word2vec. Random Forest with TF-IDF exhibited superior performance, while SVM performed better with
+Word2vec-derived features. TF-IDF’s strength lies in key term capture and compatibility with decision trees, while Word2vec excels in
+semantic information capture and efficient data processing, particularly with SVM. Despite Word2vec′s advantages, TF-IDF remains
+competitive due to its sparsity and task relevance. The study offers insights for educational assessments and student behavior
+understanding.
+
+5.3. Cluster analysis
+
+    Using TF-IDF and Word2vec, the k-means algorithm analyzed the clusters of respondents based on their behavior sequences. Three
+distinct clusters were identified, with one cluster showing a significantly higher correct response rate compared to the other two
+clusters. This cluster exhibited more VOTAT strategies, aligning with previous findings that linked behavioral strategies to problem-
+solving processes [73]. The other two clusters had lower accuracy rates. One cluster displayed scattered and disordered behavior
+sequences, indicating a lack of VOTAT strategy ability. The second cluster frequently or exclusively exhibited a "0_0_0″ behavior,
+suggesting a lack of clarity in answering concepts and a failure to extract effective answering strategies from the behavior sequence.
+These results confirmed the clustering effect observed in previous studies [53,73] and validated the usefulness of TF-IDF and Word2vec
+in extracting behavioral features.
+    The reasons for the relatively good clustering performance that was achieved through the analysis of the characteristics of
+Word2vec, TF-IDF, and the k-means algorithm are explained as follows:
+    Word2vec offers semantic richness by mapping words into a vector space based on large textual datasets, enabling it to capture
+semantic similarities between words. In addition, Word2vec is context sensitive and considers the surrounding context of words during
+training, thereby accurately capturing the word semantics, which is crucial for understanding complex response behaviors.
+    TF-IDF quantifies importance by evaluating the frequency of words in a specific document relative to their distribution across all
+documents. This method identifies keywords that are more discriminative for specific response content, which helps to reveal the
+characteristics of different response behaviors. In addition, TF-IDF filters out common vocabulary by reducing the weight of words that
+appear frequently across all documents. This helps to reduce interference from common words in classification, thereby allowing the
+model to focus more on distinguishing unique vocabulary associated with different response behaviors.
+    As an unsupervised clustering technique, k-means categorizes data by minimizing the intra-cluster distances and maximizing the
+inter-cluster distances. Two key aspects are notable when using features extracted from Word2vec and TF-IDF for k-means clustering.
+First, it facilitates high-dimensional feature representation: Word2vec and TF-IDF generate feature vectors that map response be­
+haviors to high-dimensional space, offering rich information for k-means to discern and differentiate diverse response behavior pat­
+terns. Second, it underscores substantial category distinctions: Word2vec captures profound semantic relationships, whereas TF-IDF
+accentuates the significance of pivotal words. The amalgamation of features extracted by these methodologies comprehensively re­
+flects the attributes of response behaviors. Hence, k-means clustering leveraging these features adeptly discriminates various facets of
+response behaviors, yielding noticeable disparities in classification accuracy.
+    In summary, Word2vec and TF-IDF extract textual features from both semantic and importance dimensions, furnishing k-means
+clustering with rich and effective information. This enables the algorithm to distinguish various problem-solving response behaviors in
+high-dimensional space proficiently, thereby manifesting significant disparities in classification accuracy.
+
+6. Conclusions
+
+   Based on the PISA 2012 climate control problem-solving task, TF-IDF and Word2vec were used to analyze problem-solving
+behavior sequences. Supervised learning algorithms were used to predict performance, analyze behavior, and identify strategies for
+correct answers. Cluster analysis was also employed to group respondents. The main findings are.
+
+1) TF-IDF and Word2vec, two text feature extraction methods, effectively extracted latent information from answer-behavior se­
+   quences during problem-solving. TF-IDF effectively identified key answering actions, confirming its theoretical advantage in
+   suppressing commonly used behaviors with low discrimination, and Word2vec successfully captured the potential relationship
+   between behaviors and identified a series of potential VOTAT behaviors.
+2) TF-IDF and Word2vec were used to accurately predict the answering performance of respondents using supervised learning al­
+   gorithms. The random forest model based on TF-IDF performed best, followed by the Word2vec SVM model. Word2vec-based
+   models outperformed TF-IDF-based models in F1-score, Accuracy, and Recall across Logistic Regression, KNN, and SVM (except
+   for Precision). The VOTAT behavior strategy detected by the models was essential for correct answers.
+3) Unsupervised machine learning with k-means clustering effectively groups behavior features that are identified by TF-IDF and
+   Word2vec. The different clusters showed distinct response behavior patterns, accuracy rates, and VOTAT usage proportions. Higher
+   accuracy clusters exhibited increased VOTAT usage. Word2vec outperformed TF-IDF in recognizing VOTAT actions with sequential
+   properties.
+
+
+
+
+                                                                  18
+J. Zhou et al.                                                                                                      Heliyon 10 (2024) e35945
+
+
+Contributions
+
+    The exploration of problem-solving behavior sequences using TF-IDF and Word2vec can be summarized as follows: First, this study
+successfully employed cross-disciplinary techniques by using TF-IDF and Word2vec for feature extraction from response actions and
+sequences. These text analysis methods captured essential information and deep semantic relationships, providing a rich feature
+representation that is not commonly found in traditional educational assessment analysis. Second, this approach serves as an effective
+supplement for acquiring fine-grained assessment evidence. The research combines supervised and unsupervised machine learning.
+This not only allows for in-depth analysis of effective response strategies, but also validates the effectiveness of the text method for
+feature extraction and the response assessment model. Third, it fosters personalized assessment and learning, offering the potential for
+finely tailored educational interventions by discerning diverse student response patterns with granularity. This capability can facilitate
+the design of targeted teaching strategies and interventions. Fourth, novel tools and perspectives are offered for educational assess­
+ment. This study showcases the power of advanced text analysis and machine learning techniques in unearthing valuable assessment
+evidence from large-scale educational data. It provides practical support for innovative assessment approaches and offers a fresh
+perspective on assessment methods and strategies.
+
+Limitations
+
+    Although this study has delved into the cross-disciplinary feature extraction of the TF-IDF and Word2vec text methods, several
+limitations remain. First, considering more advanced approaches is advisable when using Word2vec for sequential representation. The
+averaging method employed in this study may result in the loss of information such as sequential details, potentially impacting the
+overall model accuracy adversely. Future research could explore advanced methods, such as the use of smoothed inverse frequency for
+weighted averaging or behavioral vectors as embedding layers for constructing deep learning models. Second, exploring alternative
+text analysis methods beyond TF-IDF and Word2vec to enhance the contextual sensitivity is crucial. For instance, TF-IDF may lack
+semantic understanding and may favor high-frequency terms, potentially overlooking the importance of less frequent terms, partic­
+ularly in longer documents. In addition, Word2vec-generated word vectors may not effectively address biases that are present in the
+training set, and the fixed window size of the context may limit the ability of the model to capture contextual information over longer
+ranges. Other methods to consider may include Bidirectional Encoder Representations from Transformers, long short-term memory,
+Generative Pre-trained Transformer, text graph representations, sentiment analysis techniques, and topic modeling methods. Third,
+parameter tuning and model selection pose challenges. Determining optimal TF-IDF and Word2vec parameter configurations requires
+extensive experimentation, which results in research process complexity and excessive time consumption. Furthermore, the choice
+between supervised and unsupervised models significantly impacts the results. Finally, model generalizability is a concern. Given the
+reliance of this study on specific datasets, overfitting risks exist, where models perform well on certain datasets but lack generaliz­
+ability to new or different types of datasets. Validating research findings on broader datasets is necessary to enhance the generalization
+and transferability.
+    In summary, applying TF-IDF and Word2vec for extracting behavioral features from problem-solving processes holds theoretical
+and transferable significance. In this study, key response behaviors and strategies were effectively extracted by leveraging contextual
+analysis, thereby overcoming previous limitations and enhancing the precision of machine learning models. This research not only
+advances the evidence value of process data assessment, but also provides valuable insights for the education and psychological
+evaluation domains. The findings of this study can be further validated and explored through methodological refinements and the use
+of diverse datasets.
+
+Data availability statement
+
+   The data used in this study were sourced from the open database of the OECD official website, with the ultimate interpretive
+authority vested in the OECD. This database is publicly available and can be obtained from the following link: https://www.oecd.org/
+pisa/data/pisa2012database-downloadabledata.htm. The climate control dataset originated from the ProcData package in R language.
+
+Generalization statement
+
+   The conclusions of this study have not been extended to other datasets of answer-behavior sequences in problem-solving. We
+anticipate validation and discussion among peers.
+
+Ethics declaration statement
+
+   Review and/or approval by an ethics committee was not required for this study because the data were sourced from the OECD
+public database, and ethical considerations regarding personnel are not applicable to the research contents.
+
+Funding statement
+
+  This study received support from the National Social Science Fund of China in Education: "The Role of Visual Representation in
+Mathematical Modeling for Elementary and Middle School Students and Its Training Research" (Project Number: BHA220143).
+
+                                                                   19
+J. Zhou et al.                                                                                                                                Heliyon 10 (2024) e35945
+
+
+CRediT authorship contribution statement
+
+   Jing Zhou: Writing – review & editing, Writing – original draft, Visualization, Validation, Supervision, Methodology, Investigation,
+Formal analysis. Zhanliang Ye: Writing – original draft, Software, Formal analysis, Data curation. Sheng Zhang: Validation, Su­
+pervision, Methodology, Investigation, Conceptualization. Zhao Geng: Software, Formal analysis, Data curation. Ning Han: Writing –
+review & editing, Visualization, Software, Formal analysis. Tao Yang: Writing – review & editing, Validation, Supervision, Resources,
+Project administration, Investigation, Funding acquisition, Conceptualization.
+
+Declaration of competing interest
+
+    The authors declare that they have no known competing financial interests or personal relationships that could have appeared to
+influence the work reported in this paper.
+
+References
+
+ [1] Y. Bergner, A.A. von Davier, Process data in NAEP: past, present, and future, J. Educ. Behav. Stat. 44 (6) (Dec. 2019) 706–732, https://doi.org/10.3102/
+     1076998618784700.
+ [2] J. Yuan, Y. Xiao, H. Liu, Assessment of collaborative problem solving based on process stream data: a new paradigm for extracting indicators and modeling dyad
+     data, Front. Psychol. 10 (Feb. 2019) 369, https://doi.org/10.3389/fpsyg.2019.00369.
+ [3] B. Csapó, J. Ainley, R.E. Bennett, T. Latour, N. Law, Technological issues for computer-based assessment, in: P. Griffin, B. McGaw, E. Care (Eds.), Assessment and
+     Teaching of 21st Century Skills, Springer Netherlands, Dordrecht, 2012, pp. 143–230, https://doi.org/10.1007/978-94-007-2324-5_4.
+ [4] OECD, PISA 2015 collaborative problem-solving framework. OECD, Paris, Aug. 2017, https://doi.org/10.1787/9789264281820-8-en.
+ [5] OECD, PISA 2022 Assessment and Analytical Framework, OECD, 2023, https://doi.org/10.1787/dfe0bf9c-en.
+ [6] OECD, PISA 2012 Assessment and Analytical Framework: Mathematics, Reading, Science, Problem Solving and Financial Literacy, OECD, Paris, 2013, https://
+     doi.org/10.1787/9789264190511-en.
+ [7] X. Tang, S. Zhang, Z. Wang, J. Liu, Z. Ying, ProcData: an R package for process data analysis, Psychometrika 86 (4) (Dec. 2021) 1058–1083, https://doi.org/
+     10.1007/s11336-021-09798-7.
+ [8] H. Xu, G. Fang, Y. Chen, J. Liu, Z. Ying, Latent class analysis of recurrent events in problem-solving items, Appl. Psychol. Meas. 42 (6) (Sep. 2018) 478–498,
+     https://doi.org/10.1177/0146621617748325.
+ [9] C. Korkmaz, A.-P. Correia, A review of research on machine learning in educational technology, Educ. Media Int. 56 (3) (2019) 250–267, https://doi.org/
+     10.1080/09523987.2019.1669875.
+[10] Q. He, M. von Davier, Analyzing Process Data from Problem-Solving Items with N-Grams: Insights from a Computer-Based Large-Scale Assessment, 2016,
+     pp. 749–776, https://doi.org/10.4018/978-1-4666-9441-5.ch029.
+[11] Q. He, M. von Davier, Identifying feature sequences from process data in problem-solving items with N-grams, in: Quantitative Psychology Research, L.A. van
+     der Ark, D.M. Bolt, W.-C. Wang, J.A. Douglas, S.-M. Chow (Eds.), Springer Proceedings in Mathematics & Statistics, Springer International Publishing, Cham,
+     2015, pp. 173–190, https://doi.org/10.1007/978-3-319-19977-1_13.
+[12] A. Nuntiyagul, K. Naruedomkul, N. Cercone, D. Wongsawang, Adaptable learning assistant for item bank management, Comput. Educ. 50 (1) (Jan. 2008)
+     357–370, https://doi.org/10.1016/j.compedu.2006.07.003.
+[13] B. Eichmann, F. Goldhammer, S. Greiff, L. Brandhuber, J. Naumann, Using process data to explain group differences in complex problem solving, J. Educ.
+     Psychol. 112 (8) (2020), https://doi.org/10.1037/edu0000446, 8, Art.
+[14] G. Fang, Z. Ying, Latent theme dictionary model for finding Co-occurrent patterns in process data, Psychometrika 85 (3) (Sep. 2020) 775–811, https://doi.org/
+     10.1007/s11336-020-09725-2.
+[15] Q. He, F. Borgonovi, M. Paccagnella, Leveraging process data to assess adults’ problem-solving skills: using sequence mining to identify behavioral patterns
+     across digital tasks, Comput. Educ. 166 (Jun. 2021) 104–170, https://doi.org/10.1016/j.compedu.2021.104170.
+[16] K. Herborn, M. Stadler, M. Mustafić, S. Greiff, The assessment of collaborative problem solving in PISA 2015: can computer agents replace humans? Comput.
+     Hum. Behav. 104 (2020) https://doi.org/10.1016/j.chb.2018.07.035.
+[17] S. Greiff, S. Wüstenberg, D.V. Holt, F. Goldhammer, J. Funke, Computer-based assessment of Complex Problem Solving: concept, implementation, and
+     application, Educ. Technol. Res. Dev. 61 (3) (Jun. 2013) 407–421, https://doi.org/10.1007/s11423-013-9301-x.
+[18] E.L. Baker, R.E. Mayer, Computer-based assessment of problem solving, Comput. Hum. Behav. 15 (3) (May 1999) 269–282, https://doi.org/10.1016/S0747-
+     5632(99)00023-0.
+[19] J. Lu, Study on Problem Solving Ability of Program for International Student Assessment (PISA) Based on Log Data, East China Normal University, 2017
+     [Online]. Available: https://kns.cnki.net/KCMS/detail/detail.aspx?dbname=CDFDLAST2018&filename=1017102872.nh.
+[20] S.G. Sireci, A.L. Zenisky, Innovative item formats in computer-based testing: in pursuit of improved construct representation, in: Handbook of Test
+     Development, Routledge, 2006.
+[21] J. Yuan, Y. Xiao, H. Liu, Assessment of collaborative problem solving based on process stream data: a new paradigm for extracting indicators and modeling dyad
+     data, Front. Psychol. 10 (2019), https://doi.org/10.3389/fpsyg.2019.00369.
+[22] I.V.S. Mullis, M.O. Martin, A.M. Kennedy, K.L. Trong, M. Sainsburry, PIRLS 2011 assessment framework, in: Progress in International Reading Literacy Study
+     (PIRLS), TIMSS & PIRLS International Study Center, Chestnut Hill, MA, 2009.
+[23] C.V. Bunderson, D.K. Inouye, J.B. Olsen, The four generations of computerized educational measurement, ETS Res. Rep. Ser. 1988 (1) (1988) i–148, https://doi.
+     org/10.1002/j.2330-8516.1988.tb00291.x.
+[24] J. Funke, Dynamic systems as tools for analysing human judgement, Think. Reas. 7 (1) (Feb. 2001) 69–89, https://doi.org/10.1080/13546780042000046.
+[25] S. Wüstenberg, S. Greiff, J. Funke, Complex problem solving — more than reasoning? Intelligence 40 (1) (Jan. 2012) 1–14, https://doi.org/10.1016/j.
+     intell.2011.11.003.
+[26] X. Tang, Z. Wang, J. Liu, Z. Ying, An exploratory analysis of the latent structure of process data via action sequence autoencoders, Br. J. Math. Stat. Psychol. 74
+     (1) (2021) 1–33, https://doi.org/10.1111/bmsp.12203.
+[27] S. Greiff, C. Niepel, R. Scherer, R. Martin, Understanding students’ performance in a computer-based assessment of complex problem solving: an analysis of
+     behavioral data from computer-generated log files, Comput. Hum. Behav. 61 (Aug. 2016) 36–46, https://doi.org/10.1016/j.chb.2016.02.095.
+[28] M. Stadler, S. Hofer, S. Greiff, First among equals: log data indicates ability differences despite equal scores, Comput. Hum. Behav. 111 (Oct. 2020) 106442,
+     https://doi.org/10.1016/j.chb.2020.106442.
+[29] S. Xin, L. Jian, F. Zhiyu, Using game log-file to predict students’ reasoning ability and mathematical achievement: an application of machine learning, Acta
+     Psychol. Sin. 50 (7) (2018) 761–770, https://doi.org/10.3724/SP.J.1041.2018.00761.
+[30] Q. He and M. von Davier, “Analyzing Process Data from Problem-Solving Items with N-Grams: Insights from a Computer-Based Large-Scale Assessment,” in
+     Handbook of Research on Technology Tools for Real-World Skill Development. Accessed: Aug. 01, 2022. [Online]. Available: https://www.igi-global.com/
+     chapter/analyzing-process-data-from-problem-solving-items-with-n-grams/www.igi-global.com/chapter/analyzing-process-data-from-problem-solving-items-
+     with-n-grams/139710.
+
+
+                                                                                  20
+J. Zhou et al.                                                                                                                                 Heliyon 10 (2024) e35945
+
+[31] Q. He, F. Borgonovi, M. Paccagnella, Using Process Data to Understand Adults’ Problem-Solving Behaviour in the Programme for the International Assessment
+     of Adult Competencies (PIAAC): Identifying Generalised Patterns across Multiple Tasks with Sequence Mining, OECD, Paris, Sep. 2019, https://doi.org/
+     10.1787/650918f2-en.
+[32] X. Tang, Z. Wang, Q. He, J. Liu, Z. Ying, Latent feature extraction for process data via multidimensional scaling, Psychometrika 85 (2) (Jun. 2020) 378–397,
+     https://doi.org/10.1007/s11336-020-09708-3.
+[33] W. Zhang, T. Yoshida, X. Tang, A comparative study of TF*IDF, LSI and multi-words for text classification, Expert Syst. Appl. 38 (3) (Mar. 2011) 2758–2765,
+     https://doi.org/10.1016/j.eswa.2010.08.066.
+[34] O. Barkan, N. Koenigstein, ITEM2VEC: neural item embedding for collaborative filtering, in: 2016 IEEE 26th International Workshop on Machine Learning for
+     Signal Processing (MLSP), Sep. 2016, pp. 1–6, https://doi.org/10.1109/MLSP.2016.7738886.
+[35] G.A. Fink, Markov models for pattern recognition: from theory to applications, in: Advances in Computer Vision and Pattern Recognition, Springer Science &
+     Business Media, London, 2014, https://doi.org/10.1007/978-1-4471-6308-4_1.
+[36] D. Herremans, C.-H. Chuan, Modeling Musical Context with Word2ve, 2017, https://doi.org/10.48550/arXiv.1706.09088 arXiv, Jun. 28.
+[37] K. Spärck Jones, IDF term weighting and IR research lessons, J. Doc. 60 (5) (Jan. 2004) 521–523, https://doi.org/10.1108/00220410410560591.
+[38] S. Robertson, Understanding inverse document frequency: on theoretical arguments for IDF, J. Doc. 60 (5) (Jan. 2004) 503–520, https://doi.org/10.1108/
+     00220410410560582.
+[39] Saihanqiqige, Application research of English scoring based on TF-IDF clustering algorithm, IOP Conf. Ser. Mater. Sci. Eng. 750 (1) (2020) 012215, https://doi.
+     org/10.1088/1757-899X/750/1/012215.
+[40] H. Zhang, W. Ni, M. Zhao, Y. Yang, Teaching resources recommendation system for K12 education, J. Comput. Appl. 34 (11) (Nov. 2014) 3353, https://doi.org/
+     10.11772/j.issn.1001-9081.2014.11.3353.
+[41] T. Mikolov, I. Sutskever, K. Chen, G.S. Corrado, J. Dean, Distributed representations of words and phrases and their compositionality, in: Advances in Neural
+     Information Processing Systems, Curran Associates, Inc., 2013. Accessed: Aug. 01, 2022. [Online]. Available: https://proceedings.neurips.cc/paper/2013/hash/
+     9aa42b31882ec039965f3c4923ce901b-Abstract.html.
+[42] A. Mnih, G.E. Hinton, A scalable hierarchical distributed language model, in: Advances in Neural Information Processing Systems, Curran Associates, Inc., 2008.
+     Accessed: Aug. 01, 2022. [Online]. Available: https://proceedings.neurips.cc/paper/2008/hash/1e056d2b0ebd5c878c550da6ac5d3724-Abstract.html.
+[43] A. Lazaridou, N.T. Pham, M. Baroni, Combining Language and vision with a multimodal skip-gram model, arXiv, Mar. 12 (2015), https://doi.org/10.48550/
+     arXiv.1501.02598.
+[44] U. Bhattacharjee, P.K. Srijith, M.S. Desarkar, Term specific TF-IDF boosting for detection of rumours in social networks, in: 2019 11th International Conference
+     on Communication Systems & Networks (COMSNETS), Jan. 2019, pp. 726–731, https://doi.org/10.1109/COMSNETS.2019.8711427.
+[45] B.A. Kuncoro, B.H. Iswanto, TF-IDF method in ranking keywords of Instagram users’ image captions, in: 2015 International Conference on Information
+     Technology Systems and Innovation (ICITSI), Nov. 2015, pp. 1–5, https://doi.org/10.1109/ICITSI.2015.7437705.
+[46] Y. Liu, C. Xu, X. Kuai, H. Deng, K. Wang, Q. Luo, Analysis of the causes of inferiority feelings based on social media data with Word2Vec, Sci. Rep. 12 (1) (Mar.
+     2022) 5218, https://doi.org/10.1038/s41598-022-09075-2.
+[47] H. Lin, N. Bu, A CNN-based framework for predicting public emotion and multi-level behaviors based on network public opinion, Front. Psychol. 13 (2022)
+     [Online]. Available: https://www.frontiersin.org/journals/psychology/articles/10.3389/fpsyg.2022.909439. (Accessed 28 February 2024).
+[48] G. Sun, A. Guo, J. Ma, J. Wei, Personal trait analysis using Word2vec based on user-generated text, in: 2019 IEEE SmartWorld, Ubiquitous Intelligence &
+     Computing, Advanced & Trusted Computing, Scalable Computing & Communications, Cloud & Big Data Computing, Internet of People and Smart City
+     Innovation, Aug. 2019, pp. 1131–1137, https://doi.org/10.1109/SmartWorld-UIC-ATC-SCALCOM-IOP-SCI.2019.00213. SmartWorld/SCALCOM/UIC/ATC/
+     CBDCom/IOP/SCI).
+[49] S.A. Crossley, K. Kyle, D.S. McNamara, The tool for the automatic analysis of text cohesion (TAACO): automatic assessment of local, global, and text cohesion,
+     Behav. Res. Methods 48 (4) (Dec. 2016) 1227–1237, https://doi.org/10.3758/s13428-015-0651-7.
+[50] T. Hastie, R. Tibshirani, J. Friedman, Overview of supervised learning, in: The Elements of Statistical Learning, Springer Series in Statistics, New York, NY, 2009,
+     pp. 9–41, https://doi.org/10.1007/978-0-387-84858-7_2. Springer New York.
+[51] C. Romero, S. Ventura, Educational data mining: a survey from 1995 to 2005, Expert Syst. Appl. 33 (1) (Jul. 2007) 135–146, https://doi.org/10.1016/j.
+     eswa.2006.04.005.
+[52] Z. Han, Q. He, M. von Davier, Predictive feature generation and selection using process data from PISA interactive problem-solving items: an application of
+     random forests, Front. Psychol. 10 (2019) 1–15, https://doi.org/10.3389/fpsyg.2019.02461.
+[53] X. Qiao, H. Jiao, Data mining techniques in analyzing process data: a didactic, Front. Psychol. 9 (2018), https://doi.org/10.3389/fpsyg.2018.02231.
+[54] A.K. Jain, Data clustering: 50 years beyond K-means, Pattern Recogn. Lett. 31 (8) (Jun. 2010) 651–666, https://doi.org/10.1016/j.patrec.2009.09.011.
+[55] B. Eichmann, F. Goldhammer, S. Greiff, L. Brandhuber, J. Naumann, Using process data to explain group differences in complex problem solving, J. Educ.
+     Psychol. 112 (8) (2020) 1546–1562, https://doi.org/10.1037/edu0000446.
+[56] S. Greiff, S. Wüstenberg, F. Avvisati, Computer-generated log-file analyses as a window into students’ minds? A showcase study based on the PISA 2012
+     assessment of problem solving, Comput. Educ. 91 (Dec. 2015) 92–105, https://doi.org/10.1016/j.compedu.2015.10.018.
+[57] Y. Han, Y. Xiao, H. Liu, Feature extraction and ability estimation of process data in the problem-solving test, Adv. Psychol. Sci. 30 (6) (Jun. 2022) 1393–1409,
+     https://doi.org/10.3724/SP.J.1042.2022.01393.
+[58] H. Liu, Y. Liu, M. Li, Analysis of process data of PISA 2012 computer-based problem solving: application of the modified multilevel mixture IRT model, Front.
+     Psychol. 9 (2018), https://doi.org/10.3389/fpsyg.2018.01372.
+[59] T. Mikolov, I. Sutskever, K. Chen, G. Corrado, J. Dean, Distributed Representations of Words and Phrases and Their Compositionality, 2013, https://doi.org/
+     10.48550/arXiv.1310.4546 arXiv, Oct. 16.
+[60] Y.A. Alsariera, Y. Baashar, G. Alkawsi, A. Mustafa, A.A. Alkahtani, N. Ali, Assessment and evaluation of different machine learning algorithms for predicting
+     student performance, Comput. Intell. Neurosci. 2022 (May 2022) 4151487, https://doi.org/10.1155/2022/4151487.
+[61] N.H. Cahyana, S. Saifullah, Y. Fauziah, A.S. Aribowo, R. Drezewski, Semi-supervised text annotation for hate speech detection using K-nearest neighbors and
+     term frequency-inverse document frequency, Int. J. Adv. Comput. Sci. Appl. 13 (10) (2022), https://doi.org/10.14569/IJACSA.2022.0131020.
+[62] M. Jawthari, V. Stoffová, Predicting students’ academic performance using a modified kNN algorithm, Pollack Period. 16 (3) (Aug. 2021) 20–26, https://doi.
+     org/10.1556/606.2021.00374.
+[63] C. Cortes, V. Vapnik, Support-vector networks, Mach. Learn. 20 (3) (Sep. 1995) 273–297, https://doi.org/10.1007/BF00994018.
+[64] M. Berland, R. Baker, P. Blikstein, Educational data mining and learning analytics: applications to constructionist research, Technol. Knowl. Learn. 19 (Jul)
+     (2014), https://doi.org/10.1007/s10758-014-9223-7.
+[65] W. Hämäläinen, M. Vinni, Comparison of machine learning methods for intelligent tutoring systems, in: Intelligent Tutoring Systems, M. Ikeda, K.D. Ashley, T.-
+     W. Chan (Eds.), Lecture Notes in Computer Science, Springer, Berlin, Heidelberg, 2006, pp. 525–534, https://doi.org/10.1007/11774303_52.
+[66] S. Saifullah, Y. Fauziah, A.S. Aribowo, Comparison of machine learning for sentiment analysis in detecting anxiety based on social media data, J. Inf. 15 (1) (Feb.
+     2021) 45, https://doi.org/10.26555/jifo.v15i1.a20111.
+[67] D.E. Rumelhart, G.E. Hinton, R.J. Williams, Learning representations by back-propagating errors, Nature 323 (Oct. 1986) 533–536, https://doi.org/10.1038/
+     323533a0.
+[68] Z.S. Harris, Distributional structure, Word 10 (2–3) (Aug. 1954) 146–162, https://doi.org/10.1080/00437956.1954.11659520.
+[69] J. Yan, Research on Word Vector Based Text Distance Calculation and its Application, MA thesis, Central China Normal University, 2017 [Online]. Available:
+     https://kns.cnki.net/KCMS/detail/detail.aspx?dbname=CMFD201801&filename=1017274400.nh.
+[70] J. Lilleberg, Y. Zhu, Y. Zhang, Support vector machines and Word2vec for text classification with semantic features, in: 2015 IEEE 14th International Conference
+     on Cognitive Informatics & Cognitive Computing (ICCI*CC), Jul. 2015, pp. 136–140, https://doi.org/10.1109/ICCI-CC.2015.7259377.
+
+
+
+
+                                                                                   21
+J. Zhou et al.                                                                                                                                Heliyon 10 (2024) e35945
+
+[71] D. Zhang, H. Xu, Z. Su, Y. Xu, Chinese comments sentiment classification based on word2vec and SVMperf, Expert Syst. Appl. 42 (4) (Mar. 2015) 1857–1863,
+     https://doi.org/10.1016/j.eswa.2014.09.011.
+[72] M. Li, Y. Liu, H. Liu, Analysis of the Problem-solving strategies in computer-based dynamic assessment: the extension and application of multilevel mixture IRT
+     model, Acta Psychol. Sin. 52 (4) (Apr. 2020) 528–540, https://doi.org/10.3724/SP.J.1041.2020.00528.
+[73] Y. Ren, F. Luo, P. Ren, D. Bai, X. Li, H. Liu, Exploring multiple goals balancing in complex problem solving based on log data, Front. Psychol. 10 (2019), https://
+     doi.org/10.3389/fpsyg.2019.01975.
+
+
+
+
+                                                                                   22
+

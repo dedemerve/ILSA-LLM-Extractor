@@ -1,183 +1,183 @@
-# Gold Standard Quality Report
+# Gold Standard Quality Report (Updated)
 
 **Date:** 2026-10-05  
-**Scope:** ilsa_survey_articles corpus (targeted ILSA ML survey, N=142 JSON including duplicates; N=132 unique after removing `(1)` copy files)  
-**Purpose:** Assess suitability of existing LLM-extracted JSON records as training labels for domain-specific fine-tuning.
+**Version:** v2 — replaces earlier version from commit 40de9da  
+**Data:** `outputs/finetuning/data/gold_standard.csv`
 
 ---
 
-## 1. Candidate Study Population
+## ⚠ TERMINOLOGY NOTE
 
-| Count | Description |
-|------:|-------------|
-| 142 | Total JSON files in `outputs/ilsa_survey_articles/json/` |
-| 10 | Duplicate `(1)` copies (excluded) |
-| **132** | Unique JSON records analyzed |
-| 130 | Records with DOI present (98.5%) |
-| 2 | Records without DOI |
-| 128 | Records with `main_findings` populated (97.0%) |
-| 4 | Records with empty `main_findings` |
-| 112 | Records with non-empty `top_predictors` in at least one finding |
-| 203 | Total finding rows across all 132 records |
-| 105 | Survey JSONs mapping to canonical study_ids in evidence_matrix_full_v2 |
-| 27 | Survey JSONs NOT appearing in canonical evidence matrix |
+The previous version of this report used the term "gold standard" for automatically validated records. This was incorrect.
+
+**Correct terminology from this version forward:**
+
+- `silver_verified_candidate` — source available + canonical match + auto-clean Tier-1/2 schema
+- `silver_only` — canonical match but source unavailable or schema requires manual review
+- `excluded` — no main_findings or not in canonical evidence matrix
+- `gold_verified` — ONLY after human annotation (not yet performed)
+
+**No records are gold_verified as of 2026-10-05.**
 
 ---
 
-## 2. Label Source Assessment
+## 1. Corpus Summary
 
-The existing JSON extractions were produced by the GPT-based extractor (`src/extractors/gpt_extractor.py`) using the ILSAArticleMetadata schema (Pydantic v2). **No human annotation has been applied post-hoc.** The quality of labels depends on:
-
-- Extraction prompt quality (structured, schema-constrained via Pydantic validation)
-- Automated Pydantic validators (bool coercion, NA guard, category Literal enforcement)
-- Deterministic post-processing in `build_evidence_matrix_v2.py` and `expand_evidence_matrix.py`
-
-**No record in this corpus has been human-verified beyond automated validation.**
-
-### Validation tiers applied
-
-| Tier | Mechanism | Coverage |
-|------|-----------|---------- |
-| Schema validation | Pydantic field validators, Literal types | 100% |
-| Bool coercion | `coerce_optional_bool()` | 100% |
-| NA guard | `variable_code` cannot be 'N/A' | 100% (confounder records) |
-| DOI prefix stripping | validator `strip_doi_prefix` | 130/132 |
-| Category enforcement | 13-value Literal for confounder.category | 100% |
-| Canonical mapping | RAW_TO_CANONICAL dict | ~79.5% (105/132) |
-| Human review | None | 0% |
+| Metric | Count |
+|--------|------:|
+| Total unique JSON files analyzed | 132 |
+| Records with main_findings | 128 |
+| Records with top_predictors | 112 |
+| Records with DOI | 130 |
+| Records in canonical evidence matrix | 105 |
+| Source PDFs recovered | 10 |
+| Source texts extracted | 10 |
+| **silver_verified_candidate** | **9** |
+| silver_only (source unavailable) | 103 |
+| excluded | 20 |
 
 ---
 
-## 3. Field-Level Coverage
+## 2. Exclusion Breakdown
 
-### Plausible values handling distribution (N=132)
-
-| Value | N | % |
-|-------|--:|--:|
-| not_applicable | 79 | 59.8% |
-| rubin_rules | 30 | 22.7% |
-| single_pv | 16 | 12.1% |
-| average_pv | 4 | 3.0% |
-| irt_theta | 1 | 0.8% |
-| wle | 1 | 0.8% |
-| all_pv | 1 | 0.8% |
-
-**Note:** `rubin_rules` and non-standard values (`irt_theta`, `wle`, `all_pv`) are outside the current schema Literal definition (`single_pv|all_pvs|not_applicable|not_reported`). These represent schema drift or LLM free-form output that passed at extraction time. They must be harmonized before use as training labels.
-
-### Missing data handling distribution (N=132)
-
-| Value | N | % |
-|-------|--:|--:|
-| not_reported | 65 | 49.2% |
-| multiple_imputation | 26 | 19.7% |
-| knn_imputation | 13 | 9.8% |
-| listwise_deletion | 16 | 12.1% |
-| mean_imputation | 8 | 6.1% |
-| single_imputation | 4 | 3.0% |
-
-**Note:** `knn_imputation` and `single_imputation` are outside current schema Literal definition. Schema drift present.
-
-### Research design type distribution (N=132)
-
-| Value | N | % |
-|-------|--:|--:|
-| predictive | 83 | 62.9% |
-| exploratory | 47 | 35.6% |
-| causal_observational | 2 | 1.5% |
-
-**Note:** `causal_observational` is outside current Literal definition (`cross_sectional|longitudinal|experimental|not_reported`). Schema drift present.
-
-### Student weights used (N=132)
-
-| Value | N | % |
-|-------|--:|--:|
-| False (no weights) | 86 | 65.2% |
-| True (weights applied) | 17 | 12.9% |
-| Unknown/None | 29 | 22.0% |
-
-### Program distribution in findings (N=203 finding rows)
-
-| Program | N findings |
-|---------|----------:|
-| PISA | 143 |
-| TIMSS | 15 |
-| PIRLS | 9 |
-| PIAAC | 8 |
-| TALIS | 2 |
-| ICCS | 1 |
-| ICILS | 1 |
-
-**Strong PISA dominance.** Non-PISA programs are rare in this sub-corpus.
+| Reason | N |
+|--------|--:|
+| Not in canonical evidence matrix (DOI not in evidence_matrix_full_v2.csv) | 16 |
+| No main_findings | 4 |
+| Total excluded | **20** |
 
 ---
 
-## 4. Label Quality Assessment
+## 3. Silver-Only Breakdown
 
-### Issues identified
+| Reason | N |
+|--------|--:|
+| Source text unavailable (no PDF) | 112 |
+| Tier-1/2 schema normalization needs manual review | ~3 |
+| No top_predictors | ~1 |
+| Total silver_only | **103** |
 
-| Issue | Count | Action |
-|-------|------:|--------|
-| Schema drift (non-Literal PV values) | ~37 records | flag as `needs_review` |
-| Schema drift (non-Literal missing_data) | ~17 records | flag as `needs_review` |
-| Schema drift (non-Literal research_design) | 2 records | flag as `needs_review` |
-| Not in canonical evidence matrix | 27 records | flag as `excluded_from_gold` |
-| No main_findings | 4 records | `excluded_from_gold` |
-| No DOI | 2 records | flag, keep if title dedup clean |
-| Human verification | 0 records | No record is human-verified |
-
-### Gold standard construction rules
-
-Since NO records have human review, the gold standard is constructed by:
-
-1. **Including** records that: (a) passed Pydantic schema validation, (b) have DOI, (c) have non-empty `top_predictors`, (d) map to the canonical evidence matrix (105/132), (e) have NO schema drift in Tier-1 fields (program, cycle, target_variable, predictor, direction)
-2. **Flagging as `needs_review`**: records with non-standard Literal values in any Tier-1 field
-3. **Excluding**: records with empty main_findings, not in canonical mapping, or with contradictory evidence
-
-### Estimated gold standard size
-
-| Category | N | Label |
-|----------|--:|-------|
-| Candidate records | 132 | — |
-| No main_findings | 4 | `excluded_from_gold` |
-| Not in canonical evidence matrix | 27 | `excluded_from_gold` |
-| Schema drift (estimated overlap) | ~15 additional | `needs_review` |
-| **Estimated gold standard** | **~86** | `gold` |
-| **Needs review** | **~20** | `needs_review` |
-| **Excluded** | **~26** | `excluded_from_gold` |
-
-**This estimate requires verification.** The actual gold standard CSV must be built by running the construction script.
+Note: some records have multiple reasons (source unavailable AND schema drift).
 
 ---
 
-## 5. Source Text Availability — Critical Constraint
+## 4. Silver-Verified Candidates — Detailed
 
-For supervised extraction fine-tuning, each training example requires a `(source_text, structured_output)` pair. The current corpus only stores the structured output (JSON). Original PDF text was consumed during extraction but is NOT stored in the JSON files.
+These 9 records pass all automated checks AND have source text available. They are candidates for human annotation. They are NOT yet gold_verified.
 
-| Source text status | N records (estimated) |
-|--------------------|----------------------:|
-| `source_available` (PDF re-processable) | Unknown — requires PDF file audit |
-| `source_missing` (no PDF, JSON only) | Unknown |
-| `source_partial` (summary fields only) | 132 (standardized_conclusion, outcome_summary available) |
+| Study | DOI | Programs | N findings | PV handling | Missing data |
+|-------|-----|----------|----------:|-------------|--------------|
+| 1. Lee & Lee (2025) | 10.5281/zenodo.16778072 | TIMSS | 1 | not_applicable | not_reported |
+| 10. Aydoğan & Tat (2025) | 10.21031/epod.1525454 | PISA | 1 | not_applicable | listwise_deletion |
+| 3. Zhou et al. (2024) | 10.1016/j.heliyon.2024.e35945 | PISA | 1 | not_applicable | not_reported |
+| 4. Zheng et al. (2023) | 10.1007/s10639-023-11908-0 | PISA | 1 | not_applicable | not_reported |
+| 5. Song & Cutumisu (2024) | 10.1080/09500693.2024.2359099 | TIMSS | 1 | not_applicable | not_reported |
+| 6. Elouafi (2025) | 10.3390/info16060480 | TIMSS | 1 | not_applicable | not_reported |
+| 7. Alas & Tezer (2024) | 10.3390/su16177806 | PISA | 1 | not_applicable | not_reported |
+| 8. Acıslı-Celik & Yesilkanat (2023) | 10.1007/s00521-023-08901-6 | PISA | 1 | not_applicable | not_reported |
+| 9. Alkan et al. (2025) | 10.1371/journal.pone.0326121 | PISA | 3 | not_applicable | not_reported |
 
-**Without source text, supervised fine-tuning in the strict sense is not possible.** Alternative approaches:
+### Program distribution
 
-1. **Re-process PDFs** if originals are present in `data/` directory
-2. **Use silver-label self-training**: generate new LLM outputs on held-out PDFs, use existing extractions as reference
-3. **Instruction fine-tuning on schema**: use structured JSON outputs alone as target, with schema description as context
+| Program | N studies | % |
+|---------|----------:|--:|
+| PISA | 7 | 77.8% |
+| TIMSS | 3 | 33.3% |
+| PIRLS | 0 | 0% |
+| TALIS | 0 | 0% |
+| ICILS | 0 | 0% |
+| ICCS | 0 | 0% |
+| PIAAC | 0 | 0% |
 
-This limitation MUST be resolved before constructing `train.jsonl`.
+**PISA dominance: 77.8%.** Non-PISA programs are severely under-represented.
+
+### PV handling distribution (silver-verified candidates)
+
+All 9 records have `plausible_values_handling = not_applicable`. This means these studies did NOT use standard ILSA plausible values procedures — they typically used single PV, WLE scores, or dichotomized outcomes. This is itself a methodological signal relevant to canonical mapping.
 
 ---
 
-## 6. Recommended Next Steps
+## 5. Full Corpus Field Distributions (N=132)
 
-1. Audit PDF availability in `data/` to determine `source_available` count
-2. Harmonize schema drift values before labeling
-3. Build `outputs/finetuning/gold_standard.csv` with `label_quality` column
-4. If source texts available: construct `(source_text → JSON)` pairs for ~86 gold records
-5. If source texts unavailable: document as limitation, proceed with schema-only instruction format
+### Plausible values handling
+
+| Value | N | % | Schema valid |
+|-------|--:|--:|:-------------|
+| not_applicable | 79 | 59.8% | ✓ |
+| rubin_rules | 30 | 22.7% | ✗ → normalized to all_pvs |
+| single_pv | 16 | 12.1% | ✓ |
+| average_pv | 4 | 3.0% | ✗ → normalized to all_pvs |
+| irt_theta | 1 | 0.8% | ✗ → not_applicable (manual review) |
+| wle | 1 | 0.8% | ✗ → not_applicable (manual review) |
+| all_pv | 1 | 0.8% | ✗ → normalized to all_pvs |
+
+### Missing data handling
+
+| Value | N | % | Schema valid |
+|-------|--:|--:|:-------------|
+| not_reported | 65 | 49.2% | ✓ |
+| multiple_imputation | 26 | 19.7% | ✓ |
+| listwise_deletion | 16 | 12.1% | ✓ |
+| knn_imputation | 13 | 9.8% | ✗ → normalized to multiple_imputation |
+| mean_imputation | 8 | 6.1% | ✓ |
+| single_imputation | 4 | 3.0% | ✗ → mean_imputation (manual review) |
+
+### Research design type
+
+| Value | N | % | Schema valid |
+|-------|--:|--:|:-------------|
+| predictive | 83 | 62.9% | ✗ → cross_sectional (manual review) |
+| exploratory | 47 | 35.6% | ✗ → cross_sectional (manual review) |
+| causal_observational | 2 | 1.5% | ✗ → cross_sectional (manual review) |
+
+**All 132 records have schema-drift research_design_type.** This is a systemic LLM output issue — the current schema Literal values (`cross_sectional|longitudinal|experimental|not_reported`) do not match the labels the LLM learned to produce. This is a Tier-3 field and does not block silver_verified_candidate status.
 
 ---
 
-*Generated by: manual inspection of ilsa_survey_articles corpus*  
-*Date: 2026-10-05*
+## 6. Class Imbalance Assessment
+
+### For the 9 silver-verified candidates
+
+N = 9 is too small for train/validation/test splitting. Minimum viable training set is ~50–100 supervised examples for reliable SFT.
+
+**Current situation is insufficient for standard supervised fine-tuning.**
+
+### Recommended paths forward
+
+| Option | Feasibility | Notes |
+|--------|-------------|-------|
+| Obtain additional PDFs from authors or institutional access | Preferred | Would expand N to 64–105 if successful |
+| Use 9 candidates for few-shot prompt evaluation only | Viable now | No gradient-based training required |
+| Use silver_only labels with schema normalization applied | Possible but risky | LLM labels without source-text verification |
+| Schema-constrained instruction evaluation (no training) | Viable now | Baseline vs alternative prompts |
+
+---
+
+## 7. Rare Category Assessment
+
+| Construct | N studies (canonical evidence) | In silver_verified |
+|-----------|-------------------------------:|:--------------------|
+| SES_COMPOSITE | 54 | yes |
+| GENDER | 50 | partial |
+| SCHOOL_BELONGING | 27 | no |
+| TEACHER_SELF_EFFICACY_CLS_MGMT | 21 | no |
+| PARENTAL_EDUCATION | 7 | yes (TIMSS studies) |
+| HOME_LITERACY_ACTIVITIES | 1 | no |
+| JOB_SATISFACTION_PROFESSION | 1 | no |
+| PRIOR_ACHIEVEMENT | 1 | no |
+
+Teacher constructs (TALIS), literacy constructs (PIRLS), civic constructs (ICCS/ICILS) are entirely absent from the silver-verified set.
+
+---
+
+## 8. Annotation Priority Queue
+
+If human annotation is to proceed, prioritize:
+
+1. Articles 2–9 (already have source text): 9 candidates
+2. If additional PDFs obtained: TIMSS-heavy articles first (to reduce PISA dominance)
+3. Any article covering PIRLS/TALIS/ICILS/ICCS/PIAAC
+
+---
+
+*Generated: 2026-10-05 | Supersedes audit/gold_standard_quality_report.md from commit 40de9da*
