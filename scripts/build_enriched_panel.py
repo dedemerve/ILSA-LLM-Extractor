@@ -10,7 +10,7 @@ Her (country_iso3, cycle) için:
     → lag-1 olarak (bir önceki döngüdeki kovaryat değeri)
 
 Döngüler arası eşleştirme:
-  PISA  : 2015 → 2022 → 2025  (3-7 yıl aralık)
+  PISA  : 2000… → 2015 → 2018 → 2022 → 2025  (available cycles)
   TIMSS : 2003 → 2007 → 2011 → 2015 → 2019  (4 yıl aralık)
   PIRLS : 2011 → 2016 → 2021  (5 yıl aralık)
 
