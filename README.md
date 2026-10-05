@@ -1,6 +1,8 @@
-# ILSA Literature Extraction Pipeline
+# ILSA Literature Extraction & Forecasting Pipeline
 
-Structured metadata extraction from academic PDFs on International Large-Scale Assessments (PISA, TIMSS, etc.) and machine learning, with a four-stage pipeline that ends in literature-informed country-level forecasting. Core stack: **PyMuPDF** for text, **OpenAI** for JSON extraction, **Pydantic** schema validation, **Ridge regression** + **SHAP** for forecasting and explainability.
+Structured metadata extraction from academic and official PDFs on International Large-Scale Assessments (PISA, TIMSS, PIRLS, ICCS, ICILS, PIAAC, TALIS), matched to OECD/IEA microdata, ending in literature-informed country-level forecasting.
+
+Core stack: **PyMuPDF** → **OpenAI** JSON extraction → **Pydantic** validation → **Ridge** (M0/M1) + **SHAP**.
 
 ## Setup
 
@@ -15,20 +17,81 @@ The root `requirements.txt` is the full dependency lockfile. For extraction only
 
 ## Pipeline Overview
 
-| Stage | Script | Input | Output |
-|-------|--------|-------|--------|
-| 1 — Extraction | `ilsa_pipeline/scripts/run_pipeline.py` | PDFs in `data/` | `output/json/*.json` |
-| 2 — Standardization | `scripts/build_structured_meta_analysis.py` | JSON outputs | `outputs/ILSA_Meta_Analysis_Dataset.xlsx` |
-| 3 — RAG Synthesis | `scripts/query_engine.py` | Standardized records | `outputs/final_knowledge_synthesis.csv` |
-| 4a — Country estimates | `scripts/build_country_estimates.py` | ILSA microdata | `outputs/stage4/country_estimates.csv` |
-| 4b — Predictor weights | `scripts/compute_predictor_weights.py` | Knowledge synthesis | `outputs/stage4/predictor_weights.csv` |
-| 4c — LOCO Forecasting | `scripts/run_loco_forecasting.py` | Estimates + weights | `outputs/stage4/loco_*.csv`, `shap_values.csv` |
+| Stage | Role | Key scripts | Primary outputs |
+|-------|------|-------------|-----------------|
+| 1 — Extraction | PDF → `ILSAArticleMetadata` JSON | `ilsa_pipeline/scripts/run_pipeline.py`, `scripts/run_batch_folders.py` | `outputs/{OECD,IEA,Scopus,Web of Science,ilsa_survey_articles}/**/json/` |
+| 2 — Standardization | Dedup, Excel, taxonomy | `build_tabular_dataset.py`, `build_canonical_taxonomy.py` | `outputs/ILSA_*.xlsx`, `taxonomy_map.json` |
+| 3 — Synthesis | Knowledge aggregates | `build_semantic_knowledge_base_v2.py`, `query_engine.py` | `final_knowledge_synthesis*.csv` |
+| 4 — Country estimates | Microdata → country means | `build_country_estimates.py`, `compute_predictor_weights.py` | `outputs/stage4/` |
+| **5 — Forecasting** | Evidence × panel × LOCO/forward | See Stage 5 below | **`outputs/stage5/` (source of truth)** |
 
-## Running
+Expert task inventory and completion status: [`docs/expert_ilsa_pipeline_checklist.md`](docs/expert_ilsa_pipeline_checklist.md).
 
-### Stage 1 — Evidence Extraction
+## Stage 5 — Literature-informed forecasting (current)
 
-Main orchestration (batch PDFs → JSON):
+```
+effect_sizes / evidence_matrix / W_j
+        +
+country estimates + lag covariates
+        ↓
+enriched_panel → LOCO (M0/M1) / hold-out / diagnostic
+        ↓
+forward_predictions + per_country_accuracy
+```
+
+| Program | Validation | Forward cycle | Per-country accuracy |
+|---------|------------|---------------|----------------------|
+| PISA | Expanding LOCO (1 Ridge fold: 2025) | 2028 | Yes |
+| TIMSS G8 | LOCO (6 folds) | 2027 | Yes |
+| TIMSS G4 | LOCO (5 folds) | 2027 | Yes |
+| PIRLS | LOCO (3 folds) | 2026 | Yes |
+| ICCS | LOCO (1 fold: 2022, exploratory) | 2029 | Yes (9 countries) |
+| ICILS | Pooled hold-out (test=2023) | 2028 | Pending hold-out pred regen |
+| PIAAC | In-sample diagnostic only | — | — (not OOS-comparable) |
+
+Models: **M0** Ridge (unweighted), **M1** Ridge (features × √W_j), plus persistence / AR(1) baselines in LOCO.
+
+### Stage 5 commands (order)
+
+```bash
+# Evidence & weights
+python scripts/extract_effect_sizes.py
+python scripts/build_evidence_matrix.py
+python scripts/compute_predictor_weights_v2.py
+python scripts/build_literature_priority.py
+python scripts/build_canonical_crosswalk.py
+
+# Microdata panels
+python scripts/build_country_estimates.py
+python scripts/build_covariate_estimates.py
+python scripts/build_enriched_panel.py
+
+# Core LOCO + forward (writes outputs/stage5/)
+python scripts/run_loco_forecasting.py
+
+# Program branches
+python scripts/build_iccs_loco.py
+python scripts/run_icils_piaac_holdout.py
+python scripts/generate_icils_forward_predictions.py
+
+# Accuracy table
+python scripts/build_per_country_accuracy.py
+```
+
+### Key Stage 5 outputs
+
+| File | Description |
+|------|-------------|
+| `forward_predictions.csv` | Next-cycle forecasts (PISA/TIMSS/TIMSS_G4/PIRLS/ICILS) |
+| `iccs_forward_predictions.csv` | ICCS → 2029 |
+| `loco_results.csv` / `loco_predictions.csv` | Temporal fold metrics and predictions |
+| `per_country_accuracy.csv` | Country-level MAE/RMSE (M0/M1) |
+| `validation_design_summary.csv` | Per-program validation design decisions |
+| `effect_sizes.csv` | 3,083 rows / 577 papers (Scopus+WoS+survey) |
+
+`predicted_cycle` uses official intervals (PISA 3y, TIMSS 4y, PIRLS 5y, ICILS 5y) with IEA override for ICCS 2029 — not mean historical gaps.
+
+## Running Stage 1 — Evidence Extraction
 
 ```bash
 python ilsa_pipeline/scripts/run_pipeline.py \
@@ -38,53 +101,13 @@ python ilsa_pipeline/scripts/run_pipeline.py \
   --resume
 ```
 
-Targeted batch: `ilsa_pipeline/scripts/extract_targeted.py`
-
-The extraction prompt is at `prompts/extraction_system_prompt.txt`.
-
-### Stage 4 — Country-Level Forecasting
-
-Run stages in order:
-
-```bash
-# 4a: compute country-level estimates from ILSA microdata
-python scripts/build_country_estimates.py
-
-# 4b: derive literature-based predictor priority weights
-python scripts/compute_predictor_weights.py
-
-# 4c: run LOCO forecasting (M0 / M1 / M2) + SHAP
-python scripts/run_loco_forecasting.py
-
-# optionally restrict to specific programs or domains:
-python scripts/run_loco_forecasting.py --programs PISA TIMSS --domains mathematics
-```
-
-## Stage 4 Outputs
-
-All files land in `outputs/stage4/`:
-
-| File | Description |
-|------|-------------|
-| `country_estimates.csv` | Country-level mean and SE per program, cycle, domain |
-| `predictor_weights.csv` | Literature-derived priority weights ($w_j = F_j D_j C_j$) per canonical predictor |
-| `loco_results.csv` | RMSE, MAE, R², Spearman per fold × model (M0/M1/M2); Diebold–Mariano rows for programs with ≥ 3 folds |
-| `loco_predictions.csv` | Per-country, per-cycle predictions for all three models |
-| `shap_values.csv` | Mean absolute SHAP values for M1 per program × domain × feature (requires `shap` package) |
-
-### Models
-
-| Model | Description |
-|-------|-------------|
-| M0 | Ridge, no literature weighting ($w_j = 1\ \forall j$) |
-| M1 | Ridge, features scaled by $\sqrt{w_j}$ from literature weights |
-| M2 | Naive persistence ($\hat{y}_{t+1} = y_t$) |
-
-Validation uses **Leave-One-Cycle-Out (LOCO)** temporal cross-validation. The **Diebold–Mariano** test (Harvey–Leybourne–Newbold corrected) compares M1 vs M2 for programs with at least 3 evaluation folds. **SHAP** values are computed via `shap.LinearExplainer` on the fitted M1 Ridge model.
+Targeted batch: `ilsa_pipeline/scripts/extract_targeted.py`  
+Corpus batch (Desktop folder tree): `scripts/run_batch_folders.py`  
+Prompt: `prompts/extraction_system_prompt.txt`
 
 ## Dataset
 
-The structured outputs are publicly available on HuggingFace:
+Public structured outputs on HuggingFace:
 
 **[dedemerve/ILSA-LLM-Extractor-Dataset](https://huggingface.co/datasets/dedemerve/ILSA-LLM-Extractor-Dataset)**
 
@@ -99,10 +122,12 @@ The structured outputs are publicly available on HuggingFace:
 python scripts/upload_to_hf.py
 ```
 
-## Extraction Outputs
+## What this repo does *not* claim
 
-- `output/json/*.json`: Per PDF, a single object with top-level keys `metadata` and `data` (same shape as `ILSAArticleMetadata`). Pipeline failures use a sentinel prefix in `data.outcome_summary` so `--resume` can retry.
-- Parquet / SQLite helpers: `build_master_parquet`, `build_sqlite_database`, `StorageManager` in `ilsa_pipeline/utils/storage.py`.
+- Scopus/WoS coverage is **not** the universe of all ILSA publications (2020–2026 AI/ML-focused queries).
+- OECD/IEA JSONs are extracted but **not** yet folded into the effect-size W_j path.
+- PIAAC MAEs are diagnostic; they are not cross-program LOCO-comparable.
+- ~67% of effect-size predictors currently map to `OTHER` — construct harmonization is ongoing.
 
 ## License
 

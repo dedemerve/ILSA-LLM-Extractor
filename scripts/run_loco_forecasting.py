@@ -1,31 +1,24 @@
 #!/usr/bin/env python3
 """
-Stage 4 — Modül 3: LOCO Forecasting (M0 / M1 / M2)
+Stage 5 — LOCO Forecasting (M0 / M1 / M2 / M3) + forward predictions
+
+When outputs/stage5/enriched_panel.csv (or predictor_weights_v2.csv) exists,
+this script reads Stage 5 inputs and writes Stage 5 outputs. Otherwise it
+falls back to Stage 4 paths.
 
 Modeller:
-  M0  — Ridge (veri güdüimlü): lag özellikleri, literatür ağırlığı yok
+  M0  — Ridge (veri güdümlü): lag özellikleri, literatür ağırlığı yok
   M1  — Ridge (literatür bilgili): özellikler sqrt(w_j) ile ölçeklenir
-  M2  — Persistence: son gözlenen cycle ortalamasını tahmin olarak kullan
+  M2  — Persistence: son gözlenen cycle skorunu tahmin olarak kullan
+  M3  — AR(1) baseline
 
 Temporal doğrulama:
-  LOCO (Leave-One-Cycle-Out): her cycle c için, c'den önceki tüm
-  cycle'lar train seti; c test seti. En az 1 train cycle gerekir.
+  LOCO (Leave-One-Cycle-Out / expanding window): her cycle c için,
+  c'den önceki çiftler train; c test.
 
-Özellik seti:
-  Her (program, domain) için, test cycle'ından önceki en son
-  gözlenen ülke ortalaması (lag-1 özelliği).
-  Çapraz-program özellikleri: aynı domain'deki diğer programların
-  lag-1 ortalamaları (program × domain çiftleri).
-
-Literatür ağırlığı eşlemesi (M1):
-  Math_Achievement    → program=PISA/TIMSS, domain=mathematics
-  Reading_Achievement → program=PIRLS/PISA, domain=reading
-  Science_Achievement → program=PISA/TIMSS, domain=science
-
-Çıktılar:
-  outputs/stage4/loco_results.csv      — fold × model metrikleri
-  outputs/stage4/loco_predictions.csv  — her tahmin satırı
-  outputs/stage4/shap_values.csv       — M1 SHAP global önem (program × domain × özellik)
+predicted_cycle:
+  Official intervals (PISA=3, TIMSS/TIMSS_G4=4, PIRLS=5, ICILS=5)
+  with IEA override ICCS→2029. Mean historical gaps are not used.
 """
 
 from __future__ import annotations
@@ -69,6 +62,21 @@ log = logging.getLogger(__name__)
 
 # Ridge alpha grid (cross-validated)
 ALPHA_GRID = [0.01, 0.1, 1.0, 10.0, 100.0, 1000.0]
+
+# Official / announced cycle intervals (years). Mean historical gaps are
+# unreliable for irregular calendars (e.g. PISA 2015→2022→2025).
+PROGRAM_CYCLE_INTERVAL: dict[str, int] = {
+    "PISA": 3,
+    "TIMSS": 4,
+    "TIMSS_G4": 4,
+    "PIRLS": 5,
+    "ICILS": 5,
+    "ICCS": 7,  # fallback; IEA announced ICCS 2029 overrides when last=2022
+}
+# Absolute next-cycle overrides (IEA/OECD announcements beat interval math)
+OFFICIAL_NEXT_CYCLE: dict[str, int] = {
+    "ICCS": 2029,
+}
 
 # Program–domain → knowledge_synthesis canonical variable eşlemesi
 _DOMAIN_TO_VAR: dict[tuple[str, str], str] = {
@@ -769,8 +777,17 @@ def predict_forward(
             continue
 
         last_cycle = cycles[-1]
-        gaps = [cycles[k] - cycles[k-1] for k in range(1, len(cycles))]
-        next_cycle = last_cycle + int(round(sum(gaps) / len(gaps)))
+        if prog in OFFICIAL_NEXT_CYCLE:
+            next_cycle = OFFICIAL_NEXT_CYCLE[prog]
+        elif prog in PROGRAM_CYCLE_INTERVAL:
+            next_cycle = last_cycle + PROGRAM_CYCLE_INTERVAL[prog]
+        else:
+            gaps = [cycles[k] - cycles[k - 1] for k in range(1, len(cycles))]
+            next_cycle = last_cycle + int(round(sum(gaps) / len(gaps)))
+            log.warning(
+                "predicted_cycle: %s has no official interval; using mean gap → %d",
+                prog, next_cycle,
+            )
 
         score_cols = [f for f in all_feature_cols if not f.startswith("lag_")]
         cov_cols   = [f for f in all_feature_cols if f.startswith("lag_")]
