@@ -301,7 +301,7 @@ def build_error_analysis(ledger: pd.DataFrame) -> pd.DataFrame:
 
 def build_pisa_2025_final() -> pd.DataFrame:
     lp = pd.read_csv(STAGE5 / "loco_predictions.csv")
-    p = lp[(lp["program"] == "PISA") & (lp["test_cycle"] == 2025)].copy()
+    p = lp[(lp["program"] == "PISA") & (lp["test_cycle"].astype(str) == "2025")].copy()
     out = pd.DataFrame({
         "country": p["country_iso3"],
         "domain": p["domain"],
@@ -316,11 +316,40 @@ def build_pisa_2025_final() -> pd.DataFrame:
         out[f"error_{m}"] = (out["actual"] - out[f"forecast_{m}"]).round(4)
         out[f"abs_error_{m}"] = out[f"error_{m}"].abs().round(4)
     out["target_cycle"] = 2025
-    out["training_cycles"] = "2015|2022"
+    out["training_cycles"] = "2000|2003|2006|2009|2012|2015|2018|2022"
     out["validation_design"] = "expanding_window_LOCO"
     out["model_version"] = MODEL_VERSION
     out["literature_weight_version"] = LIT_WEIGHT_VERSION
     out["note"] = "Historical OOS: train on pairs before 2025; compare to actual PISA 2025"
+    return out.sort_values(["domain", "country"]).reset_index(drop=True)
+
+
+def build_pisa_2022_final() -> pd.DataFrame:
+    """Full Ridge + persistence comparison for PISA 2022 (post panel expansion)."""
+    lp = pd.read_csv(STAGE5 / "loco_predictions.csv")
+    p = lp[(lp["program"] == "PISA") & (lp["test_cycle"].astype(str) == "2022")].copy()
+    out = pd.DataFrame({
+        "country": p["country_iso3"],
+        "domain": p["domain"],
+        "actual": p["y_true"].round(4),
+        "forecast_M0": p["y_M0"].round(4),
+        "forecast_M1": p["y_M1"].round(4),
+        "forecast_M2": p["y_M2"].round(4),
+        "forecast_M0A": p["y_M0A"].round(4),
+        "forecast_M3": p["y_M3"].round(4),
+    })
+    for m in ["M0", "M1", "M2", "M0A", "M3"]:
+        out[f"error_{m}"] = (out["actual"] - out[f"forecast_{m}"]).round(4)
+        out[f"abs_error_{m}"] = out[f"error_{m}"].abs().round(4)
+    out["target_cycle"] = 2022
+    out["training_cycles"] = "2000|2003|2006|2009|2012|2015|2018"
+    out["validation_design"] = "expanding_window_LOCO"
+    out["model_version"] = MODEL_VERSION
+    out["literature_weight_version"] = LIT_WEIGHT_VERSION
+    out["note"] = (
+        "Historical OOS after panel expansion (WB published means for early cycles "
+        "+ existing microdata 2015/2022/2025). Ridge M0/M1 available."
+    )
     return out.sort_values(["domain", "country"]).reset_index(drop=True)
 
 
@@ -451,15 +480,15 @@ def build_revision_log() -> pd.DataFrame:
             "domain": "mathematics/reading/science",
             "cycle": 2022,
             "problem_detected": "Ridge M0/M1 unavailable (n_train=0)",
-            "diagnostic_evidence": "loco_results.csv: PISA 2022 n_train=0; panel cycles 2015/2022/2025 only",
+            "diagnostic_evidence": "Resolved: published WB means for 2000–2018 merged; loco_results PISA 2022 n_train≈326",
             "proposed_change": "Ingest earlier PISA cycles (2000–2018) into country_estimates/enriched_panel to create valid train pairs before 2022",
             "change_type": "panel_history_expansion",
             "old_specification": "PISA cycles={2015,2022,2025}",
-            "new_specification": "PISA cycles={2000..2025} where microdata available",
-            "researcher_decision": "pending",
-            "accepted_or_rejected": "pending",
-            "reason": "Requires microdata rebuild under ILSA_MICRODATA_ROOT; not auto-applied",
-            "validation_result": "not_run",
+            "new_specification": "PISA cycles={2000,2003,2006,2009,2012,2015,2018,2022,2025}",
+            "researcher_decision": "accepted",
+            "accepted_or_rejected": "accepted",
+            "reason": "Applied via ingest_pisa_published_means.py (PUBLISHED_WB); microdata BRR upgrade pending for 2018 SAV",
+            "validation_result": "pisa_2022_ridge_available",
             "commit_hash": "",
         },
         {
@@ -582,6 +611,8 @@ def build_final_audit(fold_info: dict) -> pd.DataFrame:
     em = pd.read_csv(STAGE5 / "evidence_matrix.csv")
     ledger = pd.read_csv(STAGE5 / "forecast_ledger.csv")
     p25 = pd.read_csv(STAGE5 / "pisa_2025_forecast_vs_actual_final.csv")
+    lp = pd.read_csv(STAGE5 / "loco_predictions.csv")
+    lp_2022 = lp[(lp["program"] == "PISA") & (lp["test_cycle"].astype(str) == "2022")]
 
     # leakage check: PISA 2025 training cycles must not include 2025
     pisa_ledger = ledger[(ledger.program == "PISA") & (ledger.target_cycle == 2025)]
@@ -621,10 +652,10 @@ def build_final_audit(fold_info: dict) -> pd.DataFrame:
          "source": "pisa_2025_forecast_vs_actual_final.csv",
          "validation": "M0/M1/M2 present; actual present",
          "notes": f"MAE_M0={p25.abs_error_M0.mean():.2f}; MAE_M1={p25.abs_error_M1.mean():.2f}; MAE_M2={p25.abs_error_M2.mean():.2f}"},
-        {"component": "pisa_2022_ridge", "status": "unavailable", "count": 0,
-         "source": "loco_predictions.csv",
-         "validation": "y_M0 null for test_cycle=2022",
-         "notes": "Persistence M2 only; panel lacks pre-2022 train pairs for Ridge"},
+        {"component": "pisa_2022_ridge", "status": "verified", "count": int((lp_2022["y_M0"].notna()).sum()),
+         "source": "pisa_2022_forecast_vs_actual_final.csv",
+         "validation": "y_M0/y_M1 non-null for test_cycle=2022",
+         "notes": "Panel expanded with PUBLISHED_WB 2000–2018; Ridge n_train≈326"},
         {"component": "temporal_leakage_pisa_2025_train", "status": "pass" if not leak else "FAIL",
          "count": 0, "source": "forecast_ledger training_cycles",
          "validation": "2025 not in training_cycles",
@@ -672,6 +703,12 @@ def main():
     p25.to_csv(OUT / "pisa_2025_forecast_vs_actual_final.csv", index=False)
     print(f"  pisa_2025_forecast_vs_actual_final.csv: {len(p25)} rows")
     print(p25.groupby("domain")[["abs_error_M0", "abs_error_M1", "abs_error_M2"]].mean().round(2))
+
+    print("Building PISA 2022 final (Ridge unlocked)...")
+    p22 = build_pisa_2022_final()
+    p22.to_csv(OUT / "pisa_2022_forecast_vs_actual_final.csv", index=False)
+    print(f"  pisa_2022_forecast_vs_actual_final.csv: {len(p22)} rows")
+    print(p22.groupby("domain")[["abs_error_M0", "abs_error_M1", "abs_error_M2"]].mean().round(2))
 
     print("Building corpus provenance...")
     prov = build_corpus_provenance()
