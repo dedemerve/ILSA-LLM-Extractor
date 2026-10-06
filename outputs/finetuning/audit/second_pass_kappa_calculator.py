@@ -81,8 +81,8 @@ def run():
         'n_rows': int(len(df)),
         'per_field': results,
         'macro_kappa': round(macro_kappa, 3),
-        'threshold_met': threshold_met,
-        'fine_tuning_cleared': threshold_met,
+        'threshold_met': bool(threshold_met),
+        'fine_tuning_cleared': bool(threshold_met),
     }
     out_path = Path(__file__).parent / 'intra_rater_reliability_v4.json'
     with open(out_path, 'w', encoding='utf-8') as f:
