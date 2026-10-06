@@ -1,0 +1,108 @@
+{
+  "_generated": "2026-10-06",
+  "_purpose": "Automated validation checks for few_shot_demonstrations_v1.json — 12 PASS/FAIL checks across 4 demonstrations and 21 evidence pairs.",
+  "_source_file": "outputs/finetuning/baseline/few_shot_demonstrations_v1.json",
+  "_gold_source": "outputs/finetuning/data/gold_standard_full_corpus_v1.4.csv",
+
+  "checks": [
+    {
+      "check_id": "V01",
+      "description": "All 4 demonstrations present",
+      "expected": "4 demonstrations (demo_1, demo_2, demo_3, demo_4)",
+      "observed": "4 demonstrations present: demo_1 (TIMSS), demo_2 (TIMSS+PISA), demo_3 (PIAAC), demo_4 (PIRLS)",
+      "status": "PASS"
+    },
+    {
+      "check_id": "V02",
+      "description": "Total evidence pairs match protocol counts (7+4+4+6 = 21)",
+      "expected": "demo_1=7, demo_2=4, demo_3=4, demo_4=6",
+      "observed": "demo_1=7, demo_2=4, demo_3=4, demo_4=6 — total=21",
+      "status": "PASS"
+    },
+    {
+      "check_id": "V03",
+      "description": "All 21 evidence pairs have all 10 §3.2 schema fields present (including explicit null where applicable)",
+      "expected": "Every pair contains: predictor, ilsa_variable, canonical_construct, outcome, effect_type, direction, effect_size, plausible_values_handling, student_weights_used, evidence_text",
+      "observed": "All 21 pairs contain all 10 fields. Null values are explicitly set (not missing) for: ilsa_variable (10 pairs), effect_size (4 pairs), student_weights_used (8 pairs).",
+      "status": "PASS"
+    },
+    {
+      "check_id": "V04",
+      "description": "evidence_text is non-null and non-empty for ALL 21 pairs (§3.3 MANDATORY)",
+      "expected": "evidence_text populated for every record",
+      "observed": "All 21 pairs have non-null, non-empty evidence_text sourced verbatim from source text files.",
+      "status": "PASS"
+    },
+    {
+      "check_id": "V05",
+      "description": "direction values use only canonical vocabulary: positive | negative | mixed | not_reported",
+      "expected": "No '1', '-1', '0', 'null' (string), or JSON null in direction field",
+      "observed": "demo_1: all 7 = 'positive'; demo_2: all 4 = 'mixed'; demo_3: all 4 = 'positive'; demo_4: all 6 = 'not_reported'. No numeric encodings present.",
+      "status": "PASS"
+    },
+    {
+      "check_id": "V06",
+      "description": "effect_type values use only canonical vocabulary: E_assoc | E_predictive | E_cross_cycle | E_cross_country",
+      "expected": "No raw 'predictive', 'associative', or other non-prefixed values",
+      "observed": "demo_1: 7 × E_assoc; demo_2: 4 × E_assoc; demo_3: 4 × E_assoc; demo_4: 6 × E_predictive. All canonical.",
+      "status": "PASS"
+    },
+    {
+      "check_id": "V07",
+      "description": "plausible_values_handling values use only canonical vocabulary: rubin_rules | average_pv | single_pv | all_pvs | not_applicable | not_reported",
+      "expected": "No raw 'rubin_rules (5 PVs via Rubin)' or similar non-normalized strings",
+      "observed": "demo_1: 7 × not_applicable; demo_2: 4 × rubin_rules (normalized from gold 'rubin_rules (5 PVs via Rubin)'); demo_3: 4 × not_applicable; demo_4: 6 × not_applicable. All canonical.",
+      "status": "PASS"
+    },
+    {
+      "check_id": "V08",
+      "description": "student_weights_used values are valid JSON: true | false | null only",
+      "expected": "No string 'TRUE', 'FALSE', 'not_reported' in rendered output",
+      "observed": "demo_1: 7 × false (from gold 'FALSE'); demo_2: 4 × null (from gold 'not_reported'); demo_3: 4 × null (from gold 'not_reported'); demo_4: 6 × true (from gold 'True'/'TRUE'). All valid JSON boolean/null.",
+      "status": "PASS"
+    },
+    {
+      "check_id": "V09",
+      "description": "All 4 demonstrations are from the training split (no validation or test contamination)",
+      "expected": "All study IDs in training split per split_manifest_v4.json",
+      "observed": "Teacher-job-satisfaction--TIMSS-2025.pdf, thinking-skills-in-teaching-practices.pdf, jwl-04-2021-0047.pdf, 1-s2.0-S0022096522001059-main.pdf — all confirmed training-split studies. Split manifest frozen; no contamination.",
+      "status": "PASS"
+    },
+    {
+      "check_id": "V10",
+      "description": "No fabricated values — all ilsa_variable codes, effect_sizes, and evidence_text are sourced from actual paper texts",
+      "expected": "Every non-null value traceable to source text",
+      "observed": "ILSA variable codes sourced from measurement tables in source texts (BTBG*, BTBM*, D_Q*, F_Q*, I_Q*). Effect sizes sourced from regression tables (Table 4 in demo_1/3, Table 4/5 in demo_2, Tables 3/4 in demo_4). Evidence_text verbatim from source. Null used where source did not provide explicit values (ilsa_variable for demo_2/4; effect_size for G0199, G0200, G0165). No imputation or fabrication.",
+      "status": "PASS"
+    },
+    {
+      "check_id": "V11",
+      "description": "Direction rendering rule applied correctly (gold '1' → rendered 'positive'; gold 'positive' → rendered 'positive')",
+      "expected": "No numeric direction values in rendered output; gold records unchanged",
+      "observed": "demo_1 gold records have direction_canonical='positive' (string, not '1'). Rendering rule was not triggered. All 21 rendered direction values use canonical string vocabulary. Gold records confirmed unchanged.",
+      "status": "PASS"
+    },
+    {
+      "check_id": "V12",
+      "description": "Direction annotation discrepancies documented and flagged for researcher review",
+      "expected": "Any mismatch between gold direction and paper evidence is flagged as MANUAL_REVIEW_REQUIRED in review file",
+      "observed": "Two discrepancies identified and flagged: G0186 (teacher workload: gold=positive, paper β=−0.113***) and G0188 (teaching years: gold=positive, paper β=−0.006***). Both documented in few_shot_rendering_review_v1.md under MANUAL_REVIEW_REQUIRED. Gold records NOT modified. Demonstrations render gold direction faithfully.",
+      "status": "PASS_WITH_FLAGS",
+      "flags": ["G0186_direction_discrepancy", "G0188_direction_discrepancy"]
+    }
+  ],
+
+  "summary": {
+    "total_checks": 12,
+    "pass": 11,
+    "pass_with_flags": 1,
+    "fail": 0,
+    "manual_review_required": 2,
+    "records_affected": ["G0186", "G0188"]
+  },
+
+  "rendering_status": "MANUAL_REVIEW_REQUIRED",
+  "rendering_status_reason": "Two direction annotation discrepancies (G0186, G0188) in demo_1 require researcher adjudication. All other checks pass. Technical rendering is complete and correct. Baseline inference must not proceed until the researcher adjudicates these flags.",
+
+  "conclusion": "All 21 evidence pairs are rendered with correct schema, canonical vocabulary, verified sources, and no fabricated values. The single blocking item is researcher review of the G0186/G0188 direction discrepancy before demo_1 is accepted as a clean training signal."
+}
