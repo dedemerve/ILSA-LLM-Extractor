@@ -1,0 +1,199 @@
+BASELINE PROTOCOL — v1.1
+Status:           FROZEN PARAMETERS — model selection pending (see BASELINE_MODEL below)
+Date:             2026-10-06
+Branch:           experiment/ilsa-domain-finetuning
+Protocol source:  EVALUATION_PROTOCOL_v1.md (frozen)
+Supersedes:       baseline_prompt_draft_v1.txt (draft status)
+Researcher:       Merve Dede
+
+====================================================================================================
+FROZEN PARAMETERS
+====================================================================================================
+
+TEMPERATURE:      0.0
+  Source:         Researcher decision, 2026-10-06
+  Rationale:      Deterministic extraction required for reproducibility of the BASE condition.
+                  Non-zero temperature would introduce run-to-run variance confounding the
+                  BASE vs FINETUNED comparison.
+
+MAX_TOKENS:       8192
+  Source:         Researcher decision, 2026-10-06 (increased from template default of 4096)
+  Rationale:      Studies with many evidence pairs and mandatory evidence_text fields may
+                  approach or exceed 4096 tokens. 8192 provides safety margin.
+
+BASELINE_MODEL:   USER_DECISION_REQUIRED
+  Source:         Researcher decision, 2026-10-06
+  Decision rule:  The baseline model must use the SAME architecture as the LoRA fine-tuned
+                  model so that BASE vs FINETUNED isolates the effect of fine-tuning, not
+                  model-family capability differences.
+  Candidates:     Llama-3 8B | Mistral 7B
+  Architecture    Both candidates are equally unsupported by the repository at this time:
+  audit result:   no PEFT/TRL/transformers installation; no LoRA training code; no model
+                  checkpoint references in any script or config. Neither architecture has
+                  been previously used in this project. Selection is a user decision.
+  DO NOT USE:     Claude API — incompatible with standard LoRA fine-tuning mechanism.
+  DO NOT run      inference until researcher explicitly approves model selection.
+
+====================================================================================================
+FEW-SHOT DEMONSTRATIONS
+====================================================================================================
+
+Total demonstrations: 4
+Selection rule:       Training split ONLY. No validation or test studies.
+
+DEMONSTRATION 1 — TIMSS (replacement for rejected shot_1)
+  Study ID:             Teacher-job-satisfaction--TIMSS-2025.pdf
+  Program:              TIMSS
+  Cycle:                TIMSS 2025
+  Records:              G0184, G0185, G0186, G0187, G0188, G0189, G0190 (7 rows; 6 FORECASTABLE)
+  Constructs:           SCHOOL_LEADERSHIP(SINGLE), DISCIPLINARY_CLIMATE(HIGH), UNMATCHED,
+                        GENDER(HIGH), TEACHER_EXPERIENCE(LOW), UNMATCHED(NOT_FORECASTABLE), TEACHER_PD(LOW)
+  Direction:            positive (canonical — all 7 rows)
+  PV handling:          not_applicable (teacher-level outcome, no student PV)
+  Ambiguity flags:      none
+  Human label status:   gold_verified (all rows)
+  Split:                train (confirmed)
+  Protocol criterion:   Replaces §6.1 'PISA study (HIGH construct, clear direction)'. No pure-PISA
+                        training study with canonical direction values and ≥3 forecastable rows exists
+                        in the training pool. This TIMSS study provides HIGH constructs (GENDER,
+                        DISCIPLINARY_CLIMATE) and canonical positive direction. Program deviation
+                        (TIMSS not PISA) is unavoidable given the pool.
+  NOTE:                 The evidence rows are missing 4 §3.2 fields: ilsa_variable, effect_size,
+                        student_weights_used, evidence_text. These must be filled from the paper text
+                        when rendering the formatted (source_text → JSON output) demonstration pair.
+
+DEMONSTRATION 2 — TIMSS+PISA (shot_2 APPROVED)
+  Study ID:             thinking-skills-in-teaching-practices.pdf
+  Program:              TIMSS+PISA
+  Cycle:                TIMSS 2011 + PISA 2012
+  Records:              G0162, G0163, G0164, G0165 (4 rows; 3 FORECASTABLE)
+  Constructs:           TEACHING_QUALITY(MID), TEACHING_QUALITY(MID), SES_COMPOSITE(HIGH),
+                        UNMATCHED(NOT_FORECASTABLE)
+  Direction:            mixed (canonical — all 4 rows)
+  PV handling:          rubin_rules (confirmed)
+  Ambiguity flags:      none
+  Human label status:   gold_verified (all rows)
+  Split:                train (confirmed)
+  Protocol criterion:   §6.1 'TIMSS study (MID construct, rubin_rules PV handling)' — MET.
+  NOTE:                 4 missing fields must be filled from paper text when rendering.
+
+DEMONSTRATION 3 — PIAAC (shot_3 APPROVED)
+  Study ID:             jwl-04-2021-0047.pdf
+  Program:              PIAAC
+  Cycle:                PIAAC Cycle 1 (Rounds 1–3)
+  Records:              G0197, G0198, G0199, G0200 (4 rows; 2 FORECASTABLE)
+  Constructs:           WORKPLACE_AUTONOMY(SINGLE), UNMATCHED(NOT_FORECASTABLE),
+                        UNMATCHED(FORECASTABLE), UNMATCHED(NOT_FORECASTABLE)
+  Direction:            positive (canonical — all 4 rows)
+  PV handling:          not_applicable (PIAAC skills assessment)
+  Ambiguity flags:      none
+  Human label status:   gold_verified (all rows)
+  Split:                train (confirmed)
+  Protocol criterion:   §6.1 'PIAAC study (labor market outcome, NOT_FORECASTABLE included)' — MET.
+  NOTE:                 4 missing fields must be filled from paper text when rendering.
+
+DEMONSTRATION 4 — PIRLS (shot_4 APPROVED)
+  Study ID:             1-s2.0-S0022096522001059-main.pdf
+  Program:              PIRLS
+  Cycle:                PIRLS 2006
+  Records:              G0069, G0070, G0071, G0072, G0073, G0074 (6 rows; 6 FORECASTABLE)
+  Constructs:           MOTIVATION(MID), GENDER(HIGH), MOTIVATION(MID), GENDER(HIGH),
+                        PARENTAL_EDUCATION(LOW), SES_COMPOSITE(HIGH)
+  Direction:            not_reported (canonical — all 6 rows; direction_zero_ambiguous resolved)
+  PV handling:          not_applicable (longitudinal PIRLS follow-up)
+  Ambiguity flags:      direction_zero_ambiguous (all 6 rows; correctly resolved to not_reported)
+  Human label status:   gold_verified (all rows)
+  Split:                train (confirmed)
+  Protocol criterion:   §6.1 'Optional: PIRLS or TALIS for diversity' — MET.
+  NOTE:                 4 missing fields must be filled from paper text when rendering.
+
+====================================================================================================
+DIRECTION VOCABULARY (FROZEN)
+====================================================================================================
+
+The canonical output vocabulary for the direction field is:
+
+  positive       — predictor is positively associated with the outcome
+  negative       — predictor is negatively associated with the outcome
+  mixed          — direction varies across models, countries, or outcome specifications
+  not_reported   — direction cannot be established from the source text; also used when
+                   the study reports a null/non-significant result without a signed effect
+
+DO NOT output in the prompt or demonstrations:
+  1          (numeric encoding — non-canonical)
+  -1         (numeric encoding — non-canonical)
+  0          (numeric encoding — maps to not_reported)
+  "null"     (string "null" — NOT a valid direction label)
+  JSON null  (JSON null is not used for the direction field; use not_reported instead)
+
+Source: Researcher decision, 2026-10-06.
+Gold records that contain direction_canonical="1" (44 rows across 4 training studies) are
+NOT modified. When rendering formatted demonstrations, display direction="positive" where the
+gold record has direction_canonical="1". This rendering rule was authorized by the researcher
+for demonstration purposes only and does NOT rewrite any gold record.
+
+====================================================================================================
+TRAINING POPULATION (for future LoRA reference)
+====================================================================================================
+
+  v1.3 protocol figure:      153 FORECASTABLE training rows (EVALUATION_PROTOCOL_v1.md §4.5, §7)
+  v1.4-adjusted figure:      152 FORECASTABLE training rows
+  Difference:                1 row — G0244 (study: 1-s2.0-S0272775725001001-main.pdf)
+  G0244 adjudication:        direction_original=positive, canonical_construct changed from
+                             SES_COMPOSITE (v1.3) → UNMATCHED (v1.4). Predictor is "Assessment
+                             cycle" — a temporal year variable, not an SES composite. UNMATCHED
+                             is the correct v1.4 label.
+  Governing figure for LoRA: 152 (v1.4-adjusted, consistent with frozen gold_standard_full_corpus_v1.4.csv)
+  Does NOT affect:           few-shot baseline, 30/6/6 study split, test set, Stage 5, W_j
+
+====================================================================================================
+WHAT THIS STAGE DOES AND DOES NOT DO
+====================================================================================================
+
+THIS STAGE:
+  - Defines the frozen few-shot demonstration set (4 studies from training split)
+  - Defines the frozen inference parameters (temperature, max_tokens)
+  - Defines the frozen direction vocabulary
+  - Documents the model selection requirement
+  - Prepares the baseline prompt for execution once the model is confirmed
+
+THIS STAGE DOES NOT:
+  - Run baseline extraction on the validation set
+  - Calculate validation F1 or any evaluation metrics
+  - Touch the test set (6 studies, 35 rows) in any way
+  - Run LoRA fine-tuning
+  - Run SFT
+  - Modify Stage 5 outputs
+  - Modify W_j or W_jpd
+  - Change the 30/6/6 study split
+  - Change any gold labels
+
+====================================================================================================
+REMAINING BLOCKER
+====================================================================================================
+
+The only remaining decision required before baseline execution is:
+
+  BASELINE_MODEL: Llama-3 8B OR Mistral 7B
+
+The repository has no existing LoRA implementation and no model architecture preference.
+Both candidates are equally viable from an engineering standpoint. Factors to consider:
+
+  Llama-3 8B:    8K context window — may truncate very long source texts
+                 Strong instruction-following after RLHF
+                 Well-supported by HuggingFace PEFT + TRL
+
+  Mistral 7B:    32K context window — safer for long papers
+                 Comparable instruction-following capability
+                 Well-supported by HuggingFace PEFT + TRL
+
+  Recommendation (not a decision): Mistral 7B for the larger context window.
+  Some validation study texts are 60–114 KB; after prompt overhead, context may approach
+  the 8K limit for Llama-3 8B with long few-shot demonstrations included.
+
+Once the model is selected by the researcher, populate the BASELINE_MODEL field above and
+freeze this file by committing as baseline_protocol_v1.1.txt (the current file).
+
+====================================================================================================
+END OF BASELINE PROTOCOL v1.1
+====================================================================================================
