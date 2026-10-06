@@ -1,5 +1,5 @@
 BASELINE PROTOCOL — v1.1
-Status:           FROZEN PARAMETERS — model selection pending (see BASELINE_MODEL below)
+Status:           ALL PARAMETERS FROZEN — awaiting demonstration rendering (see PE-16)
 Date:             2026-10-06
 Branch:           experiment/ilsa-domain-finetuning
 Protocol source:  EVALUATION_PROTOCOL_v1.md (frozen)
@@ -21,18 +21,23 @@ MAX_TOKENS:       8192
   Rationale:      Studies with many evidence pairs and mandatory evidence_text fields may
                   approach or exceed 4096 tokens. 8192 provides safety margin.
 
-BASELINE_MODEL:   USER_DECISION_REQUIRED
+BASELINE_MODEL:   Mistral 7B  ← FROZEN 2026-10-06
   Source:         Researcher decision, 2026-10-06
   Decision rule:  The baseline model must use the SAME architecture as the LoRA fine-tuned
                   model so that BASE vs FINETUNED isolates the effect of fine-tuning, not
                   model-family capability differences.
-  Candidates:     Llama-3 8B | Mistral 7B
-  Architecture    Both candidates are equally unsupported by the repository at this time:
-  audit result:   no PEFT/TRL/transformers installation; no LoRA training code; no model
-                  checkpoint references in any script or config. Neither architecture has
-                  been previously used in this project. Selection is a user decision.
-  DO NOT USE:     Claude API — incompatible with standard LoRA fine-tuning mechanism.
-  DO NOT run      inference until researcher explicitly approves model selection.
+  Rationale:      Both Llama-3 8B and Mistral 7B are equally unsupported by the repository.
+                  Mistral 7B selected for its 32K context window, which provides appropriate
+                  capacity for long source documents (45–114 KB) with system prompt, schema
+                  instructions, and four few-shot demonstrations included. Reduces truncation
+                  risk that the 8K Llama-3 8B window would introduce for dense papers.
+  Architecture    Mistral 7B (mistralai/Mistral-7B-Instruct-v0.3 or equivalent instruct
+  family:         variant). Tokenizer family: SentencePiece (Mistral). LoRA via HuggingFace
+                  PEFT. The LoRA model MUST use the same Mistral 7B architecture and tokenizer
+                  family. Do not substitute a different model family without documenting a
+                  protocol revision.
+  DO NOT USE:     Claude API, Llama-3, or any other family without explicit protocol revision.
+  DO NOT run      inference until all four demonstrations are rendered and verified.
 
 ====================================================================================================
 FEW-SHOT DEMONSTRATIONS
@@ -154,8 +159,8 @@ THIS STAGE:
   - Defines the frozen few-shot demonstration set (4 studies from training split)
   - Defines the frozen inference parameters (temperature, max_tokens)
   - Defines the frozen direction vocabulary
-  - Documents the model selection requirement
-  - Prepares the baseline prompt for execution once the model is confirmed
+  - Documents and freezes the model selection (Mistral 7B)
+  - Prepares the baseline prompt for execution once demonstrations are rendered
 
 THIS STAGE DOES NOT:
   - Run baseline extraction on the validation set
@@ -169,30 +174,25 @@ THIS STAGE DOES NOT:
   - Change any gold labels
 
 ====================================================================================================
-REMAINING BLOCKER
+REMAINING OPEN ITEM BEFORE BASELINE EXECUTION
 ====================================================================================================
 
-The only remaining decision required before baseline execution is:
+Model selection is now frozen. The only remaining work before baseline execution is:
 
-  BASELINE_MODEL: Llama-3 8B OR Mistral 7B
+  PE-16: Render the four formatted (source_text → JSON output) demonstration pairs.
 
-The repository has no existing LoRA implementation and no model architecture preference.
-Both candidates are equally viable from an engineering standpoint. Factors to consider:
+For each of the 4 approved demonstrations, the following 4 §3.2 fields are missing from
+the existing JSON evidence rows and must be sourced from the actual paper texts:
 
-  Llama-3 8B:    8K context window — may truncate very long source texts
-                 Strong instruction-following after RLHF
-                 Well-supported by HuggingFace PEFT + TRL
+  - ilsa_variable:        ILSA survey variable code (e.g. BSDGEDUP, TOTWGT), else null
+  - effect_size:          Reported coefficient or effect size, else null
+  - student_weights_used: true/false/null
+  - evidence_text:        MANDATORY — verbatim sentence(s) from source text
 
-  Mistral 7B:    32K context window — safer for long papers
-                 Comparable instruction-following capability
-                 Well-supported by HuggingFace PEFT + TRL
+This is a rendering step only. Gold records in evidence_matrix_v1.3.csv and
+gold_standard_full_corpus_v1.4.csv are NOT modified.
 
-  Recommendation (not a decision): Mistral 7B for the larger context window.
-  Some validation study texts are 60–114 KB; after prompt overhead, context may approach
-  the 8K limit for Llama-3 8B with long few-shot demonstrations included.
-
-Once the model is selected by the researcher, populate the BASELINE_MODEL field above and
-freeze this file by committing as baseline_protocol_v1.1.txt (the current file).
+Do NOT run baseline inference until all four demonstrations are rendered and verified.
 
 ====================================================================================================
 END OF BASELINE PROTOCOL v1.1
