@@ -1,7 +1,7 @@
 # Phase 3.28 — Literature Search Scope and Candidate Audit
 
 **Date:** 2026-10-20  
-**Status:** Local export metadata audit and five-row independent outcome adjudication complete; original search execution details and Becker–Coyle numeric comparison remain partly **UNRESOLVED**.  
+**Status:** Local export metadata audit and five-row independent outcome adjudication complete. Becker–Coyle numerical comparison is superseded by the Phase 3.31 reconstruction; original search execution details remain **UNRESOLVED**.
 **Scope:** Prompt 1 only. No corpus or prior audit file was changed.
 
 ## Summary
@@ -10,7 +10,7 @@
 - **VERIFIED:** Query-folder labels encode seven named ILSA program searches in each database and a nominal 2020–2026 window. They also carry the terms artificial intelligence, machine learning, deep learning, time series analysis, prediction, or correlation.
 - **UNRESOLVED:** Search platform syntax/fields, actual search execution date, result count at execution, applied filters, export completeness, and screening history cannot be reconstructed from the local files inspected.
 - **VERIFIED:** On independent outcome coding, EXT-001 and EXT-002 describe country-level PISA mean-score forecasts. EXT-003 predicts minimum-proficiency shares, not mean scores. MIS-001 and MIS-002 do not forecast ILSA country mean scores.
-- **UNRESOLVED:** The Becker–Coyle article links supplementary material containing trend estimates, but a usable country prediction table could not be retrieved and inspected in this audit. Numerical comparison against the project historical predictions is therefore not established.
+- **SUPERSEDED:** At the time of this audit, the Becker–Coyle supplement had not been retrieved. Phase 3.31 later retrieved the publisher supplement, reconstructed the included R procedure, and compared its 2022 forecasts on the common project sample. This is a reconstruction rather than a publisher-supplied prediction table; see [Phase 3.31](phase3_31_becker_coyle_and_search_provenance.md).
 
 ## Methods and evidence inspected
 
@@ -71,14 +71,14 @@ Operational coding question: does the source report or present a forecast/projec
 
 **VERIFIED:** The project file `outputs/pisa_tabular_benchmark_v1/historical_predictions.csv` has fields `target_cycle`, `domain`, `country_iso3`, `model`, `true_score`, and `prediction` (among others), so it is structurally suitable for a country/domain/cycle comparison if the supplement contains comparable 2022 values and country identifiers.
 
-**UNRESOLVED:** No Becker–Coyle supplement file was present in the local output tree inspected, and the publisher-linked supplementary asset could not be retrieved as a readable/downloadable table during this audit. Therefore I could not identify the exact supplement table/sheet, verify that its predictions are on the same PISA scale and domain definitions, map country identifiers, or calculate common-country counts, correlations, or prediction differences. A numerical comparison is not reported. The article’s published forecast deviation analysis should not be substituted for the benchmark prediction series without the supplement’s country-level forecast values and an explicit alignment check.
+**SUPERSEDED by Phase 3.31:** The publisher supplement was subsequently obtained. It contains source R scripts and historical score data rather than a ready-made country prediction table. The R procedure was reconstructed, country and domain keys aligned, and comparison statistics produced on the 60-country common set for 2022. The result and method-compatibility limitations are in [Phase 3.31](phase3_31_becker_coyle_and_search_provenance.md).
 
 ## Limitations and next evidence needed
 
 1. **UNRESOLVED — search protocol:** Recover original database export files or saved-search histories with query strings, search dates, filters, and hit counts; plus deduplication and screening logs. The current folder labels and extraction inventory do not establish those facts.
 2. **UNRESOLVED — corpus coverage:** The inventory’s DOI intersection is not a recall estimate. It cannot determine how many eligible studies were missed, especially for records without DOI or absent from the saved extraction JSONs.
 3. **UNRESOLVED — independent human second review:** This report supplies a separate source-based outcome adjudication, but does not constitute a second human reviewer. The CSV’s `second_reviewer_status` remains pending.
-4. **UNRESOLVED — Becker–Coyle numeric comparison:** Obtain the publisher supplement file (or author-provided equivalent), establish exact score scale/domain/country mapping, then compare the 2022 predictions only on countries and domains common to both files.
+4. **COMPLETE — Becker–Coyle comparison:** See Phase 3.31 for the reconstructed procedure, common-sample metrics, and method-comparability qualification.
 
 ## Source trail
 
