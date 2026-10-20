@@ -1,7 +1,7 @@
 # Phase 3.32 — Isolated reproduction follow-up
 
 **Date:** 2026-10-20  
-**Status:** Two model branches independently rerun; TimesFM execution blocked by missing runtime module; 2,000-draw model-input rerun checkpointed and in progress at this report revision. No original analysis output was overwritten.
+**Status:** Three model branches independently rerun; TimesFM 3.0 historical zero-shot is byte-identical. The 2,000-draw model-input rerun is in progress in eight deterministic shards with the recorded package versions. No original analysis output was overwritten.
 
 ## Safe rerun method
 
@@ -23,18 +23,18 @@ The script `run_pisa_quadratic_trend_benchmark.py` was rerun to `outputs/reprodu
 
 The script `run_pisa_2025_retrospective_tabular.py` was rerun to `outputs/reproducibility_check_v2/pisa_2025_retrospective_tabular/`. Both result tables retain the same 990 prediction rows / 15 metric rows and identical nonnumeric identifiers and keys. They are not byte-identical because of floating-point serialization differences: maximum absolute prediction difference is `3.98e-13`, maximum numeric difference in the full predictions table is `2.50e-11` (squared-error column), and maximum metric difference is `5.78e-14`. These are numerical-equivalence results, not byte equality.
 
-### TimesFM 3.0 historical zero-shot — blocked in current environment
+### TimesFM 3.0 historical zero-shot — exact match
 
-The rerun stops at import with `ModuleNotFoundError: No module named 'timesfm3'`. The model weights are cached locally, but the Python evaluator package used by the original run is not installed or included in the repository. No package installation or model download was attempted. The original TimesFM output remains untouched and is not independently reproduced by this check.
+The original `timesfm3` evaluator was available in the Python 3.14 runtime with the cached model. The rerun to `outputs/reproducibility_check_v2/pisa_timesfm_historical_zeroshot/` produced all five result CSVs with byte-identical SHA-256 hashes to `outputs/pisa_timesfm_historical_zeroshot_v2/`: 624 TimesFM forecasts, 3,744 combined model predictions, 72 fold/domain metrics, and both 18-row summaries. The original outputs remain unchanged.
 
-### Model-input uncertainty v4 — checkpointed run in progress
+### Model-input uncertainty v4 — checkpointed sharded rerun in progress
 
-The exact v4 script and input hashes were accepted, and its 2,000-draw, 25-draw-batch run began in `outputs/reproducibility_check_v2/pisa_model_input_uncertainty_v4/`. It verified nonzero input-SE coverage for all 469 mathematics, 511 reading, and 469 science historical observations. The first checkpoint contains draws 0–24 (1,500 fold/model metric rows); the process has started the next batch. This full rerun is computationally intensive; no summary metrics are reported until all 2,000 draws finish and the final CSVs can be compared with the v4 source outputs.
+The first attempted rerun used a Python 3.13 environment with scikit-learn 1.6.1 and XGBoost 3.0.0, which did not match the recorded scikit-learn 1.9.1 and XGBoost 3.4.1. Its partial draws were abandoned and are not used as reproduction evidence. The exact package versions were then installed into a temporary, isolated target directory; Python 3.13.2, NumPy 2.5.3, pandas 3.0.6, scikit-learn 1.9.1, and XGBoost 3.4.1 were verified. Eight deterministic shards using disjoint slices of the original 2,000-seed sequence are running under `outputs/reproducibility_check_v3/model_input_shards/`. Each shard verified nonzero input-SE coverage for all 469 mathematics, 511 reading, and 469 science observations. No final summary metrics are reported until all shards finish, checkpoint ranges are merged and validated, and the original v4 aggregation code reproduces the source metrics, paired deltas, and winner probabilities.
 
 ## Reproduction artifacts and boundaries
 
 - All rerun outputs are isolated below `outputs/reproducibility_check_v2/`.
 - `isolated_reproduction_wrapper.json` records the original script hash and the one-line output-directory override for completed runs.
-- The TimesFM blocker is a missing execution dependency, not evidence of a numerical mismatch.
+- The initial wrong-version partial model-input outputs are not valid evidence and must not be merged with the exact-version shards.
 - The model-input run is not complete until its final manifest and summary outputs exist and the metrics, paired deltas, and winner probabilities are checked against `outputs/pisa_model_input_uncertainty_v4/`.
 - This pass does not establish reproducibility for TimesFM 2.5 LoRA adaptation or the 2025 TimesFM arm. Their model runtime/checkpoint requirements remain separate open items.
