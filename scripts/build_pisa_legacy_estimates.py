@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import re
 import logging
+import os
 from pathlib import Path
 
 import numpy as np
@@ -25,7 +26,10 @@ logging.basicConfig(level=logging.INFO, format="%(levelname)s  %(message)s")
 log = logging.getLogger(__name__)
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-ILSA_BASE    = Path("/Users/mrved/Desktop/ILSA Datasets/PISA Datasets")
+ILSA_BASE    = Path(os.environ.get(
+    "ILSA_PISA_DATA_DIR",
+    "/Users/mrved/Desktop/ILSA Datasets for LLM Extraction/PISA Datasets",
+))
 OUT_DIR      = PROJECT_ROOT / "outputs" / "stage4"
 OUT_LEGACY   = OUT_DIR / "pisa_legacy_estimates.csv"
 ESTIMATES_CSV = OUT_DIR / "country_estimates.csv"
@@ -39,7 +43,7 @@ CYCLE_CATALOG = [
         "cycle": 2000,
         "syntax": ILSA_BASE / "PISA 2000 Data/PISA2000_SPSS_student_reading.txt",
         "data":   ILSA_BASE / "PISA 2000 Data/intstud_read_v3.txt",
-        "cnt_var": "COUNTRY",   # 2000'de CNT yok, COUNTRY var (3-char)
+        "cnt_var": "COUNTRY",   # 2000 COUNTRY uses numeric ISO identifiers
         "domains": {
             "reading": ("pv1read","pv2read","pv3read","pv4read","pv5read"),
         },
@@ -115,8 +119,9 @@ CYCLE_CATALOG = [
     },
 ]
 
-# OECD PISA country code → ISO3 haritası (PISA'da kullanılan 3-harf kodlar zaten ISO3)
-# Bazı exception'lar:
+# OECD PISA country code → ISO3 haritası.
+# 2000 reading source uses ISO numeric codes in COUNTRY; the mapping below was
+# checked against VALUE LABELS COUNTRY in PISA2000_SPSS_student_reading.txt.
 _CNT_TO_ISO3: dict[str, str] = {
     "TAP": "TWN",  # Chinese Taipei
     "QAT": "QAT",
@@ -126,9 +131,28 @@ _CNT_TO_ISO3: dict[str, str] = {
     "QCN": "CHN",  # (bazı cycle'larda)
 }
 
+_PISA_2000_NUMERIC_TO_ISO3: dict[str, str] = {
+    "008": "ALB", "032": "ARG", "036": "AUS", "040": "AUT",
+    "056": "BEL", "076": "BRA", "100": "BGR", "124": "CAN",
+    "152": "CHL", "203": "CZE", "208": "DNK", "246": "FIN",
+    "250": "FRA", "276": "DEU", "300": "GRC", "344": "HKG",
+    "348": "HUN", "352": "ISL", "360": "IDN", "372": "IRL",
+    "376": "ISR", "380": "ITA", "392": "JPN", "410": "KOR",
+    "428": "LVA", "438": "LIE", "442": "LUX", "484": "MEX",
+    "528": "NLD", "554": "NZL", "578": "NOR", "604": "PER",
+    "616": "POL", "620": "PRT", "642": "ROU", "643": "RUS",
+    "724": "ESP", "752": "SWE", "756": "CHE", "764": "THA",
+    "807": "MKD", "826": "GBR", "840": "USA",
+}
+
 
 def cnt_to_iso3(code: str) -> str:
     code = str(code).strip().upper()
+    if code.isdigit():
+        try:
+            return _PISA_2000_NUMERIC_TO_ISO3[code]
+        except KeyError as exc:
+            raise ValueError(f"Unmapped numeric PISA country code: {code}") from exc
     return _CNT_TO_ISO3.get(code, code)
 
 

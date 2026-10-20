@@ -183,6 +183,11 @@ class OpenAIBackend:
                 return r.choices[0].message.content or "", r.choices[0].finish_reason or ""
             except Exception as e:  # noqa: BLE001  rate limits / transient errors
                 status = getattr(e, "status_code", None)
+                if status == 400 and "max completion tokens reached" in str(e):
+                    # Groq rejects schema outputs cut by max_tokens; this is a truncation, not a failure
+                    body = getattr(e, "body", None) or {}
+                    partial = body.get("failed_generation", "") if isinstance(body, dict) else ""
+                    return partial or "", "length"
                 if attempt == 5 or (status is not None and 400 <= status < 500 and status != 429):
                     raise
                 time.sleep(min(2 ** attempt * 5, 90))

@@ -1,5 +1,7 @@
 # Phase 3.3 — PISA 2025 Provisional Evaluation Report
 
+> **Status update (2026-10-15):** This report predates the all-domain PISA 2025 retrospective comparison. Its statement that TimesFM had not been evaluated on PISA 2025 is historical and superseded by `phase3_10_pisa2025_retrospective_evaluation.md`; independent outcome-mean validation is recorded in `phase3_12_oecd_pisa2025_mean_validation.md`.
+
 **Date:** 2026-10-15  
 **Evaluation run:** 2026-10-15 07:43 (file timestamps on `outputs/step2_2025/`)  
 **Script:** `scripts/step2_timesfm_zeroshot.py` (TEST_CYCLE = 2025, restored to 2022 after run)  

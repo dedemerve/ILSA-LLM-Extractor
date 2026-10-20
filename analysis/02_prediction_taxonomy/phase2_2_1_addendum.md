@@ -7,6 +7,8 @@
   (Open access, full HTML article retrieved 2026-10-14)  
 **This file does not overwrite any prior artifact.**
 
+> **Coverage qualification (2026-10-15):** This addendum's source review of Braun et al. remains valid. Its “zero confirmed in the 1,266 records” statement is conditional on corpus membership, not an exhaustive statement about the literature. A separate 2026 source-level audit verified a PISA 2022 country-mean trend forecast based only on PISA through 2018 (Becker & Coyle, DOI 10.3389/feduc.2026.1734988) that is not present in the corpus. Recover the original search scope and assess that record before making a field-wide zero claim; see `analysis/03_data_feasibility/phase3_14_cross_cycle_review_and_scope_correction.md`.
+
 ---
 
 ## Study

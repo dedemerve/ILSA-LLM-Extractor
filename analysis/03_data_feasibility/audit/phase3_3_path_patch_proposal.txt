@@ -1,0 +1,41 @@
+PROPOSED PATH PATCH — build_country_estimates.py
+Do NOT apply without explicit user authorization.
+This is a read-only proposal.
+
+File: scripts/build_country_estimates.py
+Line(s): 38, 137, 142, 147
+
+--- Old value ---
+Line 38:
+  ILSA_BASE = Path("/Users/mrved/Desktop/ILSA Datasets")
+
+Result for PISA 2025 paths (L137, L142, L147):
+  /Users/mrved/Desktop/ILSA Datasets/PISA Datasets/PISA 2025 Data/CY09_MS_STU_PUF.sav
+  STATUS: Does NOT exist.
+
+--- Proposed fix (Option A: change ILSA_BASE) ---
+Line 38:
+  ILSA_BASE = Path("/Users/mrved/Desktop/ILSA Datasets for LLM Extraction")
+
+Result for PISA 2025 paths:
+  /Users/mrved/Desktop/ILSA Datasets for LLM Extraction/PISA Datasets/PISA 2025 Data/CY09_MS_STU_PUF.sav
+  STATUS: EXISTS (verified 2026-10-14; size 2.17 GB; modified 2026-08-21).
+
+RISK: Changing ILSA_BASE affects ALL cycle paths (2015, 2018, 2022, 2025, TIMSS, PIRLS, ICCS, ICILS).
+All other cycle SAV files must be verified to exist under the new base path before changing.
+
+--- Proposed fix (Option B: change only PISA 2025 entries) ---
+Line 137 (and 142, 147):
+  OLD: str(ILSA_BASE / "PISA Datasets/PISA 2025 Data/CY09_MS_STU_PUF.sav")
+  NEW: "/Users/mrved/Desktop/ILSA Datasets for LLM Extraction/PISA Datasets/PISA 2025 Data/CY09_MS_STU_PUF.sav"
+
+STATUS: Targeted — only PISA 2025 paths change; other cycles unaffected.
+RISK: Hardcodes an absolute path; less portable but safer.
+
+--- Verification steps after applying either option ---
+1. Confirm the modified path exists: Path(<new_path>).exists() == True
+2. Check PISA 2015/2018/2022 paths still exist (if Option A applied)
+3. Re-run build_country_estimates.py for PISA 2025 only (do not re-run all cycles)
+4. Compare new estimates against existing country_estimates.csv backup (country_estimates.csv.bak_pre2018 is present)
+5. Re-run pisa2025_se_validation to confirm MAD remains <0.0001
+6. Check row count: expect 268 rows (89 countries × 3 domains) matching existing output
