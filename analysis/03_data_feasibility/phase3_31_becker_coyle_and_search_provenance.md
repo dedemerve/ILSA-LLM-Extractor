@@ -33,3 +33,7 @@ Accordingly, the 1,266-row coded corpus remains a fixed project corpus and must 
 ## Remaining literature limitation
 
 The numeric Becker–Coyle comparison is complete as a reconstruction. The database-search provenance remains unresolved. A second human reviewer is also still needed for the borderline-study eligibility coding; this computational audit is not a substitute for that review.
+
+## External source
+
+- Becker, D. & Coyle, T. R. (2026), [publisher article and supplementary material](https://www.frontiersin.org/journals/education/articles/10.3389/feduc.2026.1734988/full), DOI `10.3389/feduc.2026.1734988`.
