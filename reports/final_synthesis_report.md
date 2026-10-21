@@ -58,31 +58,31 @@ Source: [`joint_paired_comparisons.csv`](../outputs/pisa_joint_score_country_unc
 
 ### Historical model-input perturbation and refitting
 
-Phase 3.26’s corrected v4 run uses 2,000 draws of historical country/domain/cycle scores from marginal normal distributions based on published score SEs. It perturbs training/context inputs and labels, refits Ridge, RandomForest, and XGBoost within each draw, and keeps held-out target means fixed. Persistence and LinearTrend are recomputed from the perturbed context. TimesFM is excluded from this refit-aware run.
+The corrected Phase 3.26 run uses 2,000 draws of historical country/domain/cycle scores from marginal normal distributions based on published score SEs. It perturbs training/context inputs and labels, refits Ridge, RandomForest, and XGBoost within each draw, and keeps held-out target means fixed. Persistence and LinearTrend are recomputed from the perturbed context. TimesFM is excluded from this refit-aware run. The original checkpoint series mixed two software environments for RF/XGBoost draws 0–199 versus 200–1,999; the results below use the uniform, version-matched rerun. The original directory remains preserved for audit.
 
 | Domain | Model | Mean equal-fold MAE over 2,000 draws | 2.5th–97.5th Monte Carlo quantiles |
 |---|---|---:|---:|
 | Mathematics | Persistence | 9.639 | 9.287–9.986 |
 | Mathematics | Ridge | 10.164 | 9.651–10.714 |
 | Mathematics | RandomForest | 10.140 | 9.668–10.628 |
-| Mathematics | XGBoost | 10.768 | 10.049–11.539 |
+| Mathematics | XGBoost | 10.782 | 10.054–11.548 |
 | Mathematics | LinearTrend | 11.616 | 11.085–12.147 |
 | Reading | Persistence | 10.435 | 10.077–10.783 |
 | Reading | Ridge | 11.010 | 10.549–11.492 |
 | Reading | RandomForest | 11.061 | 10.596–11.520 |
-| Reading | XGBoost | 11.238 | 10.519–11.969 |
+| Reading | XGBoost | 11.240 | 10.523–11.984 |
 | Reading | LinearTrend | 13.658 | 13.176–14.170 |
 | Science | Persistence | 8.730 | 8.384–9.078 |
 | Science | Ridge | 9.366 | 8.874–9.929 |
 | Science | RandomForest | 9.363 | 8.903–9.841 |
-| Science | XGBoost | 9.769 | 9.128–10.449 |
+| Science | XGBoost | 9.776 | 9.134–10.453 |
 | Science | LinearTrend | 11.127 | 10.615–11.673 |
 
-Source: [`model_input_uncertainty_metrics.csv`](../outputs/pisa_model_input_uncertainty_v4/model_input_uncertainty_metrics.csv); paired deltas versus Persistence are in [`model_input_uncertainty_paired.csv`](../outputs/pisa_model_input_uncertainty_v4/model_input_uncertainty_paired.csv). Across these draws, Persistence has the lowest equal-fold MAE. The intervals reflect the stated marginal-SE sampling design only; they are not full predictive intervals and exclude cross-cycle and cross-country dependence, held-out target uncertainty, link covariance, future-cycle variation, and model specification uncertainty. Phase 3.25 and 3.26 are separate conditional analyses and must not be combined as independent components into one interval.
+Source: [`model_input_uncertainty_metrics.csv`](../outputs/reproducibility_check_v3/pisa_model_input_uncertainty_v4/model_input_uncertainty_metrics.csv); paired deltas versus Persistence are in [`model_input_uncertainty_paired.csv`](../outputs/reproducibility_check_v3/pisa_model_input_uncertainty_v4/model_input_uncertainty_paired.csv). Across these draws, Persistence has the lowest equal-fold MAE. The intervals reflect the stated marginal-SE sampling design only; they are not full predictive intervals and exclude cross-cycle and cross-country dependence, held-out target uncertainty, link covariance, future-cycle variation, and model specification uncertainty. Phase 3.25 and 3.26 are separate conditional analyses and must not be combined as independent components into one interval.
 
-Persistence had the lowest equal-fold MAE in **97.50%** of mathematics draws, **98.50%** of reading draws, and **99.75%** of science draws. These are empirical winner frequencies under this 2,000-draw marginal-SE input perturbation design, not general probabilities that Persistence will be best on future PISA cycles. Source: [`model_input_uncertainty_winner_prob.csv`](../outputs/pisa_model_input_uncertainty_v4/model_input_uncertainty_winner_prob.csv). The paired comparison file also shows that every tested alternative’s 95% Monte Carlo interval for MAE difference versus Persistence was above zero in each domain; the interpretation remains conditional on this input sampling design.
+Persistence had the lowest equal-fold MAE in **97.45%** of mathematics draws, **98.55%** of reading draws, and **99.75%** of science draws. These are empirical winner frequencies under this 2,000-draw marginal-SE input perturbation design, not general probabilities that Persistence will be best on future PISA cycles. Source: [`model_input_uncertainty_winner_prob.csv`](../outputs/reproducibility_check_v3/pisa_model_input_uncertainty_v4/model_input_uncertainty_winner_prob.csv). The paired comparison file also shows that every tested alternative’s 95% Monte Carlo interval for MAE difference versus Persistence was above zero in each domain; the interpretation remains conditional on this input sampling design.
 
-An independent rerun of all 2,000 draws completed in eight deterministic shards using the recorded package versions. Persistence, LinearTrend, and Ridge fold-level MAEs matched across all 24,000 rows per method; RF differed in 2,053 rows and XGBoost in 2,400, with the largest individual XGBoost fold-MAE difference 1.638. Aggregate metric-table MAE differed by at most 0.01360 points; paired interval endpoints differed by at most 0.02624 and winner probabilities by at most 0.0005. The overall ordering remained consistent, with Persistence still the most frequent winner in every domain. This is a completed rerun with an unresolved RF/XGBoost discrepancy, not a successful exact reproduction; the original Phase 3.26 outputs above remain the primary reported results. See [Phase 3.32](../analysis/03_data_feasibility/phase3_32_reproducibility_followup.md) and the isolated rerun artifacts in [`reproducibility_check_v3`](../outputs/reproducibility_check_v3/pisa_model_input_uncertainty_v4/).
+The mismatch is traced to the original checkpoint series mixing software environments: tree-model draws 0–199 match the older-library rerun, while draws 200–1,999 match the source-manifest-version rerun. Persistence, LinearTrend, and Ridge match both environments. The results above use the uniform, version-matched rerun in [`reproducibility_check_v3`](../outputs/reproducibility_check_v3/pisa_model_input_uncertainty_v4/); original Phase 3.26 files remain unchanged and are retained for audit. See [Phase 3.32](../analysis/03_data_feasibility/phase3_32_reproducibility_followup.md).
 
 ### Link-error covariance
 
@@ -100,7 +100,7 @@ Phase 3.30’s end-to-end audit found one exact rerun: the pairwise link-error a
 2. **Country-level estimand and limited sample:** Results concern selected country/economy mean scores, not individual students or every education system. The historical folds share countries and provide only four target cycles.
 3. **Literature scope is incomplete:** The saved inventory does not reconstruct the original systematic-search execution or establish corpus recall. Avoid describing RF/XGBoost as the most-used methods in a verified country-level future-cycle ILSA forecasting corpus.
 4. **Incomplete uncertainty propagation:** Target-score sampling, country clusters, and historical model-input/refitting uncertainty were analyzed in separate conditional designs. Scale-link covariance, a joint combination of all uncertainty components, TimesFM refitting uncertainty, model-specification uncertainty, and future-cycle variability are not included.
-5. **Reproducibility gaps:** Independent reruns confirmed byte-identical historical tabular benchmark v2 and all TimesFM 3.0, TimesFM 2.5 LoRA, and PISA 2025 TimesFM CSVs. Historical tabular v1 and PISA 2025 tabular predictions are numerically equivalent within floating-point tolerance. The full 2,000-draw model-input rerun completed but produced small RF/XGBoost numerical differences; the source outputs were preserved, and the cause remains to be isolated. See [Phase 3.32](../analysis/03_data_feasibility/phase3_32_reproducibility_followup.md).
+5. **Reproducibility gaps:** Independent reruns confirmed byte-identical historical tabular benchmark v2 and all TimesFM 3.0, TimesFM 2.5 LoRA, and PISA 2025 TimesFM CSVs. Historical tabular v1 and PISA 2025 tabular predictions are numerically equivalent within floating-point tolerance. The Phase 3.26 tree-model discrepancy was traced to mixed package environments across checkpoint batches; corrected results now use a single version-matched 2,000-draw run, and the original output remains preserved for audit. See [Phase 3.32](../analysis/03_data_feasibility/phase3_32_reproducibility_followup.md).
 6. **No causal interpretation:** Feature contributions or predictive rankings do not show that a factor causes national achievement changes. Country-level correlations and model importance are descriptive.
 
 Accordingly, report model rankings as observed in these defined samples and protocols, with the uncertainty scope stated beside each result. Do not claim that one method is generally superior or that the intervals are fully uncertainty-adjusted.
@@ -109,9 +109,8 @@ Accordingly, report model rankings as observed in these defined samples and prot
 
 1. Obtain original Scopus/WoS search histories, raw exports, date/filter/hit-count records, and screening decisions from the original researcher/database accounts; the local workspace search found none. Obtain an independent second reviewer for borderline study coding.
 2. Obtain OECD clarification and the full machine-usable historical covariance inputs. Require positive semidefiniteness and reproduction of official pairwise and trend link-error values before propagating link uncertainty.
-3. Diagnose the RF/XGBoost differences in the completed, version-matched 2,000-draw rerun; preserve the original Phase 3.26 outputs unless the discrepancy is resolved and an audited rerun is warranted.
-4. Keep Phase 3.25 target-score/country-cluster sensitivity separate from Phase 3.26 model-input/refitting sensitivity unless a justified joint sampling design is implemented.
-5. Execute the prepared [prospective forecast-lock protocol](../analysis/03_data_feasibility/prospective_pisa_forecast_lock_protocol_v1.md): fill its TBD fields and seal code, inputs, and forecasts before the next suitable PISA outcomes become accessible.
+3. Keep Phase 3.25 target-score/country-cluster sensitivity separate from Phase 3.26 model-input/refitting sensitivity unless a justified joint sampling design is implemented.
+4. Execute the prepared [PISA 2029 forecast-lock protocol](../analysis/03_data_feasibility/prospective_pisa_forecast_lock_protocol_v1.md): finalize freeze date, data cutoff, eligibility list, and access controls; hash and seal the code, inputs, environment, and forecasts before target results are accessible. OECD schedules the 2029 main survey and expects core results in 2030; exact publication date remains TBD.
 
 ## Provenance index
 

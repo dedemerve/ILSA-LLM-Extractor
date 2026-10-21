@@ -1,16 +1,16 @@
 # Prospective PISA forecast lock protocol — v1
 
-**Status:** Prepared for future-cycle execution; not yet a forecast or preregistration. This protocol becomes prospective only after its content, code commit, and forecast files are time-stamped and sealed before the target-cycle results are accessible to the team.
+**Status:** Prepared for PISA 2029 execution; not yet a forecast or preregistration. OECD schedules the PISA 2029 main survey for 2029 and results publication for 2030; the exact release date remains to be announced. This protocol becomes prospective only after its content, code commit, and forecast files are time-stamped and sealed before PISA 2029 target outcomes are accessible to the team. ([OECD PISA 2029 brochure](https://www.oecd.org/content/dam/oecd/en/about/programmes/edu/pisa/publications/brochures/PISA-2029-Brochure.pdf))
 
 ## 1. Target and estimand
 
-- **Target:** the next suitable PISA cycle after the last outcome already used in project development.
+- **Target:** PISA 2029, the next cycle after the PISA 2025 outcomes used in project development.
 - **Unit:** country/economy × subject-domain mean score, not individual student score.
 - **Domains:** mathematics, reading, and science; report each separately and an equally weighted three-domain summary.
 - **Population:** participating systems meeting the eligibility rule below; do not generalize to all countries.
 - **Horizon:** one PISA assessment cycle ahead.
 
-Before sealing, record the exact target cycle/year, the date at which the prediction will be frozen, the public data cutoff, and the event that counts as outcomes becoming accessible. If the next cycle's official timetable or score-reporting date is unknown, record that uncertainty rather than moving the cutoff after seeing results.
+Before sealing, record the exact forecast freeze timestamp, public data cutoff, and event that counts as outcomes becoming accessible. Current OECD timeline expects core PISA 2029 results in 2030, but the exact release date is not yet specified; update this field only from an official OECD announcement, before any target outcome is accessed.
 
 ## 2. Eligibility and missingness
 
@@ -61,7 +61,7 @@ After results are officially released, first verify the target outcomes and coun
 
 | Lock item | Required value before sealing |
 |---|---|
-| Target PISA cycle and expected release | TBD |
+| Target PISA cycle and expected release | PISA 2029; core results expected in 2030, exact date TBD |
 | Forecast cutoff timestamp and timezone | TBD |
 | Team members with outcome access | TBD |
 | Frozen panel and source hashes | TBD |
