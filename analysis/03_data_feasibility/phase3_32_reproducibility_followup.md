@@ -1,7 +1,7 @@
 # Phase 3.32 — Isolated reproduction follow-up
 
 **Date:** 2026-10-20  
-**Status:** Six model branches independently rerun. Historical tabular v2 and all TimesFM CSV outputs are byte-identical; historical tabular v1 and PISA 2025 tabular are numerically equivalent within floating-point tolerance. The 2,000-draw model-input rerun remains in progress. No original analysis output was overwritten.
+**Status:** Six model branches independently rerun. Historical tabular v2 and all TimesFM CSV outputs are byte-identical; historical tabular v1 and PISA 2025 tabular are numerically equivalent within floating-point tolerance. The full 2,000-draw model-input rerun completed, but its summaries are not an exact numerical reproduction of the source; this remains a documented mismatch. No original analysis output was overwritten.
 
 ## Safe rerun method
 
@@ -35,9 +35,9 @@ The original `timesfm3` evaluator was available in the Python 3.14 runtime with 
 
 The rerun to `outputs/reproducibility_check_v2/timesfm25_ils_adapter/` used the same Python 3.14.5, PyTorch 2.14.1, Transformers 5.19.0, and PEFT 0.21.2 environment recorded by the source run. The four result CSVs (1,248 adapted predictions, 4,992 all-model predictions, 96 historical metrics, and 24 equal-fold summary rows) match the originals byte-for-byte. Epoch-selection and refit losses for each fold also reproduce the values recorded in the original manifest. Adapters/checkpoints were generated only under the isolated check directory.
 
-### Model-input uncertainty v4 — checkpointed sharded rerun in progress
+### Model-input uncertainty v4 — full rerun completed; numerical mismatch
 
-The first attempted rerun used a Python 3.13 environment with scikit-learn 1.6.1 and XGBoost 3.0.0, which did not match the recorded scikit-learn 1.9.1 and XGBoost 3.4.1. Its partial draws were abandoned and are not used as reproduction evidence. The exact package versions were then installed into a temporary, isolated target directory; Python 3.13.2, NumPy 2.5.3, pandas 3.0.6, scikit-learn 1.9.1, and XGBoost 3.4.1 were verified. Eight deterministic shards using disjoint slices of the original 2,000-seed sequence are running under `outputs/reproducibility_check_v3/model_input_shards/`. Each shard verified nonzero input-SE coverage for all 469 mathematics, 511 reading, and 469 science observations. At the current revision, the first 25-draw batch has completed in every shard (200 of 2,000 draws). No final summary metrics are reported until all shards finish, checkpoint ranges are merged and validated, and the original v4 aggregation code reproduces the source metrics, paired deltas, and winner probabilities.
+The first attempted rerun used a Python 3.13 environment with scikit-learn 1.6.1 and XGBoost 3.0.0; its partial draws were abandoned. The completed rerun used the source-recorded Python 3.13.2, NumPy 2.5.3, pandas 3.0.6, scikit-learn 1.9.1, and XGBoost 3.4.1 in an isolated temporary environment. Eight deterministic shards covered the exact 2,000-seed sequence, with 80 validated checkpoints and nonzero input-SE coverage for all 469 mathematics, 511 reading, and 469 science observations. The original v4 aggregation script generated 120,000 fold/model/draw rows. Source and rerun row counts and keys match, but the aggregate CSVs are not identical. Across the 15-row metric table, maximum absolute differences are 0.01360 MAE, 0.00537 for q2.5, 0.01077 for the median, 0.01457 for q97.5, and 0.00134 for SD. Across 12 paired comparisons, maximum differences are 0.01360 in point delta, 0.02624 in q2.5, 0.01840 in q97.5, and 0.0005 in the estimated probability of beating Persistence; winner probabilities differ by at most 0.0005. Differences are concentrated in RF/XGBoost summaries. Thus this is a complete rerun with a numerical mismatch, not a successful exact reproduction. The original Phase 3.26 outputs remain the reported source results; do not replace them with this rerun. The mismatch cause has not yet been isolated.
 
 ### PISA 2025 TimesFM retrospective — exact match
 
@@ -45,8 +45,8 @@ The frozen-configuration TimesFM 2.5 adaptation plus TimesFM 3.0 comparator was 
 
 ## Reproduction artifacts and boundaries
 
-- All rerun outputs are isolated below `outputs/reproducibility_check_v2/`.
+- Standard rerun outputs are isolated below `outputs/reproducibility_check_v2/`; the completed model-input rerun and its eight shards are under `outputs/reproducibility_check_v3/`.
 - `isolated_reproduction_wrapper.json` records the original script hash and the one-line output-directory override for completed runs.
 - The initial wrong-version partial model-input outputs are not valid evidence and must not be merged with the exact-version shards.
-- The model-input run is not complete until its final manifest and summary outputs exist and the metrics, paired deltas, and winner probabilities are checked against `outputs/pisa_model_input_uncertainty_v4/`.
-- The model-input uncertainty run is the remaining long-running model branch in this reproduction pass; TimesFM 2.5 LoRA and 2025 TimesFM were independently reproduced exactly.
+- Model-input uncertainty is complete as a rerun, but the numerical mismatch needs diagnosis before claiming independent reproduction. Do not substitute these outputs for `outputs/pisa_model_input_uncertainty_v4/`.
+- TimesFM 2.5 LoRA and PISA 2025 TimesFM were independently reproduced exactly.
