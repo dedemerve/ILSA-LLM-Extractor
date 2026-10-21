@@ -1,7 +1,7 @@
 # Final synthesis: forecasting national PISA mean scores
 
 **Report date:** 2026-10-20  
-**Evidence status:** Integrates Phases 3.3 and 3.25–3.30 and the cited prediction/uncertainty outputs. The existing forecasts and analysis inputs were not changed to prepare this report.
+**Evidence status:** Integrates Phases 3.3 and 3.25–3.32 and the cited prediction/uncertainty outputs. The existing forecasts and analysis inputs were not changed to prepare this report.
 
 ## 1. Research question and prediction unit
 
