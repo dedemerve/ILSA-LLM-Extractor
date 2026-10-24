@@ -20,14 +20,14 @@ Retrospektif değerlendirme: 2000–2022 PISA döngüleriyle eğitim, 2025 gerç
 
 ## 2. Literatür Korpusu Yöntem Frekansı
 
-1266 kayıtlık ILSA korpusundan ML birincil yöntemi kodlanan **167 çalışma** analiz edilmiştir.
+1266 kayıtlık ILSA korpusundan ML birincil yöntemi kodlanan **167 çalışma** analiz edilmiştir. Frekans sayımları kapsama göre farklılaşmaktadır; aşağıdaki tablolar bu ayrımı açıkça göstermektedir.
 
-### Tablo 1 — ILSA Literatüründe En Sık Kullanılan ML Yöntemleri
+### Tablo 1a — Tüm Tahminsel Çalışmalarda Birincil Yöntem Frekansı (predictive_studies scope, N=167 kodlanan)
 
-| Yöntem | Çalışma N | Kodlananların %'si |
+| Yöntem | Çalışma N | Tahminsel çalışmaların %'si |
 | --- | --- | --- |
-| Random Forest | 44 | 26.3 |
-| XGBoost | 18 | 10.8 |
+| Random Forest | 42 | 25.1 |
+| XGBoost | 17 | 10.2 |
 | Neural Network | 17 | 10.2 |
 | SVM | 14 | 8.4 |
 | LASSO | 10 | 6.0 |
@@ -39,7 +39,15 @@ Retrospektif değerlendirme: 2000–2022 PISA döngüleriyle eğitim, 2025 gerç
 | CatBoost | 3 | 1.8 |
 | Group Mnet | 2 | 1.2 |
 
-**Sonuç:** Random Forest (%26.3) ve XGBoost (%10.8) birinci ve ikinci sıradadır. Bunlar bu çalışmada da temel ML yöntemleri olarak seçilmiştir.
+### Tablo 1b — Ülke Düzeyinde Tahmin Alt-Corpus'unda Birincil Yöntem Frekansı (country_system_studies scope)
+
+| Yöntem | Çalışma N |
+| --- | --- |
+| SVM | 4 |
+| Random Forest | 3 |
+| XGBoost | 2 |
+
+**Önemli kısıt:** Bu sayımlar, kodlanmış bir literatür corpus'una dayanmaktadır; doğrulanmış sistematik bir arama kaydı yoktur. Tablo 1a RF/XGBoost sıralaması tüm tahminsel çalışmaları yansıtır; ancak bu proje ile doğrudan örtüşen dar kapsam (ülke düzeyinde PISA ortalama tahmini) için Tablo 1b geçerlidir ve orada SVM birinci sıradadır. Dolayısıyla "literatürde en sık kullanılan yöntemler RF ve XGBoost'tur" ifadesi doğrulanmış bir corpus'a değil, daha geniş tahminsel çalışma setine dayanmaktadır.
 
 ---
 
@@ -87,17 +95,17 @@ Eğitim: her hedef döngü için önceki tüm PISA döngüleri (minimum 3). Test
 | Linear Trend | 10.355 | 11.504 | 10.305 | 15.074 |
 
 **Bulgular:**
-- Persistence baseline çoğu ML modelinden daha iyi ya da eşit performans göstermektedir.
-  Bu, PISA skorlarının döngüler arası yüksek otokorelasyona sahip olduğunu doğrular.
-- XGBoost tek tutarlı olarak Persistence'ı geçen ML modelidir.
-- TimesFM 2.5 LoRA (ILSA adaptasyonlu), zero-shot'a göre ortalama ~0.09 MAE iyileştirme sağlar.
-- Bu fark istatistiksel olarak marjinaldir; TimesFM genel olarak tabular ML'den daha kötü performans göstermektedir.
+- **Tarihsel olarak en düşük MAE'ye sahip model Persistence'dır** (9.309) — XGBoost ve tüm diğer ML modelleri geride kalır. Bu, PISA ülke ortalamalarının döngüler arası yüksek otokorelasyona sahip olduğunu doğrular ve naif bir "bir önceki değeri kullan" stratejisinin güçlü bir baseline oluşturduğunu gösterir.
+- XGBoost, ML modelleri arasında Persistence'a en yakın performansı göstermektedir (9.502); onu Ridge ve TimesFM 2.5 LoRA takip eder.
+- TimesFM 2.5 LoRA (ILSA adaptasyonlu), zero-shot'a göre ortalama ~0.09 MAE iyileştirme sağlar; bu fark rakamsal olarak küçüktür.
+- TimesFM ailesinin hiçbir üyesi tarihsel backtesting'de Persistence ya da XGBoost'u geçememiştir.
+- **Bu sıralamalar dört döngü × seçili ülke örneği üzerindeki gözlemlerdir; genel yöntem üstünlüğü iddiası desteklenmez.**
 
 ---
 
 ## 4. PISA 2025 Nihai Karşılaştırma
 
-> **Dikkat:** Bu değerlendirme 'outcome-exposed retrospective' olarak etiketlenmiştir. PISA 2025 değerleri model eğitiminde kullanılmamış, yalnızca değerlendirme hedefi olarak kullanılmıştır.
+> **Dikkat — Outcome-exposed retrospective:** PISA 2025 hedef değerleri hiçbir modelin eğitim veya bağlam girdisi olarak kullanılmamıştır. Ancak bu değerler ve önceki model sonuçları, tahmin scriptleri çalıştırılmadan önce araştırma ekibine zaten erişilebilir durumdaydı. Bu nedenle bu karşılaştırma **kör ve ileriye dönük bir doğrulama değildir**; yalnızca tanımlayıcı niteliktedir. Bağımsız prospektif doğrulama için protokolün, veri kesim noktasının, kodun ve tahminlerin 2029 PISA sonuçları açıklanmadan önce dondurulması gerekmektedir.
 
 ### Tablo 5 — PISA 2025 Model Karşılaştırması (66 Ülke)
 
@@ -113,15 +121,18 @@ Eğitim: her hedef döngü için önceki tüm PISA döngüleri (minimum 3). Test
 | Linear Trend | 15.188 | 19.584 | 10.582 | 15.118 |
 
 **Ana Bulgular:**
-- **En iyi model: XGBoost** — 3 domainde de en düşük veya en düşüğe yakın MAE
-- **Ridge** genel sıralamada XGBoost'a yakın, okuma alanında biraz daha iyi
-- **TimesFM 2.5 (LoRA dahil)** tabular ML yöntemlerinden ~5 puan daha kötü MAE vermektedir
-- **ILSA LoRA'nın TimesFM'e katkısı:** +0.152 PISA puanı (LoRA lehine)
-- **Sistematik overprediction** var: tüm modeller pozitif mean_signed_error gösteriyor (özellikle matematik ve okuma — PISA 2022'den 2025'e beklenenden daha sert düşüş)
+- **2025 retrospektif domain liderliği:** Matematik → XGBoost (9.318), Okuma → Ridge (11.357), Fen → Persistence (9.378). Hiçbir yöntem üç domainde birden en düşük MAE'yi vermemektedir.
+- **Ortalama MAE sıralamasında** Ridge (10.107) birinci, XGBoost (10.660) ikinci; **Persistence tarihsel sıralamadaki güçlü konumunu 2025'te yitirmiştir** (12.059) — bu değişimi tek bir döngüye bağlamak metodolojik olarak hatalıdır.
+- **TimesFM 2.5 (LoRA dahil)** bu outcome-exposed karşılaştırmada tabular ML yöntemlerinden ~4–5 puan daha kötü MAE vermektedir.
+- **ILSA LoRA'nın TimesFM 2.5'e katkısı:** ortalama +0.152 PISA puanı iyileştirme (LoRA lehine) — rakamsal olarak küçük.
+- **Sistematik overprediction:** tüm modeller pozitif mean_signed_error gösteriyor, özellikle matematik ve okumada belirgin. Bu, PISA 2022–2025 döneminde modellerin öngördüğünden daha sert bir skor düşüşünü yansıtmaktadır.
+- Bu sıralamalar **bu seçili örnekte ve bu outcome-exposed tasarımda** gözlemlenen değerlerdir; bağımsız prospektif kanıt teşkil etmez.
 
 ---
 
 ## 5. İstatistiksel Testler
+
+> **Yorum kısıtı:** Aşağıdaki Wilcoxon testleri ülke bazında nokta hatalarını karşılaştırmaktadır. Bu testler; hedef skor örnekleme belirsizliğini, döngüler arası bağlantı hata kovaryansını ve model-girdi pertürbasyon belirsizliğini içermemektedir. Her güven aralığı kendi koşullu tasarımına özeldir; birbirinden bağımsız olarak hesaplanmış bu aralıklar tek bir bileşik güven aralığına dönüştürülemez.
 
 ### Tablo 6 — Wilcoxon Signed-Rank Testleri (ülke bazında hata farkı)
 
@@ -209,7 +220,7 @@ Eğitim: her hedef döngü için önceki tüm PISA döngüleri (minimum 3). Test
 ## 8. Metodolojik Değerlendirme
 
 ### ✅ Doğru Yapılanlar
-- Literatürden en sık kullanılan yöntemler (RF, XGBoost) seçilmiş ve uygulanmış
+- Literatürdeki tahminsel çalışmalarda öne çıkan yöntemler (RF, XGBoost) seçilmiş ve uygulanmış; ülke düzeyinde alt-corpus için kapsam kısıtı belgelenmiştir
 - Retrospektif backtesting prensibi doğru: hedef döngüden önceki verilerle eğitim
 - TimesFM'e ILSA bağlamı verilmiş (unified_ilsa_panel ile LoRA adaptasyonu)
 - 2025 tahminleri 66 ülke için üretilmiş
@@ -232,9 +243,12 @@ Eğitim: her hedef döngü için önceki tüm PISA döngüleri (minimum 3). Test
 
 | Soru | Cevap |
 |---|---|
-| Hangi yöntemler en sık kullanılıyor? | RF (%26.3), XGBoost (%10.8) |
-| En iyi forecasting modeli (2025)? | XGBoost ve Ridge |
-| TimesFM ILSA LoRA işe yarıyor mu? | Marjinal (~0.09 MAE), istatistiksel önem zayıf |
-| Extraction kalitesi forecasting'i etkiliyor mu? | Zayıf — noise duyarlılığı düşük |
+| Hangi yöntemler tahminsel çalışmalarda en sık kullanılıyor? | RF (42 çalışma), XGBoost (17) — tüm kayıtlarda değil, tahminsel scope'ta |
+| Ülke düzeyinde tahmin alt-corpus'unda lider? | SVM (4), RF (3), XGBoost (2) — kapsam kısıtıyla |
+| Tarihsel backtesting'de en iyi model? | **Persistence** (MAE 9.309) — XGBoost ve diğerleri geride kalır |
+| 2025 retrospektif domain liderleri? | Matematik: XGBoost, Okuma: Ridge, Fen: Persistence |
+| 2025 değerlendirmesi kör test mi? | **Hayır** — outcome-exposed retrospective; bağımsız prospektif doğrulama değil |
+| TimesFM ILSA LoRA işe yarıyor mu? | Tarihsel: ~0.09 MAE iyileşme, 2025: ~0.15 — her ikisi de rakamsal olarak küçük |
+| Extraction kalitesi forecasting'i etkiliyor mu? | Zayıf — noise duyarlılığı çok düşük (flip/drop ≤ 0.16 MAE) |
 | Fine-tuning tamamlandı mı? | Hayır — A0/A1/A2/A3 kolları bekliyor |
-| 2025 tahminleri var mı? | Evet — 66 ülke × 3 domain, MAE ~9–13 arası |
+| 2025 tahminleri var mı? | Evet — 66 ülke × 3 domain, domain bazında MAE ~9–17 arası |
