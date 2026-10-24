@@ -24,7 +24,7 @@ from scipy import stats
 warnings.filterwarnings("ignore")
 
 ROOT = Path(__file__).resolve().parents[1]
-OUT_DIR = ROOT / "outputs/forecast_synthesis_v1"
+OUT_DIR = ROOT / "outputs/forecast_synthesis_v2"
 OUT_DIR.mkdir(exist_ok=True)
 
 # ─────────────────────────────────────────────────────────────
@@ -34,16 +34,22 @@ FREQ_CSV = ROOT / "analysis/03_data_feasibility/audit/ilsa_ml_method_frequency_v
 
 def load_method_frequency() -> pd.DataFrame:
     df = pd.read_csv(FREQ_CSV)
-    df = df[df["scope"] == "all_records_with_primary_method"].copy()
+    df = df[df["scope"] == "predictive_studies_with_primary_method"].copy()
     df = df[["method", "study_count", "share_of_coded_scope"]].copy()
     df["share_pct"] = (df["share_of_coded_scope"] * 100).round(1)
     df = df.sort_values("study_count", ascending=False).reset_index(drop=True)
     return df
 
+def load_country_method_frequency() -> pd.DataFrame:
+    df = pd.read_csv(FREQ_CSV)
+    return df[df["scope"] == "country_system_studies_with_primary_method"].copy()
+
 # ─────────────────────────────────────────────────────────────
 # 2. Tarihsel backtesting
 # ─────────────────────────────────────────────────────────────
 HIST_CSV = ROOT / "outputs/pisa_timesfm25_ils_adapter_v1/historical_metrics.csv"
+HIST_PANEL = ROOT / "outputs/pisa_all_models_quadratic_trend_v1/historical_all_models_predictions.csv"
+PISA2025_PANEL = ROOT / "outputs/pisa_all_models_quadratic_trend_v1/pisa2025_all_models_predictions.csv"
 
 MODEL_LABELS = {
     "XGBoost": "XGBoost",
@@ -54,10 +60,13 @@ MODEL_LABELS = {
     "TimesFM2_5_ILSA_LoRA": "TimesFM 2.5 + ILSA LoRA",
     "TimesFM3_zero_shot": "TimesFM 3.0 (zero-shot)",
     "LinearTrend": "Linear Trend",
+    "LinearQuadraticTrend": "Linear-Quadratic Trend",
 }
 
 def load_historical() -> pd.DataFrame:
-    df = pd.read_csv(HIST_CSV)
+    raw = pd.read_csv(HIST_PANEL)
+    df = (raw.groupby(["target_cycle", "domain", "model"], as_index=False)
+          .agg(MAE=("absolute_error", "mean")))
     df["model_label"] = df["model"].map(MODEL_LABELS).fillna(df["model"])
     return df
 
@@ -97,10 +106,12 @@ def historical_by_cycle(df: pd.DataFrame) -> pd.DataFrame:
 # 3. PISA 2025 nihai karşılaştırma
 # ─────────────────────────────────────────────────────────────
 PISA2025_CSV = ROOT / "outputs/pisa_2025_retrospective_timesfm_v1/metrics.csv"
-PISA2025_PRED_CSV = ROOT / "outputs/pisa_2025_retrospective_timesfm_v1/all_models_predictions.csv"
+PISA2025_PRED_CSV = PISA2025_PANEL
 
 def load_2025_metrics() -> pd.DataFrame:
-    df = pd.read_csv(PISA2025_CSV)
+    raw = pd.read_csv(PISA2025_PANEL)
+    df = (raw.groupby(["domain", "model"], as_index=False)
+          .agg(MAE=("absolute_error", "mean")))
     df["model_label"] = df["model"].map(MODEL_LABELS).fillna(df["model"])
     return df
 
@@ -146,10 +157,10 @@ def wilcoxon_model_pairs(pred_df: pd.DataFrame) -> pd.DataFrame:
                 "model_B": MODEL_LABELS.get(m2, m2),
                 "n_countries": n,
                 "mean_diff_A_minus_B": round(mean_diff, 4),
-                "interpretation": "A better" if mean_diff < 0 else "B better",
+                "interpretation": "A: lower mean AE" if mean_diff < 0 else "B: lower mean AE",
                 "wilcoxon_statistic": round(stat, 2),
-                "p_value": round(pval, 4),
-                "significant_p05": pval < 0.05,
+                "p_value": "<1e-16" if pval == 0 else f"{pval:.6g}",
+                "raw_p_lt_005": pval < 0.05,
             })
     return pd.DataFrame(results)
 
@@ -212,6 +223,7 @@ def format_table(df: pd.DataFrame, title: str) -> str:
 
 def write_report(
     method_freq: pd.DataFrame,
+    country_method_freq: pd.DataFrame,
     hist_summary: pd.DataFrame,
     hist_domain: pd.DataFrame,
     hist_cycle: pd.DataFrame,
@@ -238,39 +250,44 @@ def write_report(
         "",
         "---",
         "",
+        "## Ana bulgu",
+        "",
+        "Persistence dört tarihsel hedef döngüsünde üç alanın tamamında en düşük eşit-ağırlıklı MAE'yi vermiştir. PISA 2025 sonuçlarına maruz kalınmış retrospektif karşılaştırmada ise alan liderleri ayrışmıştır. Bulgular ülke/ekonomi ortalama puanları içindir; öğrenci düzeyinde tahmin veya ileriye dönük bağımsız doğrulama değildir.",
+        "",
         "## 1. Araştırma Sorusu ve Yaklaşım",
         "",
         "Bu çalışma, uluslararası öğrenci değerlendirmelerinden (ILSA) biri olan "
         "PISA'nın 2025 döngüsündeki matematik, okuma ve fen alanı ülke ortalamalarını "
-        "tahmin etmek için üç katmanlı bir mimari uygulamaktadır:",
+        "tahmin etmek için tabular yöntemleri ve TimesFM'i karşılaştırmaktadır. Literatür ağırlıklı Stage 5/LOCO ve extraction fine-tuning analizleri ayrı araştırma hatlarıdır; bu dokuz-modelli PISA benchmark'ının katmanları değildir:",
         "",
         "1. **Tabular ML** — Literatürde en sık kullanılan yöntemler (RF, XGBoost, Ridge)",
         "2. **Zaman Serisi Modeli** — Google TimesFM (2.5 ve 3.0), sıfır-atış ve ILSA adaptasyonlu",
-        "3. **W_j literatür ağırlıkları** — 1266 kayıtlık ILSA corpus'undan türetilen etki büyüklükleri → M1 forecaster",
         "",
-        "Retrospektif değerlendirme: 2000–2022 PISA döngüleriyle eğitim, 2025 gerçek değerlere karşı test.",
+        "Tarihsel rolling-origin hedefleri 2012, 2015, 2018 ve 2022'dir; her tahminde hedef öncesindeki döngüler kullanılır. Tabular modeller havuzlanmış geçmiş geçişleri gecikme özellikleriyle kullanırken TimesFM mevcut sıralı geçmişi alır. 2025 tahminleri 2000–2022 geçmişine dayanır ve gerçekleşen hedeflerle sonuçlara maruz kalınmış retrospektif olarak karşılaştırılır.",
         "",
         "---",
         "",
         "## 2. Literatür Korpusu Yöntem Frekansı",
         "",
-        "1266 kayıtlık ILSA korpusundan ML birincil yöntemi kodlanan **167 çalışma** analiz edilmiştir.",
+        "1.266 kayıtlık kodlanmış korpusta birincil yöntemi bulunan 147 tahminsel çalışma analiz edilmiştir. Özgün Scopus/WoS arama geçmişi, ham veri dışa aktarımları ve tarama kararları bulunmadığından bu sayım eksiksizliği doğrulanmış sistematik bir tarama değildir; sınırdaki çalışmalar için bağımsız ikinci kodlayıcı da beklenmektedir.",
         "",
         format_table(
             method_freq[["method", "study_count", "share_pct"]].head(12).rename(
-                columns={"method": "Yöntem", "study_count": "Çalışma N", "share_pct": "Kodlananların %'si"}
+                columns={"method": "Yöntem", "study_count": "Çalışma N", "share_pct": "147 kodlu tahminsel çalışmanın %'si"}
             ),
-            "Tablo 1 — ILSA Literatüründe En Sık Kullanılan ML Yöntemleri"
+            "Tablo 1 — Birincil Yöntem Frekansı (tahminsel çalışmalar, N=147)"
         ),
-        "**Sonuç:** Random Forest (%26.3) ve XGBoost (%10.8) birinci ve ikinci sıradadır. "
-        "Bunlar bu çalışmada da temel ML yöntemleri olarak seçilmiştir.",
+        format_table(
+            country_method_freq[country_method_freq["method"].isin(["SVM", "Random Forest", "XGBoost"])][["method", "study_count"]].rename(columns={"method": "Yöntem", "study_count": "Çalışma N"}),
+            "Tablo 1b — Ülke Düzeyinde Tahmin Alt-Kümesindeki Yöntemler (N=17)"
+        ),
+        "Geniş tahminsel altkümede RF (42; %28,6) ve XGBoost (17; %11,6) en sık kodlanan yöntemlerdir. Dar ülke düzeyi altkümede SVM 4, RF 3 ve XGBoost 2 çalışmayla öndedir. RF/XGBoost genel karşılaştırıcı olarak gerekçelendirilebilir; doğrulanmış ülke düzeyi gelecek-döngü ILSA tahminlerinde en sık yöntemler oldukları söylenemez.",
         "",
         "---",
         "",
         "## 3. Tarihsel Backtesting (2012–2022)",
         "",
-        "Eğitim: her hedef döngü için önceki tüm PISA döngüleri (minimum 3). "
-        "Test: hedef döngünün gerçek değerleri. 3 domain × 4 döngü = 12 fold.",
+        "Dört rolling-origin hedefi (2012, 2015, 2018, 2022), üç alan ve ortak örnekler kullanılmıştır: hedef başına sırasıyla 40, 51, 57 ve 60 ülke/ekonomi. Genel ortalama, 12 alan×hedef MAE hücresinin eşit ağırlıklı ortalamasıdır; standart sapma bu 12 betimsel hücre üzerindedir ve 12 bağımsız zaman dönemi anlamına gelmez.",
         "",
         format_table(
             hist_summary.rename(columns={
@@ -293,18 +310,17 @@ def write_report(
             "Tablo 4 — Döngü Bazında Tarihsel Ortalama MAE"
         ),
         "**Bulgular:**",
-        "- Persistence baseline çoğu ML modelinden daha iyi ya da eşit performans göstermektedir.",
-        "  Bu, PISA skorlarının döngüler arası yüksek otokorelasyona sahip olduğunu doğrular.",
-        "- XGBoost tek tutarlı olarak Persistence'ı geçen ML modelidir.",
+        "- Persistence üç alanın tamamında en düşük eşit-fold MAE'yi verdi; bu protokolde karmaşık yöntemler son-gözlem baseline'ını geçemedi.",
+        "- XGBoost Persistence'a yakın olsa da tarihsel alan ortalamalarının hiçbirinde Persistence'ı geçmedi.",
         "- TimesFM 2.5 LoRA (ILSA adaptasyonlu), zero-shot'a göre ortalama ~0.09 MAE iyileştirme sağlar.",
-        "- Bu fark istatistiksel olarak marjinaldir; TimesFM genel olarak tabular ML'den daha kötü performans göstermektedir.",
+        "- LoRA iyileşmesi her alanda 0.2 puanın altındadır. TimesFM 2.5 LoRA tarihselde Ridge ve RF'den daha düşük ortalama MAE verirken Persistence ve XGBoost'u geçememiştir; yöntem sıralaması modele ve alana göre değişir.",
+        "- Becker–Coyle'un yayımlanmış 2022 doğrusal/kuadratik trend seçimi kodundan yeniden kurulan tahminler, ortak 60 ülke örneğinde üç alanda da Persistence ve karşılaştırılan tabular modellerden daha yüksek MAE vermiştir. Bu bir supplement-kodu rekonstrüksiyonudur; yayımlanmış hazır tahmin tablosu veya ileriye dönük doğrulama değildir.",
         "",
         "---",
         "",
         "## 4. PISA 2025 Nihai Karşılaştırma",
         "",
-        "> **Dikkat:** Bu değerlendirme 'outcome-exposed retrospective' olarak etiketlenmiştir. "
-        "PISA 2025 değerleri model eğitiminde kullanılmamış, yalnızca değerlendirme hedefi olarak kullanılmıştır.",
+        "> **Dikkat — sonuçlara maruz kalınmış retrospektif değerlendirme:** Kod ve manifestlerde 2025 hedefi model girdisi/eğitim hedefi yapılmamıştır; ancak 2025 sonuçları ve önceki model sonuçları proje ekibinin erişimine açıktı. Bu nedenle bu karşılaştırma kör ve bağımsız ileriye dönük doğrulama değildir.",
         "",
         format_table(
             pisa2025.rename(columns={
@@ -314,23 +330,26 @@ def write_report(
                 "science": "Fen MAE",
                 "mean_MAE": "Ortalama MAE"
             }),
-            "Tablo 5 — PISA 2025 Model Karşılaştırması (66 Ülke)"
+            "Tablo 5 — PISA 2025 Model Karşılaştırması (66 ülke/ekonomi; alan başına)"
         ),
         "**Ana Bulgular:**",
-        "- **En iyi model: XGBoost** — 3 domainde de en düşük veya en düşüğe yakın MAE",
-        "- **Ridge** genel sıralamada XGBoost'a yakın, okuma alanında biraz daha iyi",
-        "- **TimesFM 2.5 (LoRA dahil)** tabular ML yöntemlerinden ~5 puan daha kötü MAE vermektedir",
+        "- Alan liderleri farklıdır: matematikte XGBoost (9.318), okumada Ridge (11.357), fende Persistence (9.378).",
+        "- Üç alan MAE'sinin basit ortalamasında Ridge (10.107), XGBoost'tan (10.660) düşüktür; bu sıralama da seçili örneklem ve retrospektif tasarıma özgüdür.",
+        "- TimesFM 2.5 LoRA'nın üç-alan ortalama MAE'si Ridge'den 4.276 puan yüksektir; bu fark 2025 retrospektif karşılaştırmasına özgüdür.",
         f"- **ILSA LoRA'nın TimesFM'e katkısı:** {lora_gain}",
-        "- **Sistematik overprediction** var: tüm modeller pozitif mean_signed_error gösteriyor "
-        "(özellikle matematik ve okuma — PISA 2022'den 2025'e beklenenden daha sert düşüş)",
+        "- Üç alan ve 66 ülke birlikte havuzlandığında dokuz modelin ortalama signed error'ı pozitiftir; alan bazında bu tüm modeller için geçerli değildir. Bu betimsel desen COVID-19 gibi nedenlere ilişkin nedensel açıklama sağlamaz.",
+        "",
+        "### Belirsizlik kapsamı",
+        "Hedef puan örnekleme hatası/ülke-kümesi duyarlılığı (Phase 3.25) ve tarihsel girdi belirsizliğiyle model yeniden eğitimi (Phase 3.26) ayrı koşullu analizlerdir; birleşik aralık oluşturmaz. Phase 3.26'da 2.000 marjinal-SE çekiminde Persistence'ın en düşük eşit-fold MAE sıklığı matematikte %97,45, okumada %98,55, fende %99,75'tir; bu gelecek döngüler için olasılık değildir ve TimesFM yeniden eğitim belirsizliğini kapsamaz. Tam tarihsel ölçek-link kovaryansı doğrulanamadığı için link hatası da dahil değildir; sonuçlar tam belirsizlik yayılımı olarak sunulmamalıdır.",
         "",
         "---",
         "",
-        "## 5. İstatistiksel Testler",
+        "## 5. Keşfedici ülke-eşleştirmeli testler",
         "",
     ]
 
     if not stats_tests.empty:
+        lines.append("> Bu Wilcoxon testleri 2025'e maruz kalınmış tek bir değerlendirmedeki ülke bazlı mutlak hataları eşleştirir. p değerleri çoklu karşılaştırma düzeltmesizdir; ülkeler arası bağımlılık, hedef puan örnekleme belirsizliği ve ölçek-link belirsizliği modellenmemiştir. Bu nedenle p değerleri doğrulayıcı üstünlük kanıtı sayılmamalı ve ana rapordaki koşullu küme-bootstrap/puan-SE duyarlılık analizlerinin yerine geçmemelidir.\n")
         lines.append(format_table(
             stats_tests.rename(columns={
                 "domain": "Domain",
@@ -338,10 +357,10 @@ def write_report(
                 "model_B": "Model B",
                 "n_countries": "N Ülke",
                 "mean_diff_A_minus_B": "Ortalama Δ (A−B)",
-                "interpretation": "Daha iyi",
+                "interpretation": "Düşük ort. mutlak hata",
                 "wilcoxon_statistic": "W",
                 "p_value": "p",
-                "significant_p05": "p<0.05?"
+                "raw_p_lt_005": "Ham p<0.05?"
             }),
             "Tablo 6 — Wilcoxon Signed-Rank Testleri (ülke bazında hata farkı)"
         ))
@@ -351,9 +370,11 @@ def write_report(
     lines += [
         "---",
         "",
-        "## 6. W_j → MAE Zinciri ve Noise Analizi",
+        "## 6. Ayrı araştırma hattı: extraction → W_j → Stage 5 LOCO",
         "",
         "### 6.1 W_j Ağırlık Farkı (Downstream Evaluation)",
+        "",
+        "Bu bölüm ana dokuz-modelli PISA ülke ortalaması benchmark'ından farklı bir downstream deneydir; sonuçları PISA 2025 yöntem sıralamasına eklenmemelidir.",
         "",
         f"| Metrik | Değer |",
         f"|---|---|",
@@ -365,10 +386,7 @@ def write_report(
         f"| Yön uyumu (W frozen, W oracle) | {w_delta.get('W_direction_agreement', '—')} |",
         f"| W_j'ye eşlenen kanıt satırı (oracle) | {w_delta.get('evidence_rows_oracle', '—')} |",
         "",
-        "**Yorum:** ΔMAE ≈ −0.39 (oracle Stage 5 frozen'dan daha kötü). "
-        "Bunun sebebi, test bölümünden gelen yalnızca 66 kanıt satırının W_j'yi "
-        "Stage 5'teki 620 satıra kıyasla geriye taşımasıdır. "
-        "Spearman ρ = 0.34 — oracle W vektörü frozen Stage 5 W'sıyla zayıf korelasyon gösterir.",
+        "**Yorum:** ΔMAE = oracle − frozen = −0.3946 olduğundan oracle MAE 0.3946 puan daha düşüktür (daha iyidir); eski yorumdaki 'oracle daha kötü' ifadesi ters işaretlidir. Oracle koşulu değerlendirilen split'in altın etiketlerini kullandığından deploy edilebilir extraction kolu veya bağımsız genelleme kanıtı değildir. Ağırlık benzerliği ölçüleri bu ayrı pipeline'a özgüdür.",
         "",
         "### 6.2 Noise Dose-Response (Yön Çevirme)",
         "",
@@ -380,23 +398,19 @@ def write_report(
         lines.append(format_table(
             flip[["level", "mae_mean", "mae_p2_5", "mae_p97_5"]].rename(columns={
                 "level": "Flip oranı", "mae_mean": "MAE ort.",
-                "mae_p2_5": "95% CI alt", "mae_p97_5": "95% CI üst"
+                "mae_p2_5": "2.5% yüzdeliği", "mae_p97_5": "97.5% yüzdeliği"
             }),
-            "Tablo 7 — Yön Flip Pertürbasyonu (0–100%)"
+            "Tablo 7 — Yön Flip Pertürbasyonu (0–100%; 100 tekrar/düzey)"
         ))
         lines.append(format_table(
             drop[["level", "mae_mean", "mae_p2_5", "mae_p97_5"]].rename(columns={
                 "level": "Drop oranı", "mae_mean": "MAE ort.",
-                "mae_p2_5": "95% CI alt", "mae_p97_5": "95% CI üst"
+                "mae_p2_5": "2.5% yüzdeliği", "mae_p97_5": "97.5% yüzdeliği"
             }),
-            "Tablo 8 — Çift Düşürme Pertürbasyonu (0–100%)"
+            "Tablo 8 — Çift Düşürme Pertürbasyonu (0–100%; 100 tekrar/düzey)"
         ))
         lines.append(
-            "**Yorum:** Yön flipi ve çift düşürme MAE'yi yalnızca ~0.16 puan artırmaktadır "
-            "(%100 flipte bile). Bu, forecasting pipeline'ının ekstraksiyon gürültüsüne "
-            "**çok düşük duyarlılık** gösterdiğini kanıtlar. "
-            "Tez iddiası için: 'Çıkarım kalitesi W_j'yi değiştirir, "
-            "ama W_j → MAE kanalı bu tasarımda zayıftır.' "
+            "**Yorum:** Bu sentetik pertürbasyon tasarımında flip/drop ortalamaları baseline çevresindedir; %100 flip sonucunun baseline ile aynı olması pertürbasyon semantiğinin raporlanmasını gerektirir. Bu sonuç gerçek extraction hatalarının dağılımına genellenemez ve düşük duyarlılığı kanıtlamaz. "
             "Construct swap pertürbasyonu ise MAE'yi ~2 puan düşürmektedir — "
             "bu bir artifakt: yanlış construct seçimi tahmin dışı kalan "
             "bir predictor ağırlığını arttırarak bazen MAE'yi iyileştirebilir."
@@ -408,27 +422,25 @@ def write_report(
         "",
         "---",
         "",
-        "## 7. Fine-tuning Extraction Durumu",
+        "## 7. Ayrı araştırma hattı: extraction fine-tuning",
         "",
         "| Kol | Model | Durum | Val Strict F1 |",
         "|---|---|---|---|",
         "| Oracle ceiling | — | ✅ Tamamlandı | 0.778 |",
-        "| A0 base_qwen3_chunked | Qwen3-8B | ⬜ Henüz çalışmadı (API key yok) | — |",
-        "| A1 qwen3_lora_selected | Qwen3-8B + LoRA | ⬜ GPU gerekli (Colab) | — |",
-        "| A2 base_mistral_chunked | Mistral-7B | ⬜ Henüz çalışmadı | — |",
-        "| A3 mistral_lora_selected | Mistral-7B + LoRA | ⬜ GPU gerekli (Colab) | — |",
-        "| P3 zeroshot_qwen27b | Qwen3.8-27B via Groq | ✅ Tamamlandı | **0.000** |",
+        "| A0 base_qwen3_chunked | Qwen3-8B | ⬜ Yerel v2 değerlendirme çıktısı yok | — |",
+        "| A1 qwen3_lora_selected | Qwen3-8B + LoRA | ⬜ Yerel v2 değerlendirme çıktısı yok | — |",
+        "| A2 base_mistral_chunked | Mistral-7B | ⬜ Yerel v2 değerlendirme çıktısı yok | — |",
+        "| A3 mistral_lora_selected | Mistral-7B + LoRA | ⬜ Yerel v2 değerlendirme çıktısı yok | — |",
+        "| P3 zeroshot_qwen27b | qwen/qwen3.8-27b (sağlayıcı çıktı kaydında yok) | ✅ Tamamlandı | **0.000** |",
         "| Stage 7/9 LoRA (geçersiz) | Mistral-7B | ❌ 0/256 tensor yüklendi | — |",
         "",
-        "**P3 (Qwen3-27B zero-shot) strict F1 = 0.00** — model, "
-        "codebook taksonomisine uygun construct etiketleri üretemiyor. "
-        "Bu, domain fine-tuning'in kritik önemini kanıtlar.",
+        "**Yorum sınırı:** Zero-shot Qwen kolundaki strict F1=0.000 tek başına domain fine-tuning'in gerekli ya da üstün olduğunu kanıtlamaz. Aynı tahminlerin matcher tanımına göre farklı F1 alması ölçüm duyarlılığı gösterir. Geçerli base/LoRA kıyası için aynı split, aynı çıkarım/değerlendirme ayarları ve tamamlanmış eşleşik kollar gerekir. Yerel v2 değerlendirme envanterinde oracle ve zero-shot Qwen çıktıları bulunuyor; eşleşik base/LoRA kolları görünmüyor.",
         "",
         "**Sonraki adımlar:**",
-        "1. Groq API key ekle → A0 ve P1–P4 kollarını çalıştır",
-        "2. Colab/GPU'da `train_lora_v2.py` çalıştır → A1, A3",
-        "3. `eval_extraction.py` ile tüm kolları değerlendir",
-        "4. `downstream_eval.py --split test --final-test-run` ile test seti",
+        "1. Önce doğrulama bölmesinde aynı ayarlarla eşleşik base, retrieval/prompt ve LoRA kollarını tamamla.",
+        "2. Eğitim kollarını GPU'da çalıştır ve her adapter'ın yüklendiğini doğrula.",
+        "3. Checkpoint'i validation strict extraction metriğiyle seç; kolları aynı test ayarlarında değerlendir.",
+        "4. Test bölümünü yalnızca protokol, model ve kod kilitlendikten sonra bir kez çalıştır.",
         "",
         "---",
         "",
@@ -439,19 +451,18 @@ def write_report(
         "- Retrospektif backtesting prensibi doğru: hedef döngüden önceki verilerle eğitim",
         "- TimesFM'e ILSA bağlamı verilmiş (unified_ilsa_panel ile LoRA adaptasyonu)",
         "- 2025 tahminleri 66 ülke için üretilmiş",
-        "- Noise dose-response analizi ile W_j duyarlılığı ölçülmüş",
-        "- Protokol v2 pre-registered ve geçersiz Stage 7/9 sonuçları belgelenmiş",
+        "- Ayrı bir downstream deneyde sentetik W_j/noise duyarlılığı incelenmiş; sonuçları ana PISA benchmark'ından ayrılmıştır",
+        "- Fine-tuning v2 protokolü belgelenmiş; önceden dışarıda kayıt altına alındığı doğrulanmamıştır; geçersiz Stage 7/9 sonucu ayrıca belgelenmiştir",
         "",
         "### ⚠️ Dikkat Edilmesi Gereken Sorunlar",
         "- **TimesFM LoRA katkısı marjinal (~0.09 MAE)** — ILSA context injection yeterli iyileştirme sağlamıyor",
-        "- **Tüm modeller overprediction yapıyor** — 2025 PISA skorları beklenenden düşük, "
-        "bu muhtemelen COVID-19 öğrenme kayıplarının 2022 sonrası telafi edilememesinden kaynaklanıyor",
-        "- **W_j → MAE zinciri zayıf** — 66 oracle kanıt satırı 620 Stage 5 satırına karşı yetersiz",
-        "- **Fine-tuning kolları henüz tamamlanmamış** — GPU kaynağı ve API key gerekli",
+        "- **Pooled overprediction betimseldir** — domain bazında bütün yöntemler pozitif sapma göstermiyor; bu sonuçtan neden/etki çıkarılamaz",
+        "- **W_j/noise sonuçları ayrı exploratory downstream tasarıma özgüdür**; PISA benchmark'ına doğrudan aktarılmaz",
+        "- **Fine-tuning kolları eksiktir** — yerel v2 envanteri eşleşik base/LoRA karşılaştırmasını göstermiyor",
         "",
         "### ❌ Geçersiz Sayılan Sonuçlar",
         "- Stage 7/9 Mistral LoRA F1 = 0.379 → base model sonucu, LoRA değil",
-        "- P3 zero-shot F1 = 0.000 → codebook etiketleme başarısız",
+        "- P3 zero-shot F1 = 0.000 → yalnızca belirtilen strict matcher ve kol için sonuç; fine-tuning üstünlüğü kanıtı değildir",
         "",
         "---",
         "",
@@ -459,12 +470,19 @@ def write_report(
         "",
         "| Soru | Cevap |",
         "|---|---|",
-        "| Hangi yöntemler en sık kullanılıyor? | RF (%26.3), XGBoost (%10.8) |",
-        "| En iyi forecasting modeli (2025)? | XGBoost ve Ridge |",
-        "| TimesFM ILSA LoRA işe yarıyor mu? | Marjinal (~0.09 MAE), istatistiksel önem zayıf |",
-        "| Extraction kalitesi forecasting'i etkiliyor mu? | Zayıf — noise duyarlılığı düşük |",
-        "| Fine-tuning tamamlandı mı? | Hayır — A0/A1/A2/A3 kolları bekliyor |",
-        "| 2025 tahminleri var mı? | Evet — 66 ülke × 3 domain, MAE ~9–13 arası |",
+        "| Tahminsel literatürde en sık kodlananlar? | RF 42/147, XGBoost 17/147; ülke düzeyi altkümede SVM 4/17 |",
+        "| 2025 alan liderleri? | Matematik XGBoost; okuma Ridge; fen Persistence; üç-alan ortalaması Ridge |",
+        "| TimesFM ILSA LoRA işe yarıyor mu? | Tarihsel eşleşik MAE farkı <0.2; güçlü üstünlük kanıtı yok |",
+        "| Extraction kalitesi forecasting'i etkiliyor mu? | Mevcut sentetik-noise deneyi bunu kesinleştirmiyor |",
+        "| Fine-tuning tamamlandı mı? | Eşleşik base/LoRA kolları yerel envanterde tamamlanmış görünmüyor |",
+        "| 2025 tahminleri var mı? | Evet — 66 ülke/ekonomi × 3 alan; yöntem-alan MAE aralığı 9.318–19.584 |",
+        "| Bağımsız ileriye dönük doğrulama var mı? | Hayır; PISA 2029 için kod, veri, model ve tahminler sonuçlar açılmadan önce dondurulmalı |",
+        "",
+        "## Kaynak ve yeniden üretim",
+        "- Ana tahmin panelleri: `outputs/pisa_all_models_quadratic_trend_v1/`.",
+        "- Literatür sıklığı/kapsam notu: `analysis/03_data_feasibility/phase3_11_corpus_method_frequency.md`.",
+        "- Araştırma amacı ve kanıt denetimi: `analysis/03_data_feasibility/phase3_33_objective_alignment_audit.md`.",
+        "- Bu sentezi üreten betik: `scripts/synthesize_forecast_comparison.py`.",
     ]
 
     return "\n".join(lines)
@@ -478,6 +496,7 @@ def main() -> None:
 
     # Yöntem frekansı
     method_freq = load_method_frequency()
+    country_method_freq = load_country_method_frequency()
     method_freq.to_csv(OUT_DIR / "method_frequency.csv", index=False)
     print(f"  Yöntem frekansı: {len(method_freq)} satır")
 
@@ -521,7 +540,7 @@ def main() -> None:
     # Rapor
     print("Rapor yazılıyor...")
     report_md = write_report(
-        method_freq, hist_sum, hist_dom, hist_cyc,
+        method_freq, country_method_freq, hist_sum, hist_dom, hist_cyc,
         p25_sum, stats_tests, noise_df, w_delta
     )
     report_path = OUT_DIR / "synthesis_report.md"
