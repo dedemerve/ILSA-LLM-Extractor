@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.1.0] - 2026-10-25
+
+### Changed
+- TALIS pipeline (`build_talis_covariates.py`): added JRR variance estimation using TRWGT1–TRWGT100 replicate weights; SE column now populated for all four cycles (2008, 2013, 2018, 2024)
+- PIAAC Cycle 2 year corrected from 2017 to 2022 in `build_icils_piaac_estimates.py` and downstream outputs
+- TALIS 2008 and 2024 cycles added to covariate pipeline; output expanded from 2 to 4 cycles
+
+### Performance (thesis run)
+- Covariate records: 174 (TALIS output, post-correction)
+- TALIS SE coverage: R=100 replicates across all cycles
+
 ## [1.0.0] - 2026-05-31
 
 ### Added
