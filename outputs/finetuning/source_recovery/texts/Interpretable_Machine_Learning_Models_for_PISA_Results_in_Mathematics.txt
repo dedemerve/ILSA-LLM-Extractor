@@ -1,0 +1,2071 @@
+Received 20 January 2025, accepted 31 January 2025, date of publication 4 February 2025, date of current version 12 February 2025.
+Digital Object Identifier 10.1109/ACCESS.2025.3538585
+
+Interpretable Machine Learning Models for PISA
+Results in Mathematics
+ISMAEL GÓMEZ-TALAL 1 , (Member, IEEE), LUIS BOTE-CURIEL
+AND JOSÉ LUIS ROJO-ÁLVAREZ 1,2 , (Senior Member, IEEE)
+
+1,
+
+1 Department of Signal Theory and Communications and Telematic Systems and Computation, Rey Juan Carlos University, 28943 Madrid, Spain
+2 D!lemmaLab Ltd., 28943 Madrid, Spain
+
+Corresponding author: Ismael Gómez-Talal (ismael.gomez.talal@urjc.es)
+This work was supported in part by the Autonomous Community of Madrid (European Laboratory for Learning and Intelligent Systems
+(ELLIS) Madrid Node), and in part by the Spanish Ministry of Science and Innovation (LATENTIA) under Grant
+PID2022-140786NB-C32/AEI/10.13039/501100011033.
+
+ABSTRACT The Program for International Student Assessment (PISA) 2022 provides a global framework
+for assessing educational performance worldwide. We addressed a principled observation of characteristics
+and disparities in Mathematics performance among Spanish adolescents while showing the factors
+influencing these results. To address this question, we proposed using advanced Machine Learning
+techniques through possibly non-linear predictive models that identify key drivers of Mathematics
+performance to inform data-driven educational policies and interventions that improve learning outcomes.
+By preprocessing the PISA dataset, we categorized students into Low, Medium, and High proficiency levels
+and employed various binary classification models to discern predictive patterns. In addition, a stacking
+meta-model integrating the strengths of eight distinct predictive models was developed to enhance prediction
+accuracy. Our results demonstrated that the meta-model outperforms individual models in predicting
+student performance across various proficiency levels, consistently showing superior metrics in Precision,
+Recall, and Area Under Curve (AUC) scores. Specifically, the meta-model achieved an AUC score of
+0.9766 when classifying students in the Low and High proficiency categories. We adopted the Shapley
+Additive exPlanations method to demystify the model decisions, highlighting significant predictors such
+as grade repetition, access to digital devices, and extracurricular Mathematics classes. We also introduced
+an interactive dashboard, harnessing Uniform Manifold Approximation and Projection for dimensionality
+reduction and enabling a granular view of the educational landscape. The intention of all this is to contribute
+to an education system that is well-informed and effectively adapts to the diverse needs of students.
+INDEX TERMS Programme for international student assessment, education, interpretable machine learning,
+Shapley additive explanations, meta-modeling approach, dashboard visualization.
+I. INTRODUCTION
+
+One of the most pivotal evaluations of adolescent education globally is the Programme for International Student
+Assessment (PISA) 2022 [1], [2]. This triennial international
+assessment measures 15-year-old students’ acquisition of
+crucial knowledge and skills necessary for successful societal
+integration. The 2022 iteration of PISA extends its focus to
+Reading, Mathematics, and Science, incorporating innovative
+domains alongside the assessment of student well-being.
+These insights are instrumental in benchmarking student
+The associate editor coordinating the review of this manuscript and
+approving it for publication was Wai-Keung Fung
+VOLUME 13, 2025
+
+.
+
+performance across the globe and evaluating the relative
+efficacy of educational systems among participating nations.
+The findings, especially in Mathematics and Science, are critical, underscoring their foundational role in the technological
+advancement of a country [3], [4].
+In the contemporary research milieu, an undeniable
+demand exists for in-depth exploration and sophisticated
+analysis. Several studies have leveraged on PISA metrics
+to prove specific dimensions, and a burgeoning segment is
+exploring the expansive capabilities of Machine Learning
+(ML) [5], [6], [7], [8], [9], [10], [11]. However, a significant
+gap persists, as the academic sphere needs a non-linear datadriven models approach capable of navigating the extensive
+
+2025 The Authors. This work is licensed under a Creative Commons Attribution 4.0 License.
+For more information, see https://creativecommons.org/licenses/by/4.0/
+
+27371
+
+I. Gómez-Talal et al.: Interpretable Machine Learning Models for PISA Results in Mathematics
+
+data landscape to extract and highlight critical variables [12],
+[13], [14]. Such a methodology is crucial as we navigate the
+threshold of a data-centric epoch to offer profound insights
+while being accessible to a broad spectrum of stakeholders,
+including researchers and educators [15].
+In this paper, PISA 2022 data, focused on Spanish
+students, is elaborated to define and study three types of
+students in line with the structure used in the official PISA
+reports classification system: Low, Medium, and High. Low
+proficient students show mere comprehension of fundamental
+mathematical ideas and simple arithmetics. Students at the
+Medium level understand underlying mathematical concepts
+to the extent that they can use them for problem-solving.
+High achievers in Mathematics have the most profound
+understanding of the subject, with apt complex reasoning,
+abstractive thinking, and application of sophisticated geometry concepts. In order to develop a simple but also robust
+analytical framework to classify the students’ performance,
+we decided to adopt three classes (Low, Medium, and High).
+Similar categorization methods have also been used in earlier
+studies [16], [17], which have proved to assist in drawing
+attention to important trends and improving comprehension.
+This does help in preserving congruence with other processes
+and patterns of educational research while allowing for
+greater scrutiny of educational phenomena.
+Our main goal is to address the worldwide differences in
+Mathematics achievement among Spanish adolescents using
+the latest 2022 PISA data. We apply predictive ML models
+for attribution analysis of Mathematics performance, mainly
+concentrating on reading accessibility, critical thinking skills,
+and geographical aspects through interpretability methods.
+We explored different binary classification models using
+six hyperparameter combinations in eight models to find
+the most effective model for understanding the variables
+in our study. All models were tuned separately using grid
+search in every cross-validation fold to find the best set of
+hyperparameters for the model and enhance performance,
+which was done in a customized manner. Then, the top
+eight models that performed well with their optimal hyperparameters in the preceding stage were embedded into a
+meta-model using the stacking technique. Methods have
+been developed that utilize the meta-model to combine the
+predictions of each of the individual models so that overall
+accuracy is improved and the individual models are quite
+robust, thus building a strong ensemble model [18], [19].
+Next, we explored which factors influence mathematical
+performance using advanced analytical techniques as Shapley
+Additive exPlanations (SHAP) for model analysis [20]. This
+ML approach helps us better understand how these factors
+affect students’ skills. Interpretability models revealed the
+various factors that impact students’ mathematics scores,
+including access to reading materials, critical thinking skills,
+gender differences, and location.
+The contributions of this work are as follows:
+• Eight machine learning models were applied and
+optimized to predict student performance, with a
+27372
+
+stacking meta-model significantly enhancing predictive
+accuracy.
+• The study employs SHAP to interpret model predictions,
+highlighting the importance of variables such as access
+to resources, critical thinking skills, and demographic
+factors.
+• It demonstrates that factors like grade repetition, digital
+device ownership, and participation in additional Mathematics classes significantly impact performance.
+• A state-of-the-art interactive dashboard was developed,
+integrating UMAP visualizations and SHAP analysis
+to facilitate decision-making for educators and policymakers. It provides actionable insights for addressing regional and demographic inequalities in student
+achievement, offering a framework for evidence-based
+policymaking.
+The rest of this paper is organized as follows: Section II
+of the paper is a review of literature focusing on various
+determinants of students’ achievements in Mathematics, such
+as teaching quality, gender, technology use, and availability
+of resources in homes. Section III depicts the approach taken,
+including the data processing, the adopted classification
+models, and the application of SHAP values for analysis.
+In Section IV, the results of the experiments are described,
+featuring the outcomes of the single classifiers and the
+meta-classifier in distinguishing student performance levels.
+Section V elucidates the results and their relevance to education. In contrast, Section VI re-evaluates the whole research
+and reiterates the power of integrating the ML models
+with the interactive dashboards for improving educational
+performance, and outlines future research opportunities.
+II. RELATED WORK
+
+This section analyses the different determinants of educational achievement with emphasis on Mathematics. It first
+considers the importance of teaching quality and what other
+strategies can bring about. Then, the section addresses
+the issue of gender in Mathematics throughout various
+settings. Technology integration as an influencing factor is
+discussed in the following subsection, where the drawbacks
+and aspects of technology engagement are also elaborated
+on and explained. Finally, it addresses the household
+educational resources, distinguishing parental engagement
+and the provision of capital as the most significant for
+children’s achievements in Mathematics.
+A. TEACHING QUALITY AND ITS IMPACT ON
+MATHEMATICS ACHIEVEMENT
+
+An investigation in the Philippines scrutinized the interplay among socioeconomic status, a growth mindset, and
+proficiency in Mathematics and Science [21]. The outcomes indicated a positive association between a growth
+mindset and performance in these disciplines. Notably, the
+influence of a growth mindset on educational attainment
+was more marked in students hailing from economically
+disadvantaged backgrounds, underscoring the moderating
+VOLUME 13, 2025
+
+I. Gómez-Talal et al.: Interpretable Machine Learning Models for PISA Results in Mathematics
+
+role of socioeconomic status [22], [23]. The study also noted
+that students from lower socioeconomic strata are likelier
+to exhibit a diminished growth mindset than their more
+affluent counterparts, likely reflecting disparities in access to
+educational resources and opportunities.
+B. TECHNOLOGY INTEGRATION AND ITS IMPACT ON
+MATHEMATICS ACHIEVEMENT
+
+In examining the intersection of technology use and academic
+performance, particularly in Mathematics, recent studies
+offer nuanced insights into how digital tools influence
+learning outcomes. In [24], the authors, through their analysis
+in the PISA 2018 report, shed light on the complex relationship between technology usage and academic performance.
+Their research underscores the potential of technology to
+enhance learning when integrated thoughtfully into the
+educational process, suggesting that strategic application of
+digital resources can positively impact student achievement in
+Mathematics. Additionally, studies have unveiled a nuanced
+relationship between the employment of Information and
+Communication Technologies (ICT) and academic achievement in Mathematics [25], [26], [27]. Judicious use of ICT
+can bolster learning by facilitating practice, exploration, and
+access to online educational resources. Conversely, evidence
+suggests that excessive or misguided use of ICT might result
+in adverse academic outcomes [28], [29], [30]. The authors in
+[31] deepen into the effects of ICT use and related attitudes
+on students’ Mathematics and Science performance. Their
+study, leveraging a decade of PISA surveys, highlights the
+importance of ICT access and quality use in educational
+settings. They argue that while ICT can be a powerful tool
+for educational engagement and improvement, its benefits
+are contingent upon students’ attitudes towards technology
+and its application in learning Mathematics and Science
+[7], [32]. Furthermore, in [33], based on PISA 2018 data,
+employs multilevel structural equation analysis to understand the impact of educational ICT resources on student
+engagement and academic performance. Their findings point
+to a significant positive relationship between access to
+educational technology resources, student engagement, and
+academic performance in Mathematics. This suggests that
+the availability of digital tools, when coupled with effective
+engagement strategies, can substantially enhance students’
+learning experiences and outcomes in Mathematics.
+C. GENDER GAP IN MATHEMATICS ACHIEVEMENT
+
+There is a notable persistence of gender gaps in Mathematics achievement, with males typically surpassing females
+in various countries. An analysis of PISA data in [34]
+across 40 nations revealed substantial variation in this gap,
+with some countries reporting negligible gender differences
+and others noting females outperforming males. Further
+scrutiny of the 2018 PISA data suggested a narrowing
+gender gap in Mathematics performance, with females
+
+VOLUME 13, 2025
+
+excelling in Mathematics in several regions. Despite this
+progress, disparities remain in selecting technical professions
+and confidence in Science, Technology, Engineering, and
+Mathematics (STEM) fields [35].
+D. HOME EDUCATIONAL RESOURCES AND THEIR IMPACT
+ON MATHEMATICS ACHIEVEMENT
+
+In the discourse on educational outcomes, particularly within
+the realm of Mathematics achievement, the availability of
+educational resources at home, such as books, stands out
+as a significant predictor of student performance. In [36],
+further into this aspect by examining the interplay between
+socioeconomic status (SES), migration background, noncognitive abilities, and their collective impact on students’
+performance in PISA assessments for Reading and Mathematics [37], [38], [39]. The findings from this research
+underscore the importance of home educational resources,
+revealing that students with access to a broader range of
+books and educational materials at home tend to perform
+better in Mathematics. This correlation highlights the critical
+role of the home environment in shaping students’ academic
+capabilities, suggesting that educational resources at home
+provide direct learning opportunities and reflect broader
+socioeconomic factors that contribute to academic success.
+The review portrays the most valid factors affecting
+Mathematics success, such as teaching, gender, technology,
+and family support in education. Previous studies have
+investigated these areas, but it is clear that more work is
+needed to see how these aspects come together. In particular,
+the interaction of home resources with external ones, such as
+school quality, the role of digital resources, and the effect of
+attitudes towards STEM among different genders, have been
+sparse. In this regard, our methodology fills these gaps in the
+literature as it uses a multidimensional approach to unveil
+the multifactor nature of the determinants of achievement in
+Mathematics.
+III. METHODOLOGY
+
+In this section, we outline our methodological approach
+tailored to the analysis of the PISA 2022 dataset for Spain,
+detailing our rigorous data curation processes, the application of Uniform Manifold Approximation and Projection
+(UMAP) for thoughtful dimensionality reduction [40], and
+the deployment of various binary classification models aimed
+at decoding the diverse academic performance levels of
+students. Central to our strategy is the delicate balance
+between computational precision and the interpretability
+of our findings, ensuring that the insights garnered are
+statistically robust and pedagogically meaningful. The overarching goal of our methodical workflow is to convert a
+comprehensive set of educational data into actionable insights
+that can inform policy and pedagogy, thereby catalyzing
+the improvement of student outcomes within the academic
+landscape.
+
+27373
+
+I. Gómez-Talal et al.: Interpretable Machine Learning Models for PISA Results in Mathematics
+
+TABLE 1. The level of proficiency in Mathematics skills of the cohort
+surveyed, breaking it down by score range, descriptive level, how many
+individuals achieved that level, and a description of such levels. This
+breakdown level is significant because it gives the overall picture of the
+mathematical skills presented in the sample and the distribution of the
+different proficiency levels, thus providing a deep detail regarding
+mathematical skills within the sampled population.
+
+A. DATA CURATION FROM PISA 2022 FOR SPAIN
+
+The dataset employed in this investigation originates from
+the latest 2022 PISA assessment, focusing on student
+performance within Spain. Provided by the Organisation for
+Economic Co-operation and Development (OECD), the raw
+dataset comprised data from 30,800 students. A foundational
+aspect of our data curation involved the removal of entries
+with excessive missing values, a decision guided by the
+principle of maintaining rigorous data quality for analysis.
+Out of the available rows with all necessary data, variables
+were chosen that served the purpose of the study and covered
+fundamental educational, demographic, and resource-related
+aspects. Any variables that were substantially blank or not
+much linked to the study objectives were removed. This
+approach resulted in a dataset that was both wide-ranging and
+suitable for producing trustworthy research outcomes.
+As Figure 1 illustrates, the dataset exhibited many rows
+with many missing values. The red line in the histogram, representing a 95% confidence threshold, delineates the cutoff
+for rows with nine or more missing values (columns with no
+values). Rows exceeding this threshold were excluded from
+further analysis. This preemptive data filtering resulted in a
+condensed dataset of 29,282 Spanish students, reducing 1,518
+entries from the original sample. Such a stringent criterion for
+data inclusion ensures the analytical robustness of our study
+by mitigating the potential bias that could arise from a high
+incidence of incomplete data. The remaining missing values,
+whose rows can be a maximum of nine missing values, have
+been replaced by the mean value of the entire dataset.
+The variables maintained for the study, as enumerated
+in Tables 5 and 6, were selected with an emphasis on
+constructing a dataset that is both comprehensive and
+conducive to dependable research findings. This histogram in
+Figure 1 and the data cleaning threshold it illustrates testify
+to the meticulous approach adopted in preparing the data for
+this study.
+Justification for the Three-Category Classification System:
+It is necessary to explain why we moved from a seven-tiered
+structure to a simplified three-category classification system
+as we go deeper and deeper into our methodological
+framework. This consideration was primarily because it
+27374
+
+was deemed necessary to simplify aspects of the analysis
+as we contend with the complexities of large educational
+datasets. The logical regrouping of the original seven levels
+into three broader categories aligns with some research
+traditions in educational studies. Works by the authors in [16]
+and [17] support this, which highlight the benefit of such
+simplification as directing the focus on essential patterns
+and conclusions while maintaining the analytic quality of
+the study. So, in our study, this strategy allows us to
+address significant aspects and provides well-supported and
+comprehensible results within the educational context.
+This type of systematic reduction reveals simple regularities and factors concerning academic attainments and
+progressions. In the preprocessing step, the dummy binary
+variables were converted into one-hot encoding, one method
+used to transform categorical variables into numerical values.
+Thus, our data could be processed more effectively with ML
+methods.
+One-hot encoding does not permit the inadvertent ordering
+of more than two removal levels within the utopian concept
+matrix categories to guarantee accurate and detailed data
+representation (Table 1 shows the distribution of categorization levels of mathematical skill after obtaining them).
+Note that the labels determining the level of proficiency in
+Mathematics were left in the original form, as this was the
+case with the most categorical variables subjected to one-hot
+encoding. Because of this, it was indicated how the integrity
+of the analytical results should be preserved and, therefore,
+the disorder included. Because such inscriptions label distinct
+and discrete classes, it was unnecessary and, thus, in the light
+of the purpose of this study, inappropriate to use one-hot
+encoding on these particular variables.
+B. OVERVIEW OF BINARY CLASSIFICATION MODELS
+
+In pursuit of this aim, we considered eight different binary
+classification models and used them on the data containing
+the three levels of Mathematics scores: Low, Medium,
+and High. The models were trained using the stratified
+K-fold approach, which was enhanced by an undersampling
+technique to eliminate the imbalance in data allocation
+within each fold and ensure that each model got adequate
+samples. The next rounds of optimization included various
+hyperparameter tuning and employing grid search to find
+the best model among the pool of trained candidates. Here,
+we summarize the models we investigated.
+Logistic Regression (LR) is a fundamental model for
+binary classification, predicting the probability that a given
+input belongs to a particular category. Consider a collection
+of p independent variables denoted by the vector x =
+(x1 , x2 , . . . , xp ). The model estimates probabilities using a
+logistic function, which is expressed as:
+p(y = 1|x) =
+
+1
+,
+1 + e−(β0 +β1 x1 +β2 x2 +···+βp xp )
+
+(1)
+
+where p(y = 1|x) is the probability of the input x being
+classified as class 1, β0 is the intercept, and β1 is the
+VOLUME 13, 2025
+
+I. Gómez-Talal et al.: Interpretable Machine Learning Models for PISA Results in Mathematics
+
+FIGURE 1. The number of missing values in the data set provided by a histogram is likely to be associated with students. The case is
+in red and represents the cut value. If the number of empty columns exceeds this number or ‘cut’, all columns in this range are
+considered almost empty. Each bar denotes the number of students with the corresponding number of empty columns. The red line
+assists in determining the number of unoccupied columns, which is intentional and has a more sustained use than the employment
+in data cleaning.
+
+coefficient for the input feature x. This model is favored for
+its simplicity and interpretability [41], [42].
+Support Vector Machines (SVM) separate various classes
+by generating a hyperplane in several dimensions. The
+optimal hyperplane is the one furthest away from the
+closest points of two classes, referred to as the support
+vector. To separate such data, non-linear boundaries SVM
+relies on kernel functions, which project the input data
+into higher dimensions. Therefore, the decision function is
+mathematically expressed as follows:
+!
+n
+X
+f (x) = sign
+αi yi K (xi , x) + b ,
+(2)
+i=1
+
+where K (xi , x) is the kernel function, yi are the labels, αi are
+the Lagrange multipliers, and b is the bias [41], [43], [44].
+Decision Trees, as the name suggests, cause the regression
+or the classification to take the form of a tree by dividing the
+datasets into smaller portions according to the input feature
+values. In this case, the aim is to ensure that the leaves are
+monolithic regarding their class. All decisions in the tree that
+is built at each stage are based on a feature that optimally
+separates the current class and its siblings according to some
+beliefs of the classifier, such as information gain:
+IG(Dp , f ) = I (Dp ) −
+
+m
+X
+Nj
+j=1
+
+Np
+
+I (Dj ),
+
+(3)
+
+where IG(Dp , f ) is the information gain of parent dataset Dp
+by feature f , I is the impurity measure, Np is the number of
+samples in the parent set, and Nj is the number of samples in
+the j-th subset [41], [45].
+VOLUME 13, 2025
+
+Random Forest upon Decision Trees by increasing the
+power of the predictive algorithm to bring an ensemble of
+trees to bear the predictive task with their aggregates used.
+Each tree is trained on a random subset of the data, and the
+final classification is typically determined by majority vote:
+ŷ = mode{y1 , y2 , . . . , yn }, where ŷ is the predicted class and
+yi are the predictions of the ith tree in the forest [46].
+Gradient Boosting (GB) constructs a weak model such as a
+decision tree and continues adding them so that the later ones
+address the mistake of the earlier trees. Each model is built
+using the commissioned framework in favor of each particular
+model, as given below:
+Fm (x) = Fm−1 (x) + ρm hm (x),
+
+(4)
+
+where Fm (·) is the model at iteration m, hm (·) is the weak
+learner, and ρm is the weight of hm (x) [47].
+XGBoost is an optimized distributed GB library designed
+to be highly efficient, flexible, and portable. It performs the
+functions of many ML algorithms within the parameters of
+GB with improvements for speed and performance [48].
+A Multilayer Perceptron (MLP) consists of any feedforward architecture with at least three layers: the input layer,
+the hidden layer, and the output layer. Each neuron output is
+a nonlinear function of the weighted summation of its inputs:
+!
+n
+X
+y=σ
+wi xi + b ,
+(5)
+i=1
+
+where σ is the activation function, wi are the weights, xi are
+the inputs, and b is the bias. MLPs can model complex
+relationships between inputs and outputs, making them
+27375
+
+I. Gómez-Talal et al.: Interpretable Machine Learning Models for PISA Results in Mathematics
+
+suitable for various applications, including classification and
+regression tasks [41], [49].
+LightGBM is a GB framework that uses tree learning
+algorithms. The system is optimized for speed and efficiency,
+emphasizing big data. LightGBM advances the performance
+of the standard techniques of GB by implementing a
+new form of tree-building strategy called the Gradient
+One-Side Sampling (GOSS) and Exclusive Feature Bundling
+(EFB), which significantly helps in reducing the cost of
+computations when working with significant datasets where
+GOSS retains cases with high gradient values and randomly
+takes cases with less gradient value while EFB groups no
+overlapping features to cut down the number of features [50].
+These models were rigorously tested to ascertain their
+effectiveness in binary classification tasks across different
+mathematical proficiency levels, employing a structured
+approach to ensure fairness and reliability in performance
+evaluation.
+
+C. STACKING META-MODEL APPROACH
+
+Stacking, introduced by Wolpert in [18], is a significant contribution towards advancing the field of ML as it presents a
+new way of combining model outputs based on a meta-model
+whose parameters are trained using the outputs from several
+base models. Such an approach, in essence, reduces the
+generalization error, greatly facilitating the emergence of
+other forms of stacking known as stacking meta-models
+or simply meta-stacking. The term meta-stacking is an
+enhancement of the initial term of stacking since this involves
+combining one or more base learners along with one or more
+meta-models, thus demonstrating the relevance of Wolpert’s
+work in the recent developments in ensemble methods.
+Upon assessing eight binary classification models, the
+next step is introducing a stacking meta-model strategy. This
+advanced ensemble technique maximizes the output of the
+team of models as individuals deriving their own merits
+from various models. The main point is that a particular
+model, called meta-modeling, is built to consolidate the
+multiple model predictions and consolidate them into one
+prediction [18], [19], [51].
+Recent studies in the field of educational data mining
+have started to employ stacking methods in solving more
+complicated predictive issues involving datasets from PISA.
+For example, in [51], the authors showed that when student
+performance is predicted, stacking improves the accuracy
+of the model by making use of several base models simultaneously [51]. Such developments indicate the increasing
+importance of stacking in education concerning data sets
+like the PISA, for which complex interactions between the
+variables of interest are present that would need elaborate
+modeling techniques to capture.
+In the conducted stage of our methodology, we apply
+the advanced meta-model construction known as stacking,
+in which base learners of varying structures are combined to
+obtain more accuracy than any single base model can provide.
+27376
+
+This has mainly been achieved through a meta-model
+whereby instead of one model making a prediction, many
+models are used to make many predictions. Then, all these
+predictions are averaged to create the final prediction.
+Exhaustive Hyperparameter Search for Base Models. As a
+first step, individual exhaustive hyperparameter searches
+are performed on all eight binary classifications. This
+systematic hyperparameter search encompasses a search over
+the hyperparameters of each model and helps to identify
+the best combination for its construction. This wide-scope
+search aims to ensure that the performance of each model
+is improved one at a time. In the end, the best-performing
+model of each category is taken forward for incorporation in
+the stacking architecture.
+Selection and Training of the Meta-Model. When the base
+models have been individually optimized, a stacking strategy
+is then used to prepare the base model predictions for the
+input features of the meta-model. In this case, since we
+have two level architectures, we have settled on LR as the
+meta-model for our study due to its effectiveness in binary
+classification tasks, ease of use and understanding, and also
+the flat nature of the decision boundary, which is optimal for
+combining the outputs from several different models.
+This is to say that there are also other steps for hyperparameter optimization in the meta-model training process.
+Still, they are pretty narrowed down since there is an explicit
+LR meta-model. This step ensures that the best-generating
+features from the base models are integrated into the
+LR model to ensure maximum efficiency of the stacking
+meta-model.
+Implementation Details. For all components of the stacking
+framework, that is, the base models and the meta-model, the
+cross-validation approach is stratified K-fold. It also helps
+care for the baseline models and the meta-model learning
+on the unseen data and the proficiency distribution over folds.
+The exhaustive hyperparameter search and training stage for
+the LR meta-model is done by understanding the overfitting
+factors and the strain that may consume too much time in
+computation.
+Evaluation and Optimization. An array of evaluation
+metrics was employed on the stacking meta-model evaluation
+to assess the stacking performance. Optimization activities
+would then be directed to LR meta-model hyperparameters
+after pursuing all base model optimization and search
+forms. This strategy guarantees that the stacking technique
+uses the separate components’ predictive capabilities and
+corrects all their predictions to achieve maximal prediction
+accuracy.
+
+D. STRATIFIED K-FOLD CROSS-VALIDATION FOR BINARY
+MODEL TRAINING
+
+Stratified K-Fold cross-validation is another necessary and
+significant method, especially for classifying models where
+datasets have class imbalances. In this method, there is a
+lot of assurance that classes will be evenly represented in
+VOLUME 13, 2025
+
+I. Gómez-Talal et al.: Interpretable Machine Learning Models for PISA Results in Mathematics
+
+all the separate buckets, which is optimal for evaluating the
+performance of the models [52], [53].
+In this work, the dataset was divided into 80 % train and
+20 % test (considering the Pareto rule), where this train set
+was trained using the k-fold stratified method, with a k = 5.
+With the model already trained, it was validated using the
+evaluation metrics (discussed in the following subsection)
+with the remaining 20 % for the test [54].
+As mentioned, this process is carried out five times,
+whereby in each fold, only one fold is used as the validation
+fold in one iteration, so all the folds are used precisely
+once. One of the essential characteristics of the optimization
+approach is that all the models are trained more or less from
+the beginning in each iteration to eliminate the effect of
+already trained models. The resulting metrics obtained based
+on each of the folds are then pooled together, which brings
+about the most thorough evaluation of a particular model
+performance [55].
+E. EVALUATION METRICS
+
+This study employs a suite of six essential metrics for
+assessing the performance across all models, which are the
+following ones: Accuracy (ACC), Recall (RC), Precision
+(PR), Specificity (SP), F1 Score (F1S), and Area Under Curve
+(AUC) [56]. ACC offers a performance evaluation for the
+initial metric by denoting the ratio of accurately predicted
+instances to the overall number of predictions. The ACC is
+determined by the formula:
+ACC =
+
+TP + TN
+,
+TP + TN + FP + FN
+
+(6)
+
+where TP denotes the true positive rate, TN is the true
+negative rate, FP is the false positive rate, and FN is the
+false negative rate. RC is indicative of the model efficacy in
+accurately identifying all positive instances, proving crucial
+in scenarios where FNs are deemed more detrimental than
+FPs. It is computed as:
+RC =
+
+TP
+.
+TP + FN
+
+(7)
+
+PR quantifies the ratio of accurately identified positive
+instances (TP) to all instances classified as positive (TP+FP),
+expressed as:
+PR =
+
+TP
+.
+TP + FP
+
+(8)
+
+SP, conversely, assesses the ratio of accurately identified
+negative instances (TN) out of all instances classified as
+negative (TN + FP), as delineated by:
+SP =
+
+TN
+.
+TN + FP
+
+(9)
+
+VOLUME 13, 2025
+
+2 · (PR · RC)
+.
+PR + RC
+
+0
+
+where an AUC of 1 signifies an exemplary classification
+model and t represents the threshold used to classify the
+predicted probabilities into positive and negative classes.
+In contrast, a score of 0.5 indicates a performance equivalent
+to random guessing [57].
+F. INTERPRETABILITY IN MACHINE LEARNING THROUGH
+SHAPLEY VALUES
+
+There are a lot of subfields of cooperative game theory that
+resort to the so-called Shapley values, such as participation
+in a cooperative game will return average proportional
+rewards [58]. Translated into ML, these participants are
+treated as features or attributes of the model. Transforming
+the coalition into the predictive model implies a task to
+be carried out. Hence, the Shapley vector interprets the
+importance of all the attributes in predicting the outcome of
+the ML model [59]. In particular, given a query point, the
+Shapley value of a feature describes how the predicted value
+(regression) or class scores (classification) will change based
+on that feature inclusion. More particularly, the contribution
+of a feature is determined by the amount of variation in
+prediction from the average prediction of the model at a
+specific query point due to that feature. This view, one can
+suppose, assigns the Shapley value regarding the i feature at
+x query to the value function vx as
+1 X vx (S ∪ {i}) − vx (S)
+,
+(12)
+ϕi (vx ) =
+M −1
+M
+|S|
+
+S⊆Ms \{i}
+
+where M is the total number of the features, Ms is the family
+set of all the features, |S| refers to cardinality of the set S, and
+vx (S) is the mean profit variation at point x due to S features.
+The SHAP Python package offers a set of interventional
+algorithms to compute these Shapley values as well [20]. The
+algorithms work by determining the value function of some
+attributes defined at a point of interest within a query as the
+expected prediction given an intervention distribution which
+exposes all other attributes not within the set of attributes
+being referenced:
+vx (S) = ED [f (xS , XS c )],
+
+(13)
+
+where xS represents the values of the features in set S at the
+query point, and XS c those not in S. Assuming features are
+independent, the value function vx (S) is approximated using
+data X as samples from the intervention distribution D for S c :
+N
+
+The F1S is a harmonic mean of PR and RC, balancing the
+model accuracy and completeness. It is calculated via:
+F1S =
+
+Lastly, AUC reflects the integral of the Receiver Operating
+Characteristic (ROC) curve, encompassing both the TP and
+FP rates. The AUC calculation is as follows:
+Z 1
+AUC =
+ROC(t)dt,
+(11)
+
+(10)
+
+vx (S) = ED [f (xS , XS c )] ≈
+
+1 X
+f (xS , (XS c )j ),
+N
+
+(14)
+
+j=1
+
+with N representing the sample size, and (XS c )j the values for
+S c in the j-th observation.
+27377
+
+I. Gómez-Talal et al.: Interpretable Machine Learning Models for PISA Results in Mathematics
+
+Interventional algorithms, while computationally more
+efficient, presume feature independence and rely on samples
+from outside the distribution, potentially leading to unrealistic observations [60]. Key SHAP interventional algorithms
+include: (1) Kernel SHAP, employing a kernel approximation
+for Shapley value estimation, suits high-dimensional spaces
+albeit with higher computational demands [20]; (2) Linear
+SHAP offering an analytical computation of Shapley values
+for linear models, enhancing computational efficiency compared to Kernel SHAP [20]; and (3) Tree SHAP, tailored
+for tree-based models like Decision Trees, Random Forests,
+and GB algorithms, excelling in computational efficiency and
+explicitly accommodates feature interactions [61].
+G. DIMENSIONALITY REDUCTION FOR PISA DATA
+ANALYSIS
+
+In this research section, we describe a UMAP approach concerned with efficiently reducing the dimensionality of PISA
+data. Unlike existing techniques, which do not incorporate
+the class labels while performing dimensionality reduction,
+UMAP facilitates the preservation of relevant geometrical
+features in a lower dimensional space, which concerns the
+class separability [40].
+1) DATA PREPROCESSING AND PARTITIONING
+
+As the first step in our processes, the preprocessing stage
+involves eliminating attributes that do not contribute significantly to analyzing the PISA students’ performances. This
+process sharpens the model focus on significant predictors.
+A split of 60/40 of the data serves as sufficient training data
+for the model and adequate testing data for the validation
+of the model. To change such characteristic features values
+to a common scale StandardScaler was employed and after
+this, better results were expected in subsequent training
+phases [62].
+2) UMAP CONFIGURATION AND TRAINING
+
+The UMAP model, configured to reduce the degree of latitude
+of data into a lower dimensional three-dimensional latent
+space, has its parameters set on how to depict local and
+overall data structures depending on the set hyperparameters,
+n_neighbors=50 for the local neighborhood size of the data,
+n_components=3 to visualize the data in a three-dimensional
+space, and min_dist=0.1 to enable the low level embedding
+to spread out as much as possible. This transformation of
+the PISA data aims to pack the different indicators behind
+the essay into the low dimension while ensuring that the
+community-based segregation of data as per the labels is
+retained.
+3) INTERACTIVE DASHBOARD FOR PISA DATA ANALYSIS
+
+A solid interactive dashboard has been constructed using the
+latent dimensions of the PISA students’ data supplied by the
+UMAP. This solution is built using Dash framework [63],
+enabling a fast and flexible web interface for conceiving
+27378
+
+Python applications. To deliver the interactive dashboard
+and insightful visual explorations of the multi-dimensional
+PISA data, the dashboard is enhanced with Plotly graphing
+library [64].
+4) TECHNOLOGIES AND FRAMEWORKS
+
+The Dash framework is employed due to its ability to
+integrate the Python programming language in converting, for
+instance, sophisticated data analysis into effective web-based
+interactive designs. Enriching this experience is Plotly that
+provides various interactive graphics [63], [65]. All these are
+the central part of a dashboard that encourages a detailed
+investigation of the complex PISA database.
+5) DASHBOARD FEATURES
+
+The dashboard possesses the following important aspects:
+(1) 3D UMAP Visualization, there is an interactive scatterplot
+in 3d where many students with many attributes are presented
+in an interactive three-dimensional scatter plot; (2) SHAP
+Value Visualization, which attempts to answer the question
+on what impacted which particular student’s performance
+predictive features; and, (3) Responsive Design, to retain the
+users across the various devices that may be used to access
+the dashboard. For detailed UMAP-derived insights from the
+community, the user is provided with interactivity features
+like drop-down selectors and clickable plot points, enabling
+the female guinea pig to be less specific.
+H. RESEARCH WORKFLOW STRATEGY
+
+Effectively analyzing the PISA 2022 data starts with
+selective data cleaning processes, as evidenced by Figure 2.
+Increasing biases creates a series of challenges because it
+sets several limitations attached to how datasets should be
+pre-processed and organized. After preprocessing, the data
+is split into training and test sets, a critical process in
+any model-building exercise and performance assessment to
+avoid overfitting.
+To address the class imbalance issue in the PISA dataset,
+the present study employs a stratified 5-fold cross-validation
+method in conjunction with random undersampling techniques during the model training. This method ensures that
+each fold has an equal number of instances belonging to each
+class, thereby promoting fairness and ACC of the developed
+model. The analysis continues rather rapidly with all sorts of
+fancy workable ML models, LightGBM, MLP, LR, Decision
+Trees, Random Forests, SVM, XGBoost, and many other
+hard-core ML modeling, with grid searches for parameters
+optimization that come along in hand. Such modeling efforts
+are comprehensive to enhance the capability of the model
+being selected for binary classification tasks, focusing on
+increasing the correct classifications.
+To provide visualization and clustering of highdimensional data, UMAP, a popular dimensionality reduction
+technique, is applied to the data. Regarding dimensionality
+reduction, SHAP values are computed on the original
+VOLUME 13, 2025
+
+I. Gómez-Talal et al.: Interpretable Machine Learning Models for PISA Results in Mathematics
+
+variables in order to give a local and global view of model
+predictions. This kind of workflow guarantees that while the
+latent space offers a broad view and understanding of the
+data, SHAP values unveil the specificity of each feature.
+The degree of correlation between these two aspects of the
+framework is well illustrated in the interactive dashboard
+(Figure 7). When a specific spot is clicked on the UMAP
+projection, SHAP values corresponding to that student
+are revealed to the user, directly linking visualization and
+explanation.
+Model effectiveness is gauged in numerous metrics, such
+as ACC, RC, PR, SP, F1S, and AUC of the ROC curve.
+These arguments support a well-rounded appraisal of model
+performance in terms of the errors that are quantitatively
+measured in predicting some parameters.
+After such benches for each model, we propose a new
+meta-model strategy to align all the former models optimally
+grouped around their parameters. Thus, this meta-model
+treats the parameters of the regression models as a structure
+upon which an ensemble of diverse algorithms that has been
+defined before is built. It is this integrated approach where
+the study seeks to exploit the predictive power of every
+individual model in a case that interacts with a few key
+parameters as hyper-parameter tuning has been previously
+optimized in grid search attempts. This meta-analysis phase
+consists of the sequential combination and evaluation of the
+hyperparameters used in the ensemble to yield one optimal
+model configuration. Last, in this process, the most efficient
+meta-model emerges, which marks one of the progress of the
+analysis in the study.
+The model evaluation stage ends with a deep understanding of the last section, which deals with SHAP-based
+interpretability and the meta-model selected as the
+best-performing and the least variable classifier. This aspect
+of SHAP analysis refers to the extent to which every single
+detail in the judgment of the model contributes and, therefore,
+seeks to explain how the meta-model is built and its decisions.
+This SHAP analysis is focused on the contribution of the
+PISA 2022 dataset within the multifaceted and explanatory
+models.
+Regarding variables, the feature selection strategy highlights factors that positively impact education. This is
+done through SHAP interpretability, which helps locate
+these characteristics and rank them not only by their
+statistical importance but their instructional value as well.
+The aim, therefore, is to identify patterns and variables
+that significantly impact student achievement in the PISA
+assessment so that beneficial actions may be taken by
+those responsible for education. ‘Analysis Application’ is
+another phase of the analytical approach, which considers
+the practical implication of the results. This consumes the
+educational data, so only the most informative features
+remain. In addition, since the purpose of local diagnostics is
+to explain predictions for each observation, this risk involves
+more focused educational objectives.
+
+VOLUME 13, 2025
+
+IV. EXPERIMENTS AND RESULTS
+
+This section presents the findings from evaluating eight
+binary classification models across three distinct scenarios
+of student performance in Mathematics: Low vs. High,
+Medium vs. High, and Low vs. Medium. Furthermore,
+it discusses the results obtained from the meta-model
+and delves into the variables deemed most significant by
+the SHAP analysis, highlighting their impact on students’
+mathematical performance.
+
+A. ANALYSIS OF BINARY CLASSIFICATION MODELS AND
+META-MODEL FRAMEWORKS
+
+In the present analysis, we examine and assess the operating
+outcomes of numerous ML models used to classify different
+categories of student performance across Low-Medium,
+High-Medium, and Low-High divisions. Table 3 contains
+summary performance results for each model concerning
+different cases in the investigation.
+Regarding the Low-High categorization, the models under
+evaluation were LR, SVM, Decision Tree, Random Forest,
+GB, XGBoost, MLP, and LightGBM. The one exception
+in performance is the meta-model, which is an ensemble
+model with LR as a base and performed better than other
+models on all metrics of interest, especially its F1S, PR,
+SP, and AUC. These results prove that the meta-model can
+distinguish the Low from the High-performance segment.
+The performance is due to the combination of various
+models that work in cooperation with each other rather than
+individual approaches.
+The trends in model performance are similar for the High
+and Medium-Low categories. The difference is that in the
+Medium-High category, once again, the meta-model beats
+the individual models, reiterating the success of ensemble
+approaches to complex classification challenges. On the other
+hand, the particular model performances in the Low-Medium
+categorization bring out the unique abilities of the Random
+Forest and the meta-model, which once again summarily
+perform best in most metrics.
+Hyperparameter tuning proves significant during model
+optimization and warrants mention. Table 2 shows the
+predetermined hyperparameter configurations, which proved
+reasonably optimal in three scenarios. For instance, hyperparameters like learning_rate, n_estimators, or max_depth are
+adjusted for each model by the specificities of the particular
+experimental conditions of that specific model.
+Low and High-Performance in Mathematics: Factors that
+make it possible to forecast success in the working of
+students within Mathematics are still being sought after, and
+thus, synthesizing these along with the interpretability of
+the model remains critical. The SHAP approach guides the
+evaluation of the role of each feature within model output,
+therefore improving the understanding of how models make
+decisions. Looking at Figure 3, we can see a significant
+difference between the SHAP values assigned to the student’s
+
+27379
+
+I. Gómez-Talal et al.: Interpretable Machine Learning Models for PISA Results in Mathematics
+
+FIGURE 2. PISA 2022 data analysis starting with: (1) the preprocessing of data and splitting it into training and test
+datasets; (2) resolving problems resulting from class imbalance by conducting stratified 5-fold cross-validation with
+random undersampling; (3) training of models consisting of different algorithms such as LR, SVM, Decision tree,
+Random Forest, GB, XGBoost, MLP and Light GBM with hyperparameter optimization; (4) evaluation of the model
+performance on the ACC, RC, F1S, PR, SP, and AUC metrics; (5) performing a selection of the most applicable
+meta-models for analysis; (6) increasing explanatory power using SHAP; (7) making feature selection; and
+(8) performing the analysis using these features.
+
+demographic features compared to high-resource students.
+More interesting is the variable ‘REPEAT’ (which explains
+whether a student is a repeater), which is one of the strong
+predictors of low performance in Mathematics. This is also
+shown in the swarm plot in Figure 3 (a), which shows that
+the loading of ‘REPEAT_YES’ on the negative values of
+SHAP indicates that it is more associated with students with
+a Low level in Mathematics. Also, the bar chart presented
+in Figure 3 (b) describes the average effect of most active
+features on students with the highest performance level. As in
+Figure 3 (c), the heat map management of SHAP values is
+shown supported by the position of the values across the
+dataset.
+
+that more than ten devices are available. Looking at the color
+gradients in Figure 3, especially in segment 3 (c), it can
+be concluded that it is prevalent or positively correlated
+with performance (more than ten devices). However, these
+cases are not displayed as red samples. On the contrary,
+this could mean that having an extremely high number of
+devices is not necessarily an advantageous element for a
+child’s performance in Mathematics, as they could be a source
+of distraction. Thus, too much freedom could be harmful
+to education. It is essential to find the optimal ratio of the
+presence of technological resources and their directed use for
+educational needs.
+3) NUMBER OF BOOKS AT HOME (ST255Q01JA)
+
+1) REPEATING STUDENT (REPEAT)
+
+The impact of the ‘REPEAT_YES’ variable is quite pronounced for the Low-performance levels in Mathematics,
+as can be seen by the deep red colors in the swarm plot
+(Figure 3 (a)). This means that students repeating a particular
+grade tend to do very inadequately in Mathematics, which
+further emphasizes the importance of this variable.
+2) DIGITAL DEVICES WITH SCREENS AT HOME
+(ST253Q01JA0)
+
+The variable quantifies how many digital devices with screens
+(television, computer, among others.) are held by a student
+in their home environment, with a value of 8 representing
+27380
+
+This variable interpretation measures the number of books
+that are likely present in the student’s home environment,
+and two (2) books mean the number of books from 11 to 25.
+Purple tones surging at the lower ends of the SHAP values
+suggest that those moderate numbers of books have less effect
+on predicting very high performance in Mathematics. This
+bookless scenario, while plausible, does not definitively erase
+the role of books at home; rather, it probably indicates that,
+beyond a certain point, the number of books is associated
+more with better academic performance than with a lack of
+books. This observation could imply that a lower limit of
+books may be useless and that a sufficient number of books
+(say 20 or more) will promote better learning.
+VOLUME 13, 2025
+
+I. Gómez-Talal et al.: Interpretable Machine Learning Models for PISA Results in Mathematics
+
+TABLE 2. Best hyperparameter values were carefully chosen based on expected performance from the different experiment scenarios. This table classifies
+the parameters that were most optimal for the various models across three different experimental scenarios: Low-High, Medium-High, and Low-Medium.
+
+4) PARTICIPATION IN EXTRA MATHEMATICS CLASSES
+(ST297Q09TA)
+
+5) DIGITAL DEVICES WITH SCREENS AT HOME
+(ST253Q01JA0)
+
+Considering the distribution of SHAP values, where participation does not seek out additional Mathematics classes
+(value 0) results in red hues in the Low-performance category,
+which implies that participation in extra Mathematics classes
+is an effective predictor of performing inadequately. On the
+other hand, blue hues may suggest that letting go of additional Mathematics classes might not negatively influence
+high-performing students who may find themselves in high
+school already without the need for extra classes. Thus,
+SHAP analysis is significant in contextualizing students’
+performance relative to their engagement with such factors
+and the attainment of Mathematics. It shows that repeating
+grades, resources available to children at home such as books
+and digital devices, and the variable engaging in voluntary
+Mathematics classes work interactively together with how
+students perform. Particularly, the variable ‘REPEAT_YES’
+stands out as one the most important predictors of the
+variables discussed above, particularly for students with
+difficulty in Mathematics necessitating this group’s targeted
+educational strategies.
+Medium and High-Performance Study in Mathematics:
+Looking at the SHAP values of students with High and
+Medium ranking in Mathematics, we can briskly analyze the
+importance of each feature depending upon the opacity as
+presented in Figure 4. The depth of the color demonstrates
+the strength of each variable regarding the model expectation,
+with red being the most positive influence and blue being
+either mild or negative.
+
+The SHAP values respond to this variable by adding a greater
+number of digital devices (8 for more than ten devices)
+positively correlates to better levels of performance in
+Mathematics seen in the red shades of the High-performance
+category of Figure 4 a. This implies that in the case of High
+and Medium achievers, better range of digital resources may
+be utilized in an effective cultural context for their educational
+goals of acquisition constructing achievement.
+
+VOLUME 13, 2025
+
+6) GENDER OF THE STUDENT (ST004D01T)
+
+A variable intended for the measurement of the gender
+of a student and emphasizing ‘Boy’ displays a positive
+effect on the upper Mathematics performance than the
+Medium level tensions above red in the High-performance
+category and positioning of the variable in Figure 4. The
+disparity could perhaps be attributed to gender-based learning
+preferences.
+7) STUDY OR DO HOMEWORK BEFORE GOING TO CLASS
+(ST294Q02JA0)
+
+The SHAP module strongly confirmed the main conclusion.
+It showed that the probability of regularly studying or doing
+homework before class increases mathematical performance.
+Here, suppose the red shades appear prominently for the high
+values of this variable. In that case, it implies that regular
+practice of such activities before class contributes positively
+towards the students’ performance.
+
+27381
+
+I. Gómez-Talal et al.: Interpretable Machine Learning Models for PISA Results in Mathematics
+
+TABLE 3. A comparative summary of performance measures of different ML models within three study cases: Low-Medium, High-Medium, and Low-High.
+These measures provide information about the classification capabilities of the models about the different levels of student performances attained.
+
+8) I DO NOT ATTEND EXTRA MATHEMATICS CLASSES
+(ST297Q09TA)
+
+The variable, ‘REPEAT’, having a negative correlation
+with performance, is somehow patent among students
+and hence is distinct from the variable ST297Q09TA
+(No_Extra_Math_Classes), which has a value of 0, which
+means a student does attend extra Mathematics classes has
+a complex effect. The high achievers who are seemingly
+deprived of any such additional classes (blue shades) may be
+able to argue that they are optimal in the subject and thus do
+not need any extra help in that area.
+The analysis hints that the relation between these variables
+and the performance is more complex than simple causeand-effect logic would suggest. High achievers seem to take
+advantage of the high availability of digital resources and
+regular pre-class study practices. Still, there appears to be
+no need for enough extra Mathematics classes. Also, the
+student’s gender has some effect on predicting performance,
+with boys being more significant than others in anticipating
+excellence in Mathematics found in this dataset.
+Low and Medium Performance Study in Mathematics:
+By interpreting the SHAP values for students categorized
+27382
+
+within the Low-Medium performance levels in Mathematics,
+we gain insights into the determinants of their academic
+achievements, as visualized in Figure 5. The SHAP value
+intensity, in Figures 5 (a) and 5 (c) (spanning from blue to
+red) reveals the predictive power of each variable, with red
+representing a more significant positive influence and blue a
+lesser or adverse one.
+9) DIGITAL DEVICES WITH SCREENS AT HOME
+(ST253Q01JA0_7)
+
+A student who has 6–10 devices with school encoded
+value ‘7’ fits in the Medium category of Mathematics
+performance, and this is reflected in the SHAP value swarm
+plot (Figure 5 (a)). This finding indicates that having many
+devices might help students learn as long as the number is not
+excessive and enough technology is offered for the students’
+learning activities.
+10) I DO GO TO EXTRA MATHEMATICS CLASSES
+(ST297Q09JA0_0)
+
+The value ‘0’ means that such people took extra Mathematics
+lessons. Regarding heat map context (Figure 5 (c)), in this
+VOLUME 13, 2025
+
+I. Gómez-Talal et al.: Interpretable Machine Learning Models for PISA Results in Mathematics
+
+FIGURE 3. SHAP value distributions by attributing them to student performance affecting features. (a) The swarm plot depicts the dispersion
+and effect of each attribute for students’ regime journalism (Low-performing students), where the x-axis shows the effect and the orientation
+of the attribute effect. (b) Column graph depicting the mean effect of the leading features for high-performing students with the graph bars
+representing the degree of contribution of the feature. (c) Heatmap of SHAP values for each feature and several sample sets, with the intensity
+of red (the positive impact on student performance), the intensity of blue, low impact.
+
+particular variable, if red, it implies that taking those factors
+positively decreases performance in this Low-Medium area
+or borderline class.
+B. MODEL EXPLAINABILITY
+
+The performance of the predictive models or two groups
+of students is shown in Figure 6: Low-High (a), MediumHigh (b), and Low-Medium (c) achievement levels. Inflection
+marks on the curves, encircled by vertical lines, indicate
+feature counts where model ACC improved relative to the
+after this feature count, depicting these features take a central
+idea in the model explainability. Thus, the SHAP values
+ranked the features in interference to their importance, and
+deletion of individual features continued to see their influence
+over time, culminating in the curves depicted. In the case of
+Low-High performance students, 20 features are the point at
+VOLUME 13, 2025
+
+which there is an optimum feature cutoff, above which any
+additional features result in a drop in both ACC and AUC
+metric (in Figure 6 (a)). The relatively Medium level students
+perform better using up to 35 features, in Figure 6 (b), while
+Low and Medium level performance students cutoff has also
+been found at 20 (in Figure 6(c)). This selection is done so that
+there is a minimum of features and a maximum of predictive
+power, choosing the features that explain the students’
+levels.
+The following research described in the Table 4, deals with
+how weight or importance of the features is calculated in the
+model rather than what is defined using graphics at this level.
+It indicates that a limited range of variables can provide a far
+greater fraction of the model’s predictive power. Such results
+are beneficial when embedding such variables in a dashboard
+application.
+27383
+
+I. Gómez-Talal et al.: Interpretable Machine Learning Models for PISA Results in Mathematics
+
+FIGURE 4. SHAP value visualization for features influencing Medium to High student performance in Mathematics. (a) The swarm plot
+depicting the centroids as descriptive statistics also tells pictorially about the coordinate-wise statistical influence the number of features has
+on the students demonstrating Medium High-performance average, and the two pole range with a degree on the x-axis indicates the range
+and polarity of the influence of each feature. (b) A bar chart shows the average SHAP score for features most often found in students with
+moderate to High scores. The lengths of the bars show how important certain feature influences are about the others. (c) Heatmap exhibiting
+the distribution of SHAP features across many observations, with each feature having distinct color-coded individual SHAP values with a
+fashion gradient from blue color on the left to red color on the right showing the descriptive ordering from least contribution to performance
+to highest contribution to performance concerning student performance factors.
+
+The application would be improved by considering these
+factors for further investigation and better insight into the
+trends and factors affecting student performance. This feature
+subset selection is essential not only for reducing the
+complexity of the model but also for maintaining the ACC
+of predictions. The model would be optimally constructed
+using the most critical variables, as identified during the
+SHAP analysis. This would render the model suitable for
+an interactive dashboard with real-time analysis using and
+interpreting data that embodies the highlights of the dataset.
+C. APPLICATION OF PREDICTIVE DASHBOARD
+
+The analysis in Figure 6 sought to establish whether the
+causes that identify variation in student performance could
+be simplified into a few main factors. This selection of
+educational variables or factors simplifies the number of
+27384
+
+variables, thus making the dashboard design more practical.
+Concentrating the number of primary variables in the dashboard application makes interacting with these educational
+factors possible, which could help educators.
+The dashboard is focused on the identified key features
+and, therefore, provides a window into how student performance has changed over time and how it is expected to change
+in the future. This means that the dashboard mainly focuses
+on the communication of essential metrics, predicting scores,
+and the profiles of students so that effective and efficient
+decisions can be made on those students.
+Within the broader interpretation of Figure 7 (a), the core
+characteristics of the dashboard aid in the decision-making
+processes. For example, the points 1-10 features, which are
+detailed as the top ten features, could be all widgets in the
+dashboard. Each widget will provide an independent piece of
+VOLUME 13, 2025
+
+I. Gómez-Talal et al.: Interpretable Machine Learning Models for PISA Results in Mathematics
+
+FIGURE 5. Visualizes the SHAP value concerning the features affecting Low to Medium student performance in Mathematics. (a) The Swarm
+plot presents the variability and effect of the features on low intermediate-level students as shown on the x-axis, which presents the
+magnitude and direction of the feature impact. (b) Bar chart showing the average SHAP value for the most important features for final year
+undergraduate students who rank Low to Medium performance level with the lengths of the bars of every feature and the relative impact of
+that feature. (c) Heatmap showing the individual feature SHAP values over several instances along with an external matrix heatmap indicating
+the impact of each feature of the model on student performance via a color scale from blue to red, moving from Low impact to High impact,
+respectively.
+
+information as follows: (1) DR Projection, this component
+presents UMAP in three Uniform Manifold dimensions
+representing the test dataset. Each point on the scatter plot
+corresponds to one student and is color-coded to show student
+population clusters. (2) SHAP Values Bar Chart, this is a bar
+chart that shows the SHAP values of the student’s data (by
+selecting a point in the UMAP projection that corresponds to
+that student), which tells the relative importance of features
+in a model specifically for this student’s data. (3) Repeat
+Status Distribution, this panel presents a basic bar graph that
+explains what proportion of students have repeated a grade
+(Repeat) and studied without repetition (No Repeat), thereby
+shedding some light on how widespread grade repetition
+is. (4) Student Level Gauge, which is also presented in a
+speedometer gauge, this visual depicts the level distribution
+VOLUME 13, 2025
+
+of students in three achievement levels: Low (red), Medium
+(yellow), and High (green), to provide a broad overview
+of attainment levels of students. (5) Gender Distribution
+Pie Chart, this pie chart is designed to look at the gender
+proportions of the student population in that study. (6) School
+Type Histogram, it uses a histographic representation of
+students in the database who attended either public or
+private schools to explain the type of education provided.
+(7) Autonomous Community Map, the map feature gives
+geographical context by pinpointing the location of the
+autonomous community or communities where the students
+are from, enhancing the demographic analysis with spatial
+insights. (8) Extra Mathematics Classes Pie Chart, a pie
+chart indicating the percentage of students who do or do
+not attend extra Mathematics classes, which may correlate
+27385
+
+I. Gómez-Talal et al.: Interpretable Machine Learning Models for PISA Results in Mathematics
+
+TABLE 4. The evaluation of the SHAP values for the main features across three comparing schemes: Low-High, Medium-High, and Low-Medium. These
+SHAP values are reflected in how the features were used in the model. This shows the contribution of each feature within the model for prediction, where
+higher SHAP values are expected to drive the model more.
+
+with academic performance in that subject. (9) Digital
+Device Ownership Bar Chart, this histogram categorizes
+students by the number of digital devices with screens they
+have access to at home, with categories ranging from 0 to
+more than 10, including recognizing the potential impact of
+digital access on educational opportunities. (10) Home Book
+Quantity Histogram, this bar chart quantifies the number
+of books students have in their homes, then sorted into
+several ranges from 0 to more than 500, acknowledging the
+role of educational resources available at home in academic
+performance.
+Figure 7 (b) shows the usability of the dashboard where the
+user is shown how to filter a given area using the example of
+the autonomous community of Basque Country. Whenever a
+user clicks on the red region show (in this example containing
+the name Basque Country), all the Dashboard areas become
+relevant because specific changes are carried out based on
+the information stored in the panels pertinent to the selected
+region. In this case, all the information concerning the
+autonomous community of the Basque Country is shown,
+both at the level of data analysis and at the level of
+visualization of the latent space of the students of this
+autonomous community. In addition, in this latent space it is
+possible to select and analyze the variables that classify this
+student in this educational level in Mathematics.
+This makes it possible for stakeholders to investigate
+education statistics in an advanced way, focusing on the
+information they want to promote and some of the issues in a
+particular community. By allowing such a narrow focus on
+one region, the dashboard becomes a means of enhancing
+understanding and decision-making.
+Figure 7 (c) illustrates the analytical capability of the
+application system. Interaction with the 3D UMAP projection
+by selecting an enrolled student leads to the presentation of
+the SHAP values in detail. The SHAP feature determines
+27386
+
+and quantifies the standard variables that are important for
+predicting the model used on a particular enrolled student.
+After selecting a data point representing a student and
+clicking on it, the student profile dashboard is displayed.
+After that, the topological positioning of the selected student
+attributes, such as autonomous community, gender, school
+type, number of digital devices, and extra Mathematics class
+attendance, is displayed.
+The dashboard depicts a bar chart in which each variable is
+represented by a bar whose length represents the magnitude
+of the SHAP value, and the color indicates the direction of the
+influence. Variables whose SHAP values are positive (red) are
+expected to improve performance, while those with negative
+values (blue) are expected to lower performance.
+V. DISCUSSION, LIMITATIONS AND FUTURE WORKS
+
+As derived from our detailed examination of the PISA
+2022 dataset for Spain, some valuable factors of student
+performance in Mathematics were identified. Such tasks have
+been tackled with the application of eight binary classification models plus an ensemble meta-model, allowing a
+constrained interpretation of the hierarchal relation that exists
+among the host of educational, demographic, and resource
+provision factors. Nevertheless, metamodels continued to
+demonstrate their real power relative to isolated models and
+thus provided further support for the continued use of hierarchical techniques in educational data mining. In particular,
+the analysis of variables aided by the SHAP value analysis
+managed to classify specific prominent variables like course
+repeat student, owning a digital device, and extra out-ofclass Mathematics lessons relevant to the comprehension of
+mathematical skills. There are great expectations for this
+activity, particularly for students who are repeaters by their
+inherent constitution or students who lack the means to
+enhance the content of the education they receive.
+VOLUME 13, 2025
+
+I. Gómez-Talal et al.: Interpretable Machine Learning Models for PISA Results in Mathematics
+
+FIGURE 6. Analysis performance associated with the number of
+features is also carried out in a comparative manner considering different
+levels of student performance. The features retain a rank order from the
+most winning SHAP values to the least winning. Next, they were removed,
+step-down, beginning with the least disturbing ones. Plot (a) depicts
+Low-High-performance students who notice a significant drop in both
+ACC and AUC metrics at a cut-off of 20 features. Plot (b) focuses on the
+Medium-High performance students who experienced a relative decrease
+in performance when the cut-off for the features was at 35. Finally,
+panel (c) demonstrates Low-Medium performance students and has shown
+the same trend of reduction in performance at a cut-off of 20 features.
+
+When contrasted with previous research, we found that
+our results corroborate the attention that literature gives
+to socioeconomic standing and the quality of teaching as
+the most important predictors of Mathematics performance
+[21], [22]. However, our work uniquely integrates these
+factors with technology, indicating that a child’s digital device
+ownership tends to enhance his or her mathematical skills if
+there are effective teaching practices in place. This further
+corroborates existing studies [24], [31], which emphasize
+the potentiality of educational technologies but at a cost.
+In contrast, our study adds to the literature base as it brings
+out new findings based on machine learning.
+Our research points out how home educational resources
+have an impact, as has been shown by [36] and [39], but adds
+a new dimension by allowing the interplay of factors such as
+out-of-class lessons and various demographic characteristics.
+Further, whereas gender gaps in Mathematics have been
+amply noted [34], [35], our research goes by segmenting
+performance, limiting the achievement gaps to a Low,
+Medium, and High modal using varying factors determining
+VOLUME 13, 2025
+
+performance of the subjects on data-based approach allowing
+for a more nuanced understanding of achievement gaps.
+It becomes clear that the models have not only become
+apparent for too many injustices in the negative and positive
+characteristics detached from higher levels of education but
+have also classified all influence factors into Low, Medium,
+and High extremes of performance. The apparent reason
+is that this is insufficient to create an all-encompassing
+policy on educational issues. As for those who were spared
+from generalizing and did accept variations, our pursuit
+of this study also invites the possibility of further studies
+investigating gender and study habit influences on attainment
+to address how to enhance students’ academic achievement.
+Limitations: This study is not without limitations. Firstly,
+the analysis is based solely on the PISA 2022 dataset, which,
+while offering the latest insights, does not allow for direct
+longitudinal comparisons with previous years. Incorporating
+datasets from earlier assessments, such as PISA 2018, would
+enable a broader perspective on trends and changes over
+time. However, this was not feasible in the present study
+due to variable differences and the need to focus on new
+variables introduced in 2022. Secondly, the study relies on
+SHAP values for interpretability, which, while powerful,
+may not capture all potential causal relationships within the
+dataset. Future work could explore alternative interpretability
+techniques or experimental validation to strengthen the
+findings. Lastly, while the developed dashboard offers
+significant utility, its effectiveness has not yet been tested in
+real-world educational settings. Implementation and usability
+testing with stakeholders such as policymakers and educators
+remain necessary to fully validate its impact.
+The ability of the model to provide an adequate prediction
+to the meta-model and the functional usability of our
+dashboard are all just the beginning of the studies in this
+field. The future evaluation will go beyond the one reported
+in this paper and employ time series analysis to monitor the
+distribution of performance changes among students within
+the same cohort over time using, ideally, a more extensive
+range of variables. Also, more aspects of attention given to the
+relationship causation and potential evidence explaining them
+might be returned, especially suggesting an experimental
+approach or qualitative-quantitative mix.
+The future work will evaluate other methods for class
+imbalance, including oversampling and mixed techniques,
+to determine if any of these methods are better than undersampling.
+Regarding prospects, the dashboard usability must also
+include the analysis of uplifts on forecast or situation
+planning, which, perhaps, the actual strength lies. Such
+advancement would enable educationists to project the
+expected impacts of custom-made strategies, resulting in
+more efficient student cultivation. In addition, incorporating
+expansive and more complicated educational datasets to
+utilize more advanced models and more features will further
+contribute to disaggregated findings that would promote
+better and specific education for varied learning settings.
+27387
+
+I. Gómez-Talal et al.: Interpretable Machine Learning Models for PISA Results in Mathematics
+
+FIGURE 7. Real-time predictive dashboard. (a) Interactive toolkit focused on educational management solutions. (b) A system for filtering out
+data for the case studies based on geographical location. (c) A widget that describes a particular student and the most important attributes.
+
+27388
+
+VOLUME 13, 2025
+
+I. Gómez-Talal et al.: Interpretable Machine Learning Models for PISA Results in Mathematics
+
+TABLE 5. PISA mathematics survey variables (Part 1). This table catalogs the first part of the variables collected in the PISA. When students of maths were
+surveyed, information concerning their home surroundings and digital technologies was collected in the first two questionnaires. It covers items from
+items possessed in households and scenarios of communication through the internet, all explained with data type.
+
+Future work should deepen studies to promote a more
+elaborate and flexible educational system that not only
+addresses the existing needs of students but can also predict
+their needs so that each of the different academic levels can
+reach their academic achievements.
+VI. CONCLUSION
+
+In conclusion, this study has not only contributed to the body
+of knowledge concerning educational Data Science. Still,
+it has also highlighted the power of ML models in dissecting
+complex datasets like PISA. With the help of modern
+analytics and interpretability methods like SHAP values,
+we have successfully extracted the significant determinants
+VOLUME 13, 2025
+
+of students’ performance in the proper context. In light of
+these findings, the developed interactive dashboard is offered
+as a resource for educators and policymakers, improving the
+quality of education through the effective utilization of data.
+The information in this dashboard enables policymakers
+to understand and deal with regional inequality in student
+achievement by filtering results by location, gender, or other
+factors. It can also help to make well-informed decisions
+as far as the funding is concerned, for instance, directing
+resources to backward communities, formulating programs
+targeting specific types of underutilized students, and later
+evaluating the performance of the strategies over a period.
+By embedding these capabilities, the tool can facilitate
+27389
+
+I. Gómez-Talal et al.: Interpretable Machine Learning Models for PISA Results in Mathematics
+
+TABLE 6. PISA mathematics survey variables (Part II). Continuation of the variable catalog from Table 5, focusing more on powers of autonomous
+connectedness, as related to school and out-of-school activities of the respondent and their socio-demographic background. In this section, quantifiable
+creative items and yes/no responses applicable to the investigation are brought in.
+
+evidence-based decision-making, enhancing fairness and
+efficiency in the education system.
+
+APPENDIX
+A. PISA SURVEY VARIABLES
+
+A considerable set of variables has been introduced in
+this PISA survey concerning students’ mathematical literacy
+to collect sufficient data on the factors that influence the
+student’s ability to perform. Table 5 shows the students’
+household settings and their computer skills variables. These
+variables cover a variety of data types, which include
+the binary presence or absence of certain items (for
+ST250Q01TA, the item signifies if a spare room is designated
+for study), whereas for some, fussy categorical variables
+revolve around a list of responses (e.g., ST251 lists cars,
+number of rooms, among others.).
+27390
+
+Moving forward in Table 6, the students were questioned
+about their biography, daily activities, and societies which
+included bullying at school (e.g., ST038Q03JA) and life
+contentment levels (ST016Q01JA). Such a wide range of data
+makes it possible to study different aspects that contribute to
+the final educational results.
+The parameters tabulated in these tables are particularly
+significant in contextualizing the place and nature of students’
+learning. For instance, ownership of mobile phones or
+computers (ST253Q01JA0 in Table 5) can be an antecedent
+of the overall level of Internet skills. In contrast, the rate
+of specific negative social experiences such as these (ST038
+in Table 6) can influence the degree of students’ active
+participation and the nature of their well-being. Information
+of this kind is adequate when defining educational policies
+and interventions to establish favorable conditions for
+teaching and learning and meet their requirements.
+VOLUME 13, 2025
+
+I. Gómez-Talal et al.: Interpretable Machine Learning Models for PISA Results in Mathematics
+
+TABLE 7. The detailed comparison of eight ML models, hyperparameter combinations, and a meta-model. This analytical period is based on ACC, RC, F1S,
+PR, SP, and AUC. Turning to the included results, they furnish some gradation in the models and their level of discrimination of students in terms of Low
+vs. High academic achievements. It is also worth mentioning that the meta-model characteristic, indicated with an asterisk, is an ensemble of all models
+trained to perform on various hyperparameters that are optimal for the given task. However, there is no standard deviation or bootstrap percentage for
+the mean and standard deviation scores for all metrics used in this study for model comparison.
+
+B. LOW AND HIGH-PERFORMANCE STUDY
+
+The results of this comparison are highlighted in Table 7 and
+include the additional evaluation for the meta-model, which
+does accept correspondence marked by an asterisk * for
+comments purposes only. This meta-model is an individual
+model that combines all the best-fine-tuned models for the
+attempted task. These outcomes represent the successful
+implementation of an ensemble meta-modeling strategy using
+all explanatory variables that are genuinely better than
+VOLUME 13, 2025
+
+the best performance score. More specifically, it means
+the meta-model can improve on the AUC, which will
+help students differentiate classes without equal attention
+to performance measures. For educational organizations
+intending to employ predictive analytics to mitigate students
+exhibiting Low academic achievement in Mathematics, such
+enhancement could be of great help.
+Superiority of the SVM with RBF Kernel. The SVM
+model, particularly concerning the use of the kernel = ‘rbf’
+
+27391
+
+I. Gómez-Talal et al.: Interpretable Machine Learning Models for PISA Results in Mathematics
+
+TABLE 8. Analysis of eight ML models’ comparison regarding hyperparameter settings about the meta-model but touches Medium to High academic
+performance range. Meta-model, or statistical synthesis, is marked with an asterisk. It follows Bussey and various other models and shifts away from the
+focus of each model that has been painstakingly set to its misconceptions for the present comparison. Also, Where PC was measured 100 times using
+Bootstrap Iteration, and the mean and standard deviation for all the metrics were evaluated for the more accurate performance of the models.
+
+and C = 10, emerges as the best performer after analysis in
+every parameter obtaining the highest AUC (0.9717). The
+degree of capability of the model to differentiate levels of
+metric performance further demonstrates the confidence that
+would be placed on the particular model for such forecasting.
+Random Forest and GB. The Random Forest with
+100 estimators and GB with 300 estimators with no restriction
+on depth managed to give results. More worth noting,
+GB with n_estimators = 300 and learning_rate = 0.1
+manages to strike a reasonable balance of ACC along with
+27392
+
+AUC, which is on the upper side at 96.70 % to be disregarded
+as excellent attributes to the model.
+XGBoost predicting ability of the model, especially
+300 estimators and a learning rate of 0.1, suggests an
+advantageous handle of the predictive power with an AUC
+reaching 0.9709. That efficiency in both PR and RC of the
+trend further indicates the user efficiency in targeting learners
+at different levels of academic performance.
+Meta-Model. A LR-based meta-model where C = 100,
+solver = ‘saga’, penalty = ‘l1’ outperformed all the individual
+VOLUME 13, 2025
+
+I. Gómez-Talal et al.: Interpretable Machine Learning Models for PISA Results in Mathematics
+
+TABLE 9. The results of eight ML models are performed in various hyperparameters, particularly the Low-medium performance levels for Mathematics.
+In this case, modeled as an asterisk, this meta-model is built on all the optimized models implemented in this study, using an ensemble method to
+benefit from the best aspects of each model. Furthermore, the hypothetical and standard results of all examined measures are bootstraped with
+100 repetitions, which is a solid practice in assessing how well the model performs.
+
+models with the highest AUC of 0.9775. This underscores the
+ability of the metamodel to leverage the strengths of the individual expert models to achieve more accurate predictions.
+C. MEDIUM AND HIGH-PERFORMANCE STUDY
+
+The results displayed in Table 8 further point out a variation
+in the performance across several metrics of interest, such
+VOLUME 13, 2025
+
+as ACC, RC, F1S, PR, SP, and AUC, stemming from the
+models abilities to tell the difference between Medium and
+High achievers. This investigation covers the range of hyperparameter configurations for each model and a new combined
+model, the so-called meta-model. The meta-model *, which
+combines the informative capacity of the stands’ models,
+is composed of the best possible models for this particular
+27393
+
+I. Gómez-Talal et al.: Interpretable Machine Learning Models for PISA Results in Mathematics
+
+TABLE 10. Comparative analysis of ML models using confusion matrices across three performance scenarios: Low-Medium, High-Medium, and Low-High
+student achievement levels.
+
+27394
+
+VOLUME 13, 2025
+
+I. Gómez-Talal et al.: Interpretable Machine Learning Models for PISA Results in Mathematics
+
+analysis, i.e., perfectly fine-tuned to the hyperparameters of
+each model. Coalescing all the distinct characteristics of each
+stand model with optimal hyperparameters further improves
+the model predictive power. Several essential remarks on the
+composed tables result from the conclusions made in the
+previous section:
+SVM with RBF Kernel. This model, especially with
+C = 10, performs the best among the rest of the models with
+dozens of metrics. In particular, it has the best AUC among
+the other models. This evidence leads to the conclusion
+about the discriminative ability of the SVM over the two
+performance levels, which in turn shows why it can be
+employed as the best model for this prediction task.
+Random Forest using 200 estimators and no limit on max
+depth is quite optimal and very close to the SVM model. This
+model is notable for its reasonable balance between PR and
+RC, which means it is efficient at catching High achievers
+while keeping false alarms to a minimum.
+GB and XGBoost. Most appeared efficient in the paperwork, especially with higher values of n_estimators =
+300 and learning_rate = 0.1. XGboost is a bit more
+productive, especially in AUC measures while measuring
+efficiency in prediction rank, than XGBoost, which uses their
+corresponding learning rate 251.
+Meta-Model Performance. LR-based meta-model (C =
+100, penalty = ‘l1’, solver = ‘liblinear’) can beat several
+individual models and many other metrics, including F1S
+and AUC. This highlights the necessity of the average as
+mentioned above because some generally accepted model
+reconstructing aiming solely for predicting should not
+exist.
+Considerations on Model Selection. Although the
+meta-model performs markedly better in terms of some
+metrics, the metric alone cannot be a determinant in selecting
+the best model. The decision should incorporate the nature
+of the problem where the model will be used, high tolerance
+for an FP (PR), low threshold of missing high performers
+(RC), and overall ACC. The performance of the meta-model
+appeals to the balanced approach taken on the metric, making
+the model desirable in situations where the trade-off between
+PR and RC is needed.
+
+1) LR
+
+The best performance was noted with the ‘l2’ penalty and
+C = 10, in which case a sound measure of regularization
+should be applied to not fit the model too much and still get
+an effective measure of accuracy. Such results indicate LR
+efficacy when properly set for these complicated tasks.
+2) SVM
+
+In the SVM model, the performance is not as optimal as
+projected, even with the RBF kernel and C = 100. These
+results mean that SVMs are potent tools but may require
+proper fine-tuning of parameters and may not be suitable for
+all Low to Medium levels.
+3) DECISION TREES
+
+Performance was optimal when the depth of the model was
+unconstrained, and the ‘entropy’ criterion was utilized, which
+points towards the model attention to interplay with various
+complex facets of the given data when the model is allowed
+to branch out entirely. Such findings bring out the prospect of
+decision trees in such cases of the application where the need
+to understand complex relationships within the data is more
+important.
+4) RANDOM FOREST
+
+In this case, however, striking performances were achieved
+with the 200 estimators used against the estimators’ no depth
+restriction aspect, underlining the contribution that aggregation of decisions has on the accuracy of the predictions. This
+performance demonstrates the value of Random Forests in
+reducing variance and preventing overfitting.
+5) META-MODEL
+
+In particular, the configuration of hyperparameters is as
+follows: C=0.1, solver=‘saga’, and penalty=‘l2’. This
+specific setup was selected as it has reported high ACC, RC,
+and F1S and strong PR, SP, and AUC values. The ensemble
+approach combines the strengths of all other models and
+raises the strength and predicting power across all evaluation
+metrics.
+
+D. LOW AND MEDIUM PERFORMANCE STUDY
+
+The assessment detailed in Table 9 is well and truly
+a thorough measurement of model performance across
+parameters such as ACC, RC, F1S, PR, SP, and AUC.
+In addition, there is also an engagement of the novel approach
+but indicated with an asterisk * whereby all the efforts in the
+individual models are optimized to the best parameters only
+for this multi-level study. The meta-model approach further
+improves ACC and generalization performance by combining
+the best characteristics of all the models. While the tabulated
+results have been analyzed, some critical issues of the table
+are brought out:
+
+VOLUME 13, 2025
+
+6) MODEL SELECTION AND HYPERPARAMETER
+OPTIMIZATION
+
+This paper highlights that hyperparameter optimization
+should be undertaken with the aim of eliciting maximally
+favorable responses from each of the models. When determining which modeling approach best suits the particular
+case, attention should be paid to its requirements in aspects
+such as PR, RC, or any other accuracy measure necessary.
+The even performance of the meta-model across most and
+especially the relevant elements we care about makes it a
+model of choice for applications with many handle decisions.
+
+27395
+
+I. Gómez-Talal et al.: Interpretable Machine Learning Models for PISA Results in Mathematics
+
+E. CONFUSION MATRICES
+
+As illustrated in Table 10, a comparative analysis of ML
+models has been conducted using confusion matrices across
+three performance scenarios: Low-High, Medium-High, and
+Low-Medium achievement levels. Results of the performance
+of several ML models are presented, among them LR, SVM,
+Decision Tree, Random Forest, GB, XGBoost, MLP, and
+LightGBM with an LR-based meta-model.
+The quantitative performance of the models is represented
+through confusion matrix values, which include the number
+of TP, the number of TN, the number of FP, and the number of
+FN. Such metrics make it possible to rank the accuracy of the
+assumed anthropogenic influence. For instance, the LR model
+exhibits TP counts of 22666, 911, and 523 for Low-High,
+Medium-High, and Low-Medium scenarios, respectively.
+However, in the case of the corroborative factors scenario, the
+model XGBoost performs better, with a slight improvement
+in the TP counts for the same scenarios. The differences
+among the various models point to the differences in
+effectiveness given the complex nature of educational data
+models.
+DECLARATION OF COMPETING INTEREST
+
+The authors declare that they have no known competing
+financial interests or personal relationships that could have
+appeared to influence the work reported in this article.
+ACKNOWLEDGMENT
+
+The authors would like to thank Prof. Arantza Gorostiaga
+from Universidad del País Vasco, UPV/EHU, for her insights
+and valuable discussion.
+REFERENCES
+[1] Results (Volume I), PISA, OECD, Paris, France, 2022.
+[2] Results (Volume II), O. PISA, 2022.
+[3] D. Shin and J. Shim, ‘‘A systematic review on data mining for mathematics
+and science education,’’ Int. J. Sci. Math. Educ., vol. 19, no. 4, pp. 639–659,
+Apr. 2021.
+[4] R. A. A. Kandeel, ‘‘Learners’ mathematics proficiency levels on Pisa
+2018: A comparative study,’’ Int. J. Instruct., vol. 14, no. 3, pp. 393–416,
+Jul. 2021.
+[5] F. Gabriel, J. Signolet, and M. Westwell, ‘‘A machine learning approach
+to investigating the effects of mathematics dispositions on mathematical
+literacy,’’ Int. J. Res. Method Educ., vol. 41, no. 3, pp. 306–327, May 2018.
+[6] L. Xiaomin and E. Auld, ‘‘A historical perspective on the OECD’s
+‘humanitarian turn’: Pisa for development and the learning framework
+2030,’’ Comparative Educ., vol. 56, no. 4, pp. 503–521, Oct. 2020.
+[7] O. Lezhnina and G. Kismihók, ‘‘Combining statistical and machine
+learning methods to explore German students’ attitudes towards ICT in
+Pisa,’’ Int. J. Res. Method Educ., vol. 45, no. 2, pp. 180–199, Mar. 2022.
+[8] O. Ramazan, S. Dai, R. W. Danielson, Y. Ardasheva, T. Hao, and
+B. W. Austin, ‘‘Students’ 2018 PISA reading self-concept: Identifying
+predictors and examining model generalizability for emergent bilinguals,’’
+J. School Psychol., vol. 101, Dec. 2023, Art. no. 101254.
+[9] X. Miao, A. Nadaf, and Z. Zhou, ‘‘Machine learning evidence from PISA
+2018 data to integrate global competence intervention in UAE K–12 public
+schools,’’ Int. Rev. Educ., vol. 69, no. 5, pp. 675–690, Oct. 2023.
+[10] G. Sırgancı, ‘‘A machine learning approach to assess differential item
+functioning of PISA 2018 ICT engagement questionnaire,’’ Int. J.
+Curriculum Instruct., vol. 15, no. 3, pp. 2079–2093, 2023.
+[11] M. Alvarez-Garcia, M. Arenas-Parra, and R. Ibar-Alonso, ‘‘Uncovering
+Student profiles. An explainable cluster analysis approach to PISA 2022,’’
+Comput. Educ., vol. 223, Dec. 2024, Art. no. 105166.
+27396
+
+[12] A. Gamazo and F. Martínez-Abad, ‘‘An exploration of factors linked to
+academic performance in Pisa 2018 through data mining techniques,’’
+Frontiers Psychol., vol. 11, Nov. 2020, Art. no. 575167.
+[13] B. Albreiki, N. Zaki, and H. Alashwal, ‘‘A systematic literature review
+of Student’ performance prediction using machine learning techniques,’’
+Educ. Sci., vol. 11, no. 9, p. 552, Sep. 2021.
+[14] D. A. Resino, A. Constante-Amores, P. G. Madrona, and P. J. Carrillo
+López, ‘‘Student well-being and mathematical literacy performance in
+PISA 2018: A machine-learning approach,’’ Educ. Psychol., vol. 44, no. 3,
+pp. 340–357, Mar. 2024.
+[15] J. Chen, Y. Zhang, Y. Wei, and J. Hu, ‘‘Discrimination of the contextual
+features of top performers in scientific literacy using a machine learning
+approach,’’ Res. Sci. Educ., vol. 51, no. S1, pp. 129–158, Sep. 2021.
+[16] J. Hu, Y. Peng, and X. Chen, ‘‘Decoding contextual factors differentiating
+Adolescents’ high, average, and low digital reading performance through
+machine-learning methods,’’ IEEE Trans. Learn. Technol., vol. 16, no. 4,
+pp. 516–527, Aug. 2023.
+[17] A. Gorostiaga and J. L. Rojo-Álvarez, ‘‘On the use of conventional and
+statistical-learning techniques for the analysis of Pisa results in Spain,’’
+Neurocomputing, vol. 171, pp. 625–637, Jan. 2016.
+[18] D. H. Wolpert, ‘‘Stacked generalization,’’ Neural Netw., vol. 5, no. 2,
+pp. 241–259, Jan. 1992.
+[19] A. Chatzimparmpas, R. M. Martins, K. Kucher, and A. Kerren, ‘‘StackGenVis: Alignment of data, algorithms, and models for stacking ensemble
+learning using performance metrics,’’ IEEE Trans. Vis. Comput. Graphics,
+vol. 27, no. 2, pp. 1547–1557, Feb. 2021.
+[20] S. Lundberg and S. Lee, ‘‘A unified approach to interpreting model
+predictions,’’ in Proc. 31st Int. Conf. Neural Inf. Process. Syst. New York,
+NY, USA: Curran Associates, Jan. 2017, pp. 4768–4777.
+[21] A. B. I. Bernardo, ‘‘Socioeconomic status moderates the relationship
+between growth mindset and learning in mathematics and science:
+Evidence from Pisa 2018 Philippine data,’’ Int. J. School Educ. Psychol.,
+vol. 9, no. 2, pp. 208–222, Apr. 2021.
+[22] P.-Y. Liou and Y.-C. Hung, ‘‘Statistical techniques utilized in analyzing
+PISA and TIMSS data in science education from 1996 to 2013:
+A methodological review,’’ Int. J. Sci. Math. Educ., vol. 13, no. 6,
+pp. 1449–1468, Dec. 2015.
+[23] E. G. Bayirli, A. Kaygun, and E. Öz, ‘‘An analysis of PISA 2018
+mathematics assessment for Asia–Pacific countries using educational data
+mining,’’ Mathematics, vol. 11, no. 6, p. 1318, Mar. 2023.
+[24] O. Navarro-Martinez and B. Peña-Acuña, ‘‘Technology usage and
+academic performance in the PISA 2018 report,’’ J. New Approaches Educ.
+Res., vol. 11, no. 1, pp. 130–145, Jan. 2022.
+[25] M. Podda, D. Bacciu, A. Micheli, R. Bellú, G. Placidi, and L. Gagliardi,
+‘‘A machine learning approach to estimating preterm infants survival:
+Development of the preterm infants survival assessment (PISA) predictor,’’
+Sci. Rep., vol. 8, no. 1, p. 13743, Sep. 2018.
+[26] S. Acıslı-Celik and C. M. Yesilkanat, ‘‘Predicting science achievement
+scores with machine learning algorithms: A case study of OECD
+PISA 2015–2018 data,’’ Neural Comput. Appl., vol. 35, no. 28,
+pp. 21201–21228, Oct. 2023.
+[27] P. S. M. Soares, ‘‘Combining statistical and machine learning methods to
+identify predictors of Brazilian students’ proficiency in PISA 2018,’’ J.
+Psychoeducational Assessment, vol. 42, no. 8, pp. 927–954, Jun. 2024.
+[28] C. Masci, G. Johnes, and T. Agasisti, ‘‘Student and school performance
+across countries: A machine learning approach,’’ Eur. J. Oper. Res.,
+vol. 269, no. 3, pp. 1072–1085, Sep. 2018.
+[29] B. Odell, M. Cutumisu, and M. Gierl, ‘‘A scoping review of the relationship
+between students’ ICT and performance in mathematics and science in
+the PISA data,’’ Social Psychol. Educ., vol. 23, no. 6, pp. 1449–1481,
+Dec. 2020.
+[30] Z. Pan and M. Cutumisu, ‘‘Using machine learning to predict U.K. and
+Japanese secondary students’ life satisfaction in PISA 2018,’’ Brit. J. Educ.
+Psychol., vol. 94, no. 2, pp. 474–498, Jun. 2024.
+[31] M. Courtney, M. Karakus, Z. Ersozlu, and K. Nurumov, ‘‘The influence of
+ICT use and related attitudes on students’ math and science performance:
+Multilevel analyses of the last decade’s PISA surveys,’’ Large-scale
+Assessments Educ., vol. 10, no. 1, pp. 1–26, Aug. 2022.
+[32] M. Simsek, ‘‘Predicting mathematics performance by ICT variables in
+PISA 2018 through decision tree algorithm,’’ Int. J. Technol. Educ., vol. 5,
+no. 2, pp. 269–279, May 2022.
+VOLUME 13, 2025
+
+I. Gómez-Talal et al.: Interpretable Machine Learning Models for PISA Results in Mathematics
+
+[33] W. Weng and W. Luo, ‘‘Exploring the influence of students’ ICT use on
+mathematics and science moderated by school-related factors,’’ J. Comput.
+Math. Sci. Teach., vol. 41, no. 2, pp. 163–185, 2022.
+[34] N. M. Else-Quest, J. S. Hyde, and M. C. Linn, ‘‘Cross-national patterns
+of gender differences in mathematics: A meta-analysis,’’ Psychol. Bull.,
+vol. 136, no. 1, pp. 103–127, Jan. 2010.
+[35] Y. Lu, X. Zhang, and X. Zhou, ‘‘Assessing gender difference in mathematics achievement,’’ School Psychol. Int., vol. 44, no. 5, pp. 553–567,
+Oct. 2023.
+[36] B. Boman and M. Wiberg, ‘‘The influence of SES, migration background,
+and non-cognitive abilities on Pisa reading and mathematics achievement:
+Evidence from Sweden,’’ Eur. J. Psychol. Educ., vol. 39, no. 3,
+pp. 2935–2951, Sep. 2024.
+[37] H. Lee, ‘‘What drives the performance of Chinese urban and rural
+secondary schools: A machine learning approach using Pisa 2018,’’ Cities,
+vol. 123, Apr. 2022, Art. no. 103609.
+[38] S. Luo, R. B. King, F. Wang, and S. O. Leung, ‘‘English digital reading
+achievement for east Asian students: Identifying the key predictors using
+a machine learning approach,’’ Asia Pacific J. Educ., pp. 1–17, Sep. 2024.
+[39] J.-Q. Zheng, K.-C. Cheung, and P.-S. Sit, ‘‘Identifying key features of
+resilient students in digital reading: Insights from a machine learning
+approach,’’ Educ. Inf. Technol., vol. 29, no. 2, pp. 2277–2301, Feb. 2024.
+[40] L. McInnes, J. Healy, and J. Melville, ‘‘UMAP: Uniform manifold approximation and projection for dimension reduction,’’ 2018, arXiv:1802.03426.
+[41] F. Pedregosa, G. Varoquaux, A. Gramfort, V. Michel, B. Thirion, O. Grisel,
+M. Blondel, P. Prettenhofer, R. J. Weiss, V. Dubourg, J. Vanderplas,
+A. Passos, D. Cournapeau, M. Brucher, M. Perrot, and É. Duchesnay,
+‘‘Scikit-learn: Machine learning in Python,’’ J. Mach. Learn. Res., vol. 12,
+pp. 2825–2830, Jan. 2012.
+[42] D. W. Hosmer Jr., S. Lemeshow, and R. X. Sturdivant, Applied Logistic
+Regression, vol. 398. Hoboken, NJ, USA: Wiley, 2013.
+[43] C. Cortes and V. Vapnik, ‘‘Support-vector networks,’’ Mach. Learn.,
+vol. 20, no. 3, pp. 273–297, Sep. 1995.
+[44] L. Buitinck, G. Louppe, M. Blondel, F. Pedregosa, A. Mueller,
+O. Grisel, V. Niculae, P. Prettenhofer, A. Gramfort, J. Grobler, R. Layton,
+J. Vanderplas, A. Joly, B. Holt, and G. Varoquaux, ‘‘API design for
+machine learning software: Experiences from the scikit-learn project,’’
+2013, arXiv:1309.0238.
+[45] L. Breiman, J. Friedman, R. Olshen, and C. Stone, ‘‘Classification and
+regression trees. Wadsworth int,’’ Group, vol. 37, no. 15, pp. 237–251,
+1984.
+[46] L. Breiman, ‘‘Random forests,’’ Mach. Learn., vol. 45, pp. 5–32, Jan. 2001.
+[47] J. H. Friedman, ‘‘Greedy function approximation: A gradient boosting
+machine,’’ Ann. Statist., vol. 29, no. 5, pp. 1189–1232, Oct. 2001.
+[48] T. Chen and C. Guestrin, ‘‘XGBoost: A scalable tree boosting system,’’
+in Proc. 22nd ACM SIGKDD Int. Conf. Knowl. Discovery Data Mining,
+Aug. 2016, pp. 785–794.
+[49] D. E. Rumelhart, G. E. Hinton, and R. J. Williams, ‘‘Learning representations by back-propagating errors,’’ Nature, vol. 323, no. 6088,
+pp. 533–536, Oct. 1986.
+[50] G. Ke, Q. Meng, T. Finley, T. Wang, W. Chen, W. Ma, Q. Ye, and T. Liu,
+‘‘LightGBM: A highly efficient gradient boosting decision tree,’’ in Proc.
+Adv. Neural Inf. Process. Syst., vol. 30, Dec. 2017, pp. 1–11.
+[51] E. Öz, O. Bulut, Z. F. Cellat, and H. Yürekli, ‘‘Stacking: An ensemble
+learning approach to predict Student performance in PISA 2022,’’ Educ.
+Inf. Technol., pp. 1–27, Oct. 2024.
+[52] T.-T. Wong and N.-Y. Yang, ‘‘Dependency analysis of accuracy estimates
+in K-fold cross validation,’’ IEEE Trans. Knowl. Data Eng., vol. 29, no. 11,
+pp. 2417–2427, Nov. 2017.
+[53] S. Prusty, S. Patnaik, and S. K. Dash, ‘‘SKCV: Stratified K-fold crossvalidation on ML classifiers for predicting cervical cancer,’’ Frontiers
+Nanotechnol., vol. 4, Aug. 2022, Art. no. 972421.
+[54] X. Zeng and T. R. Martinez, ‘‘Distribution-balanced stratified crossvalidation for accuracy estimation,’’ J. Experim. Theor. Artif. Intell.,
+vol. 12, no. 1, pp. 1–12, Jan. 2000.
+[55] P. Swarnalatha and B. K. Tripathy, ‘‘Evaluation of classifier models using
+stratified tenfold cross validation techniques,’’ in Proc. Int. Conf. Comput.
+Commun. Syst. Cham, Switzerland: Springer, Jan. 2011, pp. 680–690.
+[56] C. M. Bishop and N. M. Nasrabadi, Pattern Recognition and Machine
+Learning, vol. 4. Cham, Switzerland: Springer, 2006.
+[57] T. Fawcett, ‘‘An introduction to ROC analysis,’’ Pattern Recognit. Lett.,
+vol. 27, no. 8, pp. 861–874, Jun. 2006.
+VOLUME 13, 2025
+
+[58] A. E. Roth, The Shapley Value: Essays in Honor of Lloyd S. Shapley.
+Cambridge, U.K.: Cambridge Univ. Press, 1988.
+[59] L. Merrick and A. Taly, ‘‘The explanation game: Explaining machine
+learning models using Shapley values,’’ in Proc. Mach. Learn. Knowl.
+Extraction, 4th IFIP TC 5, TC 12, WG 8.4, WG 8.9, WG 12.9 Int.
+Cross-Domain Conf., (CD-MAKE), Dublin, Ireland. Cham, Switzerland:
+Springer, Jan. 2020, pp. 17–38.
+[60] I. E. Kumar, S. Venkatasubramanian, C. Scheidegger, and S. A. Friedler,
+‘‘Problems with shapley-value-based explanations as feature importance
+measures,’’ in Proc. Int. Conf. Mach. Learn., Jan. 2020, pp. 5491–5500.
+[61] S. M. Lundberg, G. Erion, H. Chen, A. DeGrave, J. M. Prutkin, B. Nair,
+R. Katz, J. Himmelfarb, N. Bansal, and S.-I. Lee, ‘‘From local explanations
+to global understanding with explainable AI for trees,’’ Nature Mach.
+Intell., vol. 2, no. 1, pp. 56–67, Jan. 2020.
+[62] L. Buitinck, G. Louppe, M. Blondel, F. Pedregosa, A. Mueller,
+O. Grisel, V. Niculae, P. Prettenhofer, A. Gramfort, J. Grobler, R. Layton,
+J. VanderPlas, A. Joly, B. Holt, and G. Varoquaux, ‘‘API design for
+machine learning software: Experiences from the scikit-learn project,’’
+in Proc. ECML PKDD Workshop, Lang. Data Mining Mach. Learn.,
+Sep. 2013, pp. 108–122.
+[63] Plotly Dash. [Online]. Available: https://dash.plotly.com/introduction
+[64] Plotly, PT Industries, 2015.
+[65] W. McKinney, ‘‘Data structures for statistical computing in Python,’’ in
+Proc. Python Sci. Conf., Stéfan van der Walt and Jarrod Millman, Eds.,
+2010, pp. 56–61.
+
+ISMAEL GÓMEZ-TALAL (Member, IEEE)
+received the B.Sc. degree in telecommunication
+technologies engineering, the M.Sc. degree in
+information systems engineering, and the degree
+in telematics engineering from Universidad Rey
+Juan Carlos (URJC), in 2020, 2021, and 2022,
+respectively, the M.Sc. degree in Internet of
+Things and the M.Sc. degree in telecommunication
+engineering from Universidad Carlos III de
+Madrid (UC3M), in 2022, and the Ph.D. degree
+in information and communication technology from URJC. He is working
+on his doctoral thesis. He has published in several top-tier conferences,
+including URSI, GASS, and EUSIPCO. His research interests include
+methods based on interpretable machine learning (IML) and the application
+of machine learning (ML) using actual data from the health and hospitality
+sectors.
+
+LUIS BOTE-CURIEL received the degree in
+telecommunication engineering from Universidad
+de Valladolid, Spain, in 2012, and the Ph.D. degree
+in information and communications technologies
+from Universidad Rey Juan Carlos, in 2021.
+His research interest includes machine and deep
+learning, focused on interpretability and their
+application to real-world problems.
+
+JOSÉ LUIS ROJO-ÁLVAREZ (Senior Member,
+IEEE) received the B.Sc. degree in telecommunication engineering from Universidade de Vigo,
+in 1996, and the Ph.D. degree in telecommunication engineering from Universidad Politécnica
+de Madrid, in 2000. He is currently working as
+a Full Professor with the Department of Signal
+Theory and Communications, Universidad Rey
+Juan Carlos, Spain. He has co-authored more than
+160 international articles and has contributed to
+more than 190 conference proceedings. His research interests include
+statistical learning methods for signal and image processing, arrhythmia
+mechanisms, robust signal processing techniques, and data science for
+diverse application fields.
+
+27397
+
+

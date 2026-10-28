@@ -1,0 +1,1986 @@
+Journal of the Royal Statistical Society Series A:
+Statistics in Society, 2025, 188, 428–450
+https://doi.org/10.1093/jrsssa/qnae049
+Advance access publication 24 May 2024
+Original Article
+
+Nathan McJames1,2 , Ann O’Shea2, Yong Chen Goh1,2
+and Andrew Parnell1,2
+1
+2
+
+Hamilton Institute, Maynooth University, Maynooth, Co. Kildare, Ireland
+Department of Mathematics and Statistics, Maynooth University, Maynooth, Co. Kildare, Ireland
+
+Address for correspondence: Nathan McJames, Hamilton Institute and Department of Mathematics and Statistics,
+Maynooth University, Maynooth, Co. Kildare, Ireland. Email: nathan.mcjames.2016@mumail.ie
+
+Abstract
+Bayesian Causal Forests (BCF) is a causal inference machine learning model based on the flexible nonparametric regression and classification tool, Bayesian Additive Regression Trees (BART). Motivated by
+data from the Trends in International Mathematics and Science Study (TIMSS), which includes data on
+student achievement in both mathematics and science, we present a multivariate extension of the BCF
+algorithm. With the help of simulation studies, we show that our approach can accurately estimate causal
+effects for multiple outcomes subject to the same treatment. We apply our model to Irish data from TIMSS
+2019. Our findings reveal the positive effects of having access to a study desk at home (Mathematics ATE
+95% CI: [−0.50, 10.14]) while also highlighting the negative consequences of students often feeling hungry
+at school (Mathematics ATE 95% CI: [−8.86, −1.56] , Science ATE 95% CI: [−10.35, −0.94]) or often being
+absent (Mathematics ATE 95% CI: [−11.88, −2.27]). Code for replicating the results can be found at https://
+github.com/Nathan-McJames/MVBCF-Paper.
+Keywords: Bayesian Additive Regression Trees, Bayesian Causal Forests, causal inference, machine learning,
+multivariate
+
+1 Introduction
+Estimating heterogeneous treatment effects from observational data is a complex yet essential
+task. The pursuit of precise and tailored interventions, informed by an understanding of how individuals uniquely respond to treatments, holds profound implications for many different fields. In
+this pursuit, we encounter two critical challenges. The first is the ever present issue of confounding,
+which arises in causal settings where randomized controlled trials (RCTs) are not feasible. The second challenge lies in detecting often subtle variations in individual responses to treatment. To address these hurdles, advanced modelling strategies are required, capable of flexibly controlling for
+confounding variables while guarding against overfitting. As a result, there has recently been a
+surge of interest in applying advanced non-parametric methods to tackle these challenges (see
+Caron et al., 2022a, for a review).
+This family of methods includes a vast assortment of techniques which exploit the predictive
+capabilities of advanced regression models in order to estimate heterogeneous treatment effects.
+A key strength of this family of methods is that it is very flexible, and many of the relevant
+Received: March 15, 2023. Revised: April 23, 2024. Accepted: April 24, 2024
+© The Royal Statistical Society 2024.
+This is an Open Access article distributed under the terms of the Creative Commons Attribution License (https://
+creativecommons.org/licenses/by/4.0/), which permits unrestricted reuse, distribution, and reproduction in any medium,
+provided the original work is properly cited.
+
+Downloaded from https://academic.oup.com/jrsssa/article/188/2/428/7681717 by guest on 24 April 2026
+
+Bayesian causal forests for multivariate
+outcomes: application to Irish data from
+an international large scale education
+assessment
+
+J R Stat Soc Series A: Statistics in Society, 2025, Vol. 188, No. 2
+
+429
+
+Downloaded from https://academic.oup.com/jrsssa/article/188/2/428/7681717 by guest on 24 April 2026
+
+techniques can be performed with virtually any suitable regression model. One of the most important contributions to this area was made by Hill (2011) who demonstrated that by using a sufficiently flexible regression model such as Bayesian Additive Regression Trees (BART, Chipman
+et al., 2010), it is possible to accurately estimate treatment effects. A second influential contribution was made by Hahn et al. (2020) who built on Hill’s work by using Robinson’s (1988) treatment effect parameterization to separate the estimation of Y into a prognostic effect μ, and a
+treatment effect τ. This approach, named Bayesian Causal Forests (BCF), has a number of advantages over that of Hill (2011) as it allows separate priors to be applied to the μ and τ components of
+the model and enables individual level treatment effects to be estimated directly from the data.
+Due to its flexibility and impressive predictive performance, the BCF model has become one of
+the most popular causal inference methods available and has been the subject of multiple research
+papers, many of which have extended its capabilities for use in different settings. Caron et al.
+(2022b), for example, introduced a prior in the model which encourages BCF to focus more on
+important predictor variables than less influential covariates. In another recent extension,
+Starling et al. (2021) introduced a BCF model designed for estimating treatment effects that exhibit
+smooth variations across a single covariate, drawing inspiration from a BART model with a similar design outlined in Starling et al. (2020). Other extensions of the BCF model include a hierarchical version which was used to investigate the effectiveness of a growth mindset in improving
+student achievement in a study by Yeager et al. (2019). Our model described later will also include
+a hierarchical element in its application to the motivating dataset, but this will not be the primary
+focus of our study.
+An important limitation of many causal inference methods, including BCF, is that they are only
+applicable to a single outcome variable subject to a binary treatment Z. Therefore, motivated by
+data from the Trends in International Mathematics and Science Study (Mullis et al., 2020), which
+includes data on both the mathematics and science achievement of eighth grade (approximately
+14–15 year old) secondary school students, we present a multivariate extension of BCF which
+is capable of estimating the causal effect of an intervention on multiple outcomes simultaneously.
+With our new approach, we consider the effect of a number of home-related factors on student
+achievement. Specifically, we attempt to answer the following three research questions: (i)
+‘What effect does having access to a study desk at home have on student achievement in mathematics and science?’, (ii) ‘What is the impact on student achievement in mathematics and science of
+often arriving at school feeling hungry?’, and (iii) ‘What effect does regular absence from school
+have on student achievement in mathematics and science?’. We investigate these factors because
+they have important implications for student-focused initiatives such as free school meal programmes and back to school allowances which are designed to assist students from disadvantaged
+backgrounds (Kennedy, 2013; Taras, 2005).
+The main advantage of our multivariate approach is a potentially substantial reduction in
+the uncertainty associated with the causal parameters, since the model now has access to extra
+information through the correlation of the outcome variables and the treatment effects.
+Situations in which the model might exploit a strong positive correlation in the effects of an
+intervention could occur for many plausible reasons. To illustrate, imagine an educational
+intervention aimed at enhancing students’ problem-solving skills. As these skills improve, it
+is reasonable to anticipate a concurrent improvement in mathematics and science achievement, as both subjects rely heavily on effective problem solving. Students who experience a
+substantial improvement in problem-solving abilities are likely to exhibit more pronounced
+improvements in both mathematics and science when compared to those with only marginal
+enhancements. Consequently, we would expect to observe a positive correlation between
+the magnitude of improvement in mathematics achievement and the corresponding improvement in science achievement.
+Conversely, the model might also exploit a strong negative correlation in situations where one of
+the outcome variables serves as a mediator for another. For instance, in an intervention focused on
+reducing stress levels among students, it might be observed that lowered stress levels act as a mediator by enhancing students’ productivity. If the intervention significantly reduces a student’s
+stress levels, this may be associated with a substantial increase in productivity. Therefore, this
+scenario demonstrates a negative correlation in treatment effects, as a larger reduction in stress levels corresponds to a more significant increase in productivity.
+
+430
+
+McJames et al.
+
+2 Trends in international mathematics and science study
+The Trends in International Mathematics and Science Study (TIMSS) is a large scale international
+assessment organized by the International Association for the Evaluation of Educational
+Achievement (IEA). It has taken place in many countries across the world every four years since
+1995, with 64 countries participating in TIMSS 2019. As part of the study, students in the
+fourth and eighth grade of secondary school (typically aged approximately 10–11 and 14–15, respectively) are given a short assessment in mathematics and science, which is used to estimate their
+overall achievement level. The eighth grade students also complete a short background questionnaire on topics such as their home and classroom environment, and how much they like and feel
+confident in these subjects. The teachers and principals of these students are also given short questionnaires on their educational background, teaching practices, and school access to learning
+resources, thus providing us with a large number of covariates to control for as potential confounding variables. This makes TIMSS an excellent source of information for researchers investigating factors associated with student confidence and achievement in mathematics and science.
+Due to its scale and comprehensive nature, TIMSS data have been the subject of many studies in
+the field of education since its origin in 1995. Some recent studies using data from TIMSS include
+Tang et al. (2022) who investigate the impact of science teacher continual professional development on student achievement in science, and Chen (2022) who considers the effect of the interaction between classroom and individual achievement levels on student confidence in
+mathematics. Our focus in this article however will be on the effect of three specific treatments
+on student achievement in mathematics and science. In contrast to much of the existing literature
+
+Downloaded from https://academic.oup.com/jrsssa/article/188/2/428/7681717 by guest on 24 April 2026
+
+Whilst multivariate causal inference models are rare, our approach shares similarities with that
+of a recent multivariate extension of Bayesian factor analysis models for causal inference which
+demonstrates the potential for a multivariate approach to causal inference (Samartsidis et al.,
+2020). Also of note is a multivariate random forest based method for causal inference developed
+by Guo et al. (2021). Our work is different from these because the multivariate causal factor analysis model developed by Samartsidis et al. uses a very different structure to our BART-based model. We believe our approach offers greater flexibility and may be used in a much wider variety of
+settings. Also, the multivariate random forest based method developed by Guo et al. (2021) requires RCT data with pre- and post-intervention covariates. Our model, which is designed for observational data, does not impose such requirements.
+In addition to multivariate causal inference models, there is also precedent for shared tree structures to assist in the estimation of multivariate parameters in the Bayesian context. The first example of this to our knowledge is a study by Linero et al. (2020) which demonstrated the
+impressive performance gains made possible by this approach. Related to this work is a paper
+by Um et al. (2023) which develops a multivariate BART model for skewed distributions, which
+also highlighted the advantages of using a shared tree structure in a regression problem. The key
+difference which separates these previous works from our study, however, is that in contrast to the
+paper by Um et al. (2023) which focused on estimating a multivariate target variable Y, or the paper by Linero et al. (2020) which focuses on estimating multiple transformations of, or parameters
+associated with a single outcome variable, we are interested in estimating the causal effect of an
+intervention on multiple outcomes.
+The remainder of our article is organized as follows: In Section 2, we give some background on
+the Trends in International Mathematics and Science Study, the dataset motivating our multivariate approach. Section 3.1 describes BART, the model providing the foundation upon which
+Bayesian Causal Forests are built. Section 3.2 explains how BCF leverages the impressive predictive capabilities of BART for the purpose of estimating heterogeneous treatment effects, and
+Section 3.3 details the modifications necessary to extend BCF to the multivariate setting. In
+Section 4, we present the results of a simulation study, in which we demonstrate the substantial
+benefits of jointly modelling all outcome variables available. In Section 5, we apply our multivariate extension of BCF to the motivating dataset, TIMSS 2019. Here, we investigate the effects of
+a number of treatments on student mathematics and science achievement, including home study
+supports, being hungry at school, and absenteeism. We conclude our article with a discussion
+of our results, the limitations, and potential avenues for future research.
+
+J R Stat Soc Series A: Statistics in Society, 2025, Vol. 188, No. 2
+
+431
+
+3 Bayesian non-parametric estimation of heterogeneous treatment
+effects
+One of the fastest growing areas of research in the causal inference literature is the application of
+Bayesian non-parametric machine learning algorithms for the estimation of heterogeneous treatment effects. Before discussing these approaches in detail, however, we must first cover some notation. In this article, we will adopt the Neyman–Rubin causal model (Rubin, 1974; Sekhon, 2008;
+Splawa-Neyman et al., 1990) which can be applied to situations where we are interested in the effect of a treatment Z on an outcome Y. The Neyman–Rubin causal model is based on the concept
+of potential outcomes, which asserts that for each observation i, there are two potential outcomes:
+one that would be observed under treatment yi (Zi = 1), and one that would be observed under
+control, yi (Zi = 0). Knowing both yi (Zi = 0) and yi (Zi = 1) would allow us to calculate the individual treatment effect for unit i, τi = yi (Zi = 1) − yi (Zi = 0). This is of course impossible, because we
+only ever observe one of the potential outcomes, and this is known as the fundamental problem of
+causal inference.
+Although we may not observe both potential outcomes directly, we can estimate them with
+ŷi (Zi = 0) and ŷi (Zi = 1). Then, in the presence of the correct conditions, we may estimate τi
+with τ̂i = ŷi (Zi = 1) − ŷi (Zi = 0). The conditions which are required to hold for the reliability of
+this approach in the univariate context are provided by Kurz (2022). However, for the sake of generality, given our focus on multivariate outcomes in this article, we have extended and adapted
+these assumptions to accommodate the complexities introduced by multiple outcome variables:
+(1) The stable unit treatment value assumption (SUTVA). The original assumption requires that
+the potential outcomes of any individual i must not be affected by the treatment status of any
+other individual j. For example, if student j is often absent from school, this must not influence the achievement level of any other student i. The SUTVA also requires that there are ‘no
+multiple versions’ of the same treatment. In other words, there should not be multiple potential outcomes corresponding to different versions or types of the same treatment.
+
+Downloaded from https://academic.oup.com/jrsssa/article/188/2/428/7681717 by guest on 24 April 2026
+
+which focuses on typically just one of these outcomes, we will model achievement in both subjects
+jointly.
+In this study, we delve into the causal factors associated with a student’s household
+environment, specifically examining the influence of home study supports, hunger at school,
+and absenteeism. These factors possess the potential to exert significant impacts on a student’s
+educational journey in various ways. Notably, they are all susceptible to the influence of confounding variables. Home study supports and access to educational resources are well-established
+predictors of student achievement, as evidenced by prior research (Tsai & Yang, 2015).
+However, given their likely correlation with socioeconomic status, it is imperative to untangle
+this relationship within a causal framework. The detrimental effects of students attending school
+on an empty stomach are widely acknowledged (Vik et al., 2022). Hunger can hinder concentration and deprive students of essential nutrients, underscoring the importance of free school meal
+programs (Taras, 2005). Yet, the prevalence of hunger may also be linked to a student’s socioeconomic background, necessitating careful consideration as a potential confounding factor.
+Lastly, absenteeism has been consistently linked to lower academic achievement (Vesić et al.,
+2021). However, absenteeism itself is a multifaceted issue intertwined with other adverse factors
+like school bullying (Bennour, 2021; Ladd et al., 2017), making it crucial to account for these
+variables (and others) collected as part of the TIMSS study.
+In summary, TIMSS is an excellent source of information for researchers in the field of education. TIMSS data have been used extensively to answer many important research questions
+over the years, but as the short discussion above highlights, there can often be multiple layers
+of complexity with the potential to bias the estimates of these analyses. Furthermore, much of
+the existing research has focused solely on achievement in one subject, employing traditional approaches such as multiple linear regression models which are not well suited to answering questions of a causal nature. For this reason, we propose that a multivariate causal approach, capable
+of flexibly accounting for the many confounding variables that may be present, is well suited to
+these data.
+
+432
+
+McJames et al.
+
+The above provides us with a very flexible approach for estimating individual treatment effects,
+as yi (Zi = 1) and yi (Zi = 0) can be estimated with any sufficiently accurate model f. A good choice
+for f, for a number of reasons, is BART, and this is what we will discuss next.
+
+3.1 Bayesian Additive Regression Trees
+BART is a Bayesian non-parametric machine learning algorithm that is well suited to a variety of
+regression and classification tasks (Chipman et al., 2010). BART can be described as a tree-based
+ensemble method for predicting an unknown function f (X) based on the contributions of many
+shallow trees. Individually these trees act as weak learners, each only explaining a small part of
+the unknown function, but when combined they are able to capture very complicated relationships
+and interactions between variables in the data. Owing to its impressive predictive performance,
+BART has become popular with researchers from many disciplines and has been used for a diverse
+range of applications in many fields such as medicine, economics, and education (McJames et al.,
+2023; Pierdzioch et al., 2016; Sparapani et al., 2016). BART is a very flexible model, which has
+enabled researchers to adapt or modify the underlying algorithm for various specialized use cases
+such as genomics, problems with local linearities and, of course, causal inference (Hill et al., 2020;
+Prado et al., 2021; Sarti et al., 2023).
+Given an outcome variable y of length n, and a covariate matrix X consisting of n observations
+of d variables, the BART model can be written as follows:
+
+yi =
+
+J
+􏽘
+
+g(T j , M j , xi ) + ϵi ,
+
+ϵi ∼ N(0, σ2 ),
+
+j=1
+
+where g() is a function which calculates the individual contribution of each tree j of J total trees. M j
+specifies the terminal node parameters associated with the jth tree T j . The residuals, ϵi , are assumed to be normally distributed with mean 0 and variance σ2 . Being a Bayesian model, appropriate priors are required for T j , M j , and σ2 .
+The BART model is fitted using Markov Chain Monte Carlo. Before discussing the intricacies of
+this procedure in detail, however, we will first consider how BART can serve as the foundational
+framework for a powerful causal machine learning approach: the BCF model.
+
+3.2 Bayesian Causal Forests
+BCF is an advanced causal inference machine learning algorithm (Hahn et al., 2020). BCF uses
+BART as a foundation for estimating causal effects and shares the same desirable features such
+as impressive predictive performance, careful regularization through the use of Bayesian priors,
+and uncertainty quantification. BCF does however have a number of advantages over BART for
+estimating heterogeneous treatment effects, and this is made possible by adopting the Robinson
+parameterization which expresses the outcome y as:
+yi = μ(xi , π̂i ) + τ(xi )Zi + ϵi ,
+
+Downloaded from https://academic.oup.com/jrsssa/article/188/2/428/7681717 by guest on 24 April 2026
+
+Multivariate modification: To align with the multivariate context, we now stipulate that
+this must hold for all outcome variables associated with student i.
+(2) The ignorability assumption. Also known as the unconfoundedness assumption, we require
+that there must be no residual confounding we have not controlled for: yi (Zi = 1), yi (Zi = 0) ⊥⊥
+Zi ∣ x i .
+Multivariate modification: In our multivariate adaptation, we extend this to each outcome
+variable yk by requiring that yi,k (Zi = 1), yi,k (Zi = 0) ⊥
+⊥ Zi ∣ xi ∀ i, k.
+(3) The overlap assumption. This requires that the propensity score for any individual i must be
+bounded away from zero and one: 0 < P(Zi = 1 ∣ xi ) < 1. For example, if it was true that students from disadvantaged backgrounds were guaranteed never to have a study desk, this
+would be a violation of the overlap assumption.
+Multivariate modification: This assumption remains unchanged in the multivariate adaptation as the same treatment applies to all outcome variables.
+
+J R Stat Soc Series A: Statistics in Society, 2025, Vol. 188, No. 2
+
+433
+
+Algorithm 1 Bayesian Backfitting MCMC Algorithm for Multivariate BCF
+
+Input: Multivariate Target variable Y (n rows of p outcome variables), Feature matrix X (n rows of d covariates),
+Treatment variable Z (length n; 1 for treatment; 0 for control)
+Output: Posterior list of trees T, residual covariance matrix Σ, multivariate fitted values μ̂, multivariate fitted
+values τ̂
+Set Hyper-parameter values of αμ , βμ , σμ , στ , ατ , βτ , ν, Σ0
+Set Number of μ trees Nμ , Number of τ trees Nτ , Number of iterations N
+Set Initial value Σ = I, and set all μ trees and τ trees to stumps with terminal node parameters set to 0
+for iterations i from 1 to N do
+for μ trees j from 1 to Nμ do
+With τ predictions fixed at their current values: compute multivariate partial residuals Rμ,j from Y minus
+predictions of all trees except μ tree j
+new
+Grow a new tree Tμ,j
+based on grow/prune/change/swap
+
+Accept/Reject tree structure with Metropolis–Hastings step using
+P(Tμ,j ∣ Rμ,j , Σ) ∝ P(Tμ,j )P(Rμ,j ∣ Tμ,j , Σ)
+Sample μ values from multivariate normal distribution using P(Mμ,j ∣ Tμ,j , Rμ,j , Σ) end for
+for τ trees k from 1 to Nτ do
+With μ predictions fixed at their current values: Compute multivariate partial residuals Rτ,k from Y
+minus predictions of all trees except τ tree k
+new
+Grow a new tree Tτ,k
+based on grow/prune/change/swap
+
+Accept/Reject tree structure with Metropolis–Hastings step using
+P(Tτ,k ∣ Rτ,k , Σ) ∝ P(Tτ,k )P(Rτ,k ∣ Tτ,k , Σ)
+Sample τ values from multivariate normal distribution using P(Mτ,k ∣ Tτ,k , Rτ,k , Σ)
+end for
+Combine predictions from all trees to get Ŷ = μ̂ + τ̂Z
+Update Σ with an Inverse-Wishart distribution using P(Σ ∣ Ŷ)
+end for
+
+Downloaded from https://academic.oup.com/jrsssa/article/188/2/428/7681717 by guest on 24 April 2026
+
+where μ() and τ() are both BART ensembles which work together to estimate two separate parts of
+the model: a prognostic effect μ, which can be thought of as the expected outcome under control
+when the treatment variable Z is coded as 1 for treatment, 0 for control, and a treatment effect τ,
+which can be interpreted as the impact on y of receiving treatment. The additional covariate π̂i included in the μ() part of the model is the propensity score, which is simply the estimated probability
+of individual i receiving treatment: πi = P(Zi = 1). The inclusion of the propensity score in μ() is
+important for avoiding a phenomenon called regularization induced confounding, and is especially useful in situations where the likelihood of receiving treatment is in some way related to the expected outcome under control (Hahn et al., 2020). We will therefore include an estimate of π̂i ,
+obtained using a BART model, in all experiments in this study.
+The parameterization above has a number of important benefits associated with it. First, it allows different amounts of regularization to be applied to the μ and τ parts of the model. It is common to apply greater regularization to τ than to μ because we expect the degree of heterogeneity in
+the treatment effects to be relatively simple in comparison to y itself. This prior belief can be incorporated into the model by encouraging shallower trees in the τ ensemble. The complexity of the τ
+component of the model can be further reduced by using a smaller number of trees to estimate τ
+than for μ. Secondly, if it is known that only a subset of the variables in X are responsible for moderating the effect of Z on y, then it is possible to use a different set of covariates in μ() and τ(). Finally,
+as τ is now an explicit part of the model, it is possible to make direct inference on the treatment effects with BCF, and this provides a more straightforward interpretation of the model.
+With our understanding of BART and BCF now in place, we can turn our attention to the main
+focus of this article: a multivariate extension of BCF which we will see has a number of important
+advantages over the standard univariate model.
+
+434
+
+McJames et al.
+
+3.3 Multivariate Bayesian Causal Forests
+Motivated by data from TIMSS which includes information on student achievement in both mathematics and science, we now extend the BCF algorithm to the multivariate setting. This extension
+allows us to estimate the causal effect of a given intervention on two or more outcomes jointly, and
+thus we are able to improve our predictions by taking advantage of the correlation between, and
+the shared information across all outcome variables. With our new setup, the BCF model specification becomes:
+Y i = μ(xi , π̂i ) + τ(xi )Zi + ϵi ,
+
+K
+􏽙
+
+P(T j ) =
+k=1
+
+α(1 + d(h j,k ))−β
+
+L
+􏽙
+
+[1 − α(1 + d(b j,l ))−β ],
+
+l=1
+
+where d() is a function for returning the depth of an arbitrary node, and α and β are hyperparameters which can be adjusted to place a higher probability on the preferred tree depth. The
+purpose of this prior is to encourage more shallow trees, thus restricting the amount of variance
+any one tree can explain, and helping to avoid overfitting. Note that with this prior, we allow
+all outcome variables to share the same tree structure. This is made appropriate by our motivating
+dataset, as we expect our chosen covariates will predict both outcomes in a similar way. As a result, the algorithm is encouraged to prioritize decision rules that will contribute positively towards
+accurately estimating all components of Y. This helps to avoid over-fitting and acts as a type of
+regularization, improving predictive performance.
+With the structure of the jth tree defined, the decision rules at each node form a pathway directing observations to the leaves of the tree. See Figure 1 for an example. Terminal node parameters
+μ j,k are now assigned to each of the K leaves of the jth tree, responsible for providing a small but
+important contribution to the final prediction made by the model. To safeguard against any individual trees becoming unduly influential in μ(xi ), and to ensure that the scale of the μ parameters is
+sufficient to cover the whole of the observed data, a multivariate normal prior is placed over both μ
+and τ:
+􏼐
+􏼑
+􏼁
+μ j,k ∼ MVN 0, Σμ = σ2μ I , τ j,k ∼ MVN 0, Στ = σ2τ I .
+
+Downloaded from https://academic.oup.com/jrsssa/article/188/2/428/7681717 by guest on 24 April 2026
+
+where Y i is a length p vector representing the ith observation of the p dimensional outcome variable Y, μ(xi ) and τ(xi ) represent the ith predictions from the multivariate prognostic and treatment
+effect functions, ϵi is the ith residual, and Zi is the familiar treatment status indicator: 1 for treatment, 0 for control.
+The MCMC algorithm for fitting this model is based on that of BART, and uses a combination
+of Gibbs sampling and Metropolis–Hastings steps. Specifically, the contribution provided to the
+model by μ(xi ) is based on an ensemble of Jμ multivariate Bayesian Additive Regression Trees.
+Similarly, the contribution provided to the model by τ(xi ) is based on an ensemble of Jτ multivariate BART. The process begins by updating each of the Jμ trees belonging to the μ(xi ) part of the
+model. The structure of the jth such tree is updated at each iteration by choosing at random
+one of four possible operations to propose a new updated tree; grow, prune, change, or swap.
+If grow is selected, then a splitting rule is assigned to a randomly chosen terminal node which
+then becomes the parent of two children. If prune is selected, then a parent of two terminal nodes
+is chosen at random, and its children are removed from the tree. During the change operation, an
+internal node is chosen at random and its splitting rule is replaced with a new randomly chosen
+split rule. Finally, the swap operation selects a parent–child pair which are both internal nodes,
+and swaps their splitting rules with each other.
+To prevent any member of the ensemble from growing too large, a prior P(T j ) is placed on the
+structure of the jth tree. This prior specifies that the probability of any node at depth d being nonterminal is given by α(1 + d)−β . Therefore, for a tree T j with terminal nodes h j,1 . . . h j,K , and nonterminal nodes b j,1 . . . b j,L , we have that:
+
+J R Stat Soc Series A: Statistics in Society, 2025, Vol. 188, No. 2
+
+435
+
+With the columns of Y scaled during data pre-processing to follow a standard normal distribution,
+a sensible choice for the hyper parameter σ2μ is 1/Jμ , which places a high prior probability over the
+range of all observed Y values. Depending on prior beliefs regarding the scale and heterogeneity of
+the treatment effects, a reasonable choice for σ2τ is likely to be smaller. In our experience, however,
+model performance is typically quite insensitive to the choice of prior when it comes from a sensible range of values—see the supplementary material for some experimentation. The combination
+of priors above allows the likelihood used in the Metropolis–Hastings step to be calculated in
+closed form as a multivariate normal distribution summed across terminal nodes. The data enter
+this multivariate normal distribution as partial residuals calculated from the response minus the
+predictions of the other trees that are not being updated.
+When the terminal node parameters for tree T j have all been sampled, a newly selected grow/
+prune/change/swap operation is applied to tree T j+1 and the process is repeated until all Jμ trees
+belonging to the μ(xi ) part of the model have had their terminal node parameters updated. At
+this point, analogous updates are applied to each of the Jτ trees belonging to τ(xi ). At the end of
+each iteration, the combined contribution from all trees is subtracted from Y to calculate the residuals and the residual covariance matrix Σ is updated. The above process repeats for a prespecified number of iterations and the end result is a posterior distribution of trees, terminal nodes,
+and Σ parameters.
+The conjugate prior we have used for the residual covariance matrix is an Inverse-Wishart distribution:
+Σ ∼ W −1 ν, Σ0
+
+􏼁
+
+Our decision to employ the Inverse-Wishart prior in this study was motivated by practical considerations. Specifically, we utilized an RCPP (Eddelbuettel & François, 2011) implementation of the
+Inverse-Wishart distribution, which seamlessly integrated into our existing codebase. However, an
+important alternative in this context is the LKJ prior introduced by Lewandowski et al. (2009).
+The LKJ prior has been demonstrated to offer several advantages over the Inverse-Wishart prior
+in certain scenarios, particularly with regard to its potential to exert less influence on the posterior
+distribution of the covariance matrix—a desirable trait. Despite this, our experimentation and
+testing with the Inverse-Wishart prior did not reveal any serious concerns. Nevertheless, the
+LKJ prior presents an interesting avenue for further exploration.
+For an algorithmic summary of the steps described above the reader is referred to Algorithm 1.
+Additionally, full derivations of the updates for each of the parameters in the model can be found
+in the supplementary material.
+We believe our multivariate extension of Bayesian Causal Forests introduces a number of important advantages over previous approaches. Firstly, by sharing the same tree structure, the predictions made by the model are able to benefit from any correlation between the outcome
+
+Downloaded from https://academic.oup.com/jrsssa/article/188/2/428/7681717 by guest on 24 April 2026
+
+Figure 1. Diagram of a BART model with three decision trees as part of the ensemble. The predictions for an
+observation are given by following the decision rules from the root to the terminal nodes of the trees and summing
+the individual contributions together. For example, for an observation with X1 > c1 , X5 < c3 , X1 < c6 , and X4 < c7 , the
+final prediction would be given by 1.9 + 1.2 + 1.6 = 4.7.
+
+436
+
+McJames et al.
+
+4 Simulation studies
+In this section, we present evidence of the advantages and improved predictive performance of the
+new multivariate BCF approach. We do this via a simulation study in which we have compared the
+performance of our multivariate implementation of BCF with a univariate BCF model, and a univariate BART based approach from Hill (2011). To further investigate the advantages of multivariate modelling in heterogeneous treatment effect estimation we also compare our model with
+the multivariate BART model of Um et al. (2023), using the same approach described by Hill
+(2011). We compare the four different approaches above on three different data generating processes, all based on a modified version of the first Friedman dataset (Friedman, 1991), which is a
+commonly used benchmarking dataset as it provides a complicated non-linear pattern with complex interactions. The data generating processes are as follows:
+Data generating process 1: With this data generating process we aim to test the performance of
+multivariate BCF in a setting that we believe is almost ideally suited to the model. The prognostic
+effect μ and the treatment effect τ use the same variables and follow a very similar functional form.
+We generate 10 covariates X1 to X10 . Variables X1 to X5 are uniformly distributed random variables over the range zero to one. Variables X6 to X8 are random Bernoulli variables with
+P(X = 0) = P(X = 1) = 0.5. Variables X9 and X10 are ordinal categorical variables with equal
+probability of being zero, one, two, three, or four. Our decision to incorporate a mixture of uniform, Bernoulli, and categorical variables here is to match the type of variables our model will encounter in the real life TIMSS data in the next section. The functional form for Y1 and Y2 is given in
+Table 1, where ϵ1,i and ϵ2,i come from a multivariate normal distribution with mean 0, covariance
+matrix 502 I and P(Zi = 1) = x4,i which makes X4 a confounding variable. The coefficients and the
+signal to noise ratio above have also been chosen to ensure the scale of the data and treatment effects approximately matches what we expect in the TIMSS data. In the case of the signal to noise
+ratio, this was chosen by fitting standard univariate BART models to both outcome variables from
+the real TIMSS data, both of which resulted in a residual standard deviation of approximately 50.
+Data generating process 2: We investigate the performance of multivariate BCF when the assumptions of the model have been met for Y2 but not for Y1 . We make a minor modification to
+DGP1 by setting the coefficient of X4 in μ2 to zero, and we remove X4 from the set of covariates
+
+Downloaded from https://academic.oup.com/jrsssa/article/188/2/428/7681717 by guest on 24 April 2026
+
+variables. In this way, we expect to see greater predictive performance as information can be
+shared across predictions for all outcome variables. We might expect this advantage to be especially beneficial in settings where there are few observations because if there is a lack of information
+relating to one of the outcome variables at a specific region of the covariate space, the information
+available for the other outcome variables can help to guide the predictions. Finally, by jointly modelling all outcome variables we can estimate additional model parameters related to the residual
+covariance between different outcomes which may be of interest in certain applications.
+However, it is also important to note that there may also be some disadvantages to multivariate
+approaches. While in the majority of applications we expect the outcome variables of interest to be
+strongly related in some way, this may not always be the case. As a result, if the ideal tree structure
+for estimating one of the outcome variables is quite different to the ideal tree structure of the other
+outcome variables, the model may struggle to find a structure suitable for estimating all outcome
+variables of interest. Though unlikely, it is clear that situations such as this may pose challenges for
+our model which imposes the same tree structure on all outcome variables.
+An additional causal inference specific challenge that may be plausible is the situation that arises
+when the assumptions of the model have been met for one of the outcome variables, but not the
+other. For example, if a set of covariates X1 to XP are sufficient to control for all sources of confounding impacting an outcome Y1 , but there is an additional unobserved covariate XU that introduces confounding in Y2 , then the unconfoundedness assumption of the model has been met for Y1
+but not for Y2 . Clearly, in this situation the treatment effect estimates for Y2 should be biased, but
+perhaps due to the shared dependency of Y1 and Y2 on the same tree structure, some otherwise
+avoidable bias might be introduced into Y1 .
+While we expect situations such as this to be rare, it is important to be aware of these possible
+drawbacks. In the next section, we explore these possibilities and their impact on model performance based on a number of simulation studies.
+
+J R Stat Soc Series A: Statistics in Society, 2025, Vol. 188, No. 2
+
+437
+
+Table 1. Functional form of Y1 and Y2 in data generating process 1
+
+Functional Form of Y1 and Y2 in Data Generating Process 1
+y1,i = (300 + 110 sin (πx1,i x2,i ) + 180(x3,i − 0.5)2 + 100x4,i + 120x6,i + 10x9,i ) + (20x4,i + 20x5,i ) Zi + ϵ1,i
+􏽼������������������������������������������������􏽻􏽺������������������������������������������������􏽽 􏽼�������� 􏽻􏽺�������� 􏽽
+μ1 (xi )
+
+τ1 (xi )
+
+y2,i = (300 + 90 sin (πx1,i x2,i ) + 220(x3,i − 0.5)2 + 140x4,i + 80x6,i + 10x9,i ) + (10x4,i + 30x5,i ) Zi + ϵ2,i
+􏽼����������������������������������������������􏽻􏽺����������������������������������������������􏽽 􏽼�������� 􏽻􏽺�������� 􏽽
+μ2 (xi )
+
+τ2 (xi )
+
+Note. Note that π above refers to the mathematical constant and not the propensity score described earlier.
+
+4.1 Results
+Figure 2 provides a graphical illustration of how the investigated approaches compare when predicting the heterogeneous treatment effects (τ), with a training sample size of 500 and 1,000 observations. The full set of results, including results with a training sample size of 100, 500, and
+1,000 observations can be found in the supplementary material. This figure uses the precision
+in estimating heterogeneous effects (PEHE; equivalent to the root mean squared error in estimat􏽱������������������
+􏽐
+2
+ing τ) to evaluate predictive performance when estimating τi : PEHE = N1 N
+i=1 (τi − τˆi ) .
+A comprehensive overview of our findings can also be found in Table 2. In this table, ‘PEHE on
+τ’ denotes the mean PEHE across 1,000 simulations for each data generating process, while ‘Bias
+on ATE’ signifies the average difference between the true and predicted average treatment effect,
+computed over the 1,000 simulations. The, ‘τ 95% coverage’ represents the average 95% coverage
+rate for estimating the heterogeneous treatment effects, also averaged across the 1,000 simulations, while ‘ATE 95% coverage’ shows what proportion of the ATE estimates from the 1,000 simulations contained the true ATE. Lastly, the ‘τ 95% CI width’ and ‘ATE 95% CI width’ rows show
+the average widths of the 95% credible intervals for the heterogeneous treatment effects and the
+ATE estimates, respectively.
+
+Downloaded from https://academic.oup.com/jrsssa/article/188/2/428/7681717 by guest on 24 April 2026
+
+available to the model. This means that Y2 is not affected by any residual confounding, as X4 has
+no impact on Y2 , but Y1 is affected by unobserved confounding as we hide X4 from the model and
+X4 does have an impact on Y1 . We therefore expect that all models will perform poorly in estimating τ1 but they should not encounter any difficulties in estimating τ2 . We anticipate that this degradation in performance will be isolated to Y1 and that the multivariate BCF estimates for τ2 will
+not be affected in any way.
+Data generating process 3: We investigate if the multivariate BCF model can successfully adapt
+to scenarios that require different tree structures for both of the outcome variables Y1 and Y2 . We
+make the following two changes to DGP1: (i) For μ1 , we replace 110 sin (πx1 x2 ) with
+110 sin (πx4 x5 ). This ensures that Y1 and Y2 experience different interactions, and the tree structure will need to adapt to this. (ii) For τ1 we replace 20x4 + 20x5 with 20x4 + 20x2 , and replace τ2
+with 10x3 + 30x5 . This ensures the tree structure responsible for estimating the treatment effects
+will also need to change. We expect the flexible tree prior P(T j ) to allow the trees to grow slightly
+larger if necessary, and to adapt to the greater flexibility that will be required in this situation.
+In the results that follow, we have generated 3,000 synthetic data sets for each data generating
+process, 1,000 with a training sample size of 1,000 observations, 1,000 with a training sample size
+of 500 observations, and 1,000 with a training sample size of 100 observations. The test set contains 1,000 observations in every case. For multivariate and univariate BCF we have used 50 trees
+in the ensemble for estimating the prognostic effect μ, and 20 trees in the ensemble for estimating
+the treatment effect τ. For the BART and multivariate BART approach, we have used a total of 70
+trees to estimate y. A total of 500 iterations were run for both the pre and post burn-in stages of
+model fitting. In each simulation, we have fitted the multivariate models to both outcome variables
+Y1 and Y2 , and we have fitted the univariate approaches to outcome variables Y1 and Y2 separately. The R package BCF (Hahn et al., 2020) was used for the univariate implementation of BCF and
+the R package bartCause was used for the BART approach (Dorie & Hill, 2020). The R package
+accompanying the paper by Um et al. (2023) was used for the multivariate BART model.
+
+McJames et al.
+
+Y1
+
+Y1
+
+Data Generating Process 1
+
+Data Generating Process 2
+
+Y1
+Data Generating Process 3
+11.4
+
+11.0
+10.8
+10.6
+10.4
+10.2
+10.0
+9.8
+9.6
+9.4
+9.2
+9.0
+8.8
+8.6
+8.4
+8.2
+8.0
+7.8
+7.6
+7.4
+
+37.8
+
+11.2
+
+37.6
+
+11.0
+10.8
+
+37.4
+
+10.6
+
+37.2
+
+10.4
+
+37.0
+
+10.2
+10.0
+
+36.8
+
+9.8
+36.6
+
+9.6
+
+36.4
+
+9.4
+9.2
+
+36.2
+
+9.0
+36.0
+
+8.8
+8.6
+
+35.8
+
+Training
+Sample
+Size
+
+8.4
+Y2
+
+Y2
+
+Data Generating Process 1
+
+Y2
+
+Data Generating Process 2
+
+11.4
+11.2
+11.0
+10.8
+10.6
+10.4
+10.2
+10.0
+9.8
+9.6
+9.4
+9.2
+9.0
+8.8
+8.6
+8.4
+8.2
+8.0
+7.8
+7.6
+7.4
+7.2
+
+10.2
+10.0
+9.8
+9.6
+9.4
+9.2
+9.0
+8.8
+8.6
+8.4
+8.2
+8.0
+7.8
+7.6
+7.4
+
+MVBCF
+
+BCF
+
+BART
+
+MVBART
+
+500
+
+Data Generating Process 3
+11.4
+11.2
+11.0
+10.8
+10.6
+10.4
+10.2
+10.0
+9.8
+9.6
+9.4
+9.2
+9.0
+8.8
+8.6
+8.4
+8.2
+8.0
+7.8
+
+10.4
+
+MVBCF
+
+BCF
+
+BART
+
+MVBART
+
+1000
+
+MVBCF
+
+BCF
+
+BART
+
+MVBART
+
+Estimator
+
+Figure 2. Simulation study results (sample size of 500 and 1,000 only). The central line of each modified candlestick
+plot shows the mean of the 1,000 simulations, while the main body shows a 50% confidence interval, and the full
+width covers a 95% confidence interval. Results with a sample size of 100 are deferred to the supplementary
+material, as the larger scale of the y-axis makes visual comparison slightly harder.
+
+Looking at the PEHE results from DGP1 in Figure 2 which we referred to as the ideal situation,
+multivariate BCF clearly outperforms the other three methods when tasked with accurately predicting heterogeneity in the treatment effect τ. This is evident across both outcome variables,
+and across both training sample sizes. Unsurprisingly, all methods perform better with a training
+sample size of 1,000 observations. Interestingly however, the relative performances of the tested
+approaches are quite consistent across the training sample sizes. We hypothesized that as the training sample size decreases, the benefits of the multivariate BCF approach may become clearer, however from this simulation there is no clear evidence of this, at least with these data set sizes.
+Notably, in DGP1, where the multivariate model is ideally suited, the multivariate BART model
+also performs slightly better than its univariate counterpart. However, even the multivariate
+BART model falls short of matching the performance of the univariate BCF model, highlighting
+the advantages of the Bayesian Causal Forest approach.
+The PEHE, bias, and coverage results from DGP1 in Table 2 tell a very similar story: In addition
+to the high accuracy in estimating heterogeneous treatment effects, multivariate BCF shows minimal bias in estimating the average treatment effect, and the 95% coverage rate is close to ideal.
+Again, this is consistent across both outcome variables. The credible interval widths for the
+ATE are broadly similar across all methods, but the credible interval widths for the heterogeneous
+treatment effects are noticeably narrower for the multivariate BCF model, indicating the multivariate approach can achieve the same excellent coverage but with greater precision.
+In DGP2 which included a confounded outcome Y1 and an unconfounded outcome Y2 , it is clear
+that the presence of the unobserved confounding variable severely biased the treatment effect estimates of all models for Y1 . This is clearly reflected in the bias and PEHE rows of Table 2.
+Similarly, coverage rates are hugely reduced across all four methods tested. A potential concern
+was that given the shared dependency of outcomes Y1 and Y2 on the same tree structure, this reduction in performance may also be observed in Y2 . However, the results for Y2 show that the
+multivariate BCF and multivariate BART approaches were unaffected by this and achieved strong
+
+Downloaded from https://academic.oup.com/jrsssa/article/188/2/428/7681717 by guest on 24 April 2026
+
+Precision in Estimating Heterogeneous Effects (PEHE)
+
+438
+
+22.85±0.12
+
+21.38±0.09
+
+23.03±0.11
+
+ATE 95% CI width
+
+22.80±0.10
+
+38.97±0.18
+
+0.95±0.01
+
+0.95±0.00
+
+−0.15±0.35
+
+9.78±0.15
+
+18.92±0.07
+
+33.14±0.15
+
+0.94±0.01
+
+0.93±0.00
+
+1.02±0.29
+
+9.12±0.12
+
+22.64±0.11
+
+38.62±0.20
+
+0.94±0.02
+
+0.95±0.00
+
+−0.26±0.39
+
+9.40±0.16
+
+Y2
+
+22.97±0.09
+
+45.61±0.20
+
+0.94±0.01
+
+0.97±0.00
+
+−0.44±0.36
+
+9.91±0.15
+
+21.24±0.07
+
+42.51±0.18
+
+0.00±0.00
+
+0.10±0.01
+
+35.19±0.32
+
+36.25±0.32
+
+22.92±0.10
+
+43.59±0.19
+
+0.94±0.02
+
+0.97±0.00
+
+0.14±0.39
+
+9.63±0.16
+
+Y1
+
+BCF
+
+22.78±0.09
+
+42.03±0.17
+
+0.94±0.01
+
+0.96±0.00
+
+0.09±0.36
+
+9.90±0.15
+
+18.79±0.07
+
+36.42±0.15
+
+0.94±0.01
+
+0.94±0.00
+
+1.13±0.29
+
+9.43±0.12
+
+22.63±0.10
+
+42.03±0.18
+
+0.95±0.01
+
+0.96±0.00
+
+−0.17±0.39
+
+9.96±0.16
+
+Y2
+
+23.70±0.10
+
+57.33±0.37
+
+0.95±0.01
+
+0.98±0.00
+
+−0.48±0.37
+
+11.08±0.19
+
+21.72±0.08
+
+56.12±0.36
+
+0.00±0.00
+
+0.27±0.01
+
+35.97±0.33
+
+37.45±0.32
+
+23.68±0.11
+
+55.77±0.39
+
+0.94±0.02
+
+0.98±0.00
+
+−0.06±0.40
+
+10.65±0.20
+
+Y1
+
+BART
+Y2
+
+23.63±0.10
+
+55.71±0.35
+
+0.95±0.01
+
+0.98±0.00
+
+−0.04±0.36
+
+11.10±0.18
+
+19.26±0.07
+
+50.03±0.30
+
+0.94±0.02
+
+0.98±0.00
+
+1.51±0.30
+
+10.29±0.15
+
+23.57±0.10
+
+55.41±0.37
+
+0.95±0.01
+
+0.98±0.00
+
+−0.26±0.40
+
+11.01±0.19
+
+Simulation study results, training sample size = 500
+
+Downloaded from https://academic.oup.com/jrsssa/article/188/2/428/7681717 by guest on 24 April 2026
+
+48.53±0.33
+19.49±0.07
+10.89±0.17
+0.21±0.37
+0.98±0.00
+
+56.07±0.38
+22.01±0.08
+11.00±0.19
+−0.22±0.36
+0.98±0.00
+
+24.21±0.10
+
+0.93±0.02
+
+0.00±0.00
+
+24.64±0.11
+
+0.97±0.00
+
+0.26±0.01
+
+0.95±0.01
+
+1.57±0.30
+
+36.12±0.33
+
+54.58±0.38
+
+10.21±0.15
+
+37.51±0.32
+
+58.48±0.42
+
+23.98±0.12
+
+24.23±0.11
+
+0.95±0.01
+
+0.95±0.01
+
+0.98±0.00
+
+0.98±0.00
+
+53.37±0.41
+
+0.11±0.41
+
+0.15±0.40
+0.95±0.01
+
+10.83±0.19
+
+10.29±0.19
+
+55.18±0.45
+
+Y2
+
+MVBART
+Y1
+
+Note. Best results in bold where a clear winner exists. MVBCF is generally the top performer when predicting τ, achieving minimal bias with excellent coverage.
+
+42.41±0.21
+
+0.94±0.01
+
+ATE 95% coverage
+
+τ 95% CI width
+
+0.96±0.00
+
+−0.54±0.36
+
+Bias on ATE
+
+τ 95% coverage
+
+9.59±0.15
+
+PEHE on τ
+
+DGP3
+
+39.09±0.18
+
+ATE 95% CI width
+
+0.00±0.00
+
+ATE 95% coverage
+
+τ 95% CI width
+
+0.07±0.01
+
+35.09±0.32
+
+Bias on ATE
+
+τ 95% coverage
+
+36.04±0.31
+
+PEHE on τ
+
+DGP2
+
+ATE 95% CI width
+
+0.94±0.02
+
+39.91±0.20
+
+ATE 95% coverage
+
+τ 95% CI width
+
+0.96±0.00
+
+Bias on ATE
+
+τ 95% coverage
+
+9.05±0.16
+
+−0.23±0.39
+
+PEHE on τ
+
+DGP1
+
+Y1
+
+MVBCF
+
+Table 2. Simulation study results for y1 and y2 with a training data size of 500
+
+J R Stat Soc Series A: Statistics in Society, 2025, Vol. 188, No. 2
+439
+
+440
+
+McJames et al.
+
+5 Application to TIMSS 2019
+In this section, we describe the data used from TIMSS 2019 before applying our multivariate BCF
+model to investigate the effect of three different treatments on student achievement in mathematics
+and science.
+
+5.1 Data description and procedure
+TIMSS 2019 is the seventh cycle of TIMSS to have taken place, with a total of 64 countries participating across the fourth and eighth grade components of the study, making TIMSS 2019 one of
+largest installments of the programme to date (Mullis et al., 2020). For the purposes of this study
+however, we will restrict our attention to the eighth grade subset of the data from Ireland. This
+subset of the data provides us with a representative sample of 4,118 eighth grade secondary school
+students; 2,118 male, 1,948 female, and 52 who did not say with an average age of 14.42 years. In
+addition to this, the mathematics and science teachers of these students participated in the study,
+providing us with data on 565 mathematics teachers and 409 science teachers. The students’
+school principals participated too, giving us a total of 149 principal questionnaire observations.
+After merging each student’s data together with that of their mathematics teacher, science teacher, and school principal, the end product is a combined dataset of 4,118 observations, each comprising 50 variables describing various student, teacher, and school characteristics. Important
+student level characteristics include gender, age, attitude towards and motivation for studying
+mathematics and science, as well as how many books are in their home, and the highest level educational qualification received by both parents. Important teacher level characteristics include
+number of years’ teaching experience, area of study during their degree, perceptions of the school’s
+level of emphasis on academic success, and teaching practices within the classroom. From the principal data, we also have access to information such as the number of students in the school, a description of the average socioeconomic background of the students of the school, and a summary
+of how well resourced the school is in general. We will control for these variables as potential confounders as we investigate the three factors described in Section 2. A complete list of all variables
+used can be found in the supplementary material.
+TIMSS 2019 used a stratified two-stage cluster sample design to ensure that the data gathered
+can be used as a nationally representative sample of the population of eighth grade students within
+a country (Martin et al., 2020). As part of this complex survey design, students taking part in the
+study are assigned a sampling weight to indicate how many students in the total population they
+are representative of. These weights were accounted for in our study by appropriately weighting
+the treatment effect estimates of individual students when calculating the average treatment effect
+for the student population.
+
+Downloaded from https://academic.oup.com/jrsssa/article/188/2/428/7681717 by guest on 24 April 2026
+
+performance on the unconfounded outcome Y2 . Multivariate BCF is again the strongest performer
+here in terms of PEHE, and achieves very good bias and coverage.
+Our final data generating process, DGP3 was designed to be more challenging than DGP1 as it
+featured a different tree structure for both outcome variables. Reassuringly, while a very slight reduction in the performance of multivariate BCF is observed, the model maintains much of its impressive performance from DGP1, while also maintaining minimal bias and excellent coverage.
+This is an important finding because it shows that even when the target variables are not ideally
+suited to the multivariate approach, MVBCF still performs at least as well as its competitors in
+this scenario. This may be attributable to the flexible tree prior P(T j ) which allows the trees of
+the model to grow larger when necessary, and to adapt to the greater flexibility that is required
+in such instances.
+To summarize, the results from this section have demonstrated the practical benefits of employing a multivariate BCF approach when estimating the causal effect of an intervention on two correlated outcomes. This is evident from the improved performance in multivariate BCF, which
+outperformed its univariate (and indeed multivariate) competitors when tasked with accurately
+predicting heterogeneous treatment effects. Good coverage and minimal bias was also achieved
+in each setting with the exception of the test involving a confounded outcome. Encouraged by
+the impressive performance of multivariate BCF, we now proceed to apply our model to a real dataset from the world of education in the next section.
+
+J R Stat Soc Series A: Statistics in Society, 2025, Vol. 188, No. 2
+
+441
+
+Y i = μ(xi ) + τ(xi )Zi + αclass,i + ϵi ,
+where αclass is an added multivariate random intercept term for each classroom. We assume that
+each αclass comes from a multivariate normal distribution with a population mean μα and population covariance matrix Σα : αclass ∼ N(μα , Σα ), where the prior on μα and Σα is:
+μα ∼ N(m = 0, s = 0.01I), and Σα ∼ Inv-Wish(a = 1, Ω0 = 0.1I).
+To obtain the results in the following section, three separate multivariate BCF models were applied to the TIMSS data, one for each of the treatments under investigation. For each model, the
+five plausible value chains were run for 3,000 burn-in and 2,000 post burn-in iterations, with every
+second iteration kept to reduce memory costs. A total of 100 BART trees were used for the prognostic component μ(), while a smaller number of 50 BART trees were used for estimating the treatment effects τ(). Satisfactory convergence was assessed via visual inspection of samples from the
+variance covariance matrix Σ, predicted values μ̂ and τ̂ for a random sample of individuals in
+the dataset, and the ATE estimates themselves. For comparison, we have also obtained results using a univariate BART, and univariate BCF approach. The bartCause package used for fitting the
+univariate BART model included functionality for working with hierarchical data, however, this
+feature was not present in the univariate BCF package, so to obtain the univariate BCF results we
+instead applied our multivariate BCF model to each outcome separately in order to make use of the
+random intercept feature available with the model. The multivariate BART model (Um et al.,
+2023) was not employed here as it does not include functionality for working with hierarchical
+data.
+
+5.2 Results
+In the left column of Figure 3, we show density plots of the posterior distributions of the average
+treatment effects for each of the treatments we have investigated. Detailed credible intervals for
+each of these treatments can be found in Table 3 which also provides the control and treatment
+group sizes for each intervention under investigation. For comparison, results from the other
+methods used in the simulation study have also been included. The treatment group size for
+‘Has Study Desk’ is 3,672, indicating that 89% of the students in the sample did report having
+a study desk at home, while the remaining 11% did not. The control and treatment group sizes
+for often being hungry when arriving at school or often being absent have similar interpretations.
+A broader discussion of the wider context of these results can be found in the following section, but
+for now we will focus only on a summary.
+Table 3 summarizes the average treatment effect results obtained from each of the methods applied to the TIMSS data. Reassuringly, the ATE estimates from each of the three methods are very
+similar, displaying a high level of agreement for every treatment under investigation. The credible
+
+Downloaded from https://academic.oup.com/jrsssa/article/188/2/428/7681717 by guest on 24 April 2026
+
+One extra complicating factor that must be addressed when working with data from TIMSS is
+the use of plausible values for student achievement. It is difficult for TIMSS to accurately estimate
+student achievement with only a limited number of mathematics/science questions, and this is further complicated by the fact that not all students answer the same booklet of questions during the
+TIMSS study. Therefore, instead of providing a single achievement estimate of each student, the
+TIMSS study organizers have drawn five plausible values from the posterior distribution of
+each student’s achievement level in order to better represent the underlying uncertainty that is present (Wu, 2005). In line with best practice, these five plausible values which are available in the
+public data were fully accounted for in our study. Five MCMC chains were run for every model,
+each corresponding to one of the five plausible values. These chains were pooled together after
+burn-in to capture the uncertainty in the provided estimates of student achievement.
+Finally, there is a clear hierarchical structure to the TIMSS data as students are nested within
+classrooms. Failure to account for such designs can lead to inaccuracies, and underestimation
+of model uncertainty. The presence of any unobserved classroom level confounding variables
+could have the potential to bias treatment effect estimates. Therefore, the multivariate BCF model
+we have applied to the data has been equipped with an extra random intercept parameter to account for the between classroom variation, and to control for any unobserved classroom level variables:
+
+442
+
+McJames et al.
+
+Has Study Desk ATE
+
+Has Study Desk ICATES
+
+15
+
+15
+
+10
+
+10
+
+5
+
+5
+
+0
+
+0
+
+−5
+
+−5
+
+−10
+
+−10
+−15
+
+Science Average Treatment Effect/Science ICATES
+
+−15
+
+−10
+
+−5
+
+0
+
+5
+
+10
+
+15
+
+−15
+
+−10
+
+−5
+
+0
+
+5
+
+10
+
+15
+
+Density
+
+Often Hungry ATE
+
+1.0
+0.9
+0.8
+0.7
+0.6
+0.5
+0.4
+0.3
+0.2
+0.1
+0.0
+
+Often Hungry ICATES
+
+15
+
+15
+
+10
+
+10
+
+5
+
+5
+
+0
+
+0
+
+−5
+
+−5
+
+−10
+
+−10
+
+−15
+
+Parent Education
+Unknown
+Some Primary,
+Lower Secondary
+or No School
+Lower Secondary
+
+−15
+−15
+
+−10
+
+−5
+
+0
+
+5
+
+10
+
+15
+
+−15
+
+Often Absent ATE
+
+−10
+
+−5
+
+0
+
+5
+
+10
+
+15
+
+10
+
+15
+
+Upper Secondary
+Post−secondary
+but not University
+University or Higher
+
+Often Absent ICATES
+
+15
+
+15
+
+10
+
+10
+
+5
+
+5
+
+0
+
+0
+
+−5
+
+−5
+
+−10
+
+−10
+
+−15
+
+−15
+−15
+
+−10
+
+−5
+
+0
+
+5
+
+10
+
+15
+
+Mathematics Average Treatment Effect
+
+−15
+
+−10
+
+−5
+
+0
+
+5
+
+Mathematics ICATES
+
+Figure 3. Plot of average treatment effects and individual conditional average treatment effects (ICATES). Each
+section in the left column displays a density plot of the sampled posterior distribution of the average treatment
+effects for mathematics (x-axis) and science (y-axis). In the right column, the ICATES are shown coloured by the
+parental education variable to help highlight some of the heterogeneity.
+
+interval widths are also of a very similar size and exhibit a high degree of overlap in each case. This
+agrees with what we saw in the simulation study results, which showed that the clearest improvements in performance related mainly to the estimation of the heterogeneous treatment effects. It is
+worth noting that despite the high level of agreement among all methods compared here, the true
+treatment effects remain an unobserved quantity, so the results from the real TIMSS data cannot
+
+Downloaded from https://academic.oup.com/jrsssa/article/188/2/428/7681717 by guest on 24 April 2026
+
+−15
+
+−3.56 (−11.12, 04.52) [15.64]
+
+−6.05 (−10.75, −0.89) [09.86]
+
+−5.22 (−09.14, −1.44) [07.70]
+
+−5.99 (−10.41, −0.64) [09.77]
+
+−3.92 (−12.07, 05.02) [17.09]
+3.71 (−01.42, 09.01) [10.43]
+
+−5.22 (−08.99, −1.50) [07.49]
+
+−5.73 (−10.35, −0.94) [09.41]
+
+−5.27 (−08.86, −1.56) [07.30]
+
+3,164 (77%)
+
+954 (23%)
+
+Often hungry
+
+4.03 (−1.63, 09.32) [10.95]
+
+−3.39 (−11.13, 05.09) [16.22]
+
+4.61 (−0.50, 10.14) [10.64]
+
+446 (11%)
+
+3,672 (89%)
+
+Has study desk
+
+Downloaded from https://academic.oup.com/jrsssa/article/188/2/428/7681717 by guest on 24 April 2026
+
+Note. 95% credible intervals shown in round brackets. Credible interval widths shown in square brackets.
+
+Science
+
+Mathematics
+
+Standard BART: ATE 95% CI
+
+Science
+
+Mathematics
+
+Standard BCF: ATE 95% CI
+
+Science
+
+Mathematics
+
+Multivariate BCF: ATE 95% CI
+
+Control group size (No)
+
+Treatment group size (Yes)
+
+Control/treatment group sizes:
+
+TIMSS average treatment effect results
+
+Table 3. Application to TIMSS results
+
+−3.36 (−09.60, 2.51) [12.11]
+
+−7.07 (−11.88, −2.06) [09.82]
+
+−3.21 (−08.92, 3.09) [12.01]
+
+−7.02 (−11.65, −2.37) [09.28]
+
+−3.45 (−09.17, 2.95) [12.12]
+
+−7.20 (−11.88, −2.27) [09.61]
+
+3,615 (88%)
+
+503 (12%)
+
+Often absent
+
+J R Stat Soc Series A: Statistics in Society, 2025, Vol. 188, No. 2
+443
+
+444
+
+McJames et al.
+
+Table 4. 10-fold cross-validation results for each method applied to TIMSS
+
+TIMSS 10-fold cross-validation results (RMSE)
+MVBCF
+
+Has study desk
+
+BCF
+
+BART
+
+Mathematics
+
+Science
+
+Mathematics
+
+Science
+
+Mathematics
+
+Science
+
+43.46
+
+52.82
+
+45.10
+
+53.90
+
+43.00
+
+52.27
+
+Often hungry
+
+43.70
+
+53.15
+
+45.12
+
+53.94
+
+43.03
+
+52.08
+
+Often absent
+
+44.27
+
+53.89
+
+45.20
+
+54.00
+
+43.41
+
+52.74
+
+be used to compare the performance of the models—this is a task best suited to the simulation
+study results. As a further comparison, we have included Table 4, which presents the results of
+a 10-fold cross-validation for each of the three methods, assessing their predictive performance
+on student achievement in mathematics and science. Here, the multivariate BCF model displays
+a modest improvement in performance relative to the univariate BCF model. The univariate
+BART model is the best performer here, and this is expected given the primary focus of BART
+on predicting y rather than directly targeting treatment effects. Again, it is important to clarify
+that these results do not necessarily imply strong predictive performance in estimating the treatment effects (τ), as knowing the ground truth of the treatment effects is not possible.
+To assist in the interpretation of the results that follow, consider that student achievement at the
+eighth grade in mathematics in Ireland is approximately normally distributed with mean 524,
+standard deviation 73, and students at the 10th and 90th percentiles scoring approximately 432
+and 614, respectively. Therefore, a treatment effect magnitude of 7.3 would correspond to a 0.1
+standard deviation increase/decrease in student achievement in mathematics. Effect sizes of this
+magnitude are common in educational studies and can be thought of as being ‘medium’ in size
+(Kraft, 2020). Science achievement follows a very similar distribution with mean 523 and standard
+deviation 83.
+Multivariate BCF clearly identifies access to a study desk at home as having a positive impact on
+student achievement in mathematics. The effect of having a desk on student achievement in science
+is less clear however, and the average treatment effect is centred very close to zero. Our results for
+the second treatment under investigation, often being hungry at school, show that this factor is
+associated with a very negative impact on both mathematics and science achievement. The magnitude of the effect identified is almost identical for both mathematics and science achievement.
+Finally, often being absent from school is also identified as having a negative impact on achievement in both mathematics and science. The impact on science achievement however, as was the
+case with having access to a desk, is slightly less clear than for mathematics achievement. The effects in mathematics and science achievement are positively correlated for all three treatments
+under investigation. This agrees with our intuition that the effect any of these three factors may
+have is likely to be similar on achievement in both subjects. We did observe some differences in
+magnitude however, most notably in relation to the ‘Has Study Desk’ treatment.
+Often, the effects of a treatment felt by an individual may be adjusted by one or more moderating variables. Thus in addition to the density plots for the ATE, we have included a scatterplot
+of the individual conditional average treatment effects (ICATES) in the right column of Figure 3,
+coloured by the parental education variable to help highlight some of the underlying heterogeneity. This variable was chosen because it appeared quite frequently in the splitting rules of the τ
+part of the model, indicating the model had identified this variable as a source of heterogeneity
+in the treatment effects. This can be seen visually in Figure 3, as children with parents of a similar
+education level tend to be clustered quite close together, albeit less so in the ‘Has Study Desk’ treatment where there is considerably less heterogeneity and all of the ICATE estimates are concentrated quite closely together.
+Home resources and school resources also appeared quite frequently in the set of splitting rules.
+To investigate the moderating effect of these variables we have created individual conditional expectation (ICE; Goldstein et al., 2015) plots which visualize the dependency of the treatment
+
+Downloaded from https://academic.oup.com/jrsssa/article/188/2/428/7681717 by guest on 24 April 2026
+
+Note. MVBCF performs strongly with marginally better results than the standard univariate BCF model.
+
+Hungry Treatment Effect
+
+J R Stat Soc Series A: Statistics in Society, 2025, Vol. 188, No. 2
+
+445
+
+ICE Plot of Dependency on School Resources
+0
+−3
+
+Subject
+Mathematics
+Science
+
+−6
+−9
+7.5
+
+10.0
+
+12.5
+
+15.0
+
+Absent Treatment Effect
+
+Figure 4. ICE plot of the moderating role of school resources on the ‘Often Hungry’ treatment effect. (Random
+sample of 100 students to avoid overprinting.) A jittered rug has been added to the x-axis to display the distribution of
+the average school resources variable. Students in schools with fewer resources appear to be less negatively
+affected by arriving at school feeling hungry.
+
+ICE Plot of Dependency on Home Educational Resources
+0
+−4
+
+Subject
+Mathematics
+Science
+
+−8
+−12
+6
+
+8
+
+10
+
+12
+
+14
+
+Home Educational Resources
+Figure 5. ICE Plot of the moderating role of home educational resources on the ‘Often Absent’ treatment effect.
+(Random sample of 100 students to avoid overprinting). A jittered rug has been added to the x-axis to display the
+distribution of home resources variable. Students with greater educational resources at home appear to be less
+negatively affected by regular absences. Notice the two clusters of blue lines which correspond to students who
+know and do not know their parent’s education level (see Figure 6).
+
+effects on these covariates. Figure 4 shows the results for the treatment ‘Often Hungry’ which exhibits an interesting trend, as it would appear students in schools with fewer resources tend to experience a less negative treatment effect. Schools in disadvantaged areas with fewer resources are
+more likely to receive access to free school meal programmes in Ireland (Department of Social
+Protection, 2023), so this is possibly an indication that free school meal programmes are successfully mitigating the negative consequences of students often arriving at school feeling hungry.
+Without knowing which schools do in fact participate in free school meal programmes, however,
+we can only speculate on the true moderating role of school resources here. A different pattern is
+observed in Figures 5 and 6 which show that students with more educated parents and more home
+resources are less negatively affected by frequent absences from school. These students may be in a
+better position to ‘catch up’ on missed school work due to the physical and parental resources
+available to them. However, due to the black box like nature of BART and BCF, we must acknowledge that our understanding of the genuine moderating role of home educational resources and
+parental education in the context of frequent school absences remains speculative.
+
+6 Discussion
+Motivated by data from the Trends in International Mathematics and Science Study which includes information on student achievement in both mathematics and science, we have developed
+a multivariate extension of BCF which can be used to estimate the causal effect of an intervention
+
+Downloaded from https://academic.oup.com/jrsssa/article/188/2/428/7681717 by guest on 24 April 2026
+
+School Resources
+
+446
+
+McJames et al.
+
+Absent Treatment Effect
+
+ICE Plot of Dependency on Parent Education
+Mathematics
+0
+
+28%
+
+2%
+
+4%
+
+14%
+
+Science
+20%
+
+32%
+
+28%
+
+2%
+
+4%
+
+14%
+
+20%
+
+32%
+
+−5
+
+−10
+Unknown
+
+Some Primary, Lower Secondary Upper Secondary Post−secondary University or Higher
+Lower Secondary
+but not University
+or No School
+
+Unknown
+
+Some Primary, Lower Secondary Upper Secondary Post−secondary University or Higher
+Lower Secondary
+but not University
+or No School
+
+Figure 6. ICE plot of the moderating role of parent education on the ‘Often Absent’ treatment effect. Students with
+highly educated parents appear to be less negatively affected by regular absences. Percentages indicate proportion
+of students belonging to each category.
+
+on two or more outcome variables simultaneously. The key advantage of our approach is the use
+of the same tree structure for both outcome variables. This enables us to leverage the shared variance across the outcomes, resulting in improved predictive performance, as demonstrated in our
+simulation study.
+The results from our simulation study indicate that the multivariate BCF model is capable of
+estimating causal effects with a greater level of accuracy than the univariate BCF model and
+both BART based approaches. Our model was robust to violations of the model assumptions affecting only one of the outcome variables of interest. In the case where the target variables were not
+well suited to a multivariate approach it was observed that MVBCF performed equally as well as
+the univariate BCF model, showing that there was no reduction in performance below that of a
+univariate model. As well as observing an increase in predictive performance, we noted that our
+multivariate BCF was able to attain satisfactory coverage and minimal bias.
+In our application of the multivariate BCF model to the motivating TIMSS dataset, we found
+that access to a study desk at home is associated with a clear increase in mathematics achievement,
+but with no discernible change in science achievement. Unsurprisingly, often being hungry at
+school was identified as having a very negative impact on achievement in both mathematics and
+science. A similar negative effect was found to be associated with often being absent from school.
+These results agree with findings from previous studies within the field of education which have
+identified the importance of home-related factors for predicting student achievement in mathematics and science (e.g. Tsai & Yang, 2015; Vesić et al., 2021; Vik et al., 2022). Our study therefore
+makes an important contribution by verifying these results within a causal inference framework.
+Our results provide further evidence of the potential for targeted interventions such as free
+school meal programmes to tackle the negative consequences of students frequently lacking a
+healthy breakfast in the morning, or a lunch while they are at school. Notably, 23% of students
+in our dataset reported frequently experiencing hunger when arriving at school, and this hunger
+had a significant impact, reducing student achievement by approximately five units in both mathematics and science. The positive effect of having a study desk (Mathematics ATE = + 4.61) may
+also indicate an opportunity to inform parents about the importance of students having dedicated
+study spaces at home, as 11% of students in the data did not report having access to a study desk.
+Finally, the clear negative impact that was observed from students often being absent
+(Mathematics ATE = − 7.20, Science ATE = − 3.45) may highlight the potential for schools to investigate these absences, and to prepare extra supports for the 12% of students affected by this.
+One limitation of multivariate tree-based models is that they can struggle when the outcome variables of interest are weakly or not at all correlated. In some settings, it may be the case that a very
+different tree structure is appropriate for the outcome variables, and in these situations the requirement that both outcome variables share the same tree structure can be quite restrictive, leading to a
+reduction in overall performance. This is evident from our simulation study, in which a slight reduction in performance was observed in MVBCF when applied to simulated data of this type. We
+note, however, that limitations of this kind are unlikely to apply to our investigation of the TIMSS
+data because there is a strong positive correlation between student achievement in mathematics
+
+Downloaded from https://academic.oup.com/jrsssa/article/188/2/428/7681717 by guest on 24 April 2026
+
+Parent Education
+
+J R Stat Soc Series A: Statistics in Society, 2025, Vol. 188, No. 2
+
+447
+
+Acknowledgments
+The authors would like to thank Professor Michael Elliott, Joint Editor, the Associate Editor, and
+the two anonymous referees for their invaluable comments and suggestions, which have significantly enhanced the quality of our article.
+Conflict of interest: None declared.
+
+Funding
+This work has emanated from research conducted with the financial support of Science
+Foundation Ireland under grant number 18/CRT/6049. In addition Andrew Parnell’s work was
+supported by: a Science Foundation Ireland Career Development Award (17/CDA/4695) and
+SFI Research Centre award (12/RC/2289_P2). The opinions, findings and conclusions or recommendations expressed in this material are those of the author(s) and do not necessarily reflect the
+
+Downloaded from https://academic.oup.com/jrsssa/article/188/2/428/7681717 by guest on 24 April 2026
+
+and science, r ≈ 0.85, and it is likely that variables related to a student’s family’s socioeconomic
+status or school will have a similar effect on achievement in both subjects, thus making a shared
+tree structure very appropriate.
+While not emphasized in the main article, the hierarchical extension of the model adopted in this
+article is likely to hold significant value across many domains. Multilevel datasets are common in
+many settings, and nowhere more so than in the context of education. Accounting for this feature
+is very important, especially in the causal setting, as there are likely to be unobserved classroom or
+school specific confounding variables with the potential to impact the results of any analysis.
+Despite this, the only existing multilevel BCF application we are aware of prior to this study is
+that of Yeager et al. (2019), also applied to a multilevel dataset with different schools.
+Therefore, the development of more advanced BCF models with the capability to account for
+even more complicated hierarchical data structures, perhaps with multiple levels of data would
+be very valuable.
+The measures of mathematics and science achievement used in this study are both continuous
+outcome variables. Often in education research, a question of interest is whether or not students
+have attained a specific level of mastery or ability in a given topic. These levels of mastery may be a
+simple binary outcome (achieved or has not achieved mastery), or may be ordinal (for example
+low, medium, or high level of mastery). Therefore, while some work has been conducted in the
+area of BART/BCF and binary outcomes (Hu et al., 2020; Starling et al., 2021), an extension of
+the work by Murray (2021) to multinomial or ordinal outcomes with BCF also presents a very exciting area for future research. Combining this with the multivariate BCF extension in this study
+would also potentially allow for a mixture of continuous, binary, or other types of outcomes.
+To enhance the flexibility of the multivariate BCF approach, one potential avenue for further
+development is to enhance its flexibility by partitioning the ensemble of BART trees, denoted as
+μ(), into subsets. Specifically, one subset, denoted as M1, could be dedicated to independently predicting the first outcome, while another subset, M2, could focus on predicting the second outcome. Additionally, a third subset M3 could be designed to address all outcome variables
+collectively. This increased adaptability would empower the multivariate BCF method to better
+accommodate distinct tree structures that might be well-suited for handling highly uncorrelated
+outcome variables, by allowing it to benefit from any correlation in the outcome variables through
+M3, while also allowing the model to construct separate tree structures M1 and M2 for both outcomes if necessary. A similar modification could also be applied to the ensemble of trees responsible for predicting τ if there is reason to believe that the treatment effect is likely to have a very
+different impact on both outcomes, and the effect is likely to be moderated by a distinct set of variables for each outcome.
+Finally, although our motivating dataset came from the world of education in this study, it is
+also likely that our multivariate approach would be useful in other fields such as economics or
+medicine. A researcher may be interested for example in the effect of a drug D on both the systolic
+and diastolic blood pressure of patients who have been prescribed it by their doctor. Areas for future research therefore also include the application of multivariate BCF to other disciplines with
+multivariate outcomes of interest.
+
+448
+
+McJames et al.
+
+views of the Science Foundation Ireland. For the purpose of Open Access, the authors have applied
+a CC BY public copyright licence to any Author Accepted Manuscript version arising from this
+submission.
+
+Data availability
+The TIMSS data used in this study is publicly available at https://timss2019.org/internationaldatabase/. Code for replicating the results can be found at https://github.com/Nathan-McJames/
+MVBCF-Paper.
+
+Supplementary material is available online at Journal of the Royal Statistical Society: Series A.
+
+References
+Bennour K. (2021). Multilevel modeling of the effect of bullying on absenteeism and performance in Saudi
+schools. Munich Personal RePEc Archive (pp. 1–15).
+Caron A., Baio G., & Manolopoulou I. (2022a). Estimating individual treatment effects using non-parametric
+regression models: A review. Journal of the Royal Statistical Society Series A: Statistics in Society, 185(3),
+1115–1149. https://doi.org/10.1111/rssa.12824
+Caron A., Baio G., & Manolopoulou I. (2022b). Shrinkage Bayesian causal forests for heterogeneous treatment
+effects estimation. Journal of Computational and Graphical Statistics, 31(4), 1202–1214. https://doi.org/10.
+1080/10618600.2022.2067549
+Chen X. (2022). The effects of individual-and class-level achievement on attitudes towards mathematics: An analysis of Hong Kong students using TIMSS 2019. Studies in Educational Evaluation, 72, 101113. https://doi.
+org/10.1016/j.stueduc.2021.101113
+Chipman H. A., George E. I., & McCulloch R. E. (2010). BART: Bayesian additive regression trees. The Annals of
+Applied Statistics, 4(1), 266–298. https://doi.org/10.1214/09-AOAS285
+Department of Social Protection (2023). School meals scheme. https://www.gov.ie/en/service/29a3ff-schoolmeals-scheme/.
+Dorie V., & Hill J. (2020). Package ‘bartcause’. https://cran.r-project.org/web/packages/bartCause/bartCause.pdf.
+Eddelbuettel D., & François R. (2011). Rcpp: Seamless R and C++ integration. Journal of Statistical Software,
+40(8), 1–18. https://doi.org/10.18637/jss.v040.i08
+Friedman J. H. (1991). Multivariate adaptive regression splines. The Annals of Statistics, 19(1), 1–67. https://doi.
+org/10.1214/aos/1176347963
+Goldstein A., Kapelner A., Bleich J., & Pitkin E. (2015). Peeking inside the black box: Visualizing statistical learning with plots of individual conditional expectation. Journal of Computational and Graphical Statistics,
+24(1), 44–65. https://doi.org/10.1080/10618600.2014.907095
+Guo B., Holscher H. D., Auvil L. S., Welge M. E., Bushell C. B., Novotny J. A., Baer D. J., Burd N. A., Khan N. A.,
+& Zhu R. (2021). Estimating heterogeneous treatment effect on multivariate responses using random forests.
+Statistics in Biosciences, 15, 545–561. https://doi.org/10.1007/s12561-021-09310-w
+Hahn R. P., Murray J. S., & Carvalho C. M. (2020). Bayesian regression tree models for causal inference:
+Regularization, confounding, and heterogeneous effects (with discussion). Bayesian Analysis, 15(3), 965–1056.
+https://doi.org/10.1214/19-BA1195
+Hill J., Linero A., & Murray J. (2020). Bayesian additive regression trees: A review and look forward. Annual
+Review of Statistics and Its Application, 7(1), 251–278. https://doi.org/10.1146/annurev-statistics-031219041110
+Hill J. L. (2011). Bayesian nonparametric modeling for causal inference. Journal of Computational and Graphical
+Statistics, 20(1), 217–240. https://doi.org/10.1198/jcgs.2010.08162
+Hu L., Gu C., Lopez M., Ji J., & Wisnivesky J. (2020). Estimation of causal effects of multiple treatments in
+observational studies with a binary outcome. Statistical Methods in Medical Research, 29(11), 3218–3234.
+https://doi.org/10.1177/0962280220921909
+Kennedy P. (2013). Key themes in social policy. Routledge.
+Kraft M. A. (2020). Interpreting effect sizes of education interventions. Educational Researcher, 49(4), 241–253.
+https://doi.org/10.3102/0013189X20912798
+Kurz C. F. (2022). Augmented inverse probability weighting and the double robustness property. Medical
+Decision Making, 42(2), 156–167. https://doi.org/10.1177/0272989X211027181
+Ladd G. W., Ettekal I., & Kochenderfer-Ladd B. (2017). Peer victimization trajectories from kindergarten
+through high school: Differential pathways for children’s school engagement and achievement? Journal of
+Educational Psychology, 109(6), 826–841. https://doi.org/10.1037/edu0000177
+
+Downloaded from https://academic.oup.com/jrsssa/article/188/2/428/7681717 by guest on 24 April 2026
+
+Supplementary material
+
+J R Stat Soc Series A: Statistics in Society, 2025, Vol. 188, No. 2
+
+449
+
+Downloaded from https://academic.oup.com/jrsssa/article/188/2/428/7681717 by guest on 24 April 2026
+
+Lewandowski D., Kurowicka D., & Joe H. (2009). Generating random correlation matrices based on vines and
+extended onion method. Journal of Multivariate Analysis, 100(9), 1989–2001. https://doi.org/10.1016/j.
+jmva.2009.04.008
+Linero A. R., Sinha D., & Lipsitz S. R. (2020). Semiparametric mixed-scale models using shared Bayesian forests.
+Biometrics, 76(1), 131–144. https://doi.org/10.1111/biom.v76.1
+Martin M. O., von Davier M., & Mullis I. V. (2020). Methods and procedures: TIMSS 2019 technical report.
+International Association for the Evaluation of Educational Achievement.
+McJames N., Parnell A., & O’Shea A. (2023). Factors affecting teacher job satisfaction: A causal inference machine learning approach using data from TALIS 2018. Educational Review, 1–25. https://doi.org/10.1080/
+00131911.2023.2200594
+Mullis I. V., Martin M. O., Foy P., Kelly D. L., & Fishbein B. (2020). TIMSS 2019 international results in mathematics and science. Retrieved from Boston College, TIMSS & PIRLS International Study Center website:
+https://timssandpirls.bc.edu/timss2019/international-results.
+Murray J. S. (2021). Log-linear Bayesian additive regression trees for multinomial logistic and count regression
+models. Journal of the American Statistical Association, 116(534), 756–769. https://doi.org/10.1080/
+01621459.2020.1813587
+Pierdzioch C., Risse M., & Rohloff S. (2016). Are precious metals a hedge against exchange-rate movements? An
+empirical exploration using Bayesian additive regression trees. The North American Journal of Economics
+and Finance, 38, 27–38. https://doi.org/10.1016/j.najef.2016.06.002
+Prado E. B., Moral R. A., & Parnell A. C. (2021). Bayesian additive regression trees with model trees. Statistics
+and Computing, 31(3), 1–13. https://doi.org/10.1007/s11222-021-09997-3
+Robinson P. M. (1988). Root-n-consistent semiparametric regression. Econometrica: Journal of the Econometric
+Society, 56(4), 931–954. https://doi.org/10.2307/1912705
+Rubin D. B. (1974). Estimating causal effects of treatments in randomized and nonrandomized studies. Journal of
+Educational Psychology, 66(5), 688–701. https://doi.org/10.1037/h0037350
+Samartsidis P., Seaman S. R., Montagna S., Charlett A., Hickman M., & Angelis D. D. (2020). A Bayesian multivariate factor analysis model for evaluating an intervention by using observational time series data on multiple
+outcomes. Journal of the Royal Statistical Society: Series A (Statistics in Society), 183(4), 1437–1459. https://
+doi.org/10.1111/rssa.12569
+Sarti D. A., Prado E. B., Inglis A. N., Dos Santos A. A., Hurley C. B., Moral R. A., & Parnell A. C. (2023).
+Bayesian additive regression trees for genotype by environment interaction models. The Annals of Applied
+Statistics, 17(3), 1936–1957. https://doi.org/10.1214/22-AOAS1698
+Sekhon J. (2008). The Neyman–Rubin model of causal inference and estimation via matching methods. In J. M.
+Box-Steffensmeier, H. E. Brady, D. Collier (Eds.), The Oxford handbook of political methodology (pp.
+271–299). Oxford University Press.
+Sparapani R. A., Logan B. R., McCulloch R. E., & Laud P. W. (2016). Nonparametric survival analysis using
+Bayesian additive regression trees (BART). Statistics in Medicine, 35(16), 2741–2753. https://doi.org/10.
+1002/sim.v35.16
+Splawa-Neyman J., Dabrowska D. M., & Speed T. (1990). On the application of probability theory to agricultural experiments. Essay on principles. Section 9. Statistical Science, 5(4), 465–472. https://doi.org/10.1214/
+ss/1177012031
+Starling J. E., Murray J. S., Carvalho C. M., Bukowski R. K., & Scott J. G. (2020). BART with targeted smoothing: An analysis of patient-specific stillbirth risk. The Annals of Applied Statistics, 14(1), 28–50. https://doi.
+org/10.1214/19-AOAS1268
+Starling J. E., Murray J. S., Lohr P. A., Aiken A. R., Carvalho C. M., & Scott J. G. (2021). Targeted smooth
+Bayesian causal forests: An analysis of heterogeneous treatment effects for simultaneous vs. interval medical
+abortion regimens over gestation. The Annals of Applied Statistics, 15(3), 1194–1219. https://doi.org/10.
+1214/20-AOAS1438
+Tang A., Li W., & Liu D. (2022). The impact of teachers’ professional development in science pedagogy on students’ achievement: Evidence from TIMSS 2019. Journal of Baltic Science Education, 21(2), 258–274. https://
+doi.org/10.33225/jbse
+Taras H. (2005). Nutrition and student performance at school. Journal of School Health, 75(6), 199–213. https://
+doi.org/10.1111/josh.2005.75.issue-6
+Tsai L.-T., & Yang C.-C. (2015). Hierarchical effects of school-, classroom-, and student-level factors on the science performance of eighth-grade Taiwanese students. International Journal of Science Education, 37(8),
+1166–1181. https://doi.org/10.1080/09500693.2015.1022625
+Um S., Linero A. R., Sinha D., & Bandyopadhyay D. (2023). Bayesian additive regression trees for multivariate
+skewed responses. Statistics in Medicine, 42(3), 246–263. https://doi.org/10.1002/sim.v42.3
+Vesić D., Džinović V., & Mirkov S. (2021). The role of absenteeism in the prediction of math achievement on the
+basis of self-concept and motivation: TIMSS 2015 in Serbia. Psihologija, 54(1), 15–31. https://doi.org/10.
+2298/PSI190425010V
+
+450
+
+McJames et al.
+
+Vik F. N., Nilsen T., & Øverby N. C. (2022). Aspects of nutritional deficits and cognitive outcomes–triangulation
+across time and subject domains among students and teachers in TIMSS. International Journal of Educational
+Development, 89, 102553. https://doi.org/10.1016/j.ijedudev.2022.102553
+Wu M. (2005). The role of plausible values in large-scale surveys. Studies in Educational Evaluation, 31(2-3),
+114–128. https://doi.org/10.1016/j.stueduc.2005.05.005
+Yeager D. S., Hanselman P., Walton G. M., Murray J. S., Crosnoe R., Muller C., Tipton E., Schneider B.,
+Hulleman C. S., Hinojosa C. P., Paunesku D., Romero C., Flint K., Roberts A., Trott J., Iachan R.,
+Buontempo J., Yang S. M., Carvalho C. M., …Dweck C. S. (2019). A national experiment reveals where a
+growth mindset improves achievement. Nature, 573(7774), 364–369. https://doi.org/10.1038/s41586-0191466-y
+
+Downloaded from https://academic.oup.com/jrsssa/article/188/2/428/7681717 by guest on 24 April 2026
+
+

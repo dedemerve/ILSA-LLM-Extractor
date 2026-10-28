@@ -1,0 +1,696 @@
+International Journal of Testing
+
+ISSN: 1530-5058 (Print) 1532-7574 (Online) Journal homepage: www.tandfonline.com/journals/hijt20
+
+Imputing PIRLS’s home socioeconomic status
+from students’ and schools’ questionnaire data: a
+simulation with MICE
+João Marôco & Matthias von Davier
+To cite this article: João Marôco & Matthias von Davier (2026) Imputing PIRLS’s home
+socioeconomic status from students’ and schools’ questionnaire data: a simulation with MICE,
+International Journal of Testing, 26:1, 38-53, DOI: 10.1080/15305058.2025.2595574
+To link to this article: https://doi.org/10.1080/15305058.2025.2595574
+
+View supplementary material
+
+Published online: 02 Dec 2025.
+
+Submit your article to this journal
+
+Article views: 68
+
+View related articles
+
+View Crossmark data
+
+Full Terms & Conditions of access and use can be found at
+https://www.tandfonline.com/action/journalInformation?journalCode=hijt20
+
+International Journal of Testing
+2026, VOL. 26, NO. 1, 38–53
+https://doi.org/10.1080/15305058.2025.2595574
+
+Imputing PIRLS’s home socioeconomic status from
+students’ and schools’ questionnaire data: a simulation
+with MICE
+João Marôcoa
+
+and Matthias von Davierb
+
+ECEO, Intrepid lab & CETRAD. Universidade Lusófona, Lisbon, Portugal; bTIMSS and PIRLS International
+Study Center, Boston College, Boston, USA
+a
+
+ABSTRACT
+
+International large-scale assessments (ILSAs) like TIMSS, PIRLS, and
+PISA use planned missingness completely at random (MCAR) but suffer from non-response bias with missing data not at random (MNAR),
+especially in home questionnaires where parental omissions may correlate with item content, compromising cross-country comparisons.
+This study evaluated whether PIRLS 2021’s Home Socioeconomic
+Status (HSES) could be reliably imputed using Multivariate Imputation
+by Chained Equations (MICE) based on student and school data. Six
+methods—Predictive Mean Matching (PMM), Weighted PMM, CART,
+Random Forests, Bayesian Linear Regression, and Lasso—were evaluated on 5,500 students with 10–60% simulated missingness.
+Imputation accuracy declined from 36% explained variance (correlation ~0.6) at 10% missingness to 16% (correlation <0.4) at 60% missingness. PMM performed best but exhibited shrinkage, overestimating
+low HSES and underestimating high HSES. Results underscore the
+critical need to address MNAR in ILSAs to ensure equitable and reliable international educational comparisons.
+
+KEYWORDS
+
+Home socioeconomic
+status (HSES); missing not
+at random (MNAR);
+multivariate imputation
+by chained equations
+(MICE); PIRLS; predictive
+mean matching (PMM)
+
+Introduction
+Socioeconomic status (SES) and related constructs, such as home resources for learning,
+have consistently been identified as critical predictors of reading achievement in assessments like PIRLS (Marôco, 2021; Mullis et al., 2017) and PISA (Michael & Kyriakides,
+2023; Schleicher, 2014) in multiple countries. Therefore, accurate SES measures are vital
+for explaining variations in student achievement within countries and enhancing the
+validity and reliability of reading (as well as mathematics and science) achievement
+obtained from complex test designs with planned missingness. Regrettably, low-stakes
+tests and studies, like PIRLS or PISA, often experience missing responses, particularly
+in the supplementary questionnaires probing contextual factors and learning attitudes.
+This missingness can stem from the noncompliance of participating countries or variations in participants’ motivation and willingness to answer questions.
+CONTACT João Marôco
+jpmaroco@gmail.com
+Universidade Lusófona - Centro Universitário de Lisboa Campo
+Grande, 376. 1749-024 Lisboa, Portugal.
+Supplemental data for this article can be accessed online at https://doi.org/10.1080/15305058.2025.2595574.
+© 2025 International Test Commission
+
+International Journal of Testing
+
+39
+
+Prevailing analytical practice tends to downplay the issue of unplanned missing
+data. A review by van Buuren (2012) outlined common approaches to address unplanned
+missing data, ranging from straightforward deletion of observations with missing data
+to multiple imputation methods that can lead to varying degrees of misleading conclusions. Naturally, the most effective way to avoid the effects of missing data is to
+prevent their occurrence altogether (Orchard & Woodbury, 1972). Hence, research
+project coordinators for large-scale, low-stakes assessments should strive to minimize
+unplanned missing responses since no imputation method can guarantee the estimation
+of “true” responses and their derived measures.
+There are various possibilities for dealing with missing data, such as pairwise and
+listwise deletion of cases, or imputation of missing responses. Imputation may use
+mean, median, linear regression, maximum likelihood, and Bayesian methods. Initially
+championed by Donald Rubin, multiple imputation methods have become the standard
+in statistical treatment of missing data (Rubin, 1996). Initially, due to the limitations
+in computational power, the recommended number of imputations was small, with
+typically only five imputations being recommended three to four decades ago. However,
+with the advent of ubiquitous computing power, many authors now recommend and
+use 20 or more imputations (Bodner, 2008; Graham et al., 2007), as smaller numbers
+of imputations lead to larger confidence intervals and lower degrees of freedom (Rubin
+& Schenker, 1986; von Davier, 2025). A common rule of thumb suggests performing
+as many imputations per missing variable as the percentage of missing data across the
+database (e.g. Gorst-Rasmussen, 2021; Royston, 2004) This helps ensure more precise
+and reliable statistical estimates by utilizing today’s readily available increased computing capabilities.
+Common ILSAs such as PIRLS, TIMSS, and PISA rely on simpler approaches such
+as dummy coding, or mean substitution, that do not fully model uncertainty in missing
+data (Avvisati, 2020; Bezirhan, Foy, & von Davier, 2023).
+In this study, we employed Fully Conditional specified models for imputation of
+missing HSES data to assess whether unobserved HSES in PIRLS 2021 could be imputed
+with acceptable reliability and efficiency. There are various methods for conducting
+imputation within conditionally specified models. One specific example is outlined in
+Algorithm 4.3 of van Buuren (2012, P. 120), which is the MICE algorithm introduced
+by Van Buuren and Groothuis-Oudshoorn in 2000 and later refined (van Buuren &
+Groothuis-Oudshoorn, 2011). This algorithm begins by selecting a random set of values
+from the observed data and fills in the missing data one variable at a time, once at
+a time. In the next step, a conditional variable distribution uses all the imputed data
+on the remaining variables. The algorithm then draws values from the empirical condition distribution of the following variable to be imputed. Each cycle goes through
+all variables and constitutes one iteration of the MICE algorithm. The MICE algorithm
+generates multiple imputations by running this algorithm concurrently m times in
+parallel until convergence. The MICE algorithm operates as a Gibbs sampler, which
+is a Bayesian simulation technique that draws samples from conditional distributions
+to construct samples from the overall joint distribution, and, in the case of the MICE
+algorithm, the user only directly controls the conditional distributions, meaning that
+the joint distribution is only indirectly understood and may not necessarily exist. While
+this might raise concerns from a theoretical standpoint, as we lack knowledge of the
+
+40
+
+J. MARÔCO AND M. VON DAVIER
+
+specific joint distribution to which the algorithm converges, in practice, this does not
+appear to impede the algorithm’s usefulness in various applications (van Buuren, 2012).
+Thus, for this study, we defined three research questions (RQ):
+RQ1: Can missing HSES be estimated from complete data records from student and school
+questionnaires?
+RQ2: Can missing HSES be estimated from student and school data with random missing
+patterns?
+RQ3: How efficient is the MICE algorithm found to be the best in RQ1 and RQ2 in reproducing missing data in HSES from the PIRLS 2021 countries and territories that took part
+in the 2021 PIRLS assessment?
+
+These research questions are crucial for advancing methodological rigor in large-scale
+educational assessments. RQ1 explores whether socioeconomic status indicators, which
+are often incomplete, can be reliably recovered from existing information sources,
+addressing a long-standing issue in educational data quality. RQ2 extends this inquiry
+by evaluating the robustness of imputation models under simulated missingness, thereby
+assessing their generalizability to less ideal, real-world datasets. RQ3 evaluates how
+well the best-performing MICE approach transfers across diverse national contexts
+within PIRLS 2021, providing evidence on the external validity and scalability of the
+imputation methods.
+By answering these research questions, our study contributes to both methodological
+and applied domains. It systematically compares multiple advanced MICE-based methods under simulated and empirical conditions, offering guidance for researchers and
+policymakers on how to manage missing socioeconomic data more effectively. In doing
+so, it clarifies the performance tradeoffs and practical usability of different imputation
+techniques, particularly in high-missingness scenarios and datasets with non-normal
+distributions, which are common in international educational surveys.
+
+Methods
+Data and data preparation
+All the data employed in the simulations can be accessed through the TIMSS and
+PIRLS International Study Center at Boston College (available at https://pirls2021.org/
+data/). The Home Socioeconomic Status (HSES) is an IRT-derived scale, generated
+from parents’ responses to four ordinal items, encompassing: 1) the number of books
+at home; 2) the highest educational level attained by either parent; 3) the highest
+occupational level of either parent; and 4) the number of children’s books at home
+(Yin & Reynolds, 2023), which are commonly used variables to define SES (Avvisati,
+2020). In the analysis, Rasch scores for reading achievement and all items from the
+PIRLS Student questionnaire, excluding Gender and Age, were included. In this analysis, we used only Rasch scores rather than PIRLS estimates of reading achievement
+in the form of plausible values (PVs), which are five imputations of the latent reading
+proficiency. PVs cannot be used to impute SES measures, as PVs require context data,
+and their inclusion may lead to circularity that cannot be resolved. Additionally, all
+items from the schools’ questionnaires were incorporated into the imputation process
+
+International Journal of Testing
+
+41
+
+(for a comprehensive description of the student and school questionnaires, refer to
+https://pirls2021.org/questionnaires).
+For the MICE simulations, 141 context items and each student’s Rasch score estimates of reading literacy were used as predictors of HSES. We randomly selected a
+sample of 5,500 students with complete data on all variables from the extensive pool
+of 367,575 students in the PIRLS 2021 database. This sample size was chosen to replicate the recommended sample size for countries participating in International
+Large-Scale Assessments. To answer RQ1, missing data completely at random was
+introduced in the HSES variable, keeping the complete data from student and school
+questionnaires. However, Home, student, and school questionnaires in PIRLS 2021
+exhibited varying degrees of unplanned missing data, and thus, the complete information scenario described in RQ1 is unrealistic. Thus, for RQ2, we seeded missing
+data completely at random on HSES and students and schools’ variables and assessed
+different MICE algorithms in recovering the seeded missing on HSES only. However,
+unlike simulations, the pattern of unplanned missing data in PIRLS 2021 exhibited
+significant variability between and within countries, making it unclear whether it was
+missing completely at random, missing at random, or not missing at random, and
+potentially correlated with parental SES and educational qualifications. For RQ3, we
+leveraged information from students’ sampling weights to borrow missing data patterns
+and simulated missingness for HSES data using the observed patterns of missing and
+observed variables from the student and school questionnaires. RQ3 can be considered
+the case where the pattern of missing responses is modeled after the real PIRLS field
+data and is not necessarily missing completely at random.
+Multivariate imputation by chained equations (MICE)
+In all our simulations, we utilized the MICE 3.0 package (van Buuren &
+Groothuis-Oudshoorn, 2011) and the miceadds package (Robitzsch & Grund, 2023)
+within the R 4.1.2 Statistical System (R Core Team, 2017).
+The MICE multivariate imputation model is defined separately for each variable,
+employing a set of conditional density functions, with one function assigned to each
+incomplete variable. Imputations are generated iteratively, drawing from these conditional density regressions, starting from an initial imputation. Typically, a modest
+number of iterations, such as 5-10 or at maximum 20-40, are sufficient to achieve
+estimation convergence, and following past recommendations (Van Buuren &
+Groothuis-Oudshoorn, 2011), we use only five imputations for the initial comparisons
+of multiple models to obtain estimates of means and variances of imputed values with
+20 iterations (Mera-Gaona et al., 2021; van Buuren, 2012). However, once a successful
+model and imputation method have been found, higher numbers of imputations should
+be considered to limit the effect of small sets of imputations on confidence intervals
+and degrees of freedom.
+The MICE 3.0 package offers various methods for data imputation. The following,
+each producing five imputations, were employed (for a detailed description of these
+algorithms, see van Buuren, 2012): These methods were selected to reflect diverse
+theoretical properties—PMM and weighted PMM preserve distributional shape, CART
+and RF handle non-linearities, and Bayesian and Lasso regression offer stabilization
+
+42
+
+J. MARÔCO AND M. VON DAVIER
+
+through shrinkage for high-dimensional data (Bartlett et al., 2015; Shah et al., 2014;
+Shin et al. 2017).
+1.
+
+2.
+
+3.
+
+4.
+
+5.
+
+Predictive Mean Matching (pmm): This semi-parametric imputation method preserves the observed data distribution more effectively than fully parametric approaches.
+The algorithm first fits a linear regression model on the observed (non-missing) values of the variable to be imputed, using the available predictors. It then calculates
+predicted values for both observed and missing cases. For each missing value, the
+algorithm identifies a small set of observed cases (in our simulations, the five nearest
+neighbors by default) whose predicted values are closest to the missing case. One
+donor is randomly selected from this set, and the corresponding observed value is
+imputed. This method ensures that only plausible values from the observed data are
+used, avoiding unrealistic imputations.
+
+Weighted Predictive Mean Matching (midastouch): This method extends standard
+predictive mean matching by assigning weights to potential donor cases based on
+their similarity to the case with missing data. The closer the predicted value of
+a donor to that of the recipient, the higher its probability of being selected.
+Unlike pmm, which uses a fixed number of nearest neighbors, midastouch considers all observed cases as potential donors, weighted by a kernel function of
+the distance between donor and recipient. This makes it theoretically more efficient and flexible, but computationally more intensive, particularly in large datasets or complex models with many predictors. The algorithm may converge
+slowly in complex problems with large sample sizes, such as those in this study.
+Both PMM and weighted PMM offer robustness to non-normality while maintaining realistic imputed values.
+Classification and Regression Trees (cart): This algorithm uses decision tree algorithms to predict missing values by recursively splitting the data into homogeneous subgroups based on predictor variables. A regression tree is fitted using
+the complete cases. Then, for each case with missing data, the algorithm determines the terminal node (leaf) to which it would be assigned based on its predictor values. An observed value from another case in that same terminal node
+is then randomly drawn and used as the imputation. This non-parametric
+approach captures complex nonlinear relationships and interactions among predictors but can be sensitive to overfitting if not finely tuned.
+Random Forest (rf): This algorithm builds on the idea of CART but uses an
+ensemble of trees to improve stability and predictive accuracy. It fits multiple
+regression trees using bootstrap samples of the complete cases and aggregates
+the predictions (mean for regression) to generate the expected value. For each
+missing value, the algorithm predicts a set of values using these trees and
+identifies donor observations whose predicted values are closest to the missing
+one (like pmm). One of these donors is then randomly selected, and its
+observed value is used to impute the missing value. This approach benefits
+from the robustness and flexibility of random forests, especially when managing high-dimensional or nonlinear data. Both CART and Random Forests can
+model complex, non-linear relationships and interactions (Shah et al., 2014).
+Bayesian Linear Regression (norm): This method assumes a standard linear
+regression model for the imputation but incorporates uncertainty by adopting a
+
+International Journal of Testing
+
+6.
+
+7.
+
+43
+
+Bayesian framework. Specifically, it uses non-informative priors for the regression
+coefficients and error variance. At each iteration, regression parameters are sampled from their posterior distribution, and missing values are then imputed by
+drawing from the posterior predictive distribution. This approach propagates
+model uncertainty into the imputed values, resulting in more valid statistical
+inferences after imputation.
+Lasso Regression (lasso): This algorithm estimates regression parameters using
+the LASSO (Least Absolute Shrinkage and Selection Operator), which applies L1
+regularization to perform variable selection and shrinkage. The model is fitted on
+multiple bootstrap samples of the dataset containing missing values. Each bootstrap yields a set of regression coefficients, treated as draws from the posterior
+distribution. These coefficients are then used with the original (non-bootstrap)
+data to draw imputed values from the corresponding predictive distribution. This
+method is particularly effective in high-dimensional settings where traditional
+regression models may overfit or fail to converge. Both Bayesian Linear Regression
+and Lasso provide parametric imputation approaches, with Lasso offering variable
+shrinkage, useful in high-dimensional data (Bartlett et al., 2015).
+Student Weighted Predictive Mean Matching (stdwpmm): This algorithm, implemented in the miceadds package, is a weighted variant of pmm that integrates
+complex survey design into the imputation process. Each student is weighted
+according to the PIRLS 2021 Senate Weights when simulating the full international dataset (5,500 students), or by their total student weight when imputing at
+the country level. These weights influence both the model-fitting and
+donor-selection stages, ensuring that the imputed data respects the original sampling design and yields unbiased estimates in weighted analyses. This method is
+particularly suited for large-scale educational assessments with complex stratified
+sampling designs. The rationale for choosing stdwpmm is grounded in methodological research highlighting the risks of ignoring survey weights in multiple
+imputation, particularly in stratified or clustered sampling designs common to
+studies like PIRLS and PISA (Foy et al., 2012). Studies have shown that unweighted
+imputations can lead to biased results and underestimated variances, particularly
+when the probability of missingness correlates with design variables (Kim, 2001;
+Madley-Dowd et al. 2019). Therefore, stdwpmm is particularly suited for international educational assessments where preserving the representativeness and inferential validity of imputed data is critical.
+
+Simulations were conducted using the described MICE 3.0 and miceadds algorithms,
+introducing 10% to 60% missing completely at random (MCAR) in the HSES for RQ1,
+for HSES, and students and schools’ variables for RQ2 simulations. For RQ3 with country
+data, we retained the naturally occurring missing data in student and school questionnaires
+and introduced additional MCAR missingness (10% to 60%) in the HSES variable only.
+The selection of variables for MICE imputation was done using the “quickpred”
+function from MICE 3.0. This function selects the predictors for the MICE models
+based on a pairwise threshold correlation of 0.1 between the predictor and the criterion.
+Estimation efficiency, defined as the degree of agreement between the original HSES
+and the imputed HSES generated by the MICE algorithm, was assessed using Pearson
+
+44
+
+J. MARÔCO AND M. VON DAVIER
+
+correlation coefficients across different MCAR percentages on the five imputed data
+sets. High correlations indicate strong agreement and accurate imputation, while low
+or no correlation suggests invalid estimations. This reflects the algorithm’s ability to
+preserve the relationship between observed and imputed data against the maximum
+possible recovery variability in HSES from the available, complete predictor variables.
+
+Results
+Figure 1 illustrates the distribution of Home Socioeconomic Status (HSES) for the sixty-two
+participating countries and territories that utilized the home questionnaire in the PIRLS
+2021 edition. Meanwhile, Figure 2 displays the percentage of missing HSES data for each
+country. Notably, the United States, England, and Australia were excluded from further
+analysis due to their nonparticipation in the home questionnaire for PIRLS 2021. Among
+the countries that employed the home questionnaire, the percentage of missing data
+ranged from 0.5% (Bulgaria) to 67% (Lithuania). The average percentage of missing data
+across these countries was 17% (Median = 9%, Standard Deviation = 18%). A multiple
+unweighted OLS regression using all 141 predictor variables and complete-case data
+yielded an overall correlation of 0.68 with HSES. This indicates that the predictors collectively explained approximately 46% of the variance in HSES, setting the baseline for
+our imputations.
+
+Figure 1. Frequency histograms for the HSES (ASBHES in the PIRLS 2021 dataset). For clarity, only a
+representative sample of 50% of the countries who apply the home questionnaire and preserves
+global representation (Europe, Middle East, Africa, Americas, and Asia) is shown. The full figure is on
+the Online supplemental material.
+
+International Journal of Testing
+
+45
+
+Figure 2. Percentage of HSES missing in each of the countries/territories that participated in PIRLS 2021.
+
+MICE imputation
+A sample of 5500 students was randomly selected from the original dataset, ensuring
+complete cases for Home Socioeconomic Status (HSES) and the students’ and schools’
+questionnaires. This sample was utilized to examine the efficiency of the various MICE
+algorithm imputations with different percentages of missing data randomly seeded.
+Research question 1: HSES imputation from complete student and school data
+Figure 3 shows Pearson’s correlation between the original HSES data and the imputed
+HSES data at different percentages of seeded missing completely at random for HSES only.
+
+46
+
+J. MARÔCO AND M. VON DAVIER
+
+Figure 3. Pearson correlation coefficients between the original HSES and imputed missing HSES
+seeded completely at random for different missing percentages estimated from complete student and
+schools’ data (Mean ± 95CI) (A); and dispersion plots for the pmm method at different missing completely at random percentages (B).
+
+Apart from the cart and rf algorithms, all other tested algorithms were able to recover
+around 35-40% of the missing data variance (Pearson’s r between 0.5 and 0.65) with a
+slight superiority of PMM at the lowest missing percentages.
+Missing values falling within the lower range of HSES (below the mean minus
+standard deviation) were prone to overestimation. In contrast, those in the upper range
+(above the mean plus standard deviation) tended to be underestimated under the PMM
+estimation (similar trends were observed for all other methods, data not presented).
+Imputations around the mean exhibited the highest quality, closely aligning with the
+identity line between the original and imputed HSES (refer to Figure 3(B)).
+Research question 2: HSES imputation from incomplete students and schools data
+Although results for some MICE algorithms were promising for missing HSES completely at random imputed from complete students’ and schools’ item responses plus
+reading literacy Rasch scores, this condition does not reflect the non-planned missingness in the students and schools’ items observed in PIRLS 2021. To mimic this
+condition, we seeded completely at random different missing percentages for both
+HSES and the 141 predictors from the student and school questionnaires. Figure 4
+summarizes the Pearson correlations between original and imputed HSES in the RQ2
+scenario.
+We noticed a slight overall superiority in performance across all MCAR percentages
+for student-weighted pmm from the miceadds package, with norm and lasso following
+closely. It is worth noting that the last two algorithms assume a Gaussian distribution
+for the criterion variable, which was the case for the specific dataset of complete
+observations selected. However, as demonstrated in Figure 1, this assumption does not
+hold for a substantial number of countries. The stdwpmm method from the miceadds
+package, on the other hand, incorporated Senate weights for each country and territory
+
+International Journal of Testing
+
+47
+
+Figure 4. Pearson correlation coefficients between the original HSES and imputed missing HSES
+seeded completely at random for different missing percentages estimated from randomly seeded student and schools’ data (Mean ± 95CI) (A); and dispersion plots for the pmm method at different
+missing completely at random percentages (B).
+
+that were randomly selected to form the complete dataset of 5500 observations. At a
+low percentage of missing data (10%), all methods produced similar correlations
+between original and imputed HSES. The exception was RF where the observed correlations were always significantly lower than all the other methods (see Figure 4(A)).
+At the highest frequency of missing data, under the normal assumption, stdwpmm,
+and the norm methods were the best, followed closely by pmm, on a cluster of
+non-significant differences between methods.
+Research question 3: MICE imputation for countries and territories
+To evaluate the effectiveness of MICE’s pmm and stdwpmm algorithms on actual
+missing data, we applied the algorithm to all individual countries and territories where
+HSES data was available. We introduced MCAR percentages ranging from 10% to 60%,
+but these were applied exclusively to HSES, while the original missing patterns in
+students’ and schools’ item responses were retained. Figure 5 presents a heatmap
+showing the correlations between the original HSES and the imputed values for different MCAR percentages (See the supplemental figure for the heat map of all countries.).
+For the 10% MCAR scenario, imputation efficiency varied among countries. The
+correlation between original and imputed HSES ranged from below 0.2 for countries
+like Egypt and Morocco to 0.7 for Bulgaria, Hong Kong SAR, Albania, and Austria.
+Interestingly, the correlation between observed and imputed HSES did not consistently
+decrease as the MCAR percentage increased, as observed in the case of the complete
+dataset. The efficiency of MICE, as assessed through the correlation between original
+and imputed HSES, tended to be higher for countries with symmetrical distributions
+for HSES and lower percentages of missing data in the students’ and schools’
+questionnaires.
+
+48
+
+J. MARÔCO AND M. VON DAVIER
+
+Figure 5. Heat plots for HSES missing imputations per country/territory using pmm (A) and stdwpmm (B). For clarity, only a representative sample of 50% of the countries who apply the home
+questionnaire and preserves global representation (Europe, Middle East, Africa, Americas, and Asia)
+is shown. The full figure is on the Online supplemental material.
+
+Incorporating student sampling weights (variable “totwgt” in the PIRLS 2021 dataset)
+from the miceadds package enhanced the stability of imputations. The pattern of
+decreasing correlation between observed HSES and imputed HSES with increasing
+percentages of MCAR, observed in the complete dataset simulation, was also present
+in the weighted pmm algorithm applied to the data of countries and territories.
+
+Discussion
+Missing data is a common feature of large educational datasets, especially in international large-scale student assessments. These assessments intentionally include planned
+missingness in their test designs to reduce the testing burden and keep the time on
+task appropriate for the assessed age groups. However, unplanned missing data is also
+prevalent and occurs in varying frequencies within context questionnaires administered
+to students, parents, teachers, and schools. These context variables, such as home
+socioeconomic status, have been proven to be important predictors of students’ achievement, particularly in reading literacy (Jerrim & Micklewright, 2014; Marôco, 2021;
+Michael & Kyriakides, 2023; Mullis et al., 2017; Schleicher, 2014).
+In this research paper, we employed the MICE 3.0 package (van Buuren &
+Groothuis-Oudshoorn, 2011) and the miceadds package (Robitzsch & Grund, 2023)
+within the R 4.1.2 Statistical System (R Core Team, 2022) to generate imputations
+under the Missing Completely at Random (MCAR) mechanism. We applied seven
+different algorithms that are available in these packages. Simulations were conducted
+
+International Journal of Testing
+
+49
+
+on randomly selected samples of 5500 students with complete records for student and
+school questionnaires and their reading literacy Rasch scores. Unlike ILSAs, which
+commonly use simpler dummy coding or mean replacements to treat missing data,
+our use of MICE enables richer, non-parametric modeling of missingness.
+At 10% MCAR percentages, all methods except random forests produced correlations
+between the original and imputed HSES scale scores in the 0.55-0.60 range. Considering
+that the multiple correlation (R) between the HSES and the 141 predictors in the complete dataset was 0.68, (indicating that these predictors explain about 46% of the variance
+in HSES) an observed Pearson correlation of ~0.6 between imputed and true HSES values
+(explaining around 36% of variance) represents a substantial recovery of the underlying
+structure given the uncertainty introduced by imputation. This level of recovery is consistent with what other simulation studies have found to be acceptable or even strong
+under similar MCAR conditions (e.g., Mera-Gaona et al., 2021; Shin et al., 2017). As the
+MCAR percentage increased from 10% to 60%, the original and imputed HSES correlations were stable for the complete students’ and schools’ data (RQ1). However, for the
+scenario with randomly seeded students and schools’ data (RQ2), the correlations decreased
+to around 0.45 for most algorithms as the percentage of seed MCAR data increased to
+60%. The exception was random forests with a 0.32(SE = 0.008) correlation. This trend
+aligns with both theoretical simulations (Little & Rubin, 2002) and empirical findings in
+MICE simulations elsewhere, such as with cancer data (Mera-Gaona et al., 2021), where
+increasing MCAR percentages led to decreased reliability in imputing missing data. Taken
+together, these results show that higher levels of missingness reduce the amount of
+information available, making it more difficult to estimate the missing values accurately.
+Additionally, all algorithms exhibited shrinkage, overestimating missing values at
+lower HSES levels and underestimating them at higher HSES levels compared to the
+observed HSES. Post-imputation calibration methods such as residual adjustment (Slade
+& Naylor, 2020), or hybrid models like Random Forest donor selection (Shah et al.,
+2014), may mitigate these biases.
+We also conducted simulations for MCAR imputations on complete HSES data at
+the country level, using real country student and school questionnaires missingness
+patterns (RQ3). This approach retained the naturally occurring missing data in student
+and school questionnaires, and we, thereafter, introduced additional MCAR missingness
+(10% to 60%) in the HSES variable only, applying the pmm and stdwpmm algorithms
+to recover the missing HSES data. Both algorithms struggled to predict imputed missing
+values accurately for countries with asymmetrical, non-Gaussian-like HSES distributions
+and high missingness in student and school questionnaires, such as Sweden, Morocco,
+or Montenegro. In contrast, imputations displayed higher quality (with correlations
+between 0.6 and 0.7) for countries like the Slovak Republic, Dubai, or Canada’s British
+Columbia, where HSES exhibited a more symmetrical and Gaussian shape with a lower
+percentage of missing data in students and schools’ questionnaires.
+Weighted imputation using students’ sampling weights improved the correlation
+between original and imputed HSES for all countries and participants. The pattern of
+decreasing correlation with an increasing percentage of MCAR observed in the RQ2
+simulations with the complete dataset of 5500 students, was now evident in the stdwpmm method heat map, contrary to what was observed in the pmm method. The
+PIRLS student total weights consider not only the probability of selecting each student
+
+50
+
+J. MARÔCO AND M. VON DAVIER
+
+in the target population but also the students who did not participate in the test. This
+may lead to a statistical association that students with larger weights being those that
+can be expected to produce more complete data and data of higher quality, which is
+reflected in the imputations. Furthermore, the observed range of correlations (from
+<0.2 to ~0.7) reflects both varying levels of initial missingness and the non-normality
+and skewness in the HSES distributions across countries.
+In this study, we show that the MICE framework offers flexibility by accounting
+for different types of variables (ordinal, categorical, continuous), supporting non-linear
+relationships (via CART and random forests), and generating multiple plausible datasets
+that reflect estimation uncertainty (van Buuren & Groothuis-Oudshoorn, 2011). This
+MICE flexibility may improve the missing estimation—either by design or non-planned—
+current strategies used in ILSA.
+
+Conclusions and practical implications
+Missing data is a persistent challenge in large educational datasets, particularly in
+international student assessments. This study highlights that the reliability of imputations declines as the percentage of missing data increases. Most algorithms performed
+adequately for low levels of missingness (up to 10%), but their reliability diminished
+as missingness rose to 60%, with random forests being notably less effective. These
+findings underscore the importance of minimizing data loss in assessments to maintain
+the quality of analyses and ensure meaningful imputations.
+The study also reveals that the distributional characteristics of the data heavily
+influence imputation accuracy. Countries with asymmetrical or non-Gaussian HSES
+distributions, such as Sweden, Morocco, and Montenegro, faced challenges in achieving
+accurate imputations. In contrast, participants with more symmetrical, Gaussian-like
+distributions, such as the Slovak Republic and Dubai, displayed better results. This
+underscores the need for researchers to carefully evaluate the statistical properties of
+their data before selecting and applying imputation methods.
+One important finding is the role of weighted imputations in enhancing the quality
+of imputations. Using students’ total sampling weights improved correlations between
+original and imputed HSES across all countries. This highlights the importance of
+integrating weight-based methods when dealing with uneven distributions or important
+levels of missing data.
+Finally, predictive mean matching emerged as an effective and efficient method for
+inputting missing HSES values, particularly for datasets with low to moderate missingness and symmetrical distributions. However, researchers should prioritize adjustments, such as weighted imputation, when dealing with higher missingness rates or
+asymmetrical data. These findings emphasize the need for careful planning, data
+preparation, and method selection in large-scale assessments to ensure robust, reliable
+insights and minimize biases in subsequent analyses.
+This study contributes to the ILSA literature by systematically comparing several
+advanced MICE-based imputation methods under both simulated and real-world conditions. It highlights the performance tradeoffs and the practical applicability of each
+approach, particularly in contexts with elevated levels of missing data and skewed
+variable distributions. Our simulations suggest that weighted predictive mean matching
+can improve ILSA missing data imputation.
+
+International Journal of Testing
+
+51
+
+Limitations
+This study has several limitations that should be acknowledged. Firstly, while the MICE
+algorithms demonstrated reasonable performance under MCAR conditions, these simulations may not fully capture the complex missing data mechanisms present in PIRLS
+2021, which include Missing at Random (MAR) or Not Missing at Random (NMAR)
+patterns. For instance, missing data may occur more frequently in specific countries,
+schools, or among children with certain family characteristics, such as those from
+low-income families. If non-MCAR mechanisms are plausible, MICE estimates may be
+biased, leading to inaccuracies in imputed values and, consequently, in the correlation
+estimates (Little and Rubin, 2002). This heterogeneity in missing data patterns is evident in Simulation 3, where performance with full-country datasets was poor for several
+countries. Future work will extend simulations to include MAR and MNAR conditions
+using logistic models, as recommended by Collins et al. (2001), to better approximate
+realistic nonresponse mechanisms. Other post-imputation calibration can be used. For
+example, using regression residuals as well as hybrid models combining pmm with
+random forest donor selection (see e.g. Razzak & Heumann, 2019) or pre-processing,
+like z-scores transformation, of target data to address distributional asymmetry and
+outliers (e.g. Zhao et al. 2023) may overcome some of the above-stated limitations.
+Secondly, the imputations were more accurate in countries with symmetrical distributions of Home Socioeconomic Status (HSES) and lower rates of missing data. The
+MICE approach assumes that partially observed variables are multivariate normal, functioning as a Gibbs sampler under these conditions. However, this assumption is not
+guaranteed when multivariate normality is absent (Bartlett et al., 2015; Liu et al., 2014).
+Deviations from multivariate normality may limit the generalizability of the results,
+particularly in contexts with important levels of missingness or skewed distributions.
+Additionally, the study identified systematic biases in imputations, with overestimation at lower HSES levels and underestimation at higher levels. These biases could
+impact the interpretation of SES-related findings. Finally, HSES exhibits variability
+across three levels—within schools, between schools, and between countries. Despite
+including student sampling weights in some scenarios, the variation in performance
+across countries and methods underscores the challenges of achieving robust imputations in diverse international contexts.
+
+Acknowledgments
+JM acknowledges the sponsorship of the sabbatical grant from ISPA-IU and national funds from
+FCT – Fundação para a Ciência e Tecnologia, I.P., in the context of the project UID/04810/2020.
+
+Disclosure statement
+No potential conflict of interest was reported by the author(s).
+
+Ethical approval and informed consent statements
+Not Applicable. Publicly available data
+
+52
+
+J. MARÔCO AND M. VON DAVIER
+
+Data availability statement
+Data is freely available at https://pirls2021.org
+
+ORCID
+João Marôco
+http://orcid.org/0000-0001-9214-5378
+Matthias von Davier
+http://orcid.org/0000-0003-1298-9701
+
+References
+Avvisati, F. (2020). The measure of socio-economic status in PISA: A review and some suggested improvements. Large-Scale Assessments in Education, 8(1), 1–37. https://doi.org/10.1186/s40536-020-00086-x
+Bartlett, J. W., Seaman, S. R., White, I. R., & Carpenter, J. R., Alzheimer’s Disease Neuroimaging
+Initiative* (2015). Multiple imputation of covariates by fully conditional specification:
+Accommodating the substantive model. Statistical Methods in Medical Research, 24(4), 462–487.
+https://doi.org/10.1177/0962280214521348
+Bezirhan, U., Foy, P., & von Davier, M. (2023). PIRLS 2021 achievement scaling methodology: Item
+response theory, population models, and linking across modes. https://doi.org/10.6017/lse.tpisc.
+tr2103.kb3131
+Bodner, T. E. (2008). What improves with increased missing data imputations? Structural Equation
+Modeling: A Multidisciplinary Journal, 15(4), 651–675. https://doi.org/10.1080/10705510802339072
+Collins, L. M., Schafer, J. L., & Kam, C.-M. (2001). A comparison of inclusive and restrictive
+strategies in modern missing data procedures. Psychological Methods, 6(4), 330–351. https://doi.
+org/10.1037/1082-989X.6.4.330
+Foy, P., Galia, J., & Li, I. (2012). Sampling design in TIMSS and PIRLS. In M. O. Martin & I. V.
+S. Mullis (Eds.), Methods, and procedures in TIMSS and PIRLS 2011. (pp. 3–.1–3.21) TIMSS &
+PIRLS International Study Center, Boston College. Retrieved from https://timssandpirls.bc.edu/
+methods/pdf/tp_sampling_design.pdf
+Graham, J. W., Olchowski, A. E., & Gilreath, T. D. (2007). How many imputations are really needed?
+some practical clarifications of multiple imputation theory. Prevention Science: The Official Journal of
+the Society for Prevention Research, 8(3), 206–213. https://doi.org/10.1007/s11121-007-0070-9
+Gorst-Rasmussen, A. (2021). A reproducibility rule for choosing the number of imputations when
+reporting clinical trials. Statistics in Biopharmaceutical Research, 13(4), 455–460. https://doi.org
+/10.1080/19466315.2020.1784781
+Jerrim, J., & Micklewright, J. (2014). Socio-economic gradients in children’s cognitive skills: Are
+cross-country comparisons robust to who reports family background? European Sociological
+Review, 30(6), 766–781. https://doi.org/10.1093/esr/jcu072
+Kim, J.-K. (2001). Variance estimation after imputation. Survey Methodology, 27(1), 75–83. https://
+www150.statcan.gc.ca/n1/en/pub/12-001-x/2001001/article/5856-eng.pdf
+Little, R. J. A., & Rubin, D. B. (2002). Statistical analysis with missing data. Wiley.
+Liu, J., Gelman, A., Hill, J., Su, Y., & Kropko, J. (2014). On the stationary distribution of iterative
+imputations. Biometrika, 101(1), 155–173. https://doi.org/10.1093/biomet/ast044
+Madley-Dowd, P., Hughes, R., Tilling, K., & Heron, J. (2019). The proportion of missing data
+should not be used to guide decisions on multiple imputations. Journal of Clinical Epidemiology,
+110, 63–73. https://doi.org/10.1016/j.jclinepi.2019.02.016
+Marôco, J. (2021). What makes a good reader? Worldwide insights from PIRLS 2016. Reading
+and Writing, 34(1), 231–272. https://doi.org/10.1007/s11145-020-10068-8
+Mera-Gaona, M., Neumann, U., Vargas-Canas, R., & López, D. M. (2021). Evaluating the impact
+of multivariate imputation by MICE in feature selection. PloS One, 16(7), e0254720. https://doi.
+org/10.1371/journal.pone.0254720
+
+International Journal of Testing
+
+53
+
+Michael, D., & Kyriakides, L. (2023). Mediating effects of motivation and socioeconomic status
+on reading achievement: A secondary analysis of PISA 2018. Large-Scale Assessments in
+Education, 11(1), 1–25. https://doi.org/10.1186/s40536-023-00181-9
+Mullis, I. V. S., Martin, M. O., Foy, P., Hooper, M. (2017). What makes a good reader: international
+findings from PIRLS 2016. PIRLS 2016 international results in reading. TIMSS & PIRLS International
+Study Center. http://timssandpirls.bc.edu/pirls2016/international-results/pirls/summary/
+Orchard, T., Woodbury, M. A. (1972). A missing information principle: Theory and applications
+[Paper presentation]. Proceedings of the sixth berkeley symposium on mathematical statistics
+and probability (pp. 697–715). https://doi.org/10.1525/9780520325883-036
+Razzak, H., & Heumann, C. (2019). Hybrid multiple imputations in a large-scale complex survey.
+Statistics in Transition New Series 20 (pp. 33–58). https://doi.org/10.21307/stattrans-2019-033
+R Core Team (2017). R: A language and environment for statistical computing (3.3). R Foundation
+for Statistical Computing. http://www.r-project.org
+R Core Team (2022). R: A language and environment for statistical computing (Version 4.2.1)
+[Computer software]. R Foundation for Statistical Computing. https://www.R-project.org/
+Robitzsch, A., Grund, S. (2023). miceadds: Some Additional Multiple Imputation Functions, especially for “mice.” https://cran.r-project.org/package=miceadds
+Royston, P. (2004). Multiple imputation of missing values. The Stata Journal: Promoting Communications
+on Statistics and Stata, 4(3), 227–241. https://doi.org/10.1177/1536867X0400400301
+Rubin, D. B. (1996). Multiple imputation after 18+ years. Journal of the American Statistical
+Association, 91(434), 473–489. https://doi.org/10.1080/01621459.1996.10476908
+Rubin, D. B., & Schenker, N. (1986). Multiple imputation for interval estimation from simple
+random samples with ignorable nonresponse. Journal of the American Statistical Association,
+81(394), 366–374. https://doi.org/10.2307/2289225
+Shah, A. D., Bartlett, J. W., Carpenter, J., Nicholas, O., & Hemingway, H. (2014). Comparison of
+random forest and parametric imputation models for imputing missing data using MICE: A
+CALIBER study. American Journal of Epidemiology, 179(6), 764–774. https://doi.org/10.1093/
+aje/kwt312
+Shin, T., Davison, M., & Long, J. (2017). Maximum likelihood versus multiple imputation for
+missing data in small longitudinal samples with nonnormality. Psychological Methods, 22(3),
+426–449. https://doi.org/10.1037/met0000094
+Schleicher, A. (2014). Equity, Excellence, and Inclusiveness in Education. OECD. https://doi.
+org/10.1787/9789264214033-en
+Slade, E., & Naylor, M. G. (2020). A fair comparison of tree-based and parametric methods in
+multiple imputations by chained equations. Statistics in Medicine, 39(8), 1156–1166. https://doi.
+org/10.1002/sim.8468
+van Buuren, S. (2012). Flexible imputation of missing data. In Flexible imputation of missing data.
+CRC Press Taylor & Francis Group. https://doi.org/10.1201/b11826
+van Buuren, S., & Groothuis-Oudshoorn, K. (2011). mice: Multivariate imputation by chained
+equations in R. Journal of Statistical Software, 45(3), 1–67. https://doi.org/10.18637/jss.v045.i03
+von Davier, M. (2025). An improved Satterthwaite effective d.f. Approximation. Journal of
+Educational and Behavioral Statistics, 1–21. https://doi.org/10.3102/10769986241309329
+Yin, L., & Reynolds, K. (2023). Creating and interpreting the PIRLS 2021 Context Questionnaire
+Scales. In M. von Davier, I. V. S. Mullis, B. Fishbein, & P. Foy (Eds.), Methods, and procedures:
+PIRLS 2021 technical report. Boston College TIMSS & PIRLS International Study Center.
+https://doi.org/10.6017/lse.tpisc.tr2103.kb6994
+Zhao, H., Sun, K., Dezfouli, A., & Bonilla, E. (2023). Transformed distribution matching for missing
+value imputation [Preprint]. arXiv. https://arxiv.org/abs/2302.10363
+
+

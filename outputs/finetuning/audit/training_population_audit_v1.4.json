@@ -1,0 +1,75 @@
+{
+  "_generated": "2026-10-06",
+  "_purpose": "Priority 1 — Resolve training population discrepancy (169 vs 153 vs 131)",
+
+  "three_counts_provenance": [
+    {
+      "count": 169,
+      "source_files": [
+        "outputs/finetuning/EVALUATION_PROTOCOL_v1.md (§4.5 heading: '169 FORECASTABLE rows ≠ 169 independent training examples')",
+        "Pipeline execution prompt ('169 FORECASTABLE evidence rows')",
+        "outputs/finetuning/PHASE3C_STATUS.md ('169 FORECASTABLE rows ≠ 169 independent training examples (30 paper-level)')"
+      ],
+      "exact_filtering_rule": "NOT a training-only count. The §4.5 section heading refers to train+val FORECASTABLE combined: 153 (train) + 16 (val) = 169. Confirmed by the table immediately below the heading which sums to 198 total across all splits.",
+      "population_represented": "FORECASTABLE rows available for MODEL DEVELOPMENT (train + val), NOT including locked test set. The section's own table shows train=153, val=16, test=29 (total=198). '169' = 153+16, the development-set total.",
+      "additional_note": "Coincidentally also equals gold_verified row count (human_label_status=='gold_verified'=169 in v1.4). This is a coincidence that appears to have caused confusion in the pipeline execution prompt. 169 as gold_verified count is a different concept from 169 as train+val FORECASTABLE.",
+      "verdict": "PROTOCOL_HEADING_AMBIGUITY — the '169' refers to train+val FORECASTABLE (153+16), not training-only FORECASTABLE. The pipeline execution prompt's '169 FORECASTABLE evidence rows in training' is therefore incorrect."
+    },
+    {
+      "count": 153,
+      "source_files": [
+        "outputs/finetuning/EVALUATION_PROTOCOL_v1.md §4.5 table (train FORECASTABLE rows = 153)",
+        "outputs/finetuning/EVALUATION_PROTOCOL_v1.md §7 ('Training examples: FORECASTABLE rows only (153 train rows)')",
+        "outputs/finetuning/evidence_matrix_v1.3.csv column 'construct_status' == 'FORECASTABLE' filtered to training split"
+      ],
+      "exact_filtering_rule": "evidence_matrix_v1.3.csv: construct_status == 'FORECASTABLE' AND study_id in split_manifest_v4.json train_study_ids. This excludes construct_status == 'NOT_FORECASTABLE' rows (34 in train). Includes UNMATCHED_TEACHER_ICT rows that are FORECASTABLE (19 in train).",
+      "population_represented": "Training-split rows where the predictor is judged forecastable from ILSA data (per v1.3 explicit construct_status designation), regardless of whether canonical_construct is UNMATCHED or NOT_FORECASTABLE. 153 = 187 total train - 34 NOT_FORECASTABLE.",
+      "v1.3_verified": true,
+      "verdict": "AUTHORITATIVE_V1.3 — this is the correct training population per the frozen evaluation protocol table and §7."
+    },
+    {
+      "count": 131,
+      "source_files": [
+        "outputs/finetuning/audit/preflight_v1.4_report.json (incorrect filter applied in preflight)"
+      ],
+      "exact_filtering_rule": "gold_standard_full_corpus_v1.4.csv: canonical_construct != 'UNMATCHED' (incorrectly excluded UNMATCHED_TEACHER_ICT rows and did not account for NOT_FORECASTABLE rows with valid construct labels)",
+      "population_represented": "Training rows with canonical_construct not exactly equal to 'UNMATCHED' — misses UNMATCHED_TEACHER_ICT rows (29 in train) and incorrectly includes NOT_FORECASTABLE rows with non-UNMATCHED constructs.",
+      "verdict": "INCORRECT_FILTER — this count is wrong. Preflight report filter was too narrow. Not an authoritative figure."
+    }
+  ],
+
+  "v1.4_adjusted_count": {
+    "value": 152,
+    "explanation": "G0244 was FORECASTABLE (construct=SES_COMPOSITE) in v1.3 but was adjudicated to UNMATCHED in v1.4. Under the same FORECASTABLE logic applied to v1.4, G0244 would be excluded, giving 153 - 1 = 152 training FORECASTABLE rows.",
+    "G0244_details": {
+      "study_id": "1-s2.0-S0272775725001001-main.pdf",
+      "split": "train",
+      "v1.3_construct": "SES_COMPOSITE",
+      "v1.4_construct": "UNMATCHED",
+      "v1.3_construct_status": "FORECASTABLE",
+      "adjudication_rationale": "Predictor is 'assessment cycle' (temporal year variable). Not an OECD/IEA SES composite. No ESCS/HOMEPOS/HISEI/PARED present. UNMATCHED is correct per codebook."
+    },
+    "verdict": "V1.4_DERIVED — the logical consequence of v1.4 adjudication applied consistently is 152 FORECASTABLE training rows."
+  },
+
+  "authoritative_training_population": {
+    "studies": 30,
+    "total_rows": 187,
+    "forecastable_rows_per_v1.3_protocol": 153,
+    "forecastable_rows_per_v1.4_adjudication": 152,
+    "discrepancy": "1 row (G0244: FORECASTABLE in v1.3 → UNMATCHED in v1.4)",
+    "not_forecastable_rows": 34,
+    "determination": "RESOLVABLE_WITH_NOTE",
+    "authoritative_count": 153,
+    "justification": "153 is the frozen protocol figure (EVALUATION_PROTOCOL_v1.md §7). The 1-row difference (G0244) is a documented consequence of the v1.4 adjudication. This does not represent a methodological conflict — it is a derived change from a frozen adjudication decision. The protocol must be read as referencing v1.3 data; v1.4 results in 152 by the same logic. Both figures should be reported. Do not proceed with 169 (incorrect).",
+    "recommendation": "Use 153 as the protocol-stated figure. Report the v1.4-adjusted count as 152 with G0244 exclusion documented. Exclude G0244 from LoRA training as its v1.4 construct is UNMATCHED.",
+    "conflict_status": "NO_CONFLICT_REQUIRING_ADJUDICATION — 169 is train+val FORECASTABLE (protocol heading ambiguity); 153 is v1.3 training FORECASTABLE (authoritative); 152 is v1.4-adjusted training FORECASTABLE (1-row change from documented adjudication)."
+  },
+
+  "source_file_hashes": {
+    "gold_v1.4": "6a57e6731fd0e93d9d8e39dbf9cc1bfeeb73a29b22c96e95e5dcb4a44b62a1f5",
+    "evidence_matrix_v1.3_sha256": "see_file_at_outputs/finetuning/evidence_matrix_v1.3.csv",
+    "split_manifest_v4": "d20e30ed709ed696...",
+    "evaluation_protocol_v1": "214830a18e3aed43..."
+  }
+}

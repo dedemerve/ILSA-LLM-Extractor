@@ -1,0 +1,1324 @@
+DOI: 10.1111/jedm.12420
+Journal of Educational Measurement
+Spring 2026, Vol. 63, No. 1, e12420
+Algorithmic Bias in BERT for Response Accuracy
+Prediction: A Case Study for Investigating Population
+Validity
+Guher Gorgun
+University of Alberta
+Seyma N. Yildirim-Erbasli
+Concordia University of Edmonton
+Pretrained large language models (LLMs) have gained popularity in recent years
+due to their high performance in various educational tasks such as learner mod-
+eling, automated scoring, automatic item generation, and prediction. Nevertheless,
+LLMs are black box approaches where models are less interpretable, and they may
+carry human biases and prejudices because historical human data have been used
+for pretraining these large-scale models. For these reasons, the prediction tasks
+based on LLMs require scrutiny to ensure that the prediction models are fair and
+unbiased. In this study, we used BERT—a pretrained encoder-only LLM for pre-
+dicting response accuracy using action sequences extracted from the 2012 PIAAC
+assessment. We selected three countries (i.e., Finland, Slovakia, and the United
+States) representing different performance levels in the overall PIAAC assessment.
+We found promising results for predicting response accuracy using the ﬁne-tuned
+BERT model. Additionally, we examined algorithmic bias in the prediction models
+trained with different countries. We found differences in model performance, sug-
+gesting that some trained models are not free from bias, and thus the models are
+less generalizable across countries. Our results highlighted the importance of in-
+vestigating algorithmic fairness in prediction models utilizing algorithmic systems
+to ensure models are bias-free.
+In the last decade, machine learning and data mining methods have become pop-
+ular for analyzing assessment data to discover hidden response patterns and provide
+a nuanced understanding of response behavior (e.g., Goldhammer et al., 2017; He
+et al., 2021; Nagy et al., 2022; Ulitzsch et al., 2022). Computer-based assessments
+have facilitated the use of these methods by providing rich information about exam-
+inees (Jiao et al., 2023). With computer-based assessments, supplementary informa-
+tion, in addition to traditionally captured response accuracy, can be obtained about
+examinees. Such supplementary information, typically referred to as process or log
+data, may include response time spent for each item (e.g., Gorgun & Bulut, 2021),
+the number of actions taken by examinees (e.g., Sahin & Colvin, 2020), hint requests
+(e.g., Gorgun & Bulut, 2022b), response changes (e.g., Kroehne & Goldhammer,
+2018), action sequences (e.g., Ulitzsch et al., 2022), keystrokes (e.g., Conijn et al.,
+2019), or eye tracking data (e.g., Orange et al., 2017).
+© 2024 The Author(s). Journal of Educational Measurement published by Wiley Periodicals LLC on
+behalf of National Council on Measurement in Education.
+1 of 25
+This is an open access article under the terms of the CreativeCommonsAttribution-NonCommercial-
+NoDerivs License, which permits use and distribution in any medium, provided the original work is
+properly cited, the use is non-commercial and no modiﬁcations or adaptations are made.
+
+Gorgun and Yildirim-Erbasli
+To date, researchers have leveraged log data to uncover behavioral patterns of ex-
+aminees with correct and incorrect responses (e.g., Plewan et al., 2016), investigate
+problem-solving strategies (e.g., Peji´c & Molcer, 2021), identify disengaged or un-
+motivated examinees (e.g., Yildirim-Erbasli & Bulut, 2021), and detect anomalous
+responses (e.g., Shao et al., 2022). These studies typically employed computer al-
+gorithms for modeling examinee responses. However, algorithmic systems trained
+with historical human data may discriminate against certain groups, leading to un-
+warranted inferences about examinees (Kizilcec & Lee, 2022). For example, this
+may include assigning unrealistically low scores to a certain group (Smith, 2020)
+or not selecting a certain racial group during the admission process due to the re-
+liance on the historical data (Kleinberg et al., 2018). In this study, we ﬁrst propose
+to use a pretrained encoder-only large-language model (LLM), Bidirectional En-
+coder Representations from Transformers (BERT; Devlin et al., 2018), for predict-
+ing response accuracy using action sequences extracted from the 2012 Programme
+for the International Assessment of Adult Competencies (PIAAC) log data. Then,
+we aim to investigate algorithmic bias in ﬁne-tuned BERT for predicting response
+accuracy in countries that performed well (i.e., Finland), average (i.e., Slovakia),
+and worse (i.e., the United States) in the 2012 PIAAC assessment. This allows us
+to examine the population validity of the ﬁne-tuned BERT models across countries
+with different performance levels. Investigating fairness issues in LLMs is of utmost
+importance because LLMs are trained with historical human data and may carry
+human biases and prejudices (e.g., Papakyriakopoulos et al., 2020). Recent studies
+have highlighted that LLMs may hallucinate and generate incorrect information with
+seemingly high conﬁdence (Zhang et al., 2023). Another challenge associated with
+using LLMs for modeling response behavior is the lack of model interpretability due
+to LLMs being black-box models (e.g., Lin et al., 2023). These models are consid-
+ered less interpretable because they were trained with a deep learning-based archi-
+tecture. For these reasons, this study not only proposes to use BERT for response
+accuracy prediction but also investigates the extent of model generalizability (i.e.,
+algorithmic fairness) across countries with different performance levels. The contri-
+butions of this study include understanding the feasibility of using a pretrained LLM,
+BERT, for predicting response accuracy using action sequences and examining the
+extent of algorithmic fairness in LLMs for the model’s generalizability across all
+subpopulations.
+Literature Review
+Process data refers to users’ actions that occurred while interacting with the com-
+puter interface stored as log ﬁles (He et al., 2021; Tang et al., 2020). Given that log
+ﬁles capture each action, sequences of actions, and time spent in each state, process
+data provide rich yet unstructured and high-dimensional information about the exam-
+inee response processes (Tang et al., 2020). Typically, two forms of approaches have
+been followed by the researcher when analyzing the process data: (1) preprocess
+the process data to reduce dimensionality, such as by creating aggregated features
+(e.g., total response time spent on each item or the total number of actions taken;
+Gorgun & Bulut, 2022b; Jiang et al., 2024) or (using a dimension reduction tech-
+2 of 25
+ 17453984, 2026, 1, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/jedm.12420 by Beykent University, Wiley Online Library on [24/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+Algorithmic Bias in BERT for Response Accuracy Prediction
+nique (e.g., Bulut et al., 2024; Tang et al., 2021), or (2) use raw process data as is
+for subsequent analysis (e.g., feature extraction or identifying aberrant responses)
+(e.g., He & von Davier, 2015; Ulitzsch et al., 2022; Xiong et al., 2024). Note that
+which approach to use partially depends on the format of log data ﬁles, and thus
+researchers who intend to collect log ﬁles should also consider the format of log
+ﬁles they need. For instance, in some learning environments (e.g., ASSISTments;
+Heffernan & Lindquist Heffernan, 2014), the response time spent for each action or
+information on action sequences is not available, limiting the use of some methods
+developed.
+In recent years, researchers have focused on linking response processes (i.e., pro-
+cess data) to response products (e.g., response accuracy, not-reached items) (Gold-
+hammer et al., 2017) to disentangle problem-solving strategies and identify aberrant
+test-taking behaviors. It is found that considering process data improves the estima-
+tion of examinee ability levels (He et al., 2019; Liao et al., 2019) and can support
+assumptions made about interactive tasks (Goldhammer et al., 2017).
+To investigate how problem-solving strategies differed for examinees with cor-
+rect and incorrect responses, He and von Davier (2015) examined action sequences
+and found that different performance groups have distinct patterns, yet these pat-
+terns were consistent across countries taking the PIAAC assessment. Similarly, re-
+searchers analyzed the relationship between examinees with different performance
+levels and how their action sequences differ from optimal action sequences identi-
+ﬁed by experts (He et al., 2021). They found that high-performing examinees pro-
+duced action sequences more similar to the expert-deﬁned ones (He et al., 2021).
+Other studies corroborated this ﬁnding and found that those with correct responses
+showed more efﬁcient problem-solving strategies and were more engaged in the
+task (Xiao et al., 2021; Stadler et al., 2019). Whereas those with incorrect re-
+sponses showed deviance in their action sequences compared with those who an-
+swered the task correctly, and their action sequences were more heterogeneous
+(Ulitzsch et al., 2022).
+Furthermore, process data have been used for identifying anomalies or outliers
+in the data and as a data cleaning procedure to enhance the data quality for sub-
+sequent analysis (Aggarwal, 2016; Blázquez-García et al., 2021; Gorgun & Bulut,
+2022a). For instance, Liao and colleagues (2021) identiﬁed examinees with aber-
+rant test-taking behavior by determining common test-taking processes by employ-
+ing the k-means clustering technique and ﬂagging those deviating from the common
+test-taking processes as aberrant. In a similar study, researchers employed unsuper-
+vised anomaly detection methods (e.g., isolation forest, elliptic envelope) to identify
+responses deviating from normal response behavior using the aggregated features
+extracted from the log ﬁles of a learning platform (Gorgun & Bulut, 2022b).
+Despite the increased use of algorithmic systems for identifying aberrances and
+problem-solving strategies of examinees using log ﬁles, studies have not considered
+the algorithmic fairness of models developed for assessing generalizability across
+different populations. Nonetheless, the population validity of algorithmic models is
+fundamental for analyzing examinee responses to ensure that predictive models are
+generalizable across different populations.
+3 of 25
+ 17453984, 2026, 1, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/jedm.12420 by Beykent University, Wiley Online Library on [24/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+Gorgun and Yildirim-Erbasli
+Algorithmic Bias
+The development of algorithms often neglects a crucial aspect: their potential to
+perpetuate biased outcomes, thus conserving historical and societal inequalities. De-
+spite the wealth of accessible data and advanced analytical techniques, there is a
+prevalent misconception that these systems inherently guarantee fairness. However,
+similar to human decision-making, algorithms constructed using individual-collected
+data are susceptible to biases inﬂuenced by prior experiences and personal beliefs
+(Timmons et al., 2023).
+Deﬁnitions of algorithmic bias may differ depending on the context, stakehold-
+ers involved, and goals of the analysis. A common deﬁnition includes the existence
+of discrimination and unfairness in an algorithmic system that results in dispropor-
+tionate outcomes for certain groups or individuals (Hutchinson & Mitchell, 2019;
+Kizilcec & Lee, 2022). An algorithm is fair when discrimination or inequity based
+on group membership is absent. This entails that the algorithm’s decision is indepen-
+dent of group membership. Many prediction models are trained with historical data
+and may carry biases and societal injustices that may be reﬂected while predicting
+outcomes about learners or examinees (Gándara et al., 2023). Especially, when al-
+gorithmic systems are used to make high-stakes decisions about different actors of
+education (e.g., examinees, teachers), researchers and practitioners need to scrutinize
+whether components of the decision-making pipeline are free from bias, discrimina-
+tion, or inequity (Kizilcec & Lee, 2022; von Winckelmann, 2023).
+Assume that an algorithmic system has been used to detect cheating behavior using
+process data. If there is bias in the algorithm toward a certain group of individuals,
+wrong inferences and conclusions could be made about this group. For example, if
+the algorithm suggests that members of a certain group are more likely to cheat, we
+may mistakenly remove the answers of these individuals leading to erroneous perfor-
+mance estimations. Continuing in this vein, Xiang et al. (2022) found differences in
+model performance across subgroups of learners when two machine learning mod-
+els were trained to predict learner success and retention. Recently, students in the
+UK have been assigned ﬁnal grades using an algorithm because students could not
+take the ﬁnal exam due to the COVID-19 pandemic. They found that some students
+received unrealistically lower grades which led to public pressure for re-evaluating
+students’ grades (Smith, 2020). This further highlights the importance of scrutinizing
+the algorithm’s performance for different groups to ensure the validity of inferences
+made.
+Two broad families of algorithmic bias have been adopted in the literature
+(Awasthi et al., 2020): group fairness and individual fairness. Group fairness is of-
+ten operationalized by delineating protected subgroups based on attributes like race,
+gender, ethnicity, or sexual orientation. Metrics such as the false-positive rate, false-
+negative rate, or accuracy are then employed to gauge fairness, aiming for unifor-
+mity in these metrics across all identiﬁed subgroups. In contrast, individual fairness
+demands that the model treats similar individuals similarly, regardless of their char-
+acteristics. This principle emphasizes a more granular approach to fairness within al-
+gorithmic systems. For example, group fairness would involve ensuring that the pre-
+dicted performance outcomes of students from different demographic backgrounds
+4 of 25
+ 17453984, 2026, 1, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/jedm.12420 by Beykent University, Wiley Online Library on [24/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+Algorithmic Bias in BERT for Response Accuracy Prediction
+are similar, indicating a lack of algorithmic bias. Individual fairness, on the other
+hand, would involve ensuring that students with similar predicted learning needs and
+preferences receive comparable recommendations for educational resources, tutor-
+ing, or intervention strategies.
+The focus on fairness in algorithms has elevated in recent years as more ed-
+ucational settings incorporate artiﬁcial intelligence to model learners. Most stud-
+ies analyzed algorithmic bias in prediction models in the presence of class imbal-
+ances. These studies found that using an oversampling technique such as SMOTE or
+ADASYN helped improve algorithmic fairness (Deho et al., 2023; Jiang & Pardos,
+2021; Sha et al., 2022, 2023). Even though oversampling techniques are useful for
+improving model accuracy across different populations, researchers also suggested
+that more marginalized and underrepresented populations (e.g., racial and gender
+groups) should be included in training sets (Baker et al., 2023). In addition to repre-
+sentational issues of minority groups, studies also documented biases in prediction
+models when individuals have different native languages, leading to the underesti-
+mation of examinee performance in assessments or learning environments (Gaskins,
+2022; Loukina et al., 2019).
+Traditionally, studies have examined algorithmic bias in prediction models by
+considering groups based on factors such as gender, age, race, and religion. Yet,
+the list of groups or populations can be expanded to align with the speciﬁc pur-
+pose of the algorithmic system. For instance, additional factors such as school re-
+gion (e.g., urban, suburban, or rural), learner speed (e.g., slow or fast learners),
+cultural variations (e.g., native language or home country), and socioeconomic sta-
+tus (e.g., low-income students) can be considered (Doroudi & Brunskill, 2019; Li
+et al., 2021; Loukina et al., 2019; Ocumpaugh et al., 2014; Sackett et al., 2009).
+In the context of international large-scale assessments, it is important to investi-
+gate algorithmic fairness in modeling student performance across countries. This
+ensures that valid comparisons can be made among countries participating in such
+assessments.
+Current Study
+In this study, we ﬁrst investigate the utility of using an LLM, BERT, for predict-
+ing response accuracy employing action sequences extracted from the log ﬁles of
+Problem-Solving in Technology-Rich Environments (PSTRE). To date, a few studies
+employed BERT for identifying anomalous responses in process data (e.g., Chen &
+Liao, 2022; Guo et al., 2021; Landauer et al., 2023; Shao et al., 2022), yet BERT has
+not been used for predicting response accuracy using action sequences. As empha-
+sized, action sequences provide rich yet unstructured information about the examinee
+behavior. In most cases, it is difﬁcult to directly use the action sequences data due
+to their high dimensionality. For this reason, researchers may use dimension reduc-
+tion techniques (e.g., multidimensional scaling) or may extract useful features (e.g.,
+number of actions, duration of actions) from action sequences to be used in machine
+learning models. A novelty of this study is that using BERT allows to directly use ac-
+tion sequences without the need of using such preprocessing approaches, permitting
+us to keep the rich information as is.
+5 of 25
+ 17453984, 2026, 1, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/jedm.12420 by Beykent University, Wiley Online Library on [24/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+Gorgun and Yildirim-Erbasli
+BERT is a pretrained transformer composed of token embeddings (i.e., capture the
+meaning and context of individual words in a text; Huang et al., 2020), segment em-
+beddings (i.e., differentiate between sentences A and B for next sentence prediction
+loss; Devlin et al., 2018), and position embeddings (i.e., encode absolute positions
+from 1 to a maximum length with each position having a learnable vector; Huang
+et al., 2020). For example, in the sentence “The quick brown fox jumps over the
+lazy dog,” the token embeddings would represent each individual word as numerical
+vectors capturing their semantic meaning and context within the sentence. Regard-
+ing segment embeddings, for example, consider two sentences: “The cat sat on the
+mat” (Sentence A) and “The dog barked loudly” (Sentence B). Segment embeddings
+differentiate between these two sentences and enable BERT to predict the relation-
+ship between them, such as whether Sentence B follows Sentence A logically or not.
+Regarding the position embeddings, consider a 20-token passage where the posi-
+tion embeddings would assign a unique learnable vector to each token based on its
+position from 1 to 20. These position embeddings enable BERT to understand the
+sequential order of tokens and capture the contextual relationships between them,
+regardless of their absolute positions in the input text.
+BERT is an encoder-only model and differs from other decoder-style transformers
+(e.g., GPT-4 or Llama-2) that are capable of generating sentences, answering ques-
+tions, or producing a new output in general. Thus, to re-train BERT for this speciﬁc
+task of response accuracy prediction, we ﬁrst tokenize action sequences and add a
+linear output layer on the top of the BERT model for predicting the response accu-
+racy of examinees taking PSTRE items in PIAAC 2012. This process is also known
+as ﬁne-tuning an LLM.
+Next, we examine the algorithmic bias in ﬁne-tuned BERT models when countries
+with different performance levels have been used as training sets. Speciﬁcally, we
+identify top-, average-, and low-performing countries based on the availability of
+the log data. The top-performing country is Finland, the average-performing country
+is Slovakia, and the low-performing country is the United States. We ﬁne-tune the
+BERT model using the overall sample including all countries, only Finland, only
+Slovakia, and only the United States, and compare the response accuracy across these
+four different models obtained by having different countries as training and test sets.
+Our research questions are as follows.
+Research questions.
+RQ1: To what extent do the ﬁne-tuned BERT models with different populations
+predict response accuracy?
+The aim of this research question is to investigate the utility of a pretrained LLM
+for predicting response accuracy using action sequences directly. We replicate the
+feasibility of ﬁne-tuning BERT across countries with different ability levels for re-
+sponse accuracy prediction in PSTRE items.
+RQ2: Is there a difference in model performance when BERT is ﬁned-tuned with
+different populations?
+6 of 25
+ 17453984, 2026, 1, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/jedm.12420 by Beykent University, Wiley Online Library on [24/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+Algorithmic Bias in BERT for Response Accuracy Prediction
+The purpose of this research question is to investigate the population validity of
+the ﬁne-tuned BERT model for predicting response accuracy using three different
+countries with different overall performance levels. This allows us to investigate the
+extent of algorithmic bias present in the trained models as well as showcase the
+importance of examining bias in predictive models.
+Method
+Data
+Data for this study comes from the log ﬁles extracted from three PSTRE items ad-
+ministered in the 2012 PIAAC. PIAAC is a large-scale international assessment de-
+veloped by the Organisation for Economic Co-operation and Development (OECD)
+to assess the proﬁciency levels of adults in literacy, numeracy, and problem-solving.
+PSTRE items in the 2012 PIAAC target adults’ problem-solving skills and include
+14 items in total (OECD, 2019). We selected three dichotomously scored PSTRE
+items—U03A, U07X, and U16X because (1) log data extracted from PSTRE items
+included action sequences that provided rich information about examinee behavior,
+and (2) we can train a binary classiﬁcation model using BERT. The action sequences
+included human-computer interactions recorded for each PSTRE item, such as open-
+ing a folder, viewing a folder, clicking on a link, or using the help function.
+The log data were not publicly available for all countries that participated in the
+2012 PIAAC cycle. Based on the overall country performance across all domains, we
+identiﬁed three countries with different performance levels1: Based on the availabil-
+ity of log data, the top-performing country was Finland, followed by Slovakia located
+in the middle of the performance distribution, and the worse-performing country was
+the United States. The ﬁrst dichotomously scored item, U03A—CD Tally, selected
+for this study was located in Booklet 1 and included nFinland = 1,482, nSlovakia =
+1,096, and nUnited States = 1,337 participants. The second and third dichotomously
+scored items, U07X—Book Order and U16X—Reply All, selected were located in
+Booklet 2 and included nFinland = 1,445, nSlovakia = 1,160, and nUnited States = 1,340,
+and nFinland = 1,440, nSlovakia = 1,160, and nUnited States = 1,342 participants, respec-
+tively. Across all items included in the study, the distribution of participants from
+Finland, Slovakia, and the United States was balanced. The descriptive statistics,
+including the number of participants, min, max, mean, standard deviation of item
+length, the number of cases with action sequences longer than 512 tokens, and the
+proportion-correct scores across all countries are given in Table 1.
+Data Analysis
+We provided a ﬂowchart presenting the preprocessing and data analysis steps
+adopted in this study (Figure 1). We ﬁrst extracted the log data for the selected coun-
+tries and items using the software program, LogDataAnalyzer available on the PI-
+AAC website. This process created the individual log ﬁles for Finland, Slovakia, and
+the United States. We replaced the underscore separating action descriptions with a
+space to facilitate the tokenization process with BERT—breaking down the text into
+words or subwords based on predeﬁned rules (Devlin et al., 2018). For each exam-
+inee, we created action sequences by separating each action with a hyphen symbol.
+7 of 25
+ 17453984, 2026, 1, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/jedm.12420 by Beykent University, Wiley Online Library on [24/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+Table 1
+Descriptive Statistics of Action Sequences for PSTRE Items U03A, U07X, and U16X across
+Finland, Slovakia, and the United States
+Finland
+Slovakia
+United States
+U03A—CD Tally
+N
+1,482
+1,096
+1,337
+Mean (SD) Seq. Length
+46.02 (41.91)
+34.97 (28.81)
+36.40 (33.61)
+Proportion-correct
+.43
+.51
+.37
+Min Seq. Length
+10
+10
+8
+Max Seq. Length
+387
+292
+371
+Action Seq. > 512
+0
+0
+0
+U07X—Book Order
+N
+1,445
+1,160
+1,340
+Mean (SD) Seq. Length
+55.79 (32.87)
+38.66 (23.60)
+46.44 (39.40)
+Proportion-correct
+.45
+.45
+.47
+Min Seq. Length
+3
+10
+10
+Max Seq. Length
+206
+208
+1,047
+Action Seq. > 512
+0
+0
+1
+U16X—Reply All
+N
+1,440
+1,160
+1,342
+Mean (SD) Seq. Length
+117.83
+(105.62)
+73.91 (68.01)
+105.04
+(103.41)
+Proportion-correct
+.66
+.59
+.53
+Min Seq. Length
+6
+11
+4
+Max Seq. Length
+1,445
+636
+822
+Action Seq. > 512
+11
+3
+13
+Figure 1. The ﬂowchart showing data preprocessing and analysis steps.
+After preprocessing the action sequences, an example action sequence for the item
+U03A is given as:
+START-COMBOBOX-BUTTON-DOACTION-NEXT INQUIRY-NEXT BUTTON-
+CONFIRMATION
+OPENED-BUTTON-DOACTION-BUTTON-CONFIRMATION
+CLOSED-NEXT ITEM-END.
+We also merged response data with log data ﬁles to obtain response accuracy for
+each participant for the selected PSTRE items. As explained, we selected only di-
+chotomously scored items. We recoded missing values (coded as 0 in the dataset),
+and not-reached items (coded as 9 in the dataset) as NA, incorrect responses (coded
+as 7 in the dataset) as 0. The correct responses were coded as 1. For the items se-
+8 of 25
+ 17453984, 2026, 1, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/jedm.12420 by Beykent University, Wiley Online Library on [24/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+Algorithmic Bias in BERT for Response Accuracy Prediction
+lected, we had only three cases with missing outcome variables, and we removed
+those cases from the analysis. Finally, we created a dataset for each PSTRE item,
+including variables Examinee ID, Country ID, action sequences, and response accu-
+racy (i.e., target variable).
+Next, we split the data into training and test sets, and 20% of the data is used as the
+hold-out test set. We also created subsets of training and test sets based on the country
+to train the data with the overall sample (i.e., including all countries), Finland-only,
+Slovakia-only, and the United States-only samples as well as to evaluate the model
+accuracy on the test set using the overall sample, Finland-only, Slovakia-only, and
+the United States-only samples. Following training and test set preparations, we tok-
+enized the action sequences for each item using the BERT base cased model. During
+the tokenization process, we selected a max token length of 512 and padding = True,
+to achieve equal sequence lengths for each action sequence. Thus, examinees with
+action sequences longer than 512 actions were trimmed to a length of 512 tokens, and
+those with action sequences shorter than 512 actions were added [PAD]—a special-
+ized token used to adjust the token length. Concerning Item U03A, none of the action
+sequences were longer than 512 tokens, for Item U07X, only one case in the United
+States sample has action sequences longer than 512 tokens, and for Item U16X, 26
+cases (0.7%) have action sequences longer than 512 tokens (Table 1). Given that no
+or only a very few cases have action sequences longer than 512 tokens, we expect
+that truncation has a minimal inﬂuence on the models developed.
+Based on the tokenization process, we obtained a 768-dimensional embedding
+vector of action sequences. The tokenization process also adds two special tokens:
+CLS at the beginning of each action sequence and SEP at the end of each action
+sequence. We ﬁne-tuned BERT for a downstream task (i.e., classiﬁcation) for pre-
+dicting examinees’ response accuracy using the tokenized action sequences. Specif-
+ically, using the AutoModelForSequenceClassiﬁcation function, we added a linear
+output layer for predicting the response accuracy on the top of the pooled CLS to-
+ken. We used a learning rate of 5e-6 and 3 epochs with a batch size of 8. We repeated
+the same process using the training data including overall data (i.e., including all
+countries), Finland, Slovakia, and the United States for all three items. We then eval-
+uated model performance on the hold-out test sets, including the overall data, only
+Finland, only Slovakia, and only the United States test sets. This yielded 16 models
+per item with a total of 48 models. The preprocessing steps were conducted in R
+(R Core Team, 2022), and the analysis was conducted in Python with NVIDIA T4
+Tensor Core GPU.
+Model evaluation. We evaluated the model performance of all 48 models us-
+ing Accuracy, Precision, Recall, F1, and Absolute Between-ROC Area (ABROCA;
+Gardner et al., 2019). Accuracy is deﬁned as
+Accuracy =
+T P + T N
+T P + T N + FP + FN ,
+(1)
+9 of 25
+ 17453984, 2026, 1, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/jedm.12420 by Beykent University, Wiley Online Library on [24/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+Gorgun and Yildirim-Erbasli
+where TP is true-positive rate, TN is true-negative rate, FP is false-positive rate, and
+FN is false-negative rate. Precision is deﬁned as
+Precision =
+T P
+T P + FP,
+(2)
+recall is deﬁned as
+Recall =
+T P
+T P + FN ,
+(3)
+and F1 is deﬁned as
+F1 = 2 Precision × Recall
+Precision + Recall .
+(4)
+ABROCA is a measure developed for evaluating algorithmic fairness across two
+subgroups by comparing model performance for both groups using a Receiver Op-
+erating Characteristic (ROC) Curve. Simply, ABROCA ﬁnds the difference between
+the areas in AUC by
+ABROCA = AUCb −AUCc,
+(5)
+and thus, it quantiﬁes the difference between a baseline model and a comparison
+group (Gardner et al., 2019).
+Results
+Descriptive Statistics
+The descriptive statistics for the items selected are given in Table 1. All items
+selected had moderate difﬁculty (.36 < proportion-correct < .67), yet the easiest
+item was U16X. Except for item U07X, the other two items were relatively more
+difﬁcult for the United States compared to Finland and Slovakia. Item U07X had the
+same difﬁculty for all countries included in the study, Item U16X was easiest for
+Finland, and Item U03A was easiest for Slovakia.
+Regarding the length of action sequences, for Item U03A, the min sequence
+lengths were similar across Finland, Slovakia, and the United States, whereas the
+average sequence and max sequence lengths were longer for the United States and
+Finland when compared to Slovakia. Regarding Item U07X, the min sequence length
+was the shortest for Finland, and the max sequence length was the longest for the
+United States. Interestingly, although the max sequence length was drastically longer
+for the United States compared to Slovakia and Finland, the average sequence length
+was the longest for Finland. Although sequence lengths were dissimilar across the
+countries, the proportion-correct scores were almost identical. Concerning the ﬁnal
+item, Item U16X, the average and max sequence lengths were longer for Finland
+compared to the other countries, yet the proportion-correct score was also relatively
+higher for Finland. The descriptive statistics suggested that the difﬁculty of the items
+across countries was more or less the same, yet the sequence length for some items
+was dissimilar across the countries selected.
+10 of 25
+ 17453984, 2026, 1, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/jedm.12420 by Beykent University, Wiley Online Library on [24/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+Algorithmic Bias in BERT for Response Accuracy Prediction
+Model Performance across Different Training and Test Sets
+We evaluated the model performance when different training and test sets were
+used by accuracy, precision, recall, and F1 measures. Tables 2–4 provide results
+of model performance when trained with Finland-only, Slovakia-only, the United
+States-only, and overall data using all countries in the dataset.
+Item U03A. The performance of models trained with Finland, Slovakia, and the
+United States, and the overall data were similar for predicting Finland or Slovakia-
+only test sets (Table 2). However, we observed different model performances for pre-
+dicting the United States and overall test sets. Speciﬁcally, the precision was signiﬁ-
+cantly low when Slovakia was used for predicting response accuracy for the United
+States test set, yet recall was signiﬁcantly higher for the same training-test set pair.
+Additionally, precision and accuracy were relatively low when Finland was used as
+the training set to predict response accuracy in the overall test set. Overall, for Item
+U03A, the models trained were performed similarly across different test sets used.
+Item U07X. For Item U07X, we did not have similar results to Item U03A, and
+we observed differences in model performance when different training and test sets
+were used (Table 3). For predicting response accuracy in the Finland test set, we
+found that Finland, the United States, and the overall data performed relatively sim-
+ilar (Precision was between .75 and .78, Recall was between .80 and .87, and Ac-
+curacy was between .82 and .84); however, when Slovakia was used as the training
+set, precision (Precision = .62) and accuracy (Accuracy = .75) dropped while recall
+increased (Recall = .93) signiﬁcantly. For predicting response accuracy in Slovakia
+only test set, we observed that Finland performed the worst (Precision = .86, Re-
+call = .26, F1 = .42, and Accuracy = .64) compared to other models trained with
+Slovakia, the United States, and overall data. The same trend was observed for the
+United States and the overall test sets where Finland was used as the training set.
+Speciﬁcally, the recall values were lower when Finland was used for training the
+model. Overall, there were more differences among the models trained, and speciﬁ-
+cally the model trained with the Finland only training set performed worse for pre-
+dicting other test sets except for Finland.
+Item U16X. An interesting pattern emerged for Item U16X (Table 4). For all test
+sets, the model trained with the overall dataset including all countries performed
+better than using a single country as the training set. Speciﬁcally, the accuracy of
+the overall dataset for predicting response accuracy in Finland, Slovakia, the United
+States, and overall data was .91, .93, .86, and .86, respectively, whereas the accuracy
+ranged between .73 and .83 when Finland, Slovakia, or the United States was used as
+a training set. Therefore, using the overall dataset was better for predicting response
+accuracy in Item U16X, suggesting that researchers may beneﬁt from using the total
+datasets when training prediction models for different countries. Yet, we need to
+underscore that this is not a uniform observation, highlighting the importance of the
+trial-error process in data-driven approaches.
+11 of 25
+ 17453984, 2026, 1, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/jedm.12420 by Beykent University, Wiley Online Library on [24/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+Table 2
+Model Performance for Predicting Response Accuracy of Item U03a When Different Training Data Used
+Test Data
+Training Data
+Finland
+Slovakia
+United States
+Overall
+P
+R
+F1
+Acc
+P
+R
+F1
+Acc
+P
+R
+F1
+Acc
+P
+R
+F1
+Acc
+Finland
+.79
+.90
+.84
+.86
+.77
+.96
+.86
+.86
+.78
+.95
+.86
+.87
+.78
+.93
+.85
+.86
+Slovakia
+.81
+.58
+.67
+.67
+.82
+.90
+.86
+.83
+.85
+.88
+.86
+.84
+.83
+.89
+.86
+.83
+United States
+.71
+.80
+.75
+.82
+.64
+.93
+.76
+.79
+.70
+.91
+.79
+.83
+.70
+.91
+.79
+.83
+Overall
+.77
+.76
+.77
+.79
+.74
+.93
+.83
+.83
+.78
+.91
+.84
+.85
+.77
+.91
+.84
+.84
+P: Precision, R: Recall, F1: F1-measure, Acc: Accuracy
+12 of 25
+ 17453984, 2026, 1, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/jedm.12420 by Beykent University, Wiley Online Library on [24/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+Table 3
+Model Performance for Predicting Response Accuracy of Item U07x When Different Training Data Used
+Test Data
+Training Data
+Finland
+Slovakia
+United States
+Overall
+P
+R
+F1
+Acc
+P
+R
+F1
+Acc
+P
+R
+F1
+Acc
+P
+R
+F1
+Acc
+Finland
+.79
+.80
+.80
+.83
+.62
+.93
+.75
+.73
+.75
+.87
+.80
+.82
+.78
+.86
+.82
+.84
+Slovakia
+.86
+.26
+.42
+.64
+.75
+.79
+.77
+.78
+.84
+.63
+.72
+.77
+.84
+.61
+.70
+.76
+United States
+.86
+.62
+.72
+.76
+.79
+.94
+.86
+.85
+.74
+.99
+.85
+.81
+.85
+.79
+.82
+.83
+Overall
+.83
+.58
+.68
+.75
+.71
+.89
+.79
+.79
+.81
+.78
+.80
+.82
+.86
+.99
+.92
+.90
+P: Precision, R: Recall, F1: F1-measure, Acc: Accuracy
+13 of 25
+ 17453984, 2026, 1, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/jedm.12420 by Beykent University, Wiley Online Library on [24/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+Table 4
+Model Performance for Predicting Response Accuracy of Item U16x When Different Training Data Used
+Test Data
+Training Data
+Finland
+Slovakia
+United States
+Overall
+P
+R
+F1
+Acc
+P
+R
+F1
+Acc
+P
+R
+F1
+Acc
+P
+R
+F1
+Acc
+Finland
+.82
+.96
+.88
+.83
+.80
+.99
+.89
+.82
+.82
+.97
+.89
+.83
+.89
+.99
+.94
+.91
+Slovakia
+.78
+.78
+.78
+.73
+.78
+.99
+.87
+.82
+.78
+.84
+.81
+.75
+.90
+.99
+.95
+.93
+United States
+.73
+.94
+.83
+.79
+.74
+.99
+.85
+.82
+.74
+.99
+.85
+.81
+.80
+.99
+.88
+.86
+Overall
+.78
+.90
+.84
+.78
+.78
+.99
+.87
+.82
+.78
+.94
+.85
+.80
+.86
+.99
+.92
+.86
+P: Precision, R: Recall, F1: F1-measure, Acc: Accuracy
+14 of 25
+ 17453984, 2026, 1, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/jedm.12420 by Beykent University, Wiley Online Library on [24/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+Figure 2. ABROCA plots for Item U03A.
+Figure 3. ABROCA plots for Item U07X.
+Algorithmic Bias in Fine-Tuned BERT Models
+The ﬁne-tuned BERT model was algorithmically fair for predicting response ac-
+curacy in Item U03A using Slovakia, the United States, and overall data as training
+sets except for Finland (Figure 2). When Finland was used as the training set, we
+observed that prediction accuracy was signiﬁcantly different for predicting Slovakia
+compared to the Finland model, suggesting that using the Finland-only training set
+is associated with differential accuracy, leading to a biased model for predicting re-
+sponse accuracy in Slovakia.
+Concerning Item U07X, we also observed a similar trend, that, the Finland-only
+training set is biased against predicting response accuracy in Slovakia, associated
+with lower prediction accuracy (Figure 3). We observed more biases in Item U07X
+when different countries were used for training the BERT models; speciﬁcally, there
+were small biases for predicting Finland and Slovakia when the model was ﬁne-
+tuned with Slovakia, and relatively larger biases for Slovakia when the United States
+15 of 25
+ 17453984, 2026, 1, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/jedm.12420 by Beykent University, Wiley Online Library on [24/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+Figure 4. ABROCA plots for Item U16X.
+or overall data were used as training sets. These ﬁndings suggest that Item U07X
+was more susceptible to algorithmic bias than Item U03A.
+Finally, for Item U16X, the observed differences between the AUC were relatively
+smaller than Items U03A and U07X, where the largest differences were observed for
+predicting Slovakia when the Finland-only and United States-only training sets were
+used (Figure 4). Especially, the overall training set seems almost bias-free for pre-
+dicting response accuracy for different test sets, a ﬁnding consistent with the model
+performance observed in Table 4.
+Discussion
+In recent years, an increased number of research studies have leveraged LLMs
+to develop prediction models for learner modeling, automated scoring, automated
+item generation, and prediction (e.g., Attali et al., 2022; Beseiso & Alzahrani, 2020;
+Chen & Liao, 2022). Yet, a major pitfall of LLMs is that they are trained with his-
+torical human data using a deep learning architecture (Yan et al., 2023) and may
+carry human biases and prejudices. Historical human data and less interpretability
+inherent in LLMs may lead to unfair and discriminatory prediction models against
+certain population groups. Our purpose was twofold in this study: We examined the
+utility of BERT for predicting response accuracy using action sequences without the
+need for preprocessing the log data extracted and algorithmic bias in the ﬁne-tuned
+BERT models for response accuracy prediction when different countries were used
+as training data.
+Our results indicated that pretrained LLMs could be re-trained for predicting re-
+sponse accuracy using action sequences directly, especially when the overall data
+including all countries (i.e., Finland, Slovakia, and the United States) were used.
+This ﬁnding is consistent with previous research investigating the associations be-
+tween action sequences and response accuracy (e.g., He et al., 2021; Ulitzsch et al.,
+2022). We also illustrated that action sequences modeled with pretrained LLMs pro-
+vide very accurate predictions regarding response accuracy. These models can be
+16 of 25
+ 17453984, 2026, 1, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/jedm.12420 by Beykent University, Wiley Online Library on [24/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+Algorithmic Bias in BERT for Response Accuracy Prediction
+used in intelligent tutoring systems or digital assessments with interactive problem-
+solving items to nudge learners regarding whether their action sequences are feasible
+for correctly answering an item or to provide feedback and tutoring services during
+the assessment (Heffernan & Heffernan, 2014). Thus, using action sequences as early
+warning models for identifying the failure or misconception of learners could be an
+extension of this type of modeling approach. Furthermore, these models linking re-
+sponse accuracy to action sequences can provide another strand of validity evidence
+(e.g., Zumbo & Hubley, 2017). We expect that examinees who know the content well
+deliberately select their actions leading to the correct response in a shorter amount
+of time (Ulitzsch et al., 2022). Therefore, we had a promising result for the utility
+of BERT for response accuracy prediction using only action sequences. Note that
+action sequences are unstructured and high-dimensional data. Because processing
+action sequences directly (e.g., without using dimension reduction techniques) re-
+quires higher computational power and might be difﬁcult to directly use in prediction
+models, previous research has typically extracted aggregated features (e.g., number
+of action sequences, total response time; Gorgun & Bulut, 2022b) or used dimension
+reduction techniques (e.g., multidimensional scaling; Tang et al., 2020). Nonetheless,
+our proposed approach provided a feasible method to directly use action sequences
+in prediction models. This result also provides evidence for using pretrained LLMs
+for prediction tasks that do not necessarily involve language-related prediction (e.g.,
+essay scoring vs. response accuracy).
+In the second fold of the study, we investigated the presence of algorithmic bias
+in the ﬁne-tuned BERT models when different training data were used. Speciﬁcally,
+we investigated the population validity (i.e., group fairness; Awasthi et al., 2020) of
+BERT-based prediction models when different training sets were used. We found
+differential results regarding the existence of bias in the ﬁne-tuned models. For ex-
+ample, for the ﬁrst item, U07X, models performed very similarly regardless of the
+training or test data used. However, this ﬁnding did not hold for Item U16X when
+different training and test data were used. This underscores that each item and sub-
+population should be scrutinized separately in order to fully capture the extent of
+algorithmic bias occurring in a given assessment. Furthermore, we also found that
+the accuracy of the models was highest when the overall sample where all countries
+included was used for training the prediction models. This is consistent with previous
+studies emphasizing the importance of sample size and better representation of sub-
+groups in the training data to enhance model performance and minimize the bias in
+the prediction model (e.g., Baker & Hawn, 2022; Deho et al., 2023; Kizilcec & Lee,
+2022). Achieving higher accuracy when the overall sample was used could be due
+to having almost a balanced distribution of countries, where class imbalances were
+minimized (e.g., Deho et al., 2023; Sha et al., 2022). Yet, in studies incorporating
+class imbalances among the subgroups of interest, researchers may use techniques
+such as random oversampling, SMOTE, or ADASYN to achieve a balanced class
+distribution to better represent all subgroups, especially when a high-stakes decision
+is to be made about these subgroups. Furthermore, the lower performance of predic-
+tion models when individual countries are used could be due to reduced sample size
+(Zhang et al., 2020).
+17 of 25
+ 17453984, 2026, 1, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/jedm.12420 by Beykent University, Wiley Online Library on [24/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+Gorgun and Yildirim-Erbasli
+The ﬁndings from this study can offer actionable insights with practical impli-
+cations for educational stakeholders. Our exploration of algorithmic bias across
+different training sets sheds light on the challenges and opportunities in ensur-
+ing fairness in predictive modeling. The observed small accuracy differences be-
+tween countries highlight the potential for minimizing bias through careful training
+data selection and model ﬁne-tuning. In practice, our ﬁndings suggest that training
+prediction models using data from all countries can lead to improved model per-
+formance and reduced bias. This reiterates the importance of inclusivity and repre-
+sentativeness in training datasets, especially in international educational assessments
+like PIAAC. It is important to underscore that we focused on group fairness as we
+compared the prediction accuracy of the ﬁne-tuned BERT model across different
+countries participating in the PIAAC assessment. This could be a viable method
+when the goal is to make inferences about groups rather than individuals (i.e., pop-
+ulation validity of an algorithmic system). This approach needs to be further reﬁned
+when the goal is to assess the fairness of an algorithmic system across individuals.
+To this end, researchers or practitioners may consider individual-level features (e.g.„
+overall ability, gender, race) to test whether the language models are fair across indi-
+viduals with similar traits. For instance, an algorithmic system is considered fair at
+the individual level when individuals at the same ability levels are predicted with
+similar model accuracy, regardless of their race or gender. Such characteristics are
+less relevant when the focus is at the group or population level, where an algo-
+rithm is fair if the prediction accuracy is similar across the groups. Therefore, re-
+searchers and practitioners should carefully delineate the target of the inference in
+order to ensure that an algorithmic system is fair. Additionally, our study emphasizes
+the importance of investigating algorithmic bias as one strand of validity evidence
+when algorithmic models are used for making conclusions about populations or
+individuals.
+Furthermore, our results highlighted the need for a careful data curation process
+for accurately representing subgroups and being careful regarding the extent of pre-
+dictive model utility when diverse subgroups are included in the decision-making
+process. While modeling action sequences with language models seems a feasible
+approach for response accuracy prediction, the utility of such models should be repli-
+cated across different subgroups. As researchers use action sequences in predictive
+models, it is worthwhile to investigate when an action sequence becomes informative
+regarding the response accuracy (i.e., after how many actions taken by the examinee)
+to develop effective and preventive intervention models.
+Limitations and Future Directions
+Our study has some limitations. First, we used only three countries and only three
+PSTRE items to investigate the utility of using BERT for response accuracy predic-
+tion and the presence of algorithmic bias in the trained prediction models. Future
+research may beneﬁt from including other countries as well as other PSTRE items to
+examine the algorithmic bias in the prediction models developed. Another limitation
+of the study is that the maximum number of tokens for the BERT base model is 512
+and action sequences of those longer than 512 actions were truncated. This might
+18 of 25
+ 17453984, 2026, 1, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/jedm.12420 by Beykent University, Wiley Online Library on [24/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+Algorithmic Bias in BERT for Response Accuracy Prediction
+have been associated with improper representation of these examinees and might
+have led to bias in the models trained. We also did not analyze the inﬂuence of dif-
+ferent hyperparameters when tokenizing and ﬁne-tuning BERT such as trying differ-
+ent numbers of maximum tokens, learning rate, batch size, or epoch. Future research
+may investigate the inﬂuence of hyperparameters on model accuracy and algorithmic
+bias. Additionally, because BERT is an encoder-only model, we added a linear clas-
+siﬁcation layer to make predictions about the response accuracy, which is also known
+as ﬁne-tuning BERT. While this allowed us to use action sequences directly, future
+research may compare the performance of ﬁne-tuned BERT with machine learning
+classiﬁers such as random forest, decision tree, or logistic regression by extracting
+embeddings from the action sequences. It is also noteworthy to state that there were
+differences in the length of action sequences between countries included in this study.
+While this could be due to various reasons, such as achievement level differences,
+educational systems, or curriculum differences, future research may beneﬁt from un-
+derstanding the root cause of this difference. Finally, we have not discussed ways to
+mitigate algorithmic bias in the prediction models developed using different coun-
+tries. Future studies should also consider not only the presence of algorithmic bias,
+but also methods to alleviate bias in the prediction models.
+Note
+1For the comparison of country performances, see: https://nces.ed.gov/surveys/
+piaac/ideuspiaac/report.aspx?p=3-LNP-1-20123-PVPSL-TOTAL-IN2,AUT,CAN,
+CHL,CZE,DNK,EST,FIN,FRA,DEU,GRC,IRL,ISR,ITA,JPN,NLD,NZL,NOR,
+POL,KOR,SVK,SVN,ESP,SWE,TUR,USA,BEL,GBR,CYP,LTU,SGP-MN_MN-
+Y_J-0-0-37&Lang=1033.
+References
+Aggarwal, C. C. (2016). Outlier analysis. Springer.
+Attali, Y., Runge, A., LaFlair, G. T., Yancey, K., Goodwin, S., Park, Y., & Von Davier, A. A.
+(2022). The interactive reading task: Transformer-based automatic item generation. Fron-
+tiers in Artiﬁcial Intelligence, 5, 1–13. https://doi.org/10.3389/frai.2022.903077
+Awasthi, P., Cortes, C., Mansour, Y., & Mohri, M. (2020). Beyond individual and group fair-
+ness. arXiv preprint arXiv:2008.09490.
+Baker, R.S., & Hawn, A. (2022). Algorithmic Bias in Education. International Journal of Arti-
+ﬁcial Intelligence Education, 32, 1052–1092. https://doi.org/10.1007/s40593-021-00285-9
+Baker, R. S., Esbenshade, L., Vitale, J., & Karumbaiah, S. (2023). Using Demographic Data
+as Predictor Variables: A Questionable Choice. Journal of Educational Data Mining, 15(2),
+22–52.
+Beseiso, M., & Alzahrani, S. (2020). An empirical analysis of BERT embedding for auto-
+mated essay scoring. International Journal of Advanced Computer Science and Applica-
+tions, 11(10), 204–210.
+Blázquez-García, A., Conde, A., Mori, U., & Lozano, J. A. (2021). A review on out-
+lier/anomaly detection in time series data. ACM Computing Surveys (CSUR), 54 (3), 1–33.
+https://doi.org/10.1145/3444690
+Bulut, O., Gorgun, G., & He, S. (2024). Unsupervised anomaly detection in sequential process
+data. Zeitschrift für Psychologie, 232.
+19 of 25
+ 17453984, 2026, 1, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/jedm.12420 by Beykent University, Wiley Online Library on [24/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+Gorgun and Yildirim-Erbasli
+Chen, S., & Liao, H. (2022). BERT-Log: Anomaly detection for system logs based on pre-
+trained language model. Applied Artiﬁcial Intelligence, 36(1), 2145642. https://doi.org/10.
+1080/08839514.2022.2145642
+Conijn, R., Roeser, J., & Van Zaanen, M. (2019). Understanding the keystroke log: The effect
+of writing task on keystroke features. Reading and Writing, 32, 2353–2374. https://doi.org/
+10.1007/s11145-019-09953-8
+Deho, O. B., Joksimovic, S., Liu, L., Li, J., Zhan, C., & Liu, J. (2023). Assessing the fairness of
+course success prediction models in the face of (un) equal demographic group distribution.
+In Proceedings of the Tenth ACM Conference on Learning@ Scale (pp. 48–58). Association
+for Computing Machinery. https://doi.org/10.1145/3573051.3593381
+Devlin, J., Chang, M. W., Lee, K., & Toutanova, K. (2018). BERT: Pre-training of deep
+bidirectional transformers for language understanding. arXiv preprint. https://doi.org/10.
+48550/arXiv.1810.04805
+Doroudi, S. & Brunskill, E. (2019). Fairer but not fair enough on the equitability of knowl-
+edge tracing. In Proceedings of the 9th International Conference on Learning Analytics
+& Knowledge—LAK19. Association for Computing Machinery. https://doi.org/10.1145/
+3303772.3303838
+Gándara, Denisa & Anahideh, Hadis & Ison, Matthew & Tayal, Anuja. (2023). Inside the
+black Box: Detecting and mitigating algorithmic bias across racialized groups in college
+student-success prediction. arXiv preprint arXiv:10.48550/arXiv.2301.03784
+Gardner, J., Brooks, C., & Baker, R. (2019). Evaluating the fairness of predictive student mod-
+els through slicing analysis. In Proceedings of the 9th international conference on learning
+analytics & knowledge (pp. 225–234).
+Gaskins, N. (2022). Interrogating algorithmic bias: From speculative ﬁction to liberatory de-
+sign. TechTrends, 67(3), 417–425. https://doi.org/10.1007/s11528-022-00783-0
+Goldhammer, F., Naumann, J., Roelke, H., Stelter, A., & Toth, K. (2017). Relating prod-
+uct data to process data from computer-based competency assessment. In D. Leutner, J.
+Fleischer, J. Grünkorn, & E. Klieme (Eds.), Competence assessment in education: Re-
+search, models and instruments (pp. 407–425). Springer. https://doi.org/10.1007/978-3-
+319-50030-0_24
+Gorgun, G., & Bulut, O. (2021). A polytomous scoring approach to handle not-reached items
+in low-stakes assessments. Educational and Psychological Measurement, 81(5), 847–871.
+https://doi.org/10.1177/0013164421991211
+Gorgun, G., & Bulut, O. (2022a). Considering disengaged responses in Bayesian and deep
+knowledge tracing. In M. M. Rodrigo, N. Matsuda, A. I. Cristea, & V. Dimitrova (Eds.), Ar-
+tiﬁcial intelligence in education. Posters and late-breaking results, workshops and tutorials,
+industry and innovation Tracks, practitioners’ and doctoral consortium (pp. 591–594). Lec-
+ture Notes in Computer Science (Vol. 13356). Cham: Springer. https://doi.org/10.1007/978-
+3-031-11647-6_122
+Gorgun, G., & Bulut, O. (2022b). Identifying aberrant responses in intelligent tutoring sys-
+tems: an application of anomaly detection methods. Psychological Test and Assessment
+Modeling, 64(4), 359–384.
+Guo, H., Yuan, S., & Wu, X. (2021, July). LogBERT: Log anomaly detection via BERT. In The
+International Joint Conference on Neural Networks (IJCNN) (pp. 1–8). Shenzhen, China:
+IEEE. https://doi.org/10.1109/IJCNN52387.2021.9534113
+He, Q., & Davier, M. von. (2015). Identifying feature sequences from process data in problem-
+solving items with n-grams. In L. A. van der Ark, D. M. Bolt, W.-C. Wang, J. A. Douglas,
+& S.-M. Chow (Eds.), Quantitative Psychology Research: The 79th Annual Meeting of the
+Psychometric Society (pp. 173–190). Springer. https://doi.org/10.1007/978-3-319-19977-
+1_13
+20 of 25
+ 17453984, 2026, 1, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/jedm.12420 by Beykent University, Wiley Online Library on [24/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+Algorithmic Bias in BERT for Response Accuracy Prediction
+He, Q., Borgonovi, F., & Paccagnella, M. (2021). Leveraging process data to assess adults’
+problem-solving skills: Using sequence mining to identify behavioral patterns across dig-
+ital tasks. Computers & Education, 166, 104170. https://doi.org/10.1016/j.compedu.2021.
+104170
+He, Q., Liao, D., & Jiao, H. (2019). Clustering behavioral patterns using process data in PI-
+AAC problem-solving items. In B. Veldkamp, & C. Sluijter (Eds.), Theoretical and practi-
+cal advances in computer-based educational measurement (pp. 189–212). Cham: Springer.
+https://doi.org/10.1007/978-3-030-18480-3_10
+Heffernan, N. T., & Heffernan, C. L. (2014). The ASSISTments ecosystem: Building a plat-
+form that brings scientists and teachers together for minimally invasive research on hu-
+man learning and teaching. International Journal of Artiﬁcial Intelligence in Education,
+24, 470–497. https://doi.org/10.1007/s40593-014-0024-x
+Huang, Z., Liang, D., Xu, P., & Xiang, B. (2020). Improve transformer models with better
+relative position embeddings. arXiv preprint arXiv:2009.13658.
+Hutchinson, B., & Mitchell, M. (2019, January). 50 years of test (un)fairness: Lessons for ma-
+chine learning. Proceedings of the conference on fairness, accountability, and transparency
+(pp. 49–58). Association for Computing Machinery.
+Jiang, W., and Pardos, Z.A. (2021). Towards equity and algorithmic fairness in student grade
+prediction. Proceedings of the 2021 AAAI/ACM Conference on AI, Ethics, and Society
+(AIES ’21) (pp. 608–617). Association for Computing Machinery. https://doi.org/10.1145/
+3461702.3462623
+Jiang, Y., Zhang, M., Hao, J., Deane, P., Li, C. (2024). Using keystroke behavior patterns
+to detect nonauthentic texts in writing assessments: Evaluating the fairness of predictive
+models. Journal of Educational Measurement, 1–24.
+Jiao, H., He, Q., & Yao, L. (2023). Machine learning and deep learning in assessment. Psy-
+chological Testing and Assessment Modeling, 64(1), 178–189.
+Kizilcec, R. & Lee, H. (2022). Algorithmic fairness in education. In W. Holmes & K.
+Porayska-Pomsta (Eds.), The ethics of artiﬁcial intelligence in education (pp. 174–202).
+Routledge. https://doi.org/10.4324/9780429329067-10
+Kleinberg, J., Lakkaraju, H., Leskovec, J., Ludwig, J., & Mullainathan, S. (2018). Human
+decisions and machine predictions. The Quarterly Journal of Economics, 133(1), 237–293.
+Kroehne, U., & Goldhammer, F. (2018). How to conceptualize, represent, and analyze log data
+from technology-based assessments? A generic framework and an application to question-
+naire items. Behaviormetrika, 45(2), 527–563. https://doi.org/10.1007/s41237-018-0063-y
+Landauer, M., Onder, S., Skopik, F., & Wurzenberger, M. (2023). Deep learning for anomaly
+detection in log data: A survey. Machine Learning with Applications, 12, 100470. https:
+//doi.org/10.1016/j.mlwa.2023.100470
+Li, X., Han, M., Cohen, G. L. & Markus, H. R. (2021). Passion matters but not equally ev-
+erywhere: Predicting achievement from interest, enjoyment, and efﬁcacy in 59 societies.
+Proceedings of the National Academy of Sciences of the United States of America, 118(11).
+https://doi.org/10.1073/pnas.2016964118
+Liao, D., He, Q., & Jiao, H. (2019). Mapping background variables with sequential patterns in
+problem-solving environments: An investigation of us adults’ employment status in PIAAC.
+Frontiers in Psychology, 10, 646. https://doi.org/10.3389/fpsyg.2019.00646
+Liao, M., Patton, J., Yan, R., & Jiao, H. (2021). Mining process data to detect aberrant test
+takers. Measurement: Interdisciplinary Research and Perspectives, 19(2), 93–105. https:
+//doi.org/10.1080/15366367.2020.1827203
+Lin, Z., Trivedi, S., & Sun, J. (2023). Generating with conﬁdence: Uncertainty quantiﬁcation
+for black-box large language models. arXiv preprint arXiv:2305.19187. https://doi.org/10.
+48550/arXiv.2305.19187
+21 of 25
+ 17453984, 2026, 1, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/jedm.12420 by Beykent University, Wiley Online Library on [24/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+Gorgun and Yildirim-Erbasli
+Loukina, A., Madnani, N., & Zechner, K. (2019). The many dimensions of algorithmic fair-
+ness in educational applications. In Proceedings of the Fourteenth Workshop on Innovative
+Use of NLP for Building Educational Applications. Association for Computational Linguis-
+tics https://doi.org/10.18653/v1/w19-4401
+Nagy, G., Ulitzsch, E., & Lindner, M. A. (2022). The role of rapid guessing and test-taking
+persistence in modelling test-taking engagement. Journal of Computer Assisted Learning,
+39(3), 751–766. https://doi.org/10.1111/jcal.12719
+Ocumpaugh, J., Baker, R., Gowda, S., Heffernan, N. & Heffernan, C. (2014). Population va-
+lidity for educational data mining models: A case study in affect detection. British Journal
+of Educational Technology, 45(3), 487–501. https://doi.org/10.1111/bjet.12156
+Oranje, A., Gorin, J., Jia, Y., Kerr, D., Ercikan, K., & Pellegrino, J. W. (2017). Collecting,
+analysing, and interpreting response time, eye tracking and log data. In K. Ercikan & J. W.
+Pellegrino (Eds.), Validation of score meaning for the next generation of assessments (pp.
+39–51). Routledge.
+Organization for Economic Cooperation and Development. (2019). Technical report of the
+survey of adult skills (PIAAC). 3rd edn. OECD Publishing.
+Papakyriakopoulos, O., Hegelich, S., Serrano, J. C. M., & Marco, F. (2020, January). Bias
+in word embeddings. In Proceedings of the 2020 conference on fairness, accountability,
+and transparency (pp. 446–457). Association for Computing Machinery. https://doi.org/
+10.1145/3351095.3372843
+Peji´c, A., & Molcer, P. S. (2021). Predictive machine learning approach for complex problem-
+solving process data mining. Acta Polytechnica Hungarica, 18(1), 45–63.
+Plewan, T., Wascher, E., Falkenstein, M., & Hoffmann, S. (2016). Classifying response
+correctness across different task sets: A machine learning approach. PLoS One, 11(3),
+e0152864.
+R Core Team (2022). R: A language and environment for statistical computing. Vienna, Aus-
+tria: R Foundation for Statistical Computing.
+Sackett, P. R., Kuncel, N. R., Arneson, J. J., Cooper, S. R. & Waters, S. D. (2009). Socioe-
+conomic status and the relationship between the SAT® and freshman GPA: An analysis of
+data from 41 colleges and universities. Research Report No. 2009–1. College Board.
+Sahin, F., & Colvin, K. F. (2020). Enhancing response time thresholds with response behaviors
+for detecting disengaged examinees. Large-scale Assessments in Education, 8(1), 1–24.
+https://doi.org/10.1186/s40536-020-00082-1
+Sha, L., Gaševi´c, D., & Chen, G. (2023). Lessons from debiasing data for fair and accurate
+predictive modeling in education. Expert Systems with Applications, 228, 120323. https:
+//doi.org/10.1016/j.eswa.2023.120323
+Sha, L., Rakovi´c, M., Das, A., Gaševi´c, D., & Chen, G. (2022). Leveraging class balanc-
+ing techniques to alleviate algorithmic bias for predictive tasks in education. IEEE Trans-
+actions on Learning Technologies, 15(4), 481–492. https://doi.org/10.1109/TLT.2022.319
+6278
+Shao, Y., Zhang, W., Liu, P., Huyue, R., Tang, R., Yin, Q., & Li, Q. (2022, April). Log anomaly
+detection method based on BERT model optimization. In The 7th International Conference
+on Cloud Computing and Big Data Analytics (ICCCBDA) (pp. 161–166). IEEE. https://doi.
+org/10.1109/ICCCBDA55098.2022.9778900
+Smith, H. (2020). Algorithmic bias: should students pay the price? AI & Society, 35, 1077–
+1078. https://doi.org/10.1007/s00146-020-01054-3
+Stadler, M., Fischer, F., & Greiff, S. (2019). Taking a closer look: An exploratory analysis of
+successful and unsuccessful strategy use in complex problems. Frontiers in Psychology, 10.
+https://doi.org/10.3389/fpsyg.2019.00777
+22 of 25
+ 17453984, 2026, 1, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/jedm.12420 by Beykent University, Wiley Online Library on [24/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+Algorithmic Bias in BERT for Response Accuracy Prediction
+Tang, X., Wang, Z., He, Q., Liu, J., & Ying, Z. (2020). Latent feature extraction for process
+data via multidimensional scaling. Psychometrika, 85(2), 378–397. https://doi.org/10.1007/
+s11336-020-09708-3
+Tang, X., Wang, Z., Liu, J., & Ying, Z. (2021). An exploratory analysis of the latent struc-
+ture of process data via action sequence autoencoders. British Journal of Mathematical &
+Statistical Psychology, 74(1), 1–33. https://doi.org/10.1111/bmsp.12203
+Timmons, A., Duong, J. B., Simo Fiallo, N., Lee, T., Vo, H. P. Q., Ahle, M. W., Comer,
+J. S., Brewer, L. C., Frazier, S. L., & Chaspari, T. (2023). A call to action on assessing
+and mitigating bias in artiﬁcial intelligence applications for mental health. Perspectives on
+Psychological Science, 18(5), 1062–1096. https://doi.org/10.1177/17456916221134490
+Ulitzsch, E., He, Q., & Pohl, S. (2022). Using sequence mining techniques for understanding
+incorrect behavioral patterns on interactive tasks. Journal of Educational and Behavioral
+Statistics, 47(1), 3–35. https://doi.org/10.3102/10769986211010467
+von Winckelmann, S. L. (2023). Predictive algorithms and racial bias: A qualitative descrip-
+tive study on the perceptions of algorithm accuracy in Higher Education. Information and
+Learning Sciences, 124(9/10), 349–371. https://doi.org/10.1108/ils-05-2023-0045
+Xiang, F., Zhang, X., Cui, J., Carlin, M., & Song, Y. (2022). Algorithmic bias in a stu-
+dent success prediction model: Two case studies. In 2022 IEEE International Conference
+on Teaching, Assessment and Learning for Engineering (TALE). IEEE. https://doi.org/10.
+1109/tale54877.2022.00058
+Xiao, Y., He, Q., Veldkamp, B., & Liu, H. (2021). Exploring latent states of problem-solving
+competence using hidden Markov model on process data. Journal of Computer Assisted
+Learning, 37(5), 1232–1247. https://doi.org/10.1111/jcal.12559
+Xiong, J., Wang, S., Tang, C., Liu, Q., Sheng, R., Wang, B., …Xiong, X. (2024). Sequential
+reservoir computing for log ﬁle-based behavior process data analyses. Journal of Educa-
+tional Measurement, 1–41.
+Yan, L., Sha, L., Zhao, L., Li, Y., Martinez-Maldonado, R., Chen, G., Li, X., Jin, Y., &
+Gaševi´c, D. (2023). Practical and ethical challenges of large language models in educa-
+tion: A systematic scoping review. British Journal of Educational Technology, 00, 1–23.
+https://doi.org/10.1111/bjet.13370
+Yildirim-Erbasli, S. N., & Bulut, O. (2021). Designing predictive models for early predic-
+tion of students’ test-taking engagement in computerized formative assessments. Journal
+of Applied Testing Technology, 22(2).
+Zhang, T., Wu, F., Katiyar, A., Weinberger, K. Q., & Artzi, Y. (2020). Revisiting few-sample
+BERT ﬁne-tuning. arXiv preprint arXiv:2006.05987.
+Zhang, Y., Li, Y., Cui, L., Cai, D., Liu, L., Fu, T., … Shi, S. (2023). Siren’s song
+in the AI ocean: A survey on hallucination in large language models. arXiv preprint
+arXiv:2309.01219. https://doi.org/10.48550/arXiv.2309.01219
+Zumbo, B. D., & Hubley, A. M. (Eds.). (2017). Understanding and investigating response
+processes in validation research. Springer.
+23 of 25
+ 17453984, 2026, 1, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/jedm.12420 by Beykent University, Wiley Online Library on [24/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+Gorgun and Yildirim-Erbasli
+Appendix
+# Libraries
+import pandas as pd, import numpy as np, datasets, torch, evaluate
+from sklearn.model_selection import train_test_split
+from transformers import AutoTokenizer, AutoModel
+AutoModelForSequenceClassiﬁcation, TrainingArguments, Trainer
+from sklearn.metrics import confusion_matrix
+# Example Item ID: U16×00S
+# Read in the data
+data_U16×000S = pd.read_csv(“data_U16×000S.csv”)
+# Split the data – Use 20% as test set
+dataset_train, dataset_test = train_test_split(data_U16×000S, test_size = .2)
+# Remove unnecessary columns
+dataset_train = dataset_train.remove_columns(‘__index_level_0__’)
+dataset_test = dataset_test.remove_columns(‘__index_level_0__’)
+# Save datasets as data dict to be used for tokenization and model training
+data_dict = datasets.DatasetDict({‘train’:dataset_train, “test”: dataset_test})
+# Tokenize the action sequences
+tokenizer = AutoTokenizer.from_pretrained(“bert-base-cased”)
+def tokenize_function(examples):
+return tokenizer(examples[‘text’], padding = ‘max_length’, truncation = True,
+max_length = 512)
+tokenized_datasets = data_dict.map(tokenize_function, batched = True)
+# Initialize the model for ﬁne-tuning
+device = torch.device(‘cuda’ if torch.cuda.is_available() else ‘cpu’)
+from transformers import model =
+AutoModelForSequenceClassiﬁcation.from_pretrained(“bert-base-cased”, num_labels =
+2).to(device)
+# Fine-tune the model for response accuracy prediction
+training_args = TrainingArguments(output_dir = ‘test_trainer’, evaluation_strategy =
+‘epoch’, learning_rate = 5e-6, prediction_loss_only = False)
+def compute_metrics(eval_pred):
+logits, labels = eval_pred
+predictions = np.argmax(logits, axis = -1)
+return metric.compute(predictions = predictions, references = labels)
+trainer = Trainer(
+model = model,
+args = training_args,
+train_dataset = train_dataset,
+eval_dataset = test_dataset,
+compute_metrics = compute_metrics)
+trainer.train()
+# Predict the response accuracy
+new_predictions = trainer.predict(test_dataset)
+24 of 25
+ 17453984, 2026, 1, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/jedm.12420 by Beykent University, Wiley Online Library on [24/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+Algorithmic Bias in BERT for Response Accuracy Prediction
+Authors
+GUHER GORGUN, PhD is a postdoctoral research associate at the University of Alberta,
+Edmonton, Alberta, Canada T6G 2E8; gorgun@ualberta.ca. Her primary research interests
+include learner modeling, automatic item generation and evaluation, and learning analytics.
+Dr. SEYMA NUR YILDIRIM-ERBASLI is an Assistant Professor in the Department
+of Psychology at Concordia University of Edmonton, AB T5B 4E4; seyma.yildirim-
+erbasli@concordia.ab.ca. Her research focuses on human cognition, particularly in assess-
+ing key latent traits essential for learning and assessment, such as intelligence, attitudes,
+and emotions. Her interdisciplinary projects bridge various ﬁelds, including psychometrics,
+digital assessments, natural language processing, data science, and learning analytics.
+25 of 25
+ 17453984, 2026, 1, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/jedm.12420 by Beykent University, Wiley Online Library on [24/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License

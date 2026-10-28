@@ -1,0 +1,1591 @@
+Computers in Human Behavior Reports 21 (2026) 100896
+
+Contents lists available at ScienceDirect
+
+Computers in Human Behavior Reports
+journal homepage: www.sciencedirect.com/journal/computers-in-human-behavior-reports
+
+Using machine learning approaches to predict Taiwanese eighth graders’
+computational thinking performance in ICILS 2023 study
+Nitesh Kumar Jha a , Meng-Jung Tsai b,*
+a
+
+Program of Learning Sciences, School of Learning Informatics, National Taiwan Normal University, 162, Sec. 1, Hoping E. Rd., Taipei, 106, Taiwan
+Program of Learning Sciences, School of Learning Informatics, Institute for Research Excellence in Learning Sciences, National Taiwan Normal University, 162, Sec. 1,
+Hoping E. Rd., Taipei, 106, Taiwan
+
+b
+
+A R T I C L E I N F O
+
+A B S T R A C T
+
+Keywords:
+Applications in subject areas
+Data science applications in education
+21st century abilities
+Information literacy
+Secondary education
+
+This study employs machine learning approaches to examine how socio-demographic, student-related, and
+school-related variables predict the computational thinking (CT) performance of 5211 Taiwanese eighth graders
+in the ICILS 2023 study (Fraillon, 2024). It further aims to identify the key predictors of Taiwanese students’ CT
+scores in this international evaluation project. The study used seven trained models: Multinomial Logistic
+Regression, Random Forest, AdaBoost, XGBoost, LightGBM, Gradient Boosting classifier, and Stacking Ensemble
+to identify and rank the variables that affect CT scores. The CT performance score was used as a binary variable
+with two classes: below and above average score. Findings showed that XGBoost and Stacking Ensemble performed best when classifying below and average CT scores respectively in terms of precision, recall and F1 score.
+In addition, among the variables, student-related variables had the highest impact on students’ CT skills followed
+by school-related and socio-demographic. Among student-related variables, CT disposition was the most significant variable followed by ICT self-efficacy and academic multitasking. Further, among school-related factor,
+learning special applications in class had significant impact followed by a low impact of socio-demographic
+variables such as home literacy and parents’ education. This study offers practical implications for educators,
+policymakers, and curriculum designers by underscoring the role of CT disposition and recommending targeted
+support for enhancing students’ digital self-efficacy. Additionally, the study shows the potential of ML for
+creating adaptive learning environments and guiding data-informed decisions in educational policy and practice.
+
+1. Introduction
+As suggested by Wing (2006), Computational Thinking (CT) implies
+students should learn to “think like a computer scientist”. Recently,
+Ezeamuzie & Leung (2022) found that CT has been used to solve problems in different fields, not just computer science. CT is important in
+education as it helps students to become better problem solvers, which is
+the core of learning (Gagné, 1985). Educators agree that
+problem-solving is one of the valuable skills of life (Jonassen, 2000).
+Wing (2006) argued that CT may be considered as a crucial skill similar
+to basic skills like reading writing and arithmetic skills. Although, some
+may disagree with the idea, there may be several positives associated
+with learning CT. Multiple studies have shown that studying CT helps
+improve communication, social skills, confidence, self-management,
+and collaboration (Denner et al., 2019; Liu et al., 2024). In addition,
+learning CT can also positively influence mathematical thinking,
+
+reasoning, creativity, and language skills (Scherer et al., 2019).
+CT has become an important topic in education, especially among k12 students (Kong & Lai, 2023). Research has shown that CT supports
+the development of both personal and interpersonal skills such as
+self-regulation, communication, social interaction, confidence and
+collaboration (Denner et al., 2019; Popat & Starkey, 2019). In addition,
+CT is also positively associated with cognitive processes such as mathematical thinking, language literacy, reasoning, creativity, and metacognition (Scherer et al., 2019). These advantages have led to the
+integration of CT into major curricular reforms. For example, in the
+United States’ Next Generation Science Standards (National Research
+Council, 2013) and in multiple curriculums across Europe (Palop et al.,
+2025). Further, CT has also gained recognition in international assessment frameworks such as International Student Assessment (PISA) and
+the International Computer and Information Literacy Study (ICILS).
+Both frameworks have incorporated CT into their frameworks for
+
+* Corresponding author.
+E-mail addresses: nitesh.jha1092@gmail.com (N.K. Jha), mjtsai99@ntnu.edu.tw, mjtsai99@gmail.com (M.-J. Tsai).
+https://doi.org/10.1016/j.chbr.2025.100896
+Received 31 July 2025; Received in revised form 24 October 2025; Accepted 1 December 2025
+Available online 3 December 2025
+2451-9588/© 2025 The Authors. Published by Elsevier Ltd. This is an open access article under the CC BY-NC-ND license (http://creativecommons.org/licenses/bync-nd/4.0/).
+
+N.K. Jha and M.-J. Tsai
+
+Computers in Human Behavior Reports 21 (2026) 100896
+
+evaluating 21st-century competencies (Fraillon et al., 2019; OECD,
+2018).
+These developments not only show that CT is now a central topic in
+education, but they also raise questions about what factors promote CT
+development. In this regard, prior studies have examined different categories of predictors that influence CT skills. For example, sociodemographic factors like gender, family background, and parents’ education have been found to affect CT skills to some extent (Atmatzidou &
+Demetriadis, 2016; Fraillon et al., 2019). Student-related factors such as
+age, prior programming experience, attitudes, disposition, and
+self-efficacy have also been highlighted (Ezeamuzie, 2023; Sun et al.,
+2022). At the school and pedagogical category, studies have pointed to
+the importance of classroom environments (Jha et al., 2024; Noh & Lee,
+2020; Zhang & Nouri, 2019), teaching approaches, and ICT integration
+into the curriculum (Hsu et al., 2018; Lye & Koh, 2014; Scherer et al.,
+2020). In addition, some studies emphasized cognitive factors (Shahin
+et al., 2022; Tsarava et al., 2019, pp. 1–9) and affective variables (Avcu
+& Ayverdi, 2020) as predictors of CT. More recently, recent reviews have
+highlighted the growing role of ML in analyzing such predictors,
+showing how advanced models are able to capture complex interaction
+among variables and support data-driven educational policy (Ersozlu
+et al., 2024; Sanusi et al., 2023).
+Recently, prior studies also reported that CT disposition (a studentrelated factor) was a strong predictor of students’ CT performance
+scores (Lee et al., 2023a; Tsai et al., 2022a). The core components of CT
+disposition such as decomposition, abstraction, algorithmic thinking,
+evaluation and generalization (Tsai et al., 2021, 2022b) are linked to the
+factors explored in this study. For instance, students with strong
+self-efficacy and CT dispositions are more capable of applying decomposition and abstraction when approaching complex problems (Lee
+et al., 2023b). Likewise, school environments that promote ICT integration and digital literacy can strengthen students’ algorithmic
+thinking and evaluation skills (Lee et al., 2023a). Although, the correlation between CTDS and CT performance has been confirmed in prior
+research, it has not been examined with other variables together at a
+time.
+In summary, most studies examine only one category of variables at a
+time. Also, the majority rely on traditional regression approaches, which
+may not capture the complex and non-linear relationships among multiple predictors (Alhassan et al., 2020). To address these gaps, the present study uses supervised machine learning to systematically examine
+the combined effects of socio-demographic, student, and school-related
+factors. By applying ML models to the large-scale ICILS 2023 dataset, the
+study aims to more comprehensively predict students’ CT outcomes by
+linking core CT constructs with different categories of variables.
+
+applying computing concepts in diverse domains (Nardelli, 2019).
+Since then, several frameworks have been proposed to guide CT
+education, including those by Barr & Stephenson (2011), Csizmadia
+et al. (2015), Brennan & Resnick (2012), Selby & Woollard (2013),
+Weintrop et al. (2016), and Shute et al. (2017). While these models differ
+in terminology, they consistently highlight CT as a multifaceted
+construct that involves both cognitive and practical skills (Ezeamuzie &
+Leung, 2022; Liu et al., 2024). The lack of a universal definition creates
+challenges for comparing research and assessment (Tsai et al., 2021;
+Ezeamuzie, 2023; Mannila et al., 2014). While Wing (2006) explicitly
+framed CT as “conceptualizing, not programming” (p. 35), many studies
+continue to operationalize CT through programming tasks (Ezeamuzie &
+Leung, 2022; Lye & Koh, 2014). To reduce ambiguity, this study adopts
+the definition from the ICILS large-scale framework: CT as “an individual’s ability to recognize aspects of real-world problems that are
+appropriate for computational formulation and to evaluate and develop
+algorithmic solutions to those problems so that the solutions could be
+operationalized with a computer” (Fraillon et al., 2019, p. 28). This
+definition aligns with Wing’s (2006) and Tsai’s et al. (2021, 2022a)
+conceptual framework of CT and provides the theoretical foundation for
+the present analysis.
+2.2. Theoretical framework
+The current study is based on the ICILS-2024 contextual framework
+as shown in Fig. 1 (Fraillon, 2024). The framework explains how
+learning outcomes (especially in CT) is influenced by multiple variables
+across four levels: individual, school, home, and the wider community.
+Fig. 1 illustrates how these different levels work together. The individual
+level focuses on how a students’ personal characteristics and behaviour
+affect CT performance. The school/classroom level includes factors like
+the design of learning environments and the availability of technology at
+school. The home environment (third level) focuses on family-related
+aspects such as parent’s education and home support. Finally, the
+fourth level, the wider community, refers to how broader factors like
+national education policies and a region’s access to technology.
+Although these levels are defined differently, they are closely connected to each other. For instance, the use of technology can impact
+learning at home, at school, or across the wider community. Each level
+comprises of two types of factors: indirect influence on learning (antecedents) and direct influence (processes). The study explored the impact
+of student-related (individual-level), school-related (school-level), and
+socio-demographic (home environment) characteristics on CT
+development.
+2.3. Machine learning approaches
+
+2. Related work
+
+Machine Learning (ML) techniques have received a lot of attention in
+recent years because it can unveil the relationship between the different
+academic and personal input factors, and CT outcomes. According to
+Srinivas (2020), ML models can learn on their own by using past experiences from training data, helping the system to make accurate predictions based on previous examples. Ghahramani (2015) pointed out
+that ML models can identify patterns in training data and use that
+knowledge to make predictions.
+There are three main categories of ML: supervised, unsupervised and
+reinforcement learning. In supervised learning, model is trained using
+labelled data with known input and outputs while in unsupervised
+learning there is unlabelled data to find hidden patterns or similarities.
+Reinforcement learning implies learning from experience, where system
+improved through trial and error, based on feedback.
+The current study focused on supervised learning approach. Logistic
+regression is widely used in education because it provides better results
+for linear datasets (Allen et al., 2008; Martin et al., 2005; Ranasinghe
+et al., 2017). However, in recent times, other ML algorithms have outperformed logistic regression when working on educational datasets.
+
+2.1. Computational thinking
+According to Wing (2006), CT can be viewed as thinking like a
+computer scientist to help solve problems in other areas beyond computer science. This idea has been seen as a starting point for research on
+CT (Grover & Pea, 2013; Shute et al., 2017). Earlier scholars such as
+Papert (1980) emphasized procedural thinking, i.e., how children learn
+by thinking about problems in a structured way, while Knuth (1974)
+argued that writing computer-like solutions helps students understand
+problems more clearly. Similarly, Alan Perlis, the first Turing Award
+winner, promoted programming for all students as part of a
+well-rounded education (Guzdial, 2008). These early contributions did
+not use the term CT but already highlighted its role in problem-solving
+(Bull et al., 2020). Wing (2006) and Tsai et al. (2021, 2022b) later
+broadened CT to include practices such as problem decomposition,
+abstraction, algorithm thinking, evaluation, and generalization.
+Although some researchers argued this definition was too general
+(Mannila et al., 2014), others considered it a useful foundation for
+2
+
+N.K. Jha and M.-J. Tsai
+
+Computers in Human Behavior Reports 21 (2026) 100896
+
+Fig. 1. ICILS-2023 contextual framework (Fraillon, 2024) (Source: https://www.iea.nl/sites/default/files/2024-11/ICILS_2023_International_Report_0.pdf).
+
+terms of accuracy and error rates (Gul et al., 2025). Singh et al. (2016)
+compared ML models and found that decision trees predicted the academic performance of primary school students better than Naïve Bayes
+model. Also, according to Alhassan et al. (2020), assignment marks and
+final exam grades were important features in predicting academic performance of students. They also found that Random Forest outperformed
+decision tree, neural networks, and logistic regression in terms of prediction accuracy and AUC score. In addition, two studies (Ezeamuzie,
+2024; Ezeamuzie et al., 2024) used rule-based (ZERO, One Rule, PART,
+JRip, Decision Tree) and tree-based (Random Tree, Random Forest,
+Decision Stump, Hoeffding Tree, J48, REP Tree) algorithms to predict
+CT scores across nine countries. Findings showed that some tree-based
+classifiers performed better than rule-based in both education policy
+and school-based characteristics. In addition, both classifiers generated
+human-readable rules to provide better explanation of the features that
+predicted CT development. Kong & Shen (2024) used five popular ML
+algorithms (Random Forest, AdaBoost, XGBoost, LightGBM) alongwith
+ensemble model to predict the CT concepts of primary students. Findings
+showed that XGBoost achieved the highest predictive accuracy while all
+the algorithms outperformed the Logistic Regression model.
+
+Kong & Shen (2024) showed that Light Gradient Boosting Machine
+(LightGBM), Random Forest, Extreme Gradient Boosting (XGBoost),
+Adaptive Boosting (AdaBoost), and ensemble learning had higher
+average usage ratio compared to Logistic Regression. In addition,
+Random Forest and Gradient Boosting algorithms are known powerful
+ML methods that perform better and more stable than others (Polikar,
+2012; Wainer, 2016; Whalen & Pandey, 2013). Recent reviews also
+emphasize that ensemble and boosting-based models dominate educational data mining due to their robustness in handling high-dimensional,
+non-linear predictors, making them especially effective for predicting
+student learning outcomes (Ersozlu et al., 2024; Sanusi et al., 2023).
+Therefore, we used logistic, Random Forest, LightGBM, XGBoost, AdaBoost, Gradient Boosting Method (GBM, and Stacking Ensemble
+methods in our investigation. More details about each ML algorithm are
+presented in Appendix A.
+The study used common evaluation scores such as accuracy, precision, recall, AUC (Area Under the Curve), and the F1 score to measure
+the comparative predictive performance of ML models. Accuracy is
+calculated by dividing the count of correct predictions with the total
+predictions. Next, Precision is calculated by dividing true positive predictions with the total positive predictions made. Further, Recall is
+calculated by dividing true positive predictions with the sum of true
+positives and false negatives. Finally, F1 score contains a mix of precision and recall, which can be helpful when the data is imbalanced. The
+F1 score can be calculated using (2 x precision x recall)/(precision +
+recall). During the predictions, the true positive rate changes with the
+false positive rate resulting in a curve. The AUC is the area under the
+curve that shows how good is the overall model.
+Multiple studies have used ML models to predict students’ academic
+and CT performance. For example, Rajendran et al. (2022) predicted the
+academic performance of middle school students using ML models such
+as logistic regression, Artificial Neural Network (ANN), Random Forest,
+GBM, and stacking algorithm. Findings showed that GMB outperformed
+other algorithms in predicting academic performance. Similarly, Gul
+et al. (2025) also applied eight ML models (Decision Trees, Random
+Forest, Lasso, kNN, XGBoost, CatBoost, AdaBoost, GBM) to predict students’ academic performance based on demographic and academic
+features. Results revealed that CatBoost outperformed other models in
+
+2.4. Need for the study
+Previously, multiple studies have explored the impact of different
+variables on students’ CT skills. Most studies on CT have focused more
+on learning environment (Hsu et al., 2018; Lye & Koh, 2014; Scherer
+et al., 2020), teaching methods and student-related factors like grade,
+gender, age, attitude, self-efficacy, programming experience, internet
+availability (Ezeamuzie, 2023; Kong & Shen, 2024; Sun et al., 2022).
+However, previous studies have focused on limited features to influence
+CT. The current study aims to systematically explore how CT is influenced by a wide range of variables related to socio-demographic (sex,
+internet access, computer experience, home literacy, parents’ education), student (media multitasking, problem-solving tendency,
+self-efficacy, and attitude towards ICT), and school (learning about
+internet tasks, about ICT safe use, and general-special application in
+class). Moreover, few studies (Ezeamuzie et al., 2024; Kong & Shen,
+2024) in education have used ML approaches to analyse large scale
+3
+
+N.K. Jha and M.-J. Tsai
+
+Computers in Human Behavior Reports 21 (2026) 100896
+
+datasets. This research highlights the importance of using data-driven
+methods to predict students’ CT concepts. Some previous studies have
+applied ML techniques to predict CT outcomes using education policy
+(Ezeamuzie et al., 2024), and school-related characteristics (Ezeamuzie,
+2024) from ICILS-2018 questionnaire. In another study, Kong & Shen
+(2024) used students’ demographic, cognitive, and affective factors to
+predict CT understanding. However, there are lack of studies that
+explored and compared the impact of socio-demographic, student-related, and school-related variables on students’ CT performance. Finally,
+there is a lack of study that explored Taiwanese students’ CT performance in a large-scale dataset, which may provide valuable practical
+feedbacks for the educational policy makers in Taiwan. Therefore, the
+study aims to answer two research questions:
+
+Farm Drone, .637 for Activity Tracker, and .441 for Suns and Moons
+module.
+3.2.2. ICILS 2023 International Student Questionnaire
+ICILS 2023 International Student Questionnaire (Fraillon, 2024)
+originally included 132 variables aimed to collect students’ demographic backgrounds and to assess students’ information and computer technology (ICT) using and learning behaviours at homes and
+schools. A total of 38 variables were finally derived from the questionnaire. For example, the home literacy index (S_HOMLIT), the ICT
+self-efficacy regarding the use of specialist application including computer programming (S_SPECEFF), and the exposure to specialist classroom application at school (S_SPECLASS), etc. These variables were used
+as key predictors in the subsequent analyses. The questionnaire was
+developed through extensive piloting and psychometric validation by
+the IEA, ensuring both cross-cultural comparability and internal consistency. Factor structures for ICT-related scales such as self-efficacy and
+attitudes have been validated across multiple ICILS cycles (Fraillon
+et al., 2019).
+
+RQ1: Can machine learning (ML) approaches effectively predict
+Taiwanese eighth graders’ CT performances in the ICILS 2023 study?
+If yes, which model performs best for the prediction?
+RQ2: When using the ML approaches, what are the top-five important variables to predict Taiwanese eighth graders’ CT scores in the
+ICILS 2023 study, in terms of socio-demographic, school-related, and
+student-related variables?
+
+3.2.3. Computational thinking disposition scale (CTDS)
+A total of 15 items selected from the original CTDS (Tsai et al., 2021)
+were embedded into a part of the National Student Questionnaire for all
+Taiwanese students in ICILS 2023. This scale assessed students’
+computational thinking dispositions in terms of decomposition,
+abstraction, algorithmic thinking, evaluation and generalization dispositions when solving problems in a computer programming context. The
+original 19-items CTDS have been reported with a reliability of Cronbach alpha of .91 (Tsai et al., 2021). In this study, an overall reliability
+.93 was obtained for the 15 selected terms assessed in the sample of
+ICILS 2023. The scale was only taken by Taiwanese students as part of
+ICILS questionnaire. Beyond internal consistency, the CTDS has
+demonstrated convergent validity with measures of problem-solving
+and self-efficacy in previous Taiwanese studies (Tsai et al., 2019,
+2022a). The Cronbach’s alpha of the CTDS questionnaire used in this
+study is .934. This evidence strengthens its use as a reliable predictor of
+CT performance. Since CTDS scores are significantly correlated with
+computer programming self-efficacy (Tsai et al., 2019, 2022a), this
+study included the CTDS overall averaged score as a feature for the
+modelling.
+
+3. Methodology
+3.1. Sample and data source
+The sample of this study came from the 5211 Taiwanese students
+who participated in the International Computer and Information Literacy Study 2023; ICILS 2023) project hosted by the International Association for the Evaluation of Educational Achievement (IEA) (Fraillon,
+2024). A two-stage sampling process was employed in this study: 169
+junior high schools were first selected through stratified random sampling from over 2000 schools in Taiwan, followed by a cluster sampling
+at the class level within each selected school. All participants were
+informed with a consent form provided by the IEA for participating the
+study. The final dataset cleaned and pre-processed by the IEA was
+anonymous. With an average age of 14.3, all participants were 8th
+graders and have all learned basic computer literacy course beginning in
+their 7th grade under the new national curriculum standard beginning
+in 2020 in Taiwan. This curriculum explicitly integrates CT within a
+blocked-based programming framework. Although there was no
+requirement for elementary schools regarding CT skills in Taiwan,
+CT-related activities were implemented as a form of school-based
+experimental curricula, especially emphasized in the 5th and 6th
+grades. These activities aimed to support students in applying computer
+technologies to solve real-world problems and were aligned with
+broader educational goals to foster 21st century skills.
+
+3.3. Procedures
+All data from the CT test and the questionnaire were collected online
+in Taiwan for the ICILS 2023 project. First, each student took about 30
+min to finish an online survey, including all items of the IEA International Student Questionnaire and the 15 items of the CTDS as the national items required for all Taiwanese students. After a 15–20 min
+break, a CT performance test was administered to all participants.
+Beginning with a 10-min video of the system tutorial, the CT test was
+composed by two CT modules and each module contained a series of
+tasks. All the tasks were shown and allowed students to test or to
+respond in a limited of time via an online interactive system provided by
+the IEA (Fraillon, 2024). Each CT module was allowed to be finished no
+more than 25 min. Therefore, it took around 60 min for an in-tact class to
+finish the CT test in a computer lab at school. All of the data were
+collected smoothly in Taiwan for ICILS 2023. Most of the CT test items
+were evaluated automatically via an online evaluation system. Only
+three critical response items were evaluated by a group of 5–6 national
+domain experts using the evaluation criteria provided by IEA. Since the
+study was performed globally, the CT test scores were standardized
+using Rasch item response theory, with international mean score of 483
+and a standard deviation (SD) of 112 (Fraillon, 2024). The Taiwanese
+students’ data had mean average score of 548 and a standard deviation
+of 110. Most students (around 99.5 %) had scores between 200 and 800.
+The lowest and highest scores were 128.4 and 825 respectively (Fraillon,
+
+3.2. Instruments
+3.2.1. Computational thinking performance test
+In the ICILS 2023 study, the CT assessment was composed of four
+modules, each designed to evaluate students’ competencies in key areas
+such as digital problem analysis, data representation, and the planning,
+creation, evaluation and revision of algorithmic solutions. Two of the
+four designed CT modules were randomly assigned to each participant in
+the CT test. Each module consisted of 7–9 tasks with a theme related to
+an authentic daily-live problem solving such as the design of the Automated Bus or the Farm Drone module. The tasks were presented through
+an interactive, block-based programming environment. A sample CT
+task involving code correction in a block-based programming context for
+a Farm Drone work issue is shown in Fig. 2 (Fraillion, 2024). Previous
+ICILS studies have confirmed the construct validity and cross-national
+reliability of these CT modules using item response theory (Fraillon
+et al., 2019, 2024). The Cronbach’s alpha values of the four CT modules
+for the dataset used in this study are .669 for Automated Bus, .463 for
+4
+
+N.K. Jha and M.-J. Tsai
+
+Computers in Human Behavior Reports 21 (2026) 100896
+
+Fig. 2. Example of a CT task assessed in ICILS 2023; Fraillon, 2024) (Source: https://www.iea.nl/sites/default/files/2024-11/ICILS_2023_International_Report_0
+.pdf).
+
+2024). Instead of predicting students’ CT test scores and finding the
+goodness of fit (closeness between actual and predicted scores), the
+study used a binary classification approach to predict CT scores (similar
+classification in Kong & Shen, 2024).
+
+the retained 18 variables and their characteristics. The variables are
+broadly classified into three categories: a) socio-demographic; b)
+student-related; and c) school related. The socio-demographic category
+(see Table 1) contains five variables: parent’s highest education
+(S_HISCED), home literacy index (S_HOMLIT), and computer experience
+in years (S_EXCOMP) with values ranging from 0 to 4. Also, it contains
+sex of student (S_SEX) and internet access at home (S_INTNET) with
+binary values (0 and 1).
+In the student-related category (see Table 1), the eight variables are:
+attitude towards ICT-positive outcomes (S_ICTPOSS), academic media
+multitasking (S_ACMULT), ICT self-efficacy regarding the use of general
+applications (S_GENEFF), ICT self-efficacy regarding the use of specialist
+applications (S_SPECEFF), attitude towards ICT-positive outcomes general (S_ICTPOSG), attitude towards ICT-negative outcomes general
+(S_ICTNEG), and attitude towards ICT-expectations for future use of ICT
+(S_ICTFUT). One variable Disposition to solve problem using computer
+programming (CTDS) contains value ranged from 1 to 5, calculated by
+taking average of 15 items in CTS scale (Tsai et al., 2021).
+Finally, the school-related category (see Table 1) contains five variables: learning about internet tasks at school (S_LRNINTS), learning
+about CT in class (S_CTCLS), learning about safe and responsible ICT use
+at school (S_LRNSAFE), learning with general classroom application at
+school (S_GENCLASS), and learning with specialist classroom application at school (S_SPECLASS) with international mean = 50 and SD = 10.
+
+3.4. Variables and the prediction model
+To facilitate binary classification, students were grouped into two
+categories based on their standardized CT scores. Students were grouped
+into two levels based on CT scores: below average (less than 541- around
+52.8 %) and above average (more than 541- around 47.2 %). This
+threshold was decided by the mean of the first plausible value (PV) of the
+students’ CT scores provided by the international database from ICILS
+2023; Fraillon, 2024), in which five PVs were provided. The below
+average CT scores were labelled 0, while above average was labelled 1.
+The original ICILS dataset included over 600 attributes spanning performance data, CTDS performance, system logs, sampling weightings,
+and questionnaire responses.1 To arrive at the final set of predictors, a
+multi-stage filtering process was applied. First, overlapping or highly
+correlated items were aggregated into derived indices based on IEA
+guidelines (e.g., CTDS, S_HOMLIT). Second, variables with excessive
+missingness or with little theoretical connection to CT performance were
+removed (e.g., country identifiers not relevant to Taiwan). Third, features were screened for multicollinearity using the Variance Inflation
+Factor (VIF), ensuring that retained variables provided unique information. Finally, in consultation with prior literature and the study’s
+research questions, 18 features were selected across three categories:
+socio-demographic, student-related, and school-related.
+This multi-step filtering ensured that the final predictors were both
+theoretically meaningful and empirically robust. Table 1 summarizes
+
+3.5. Model training for classification
+The data was randomly divided into training (80 %) and testing (20
+%) datasets. The training dataset was used to train the algorithms and
+the remaining data was used to train the predictive model. A ten-fold
+cross validation method was used to avoid overfitting the training
+data. The study used SKLearn python package to train logistic, Random
+Forest, AdaBoost and Gradient Boosting classifier models. In addition,
+the XGBoost model was imported using XGBoost package and LightGBM
+
+1
+https://www.iea.nl/sites/default/files/2025-02/ICILS2023_IDB_User_Gu
+ide_Supplements.pdf.
+
+5
+
+Computers in Human Behavior Reports 21 (2026) 100896
+
+N.K. Jha and M.-J. Tsai
+
+simply, VIF determines how much a feature is influenced by the other
+features in the model. A VIF of 1 means the feature is completely independent. Also, if the value is between 1 and 5, it shows moderate and
+acceptable correlation. However, a VIF over 5 means high correlation
+with other features, and we can remove it (Sheather, 2009). After
+training the models, the current study calculated feature importance
+using the SHAP package in python. SHAP is a method that explains
+model predictions and handles multicollinearity better than traditional
+techniques. The method helps rank both correlated and uncorrelated
+features more fairly (Lundberg & Lee, 2017).
+
+Table 1
+Summary of the predictors in three categories.
+Attributes
+
+ICILS code
+
+Value
+
+Category
+
+Parent highest education
+
+S_HISCED
+
+Home literacy Index
+
+S_HOMLIT
+
+Sex of student
+
+S_SEX
+
+Internet access at home
+
+S_INTNET
+
+Computer experience in years
+
+S_EXCOMP
+
+Disposition to solve problem
+using computer programming
+Academic media multitasking
+
+CTDS
+
+ICT Self-Efficacy regarding the
+use of general application
+ICT Self-Efficacy regarding the
+use of specialist application
+Attitude toward ICT- positive
+outcomes regarding the use of
+general application
+Attitude toward ICT- positive
+outcomes regarding the use of
+specialist application
+Attitude toward ICT- future use
+expectation
+Learning about Internet-related
+tasks at school
+Learning about CT in class
+
+S_GENEFF
+
+0 = none, 4
+= highest
+0 = none, 4
+= highest
+0 = female,
+1 = male
+0 = no, 1 =
+yes
+0 = none, 4
+= highest
+1 = lowest,
+5 = highest
+Mean = 50,
+SD = 10
+Mean = 50,
+SD = 10
+Mean = 50,
+SD = 10
+Mean = 50,
+SD = 10
+
+Sociodemographic
+Sociodemographic
+Sociodemographic
+Sociodemographic
+Sociodemographic
+Studentrelated
+Studentrelated
+Studentrelated
+Studentrelated
+Studentrelated
+
+S_ICTPOSS
+
+Mean = 50,
+SD = 10
+
+Studentrelated
+
+S_ICTFUT
+
+Studentrelated
+School-related
+
+Learning about ICT safe and
+responsible use at school
+Learning with general classroom
+application at school
+Learning with specialist
+classroom application at
+school
+
+S_LRNSAFE
+
+Mean = 50,
+SD = 10
+Mean = 50,
+SD = 10
+Mean = 50,
+SD = 10
+Mean = 50,
+SD = 10
+Mean = 50,
+SD = 10
+Mean = 50,
+SD = 10
+
+S_ACMULT
+
+S_SPECEFF
+S_ICTPOSG
+
+S_LRNINTS
+S_CTCLS
+
+S_GENCLASS
+S_SPECLASS
+
+4. Results
+4.1. Evaluation of the machine learning models
+The study attempts to see if CT scores (below or above average) can
+be predicted using 18 features related to socio-demographic, studentrelated, and school-related categories. To achieve this, the study used
+Logistic Regression and several machine learning models. Although
+machine learning models may handle correlated features quite well, it
+may affect the prediction of Logistic Regression model. Therefore, we
+checked for multicollinearity using VIF. Table 2 shows the descriptive
+values of the feature variables and their VIF scores. Results from Table 2
+shows that all the VIF values were below 5 indicating no
+multicollinearity.
+The ML models were trained using 80 % of the data with 10-fold
+cross validation and tested using remaining 20 % data. Table 3 shows
+the performance of ML models to predict CT scores. Fig. 3 shows the
+ROC-AUC curve comparison of ML models. The Logistic Regression
+model predicted CT scores with moderate accuracy at .69 (AUC = .76).
+Also, to examine the prediction powers of the machine learning models
+that could outperform Logistic Regression model, we examined the
+prediction performance of Random Forest, XGBoost, AdaBoost, Gradient
+Boosting Classifier, LightGBM, and a Stacking Ensemble model that
+combined all the five models. The previous models were chosen because
+they’ve been widely used in recent studies (see Methods section). After
+fine-tuning and training, the study compared the models using standard
+metrics such as AUC, accuracy, precision, recall, and F1 score. Findings
+showed that all the ML models performed better than Logistic Regression. XGBoost, LightGBM, and Stacking Ensemble had the highest AUC
+of .79 and an accuracy of .72. Among them, XGBoost had the highest
+metrics (precision, recall, and F1-score) when predicting the belowaverage scores while Stacking ensemble had highest metrics (recall
+and F1-score) for the above-average scores. Table C1 (see Appendix C)
+shows the final hyperparameter settings of the best performing models
+after fine-tuning.
+
+School-related
+School-related
+School-related
+School-related
+
+Note. Mean = International Mean; SD=Standard Deviation.
+
+model was imported from LightGBM package. Finally, to assess the potential performance gains from model combination, an ensemble
+method was employed using the “StackingClassifier” function from the
+SKLearn package. The Stacking Ensemble combined five base models:
+Random Forest, AdaBoost, XGBoost, LightGBM, and Gradient Boosting
+classifier, with Logistic Regression serving as the meta-learner. This
+ensemble model was used to check whether the ensemble model outperforms the individual models. The study fine-tuned the hyperparameters of Random Forest, XGBoost, and AdaBoost using the
+hyperopt package. Also, the hyperparameters of the LightGBM model
+were optimized using the optuna package with 10-fold cross validation
+guiding the search process (Akiba et al., 2019). The current study did not
+employ data pre-processing techniques such as scaling or normalization
+as this would not affect the output of the logistic or rule-based tree
+models. This decision aligns with common practices for tree-based
+models, which are invariant to the scale of input variables. Scaling
+was performed for Logistic Regression before the model training but did
+not lead to measurable gains in accuracy, which is consistent with the
+results reported in Kong & Shen (2024) having similar educational
+dataset. Therefore, we used the original input of the dataset for further
+processing.
+
+Table 2
+Descriptive values of feature variables and VIF scores.
+
+3.6. Multicollinearity analysis and feature importance
+Multicollinearity implies when features are highly correlated to each
+other, it can affect the accuracy of feature importance and make the
+results less reliable. To check for the same, the study used the Variance
+Inflation Factor (VIF), calculated with the ‘variation_inflation_factor’
+function from the statsmodels package in python (Kumar, 2024). To put
+6
+
+ICILS code
+
+M
+
+SD
+
+Min
+
+Max
+
+VIF
+
+S_HISCED
+S_HOMLIT
+S_SEX
+S_INTNET
+S_EXCOMP
+S_LRNINTS
+S_ACMULT
+S_GENEFF
+S_SPECEFF
+S_ICTPOSG
+S_ICTNEG
+S_ICTFUT
+S_CTCLS
+S_LRNSAFE
+S_GENCLASS
+S_SPECLASS
+S_ICTPOSS
+CTDS
+
+3.16
+1.75
+.46
+.95
+1.94
+54.3
+49.18
+47.68
+51.76
+54.08
+51.02
+50.94
+51.5
+57.32
+44.52
+50.28
+49.82
+3.29
+
+.99
+1.33
+.49
+.21
+1.3
+8.89
+10.87
+9.31
+9.16
+10.01
+9.65
+8.97
+9.02
+9.39
+9.76
+8.64
+9.49
+.67
+
+0
+0
+0
+0
+0
+20.76
+18.63
+14.31
+28.86
+19.14
+17.08
+23.17
+21.24
+22.86
+26.62
+31.8
+19.76
+1
+
+4
+4
+1
+1
+4
+75.75
+71.02
+71.57
+71.6
+69.02
+72.61
+72.64
+76.4
+67.29
+78.12
+86.18
+69.61
+5
+
+1.203
+1.262
+1.113
+1.017
+1.075
+1.523
+1.067
+2.292
+1.946
+1.664
+1.196
+2.106
+1.734
+1.388
+2.281
+2.31
+2.269
+1.364
+
+N.K. Jha and M.-J. Tsai
+
+Computers in Human Behavior Reports 21 (2026) 100896
+
+Table 3
+Predictive performance of machine learning models.
+Model
+
+AUC
+
+Accuracy
+
+Logistic
+Random Forest
+Gradient Boosting
+AdaBoost
+LightGBM
+XGBoost
+Stacking Ensemble
+
+.76
+.78
+.79
+.78
+.79
+.79
+.79
+
+.69
+.70
+.71
+.71
+.72
+.72
+.72
+
+Precision
+
+Recall
+
+F1-score
+
+Comp. Time
+
+B-ave
+
+A-ave
+
+B-ave
+
+A-ave
+
+B-ave
+
+A-ave
+
+(sec)
+
+.67
+.69
+.70
+.70
+.71
+.71
+.71
+
+.70
+.70
+.71
+.72
+.73
+.74
+.72
+
+.65
+.65
+.66
+.67
+.69
+.72
+.67
+
+.72
+.74
+.75
+.74
+.75
+.73
+.76
+
+.66
+.67
+.68
+.69
+.70
+.72
+.69
+
+.71
+.72
+.73
+.73
+.74
+.73
+.74
+
+3.93
+37.13
+11.04
+499
+89.75
+29.2
+521.3
+
+Note. B-ave = Below average, A-ave = Above average, AUC=Area Under Curve.
+
+Fig. 3. ROC-AUC curves of machine learning models.
+
+4.2. Most important variables for model prediction
+
+among all the above ML models, the study used perturbation-based
+Shapley value to measure feature importance. Fig. 4 shows a beeswarm plot of the shap values where each point represents a single
+
+Since, the study found that XGBoost algorithm performed best
+
+Fig. 4. SHAP value plot based on XGBoost model output.
+7
+
+N.K. Jha and M.-J. Tsai
+
+Computers in Human Behavior Reports 21 (2026) 100896
+
+instance (student in our case) of a feature. The X-axis represents shap
+value i.e., the impact on the model output. The farther from zero (either
+positive or negative) implies the more that feature affects the prediction
+of students’ learning CT concepts. Also, the red color implies high
+feature value and blue implies low feature value. In Y-axis, features are
+sorted by their mean absolute shap values i.e., overall importance across
+all predictions. Top five features were: CTDS (student-related), SPECEFF
+(student-related), SPECLASS (school-related), GENEFF (studentrelated), and ACMULT (student-related). Findings from SHAP plot
+showed that there are 4 school-related variables and 1 school-related
+variables with no socio-demographic variable in top 5 models according to their impact on students’ CT concepts.
+Next, to further explore the significant categories and features to
+predict students’ CT, the study explored top 10 significant features
+across all above ML models. Appendix B showed the relative variable
+importance plot of all the ML models calculated using ‘feature_importances_’ function. Further, Fig. 5 shows the comparison of variable counts among top-5 significant features selected from all ML
+settings (SHAP plot in Fig. 4 and variable importance plots in Appendix
+B) across the three categories. Findings showed that student-related
+variables have highest impact across all ML settings followed by
+school-related variables (six ML settings) and socio-demographic variables (two settings). Furthermore, among student-related variables,
+CTDS, GENEFF, and SPECEFF were among top five features in more than
+5 models with CTDS appearing in top five features in all models. CTDS is
+the most significant predictor among all the models followed by GENEFF
+(appearing in 6 models), SPECEFF (appearing in 5 models) and ACMULT
+(appearing in 3 models). In addition, among school-related variables,
+SPECLASS was the most significant predictor (in six models). Finally,
+among socio-demographic variables HOMLIT and HISCED were significant predictor (in two models). Surprisingly, gender and internet access
+at home didn’t have much effect on students’ CT performance.
+
+below average scores while Stacking algorithm gave the best results for
+above average scores. Both models achieved the highest values in precision, recall, and F1-scores. Moreover, Multinomial Logistic Regression
+with lowest computational time had lowest scores for all the key measures. Similar results were achieved by Rajendran et al. (2022), where
+Stacking method outperformed Logistic Regression in key metrics
+despite increased computational time when predicting academic performance. These findings emphasize that advanced ensemble models
+like Stacking and XGBoost are better choices when accuracy is more
+than speed.
+The observed performance differences can be explained by the
+inherent characteristics of the models. Boosting algorithms such as
+XGBoost iteratively focus on misclassified instances, which allows them
+to capture subtle non-linear patterns in complex educational data.
+Stacking combines multiple base learners to reduce bias and variance
+from individual models. By contrast, Logistic Regression assumes a
+strictly linear relationship between predictors and outcomes, which
+limits its ability to model the higher-order interactions present in complex educational data. These results align with previous findings
+(Alhassan et al., 2020; Kong & Shen, 2024) showing that boosting-based
+approaches are particularly effective in predicting student performance
+outcomes.
+Although the best-performing models (XGBoost and Stacking) achieved an accuracy of .72 and an AUC of .79, these levels indicate moderate predictive strength. In practical terms, this accuracy may not yet
+be sufficient to make high-stakes decisions at the individual student
+level, such as identifying at-risk learners for targeted interventions.
+However, such models are valuable for identifying population-level
+trends and informing educational policy. For example, they can guide
+resource allocation by highlighting which student- or school-level factors are most consistently associated with CT achievement. In this way,
+the findings are best interpreted as providing insights into systemic
+factors influencing CT skills rather than as a diagnostic tool for individual students. Future research using richer datasets or multi-modal
+inputs (e.g., log data, classroom observations) may further enhance
+individual-level prediction.
+
+5. Discussion
+The current study evaluates the performance of various ML models in
+predicting Taiwanese eighth-grade students’ CT concepts and further
+examine the effect of socio-demographic, student-related, and schoolrelated variables on the CT achievement.
+
+5.2. Influential features to predict taiwanese students’ CT performance
+For the second research question, the findings showed that when
+predicting CT achievement, student-related variables (CTDS, S_GENEFF,
+S_SPECEFF, and S_ACMULT) had the highest impact with four variables
+among top 5 in most models followed by school-related variable
+(S_SPECLASS) with one variable and socio-demographic variables having
+
+5.1. ML ensemble models for better predicting CT performance
+For the first research question, the comparative evaluation of ML
+algorithms showed that the XGBoost performed best for predicting
+
+Fig. 5. Comparison of feature counts across categories.
+8
+
+N.K. Jha and M.-J. Tsai
+
+Computers in Human Behavior Reports 21 (2026) 100896
+
+two variables in top 5 of only two models. Among student-related variables, the CTDS variable becomes the most significant predictor of CT
+achievement. In addition, a positive correlation between the CTDS
+scores and CT performance scores can be obtained from the ICILS 2023
+international database analyser (IEA, 2025). This finding might not be
+surprising as students’ CT disposition and CT skills are closely related
+(Yin et al., 2020; Kukul & Karatas, 2019). The position of CTDS variables
+across all models underscores the importance of how students approach
+computational challenges, beyond their technical skills. Findings of the
+present large-scale study reconfirmed the correlations between the CT
+competency and CT disposition (Tsai et al., 2022a), supporting the
+developmental mechanism of CT profiled in the CT developmental
+model. This implies that CTDS tendency, a cognitive variable, is the most
+important factor of CT performance, which is their behavioural responses to complex problems. The findings furthered our understanding
+about how students’ CT competencies or skills can be developed from
+cognitive mechanism to behavioural mechanism.
+In practical sense, students with a high CT disposition have a habit to
+think systematically similar to a computer scientist when they encounter
+complex/unfamiliar problems. These students will most likely decompose large problems into smaller subproblems for simplification, find
+generalization across problems, evaluate, and refine their solutions
+iteratively. In contrast, students with low CT disposition cannot think
+systematically when they find unfamiliar or complex problems or tasks
+that appear abstract or time consuming. These differences highlight why
+CT disposition functions as a powerful predictor of CT performance.
+Basically, it reflects not just knowledge but the mindset and problemsolving habits that drive effective engagement with computational
+tasks. To put simply, a strong CT disposition added with persistence and
+confidence can improve students’ engagement with CT tasks, fostering
+CT skills development. Also, self-efficacy related to general (e.g., using
+Excel to calculate data) and specialist applications (e.g., programming in
+a block-based environment) were significant predictors of CT, indicating
+that students’ confidence in using technology plays a crucial role in their
+ability to apply CT skills effectively. In addition, academic multitasking
+was also a significant predictor of CT. However, it is found that multitasking was negatively associated with Taiwanese CT performance scores
+(Fraillon, 2024) suggesting that student’s attention might be distracted
+when they study with ICT. The negative relationship between academic
+multitasking and Taiwanese students’ CT performance is not found in all
+countries (Fraillon, 2024) suggesting plausible cultural differences may
+be worth exploring in future studies.
+Next, among school-related variables, SPECLASS was a significant
+predictor of CT. This finding is consistent with the literature as studies
+have found positive effects of structured ICT integration and targeted
+application-based learning on students’ CT skills development (Fraillon
+et al., 2020, p. 297). The school environment, particularly the curriculum focusing on specialized digital tools, appears to support CT learning
+more effectively when such tools are directly embedded into instruction.
+However, the frequency of using ICT in Taiwanese schools was found
+significantly lower than the international average, suggesting some
+other factors may have facilitated students’ CT skills development in
+schools or outside schools. For example, the educational research resources provided by the National Science and Technological Council in
+Taiwan, the funding from industrial companies and non-profit organizations etc. may also play a role in shaping students’ CT learning
+motivation and achievement.
+Further, among socio-demographic variables, home literacy index and
+parent highest education were significant predictors with relative low
+impact. These findings suggest that students with more literate home
+environments and parents with higher educational levels are likely to
+perform better in CT assessments, which is consistent with previous
+research on the socio-culture dimensions of learning (Fraillon et al.,
+2020, p. 297). The findings of ICILS 2018 and 2023 had similar findings
+regarding the socio-economic-status’s (SES’s) effects on CT performance
+(Fraillon, 2024). Other factors such as gender and Internet access at
+
+home didn’t significantly affect Taiwanese students’ CT performance
+which indicates a potential narrowing of the digital divide in Taiwan.
+The plausible diminish of the gender difference is in line with the prior
+literature concerning the digital learning and education in Taiwan (Tsai
+& Tsai, 2010; Tsai et al., 2015, 2019; Lee et al., 2023b).
+5.3. Implications of the study
+The findings achieved from this study have practical implications for
+educators and policymakers. If we can identify the key predictors of
+students CT performance early in academic journey, educational institutions can design targeted intervention to support learners who may
+be at risk of underachievement. Such early identification is crucial to
+teach CT, which is an essential 21st-century skill, just like reading,
+writing, and arithmetic. Moreover, the successful application of ML
+approaches in this context highlights the potential for integrating predictive analytics into educational decision making.
+Apart from pedagogical implications, the study has wider implications for designing school curriculum, training teachers, and improving
+education technology development. Firstly, the strong effect of studentrelated factors such as CT disposition and digital self-efficacy shows that
+school must have more CT-focused programs. These programs can help
+students feel more confident and interest in CT by using hands-on and
+inquiry-based learning activities. Second, schools should design curriculum that encourages teachers to use more specialized applications
+during classroom teaching. Thirdly, although socio-demographic factors
+like parents’ education and home-literacy had less impact, they were
+still important. This suggests that government should work towards
+giving all students equal access to learning resources at home. Lastly, the
+current study shows that ML can be useful not just for predictive analytics but also for creating future leaning environments that adjust to
+each student’s needs. Future smart systems could analyse students’ realtime behaviour data to give personalized help. These systems could help
+identify students that need early support, especially those in rural areas
+with less support, and could also help in designing national policies for
+teaching CT in schools.
+6. Conclusion
+This study explored how socio-demographic, student-related, and
+school-related factors influence Taiwanese eighth graders’ CT performance using the ICILS 2023 dataset and several machine learning
+models. Among all models, XGBoost and Stacking Ensemble performed
+best, showing that advanced ensemble methods can better capture the
+complex patterns in educational data. The study makes two main contributions. First, it found that student-level factors, especially CTDS,
+were the strongest predictors of CT performance. This means that how
+students think and approach problems (such as their ability to plan,
+decompose, and persist) plays a bigger role than their background or
+school environment. Second, by using ML models on a large-scale international dataset, this study shows that data-driven methods can help
+identify important factors influencing CT such as CTDS. This suggests
+that a cognitive variable can contribute to behavioural performance,
+implying a connection between cognitive and the behavioural mechanism in CT development. Future studies may further explore the interaction effect of the variables on students’ CT performance. These
+insights can help teachers and policymakers design programs that better
+support students’ CT learning.
+7. Limitations and future work
+The study has few limitations. First, the data used in this study was
+collected from grade-8 Taiwanese students that completed the ICILS2023 questionnaire. The results may not be consistent with the students from countries. Future studies can explore more diverse datasets
+with different countries to see if the findings are consistent across
+9
+
+N.K. Jha and M.-J. Tsai
+
+Computers in Human Behavior Reports 21 (2026) 100896
+
+different countries. Also, considering diverse dataset for different grade
+and age-groups can help to examine if the findings are consistent across
+the same. Second, the study used socio-demographic, student, and
+school-related factors to predict CT. However, there may be other variables related to teacher support, or students’ learning habits, that are
+not included in the analysis. Future studies could also include those
+variables to get a deeper understanding of what influences CT
+improvement. Third, the binary classification method simplifies CT
+performance into “below-average” and “above-average”, which may
+miss some details about students’ actual CT skills. Future studies can use
+multi-class classification by classifying CT scores into multiple levels as
+defined by the ICILS. Finally, an important point is that the predictors in
+the current study may not act independently but interact with one
+another. For instance, CTDS may mediate or moderate the effects of ICT
+self-efficacy on students’ CT performance scores. Future studies could
+employ hierarchical SEM or explainable AI models to understand the
+interaction effect among the predictors. In addition, the study focused
+more on prediction (using ML models) than on explaining why certain
+students perform better. Future studies can use explainable AI methods
+to explain how ML models classify and make decisions.
+
+Declaration of the use of AI
+
+CRediT authorship contribution statement
+
+Acknowledgements
+
+Nitesh Kumar Jha: Writing – review & editing, Writing – original
+draft, Visualization, Validation, Formal analysis, Conceptualization.
+Meng-Jung Tsai: Writing – review & editing, Writing – original draft,
+Supervision, Project administration, Investigation, Data curation,
+Conceptualization.
+
+The authors thank to the financial support from The National Science
+and Technology Council, Taiwan, and The Ministry of Education,
+Taiwan. Special thanks go to the colleagues from the IEA in Hamberg,
+Germany, the IEA in Amsterdam, Neitherlands, and the ICILS 2023
+National Research Center at NTNU, Taiwan for their excellent research
+collaboration in the ICILS 2023 study.
+
+During the preparation of this work the authors used AI only
+Grammarly for proof reading and spell checking. The authors edited the
+content as needed and take full responsibility for the content of the
+publication.
+Funding statement
+This study is financially supported by The National Science and
+Technology Council, Taiwan, under the project number: NSTC 1122410-H-003-037-MY3. This study is also partially supported by The
+Ministry of Education, Taiwan, for the funding of the ICILS 2023 study in
+Taiwan.
+Declaration of competing interest
+The authors declare that they have no known competing financial
+interests or personal relationships that could have appeared to influence
+the work reported in this paper.
+
+Appendix A. ML algorithms used in this study
+A.1. Logistic Regression
+The Logistic Regression model calculates the probability of a student scoring below and above average CT scores. During training, the model learns
+best values for the constants and coefficients by using logistic function to match the training data (Bradley & Rajendran, 2022). The below equation
+shows the formula to predict how likely student-i can have below and above average CT score.
+f(CT class, i) = β0,class + βS sex,class × xS sex,i + βS HOMLIT,class × XS HOMLIT,i + … + βCTDS,class × xCTDS,i
+
+(1)
+
+A.2. Random Forest
+The Random Forest algorithm is an ensemble method that combines the predictions of multiple decision trees to identify patterns and make
+accurate predictions. Each decision tree in the model consists of several layers made up of nodes, where the data is split based on certain conditions. At
+every node, the data is divided into two branches depending on a specific rule, and this process continues through the tree until it reaches a final
+decision or class label (Rodriguez et al., 2006). In the context of this study, the algorithm continues splitting until it predicts the CT score (below or
+above average) of a student. The key criterion used to decide how the data is split at each node is called information gain (Equation (2)), which
+measures how much uncertainty (or entropy) is reduced after a split. Entropy, defined in Equation (3), represents the level of disorder or randomness
+in the data. A lower entropy and higher information gain indicate better feature selection at each step of the tree. As a result, the model becomes more
+efficient at making predictions (Bradley & Rajendran, 2021). Each tree in the forest makes its own prediction for the GPA class. The final predicted CT
+class is determined by majority voting i.e., class with the most votes across all trees.
+∑
+Entropy =
+( pi log2 pi )
+(2)
+i
+
+Information Gain = Entropy (parent) – Weighted Average [Entropy (children)]he final output.
+
+(3)
+
+A.3. Gradient Boosting Classifier
+Gradient Boosting Method (GBM) is an ensemble learning technique similar to Random Forests, but it builds decision trees in a sequential manner
+rather than in parallel. The boosting process involves training multiple trees one after another, where each new tree focuses on correcting the mistakes
+made by the previous one (Friedman, 2002). Specifically, after the first tree is built, more weight is assigned to the instances that were misclassified,
+allowing the next tree to better handle those difficult cases. In this way, each subsequent tree is a refined or “boosted” version of the previous one.
+10
+
+N.K. Jha and M.-J. Tsai
+
+Computers in Human Behavior Reports 21 (2026) 100896
+
+Gradient boosting uses the gradient of a loss function to guide the improvement of the model. A common form of the loss function is expressed as y =
+ax + b + e, where y is the model’s output, a and b are coefficients, and e is the error term. This function helps evaluate how well the model fits the data,
+and minimizing this error across iterations leads to a more accurate predictive model.
+A.4. AdaBoost
+The Adaptive Boosting (AdaBoost), is an ensemble learning technique that combines several weak learners (e.g., simple decision trees) into a single
+strong predictive model (Hussain & Zaidi, 2024). The main idea behind AdaBoost is to train a sequence of models, where each new model focuses more
+on the instances that were misclassified by the previous ones. At the start, all training samples are assigned equal weights. After the first weak learner is
+trained, the weights of the misclassified samples are increased so that the next model can pay more attention to them. This process continues for a set
+number of rounds, with each learner contributing to the final model based on its accuracy. More accurate models have higher influence, while less
+accurate ones contribute less. The final output is a weighted majority vote (for classification) or a weighted sum (for regression) of the predictions from
+all the weak learners (Hussain & Zaidi, 2024). As a result, AdaBoost adaptively improves performance by emphasizing harder-to-classify examples
+with each iteration, leading to a more robust and accurate final model.
+A.5. LightGBM
+LightGBM (Light Gradient Boosting Machine) is a highly efficient and fast implementation of gradient boosting decision trees, specifically designed
+to handle large datasets and high-dimensional features (Qiuqian et al., 2025). Like other boosting methods, LightGBM builds an ensemble of decision
+trees sequentially, where each new tree corrects the errors made by the previous ones. However, it differs in the way it constructs these trees. Instead of
+growing trees level-wise (as in traditional methods), LightGBM grows tree leaf-wise. At each step, it finds the leaf with the highest loss and splits it,
+which helps in reducing the loss more efficiently (Qiuqian et al., 2025). This approach allows LightGBM to achieve better accuracy than traditional
+boosting methods, especially on large datasets.
+A.6. XGBoost
+Extreme Gradient Boosting (XGBoost) is a widely used and powerful machine learning algorithm that builds an ensemble of decision trees to make
+accurate predictions (Asselman et al., 2023). Like other boosting techniques, XGBoost creates trees one after another (level-wise), where each new tree
+focuses on correcting the mistakes made by the previous trees. This step-by-step process helps improve the overall performance of the model. What
+makes XGBoost stand out is its ability to combine speed and accuracy. It uses second-order derivatives (i.e., both gradients and Hessians) to better
+understand the direction and magnitude of the error while optimizing the model. This leads to faster and more accurate training. XGBoost also includes several advanced features such as regularization to prevent overfitting, missing value handling, and parallel processing, which allows it to work
+efficiently even on large datasets. Additionally, it supports tree pruning and sparsity-aware algorithms to make training even more effective (Asselman
+et al., 2023). Overall, XGBoost is a reliable choice when high performance is needed for tasks like classification, regression, or ranking. Its robust
+design and proven success in many machine learning competitions make it one of the most trusted tools among data scientists and researchers.
+A.7. Stacking Ensemble
+Stacking is a machine learning technique that combines multiple models to build a stronger predictive model, especially when it is unclear which
+individual algorithm would perform best (Kurz et al., 2020). Instead of relying on a single model, stacking brings together several different learning
+algorithms, each capable of capturing unique patterns in the data (Kurz et al., 2020; Sikora, 2015). These individual models are referred to as base
+learners. To implement stacking, the dataset is typically divided into K folds. In each iteration, K − 1 folds are used to train the base models, and the
+remaining fold is used to generate predictions. This procedure is repeated so that each fold serves as the validation set once. The intermediate predictions produced by all base learners are then used to form a new dataset, which is used to train a second-level model, often called the meta-learner.
+The meta-learner is responsible for making the final prediction based on the outputs of the base models. This two-layered structure allows stacking to
+take advantage of the strengths of various models and improve overall accuracy (Parvin et al., 2015; Sikora, 2015).
+Appendix B. Variable importance plot for different ML algorithms
+
+11
+
+N.K. Jha and M.-J. Tsai
+
+Computers in Human Behavior Reports 21 (2026) 100896
+
+Fig. B1. Variable importance plot for Logistic Regression.
+
+Fig. B2. Variable importance plot for Random Forest.
+
+Fig. B3. Variable importance plot for Gradient Boosting.
+
+12
+
+N.K. Jha and M.-J. Tsai
+
+Computers in Human Behavior Reports 21 (2026) 100896
+
+Fig. B4. Variable importance plot for XGBoost.
+
+Fig. B5. Variable importance plot for AdaBoost.
+
+Fig. B6. Variable importance plot for LightGBM.
+
+13
+
+N.K. Jha and M.-J. Tsai
+
+Computers in Human Behavior Reports 21 (2026) 100896
+
+Fig. B7. Variable importance plot for Stacking Model.
+
+Appendix C. Final Hyperparameters of the ML Models
+
+Table C1
+Final hyperparameters used in this study
+Model
+
+Key Hyperparameters
+
+XGBoost
+LightGBM
+
+colsample_bytree = .94; gamma = 3.31; learning_rate = .046; max_depth = 7; min_child_weight = 2.4; n_estimators = 150; subsample = .73
+learning_rate = .113; num_leaves = 121; n_estimators = 100; max_depth = 4; min_child_samples = 49; n_trials = 50; subsample = .813; colsample_bytree = .753;
+reg_alpha = 5.4; reg_lambda = 4.158; objective = binary; metric = auc
+n_estimators = 100; max_depth = 6; min_samples_split = 2
+learning_rate = .296; max_depth = 1; n_estimators = 175
+n_estimators = 200; learning_rate = .1; max_depth = 3
+
+Random Forest
+AdaBoost
+Gradient
+Boosting
+Stacking
+Ensemble
+
+Base models = RF, AdaBoost, XGBoost, LightGBM, Gradient Boosting; Meta-learner = Logistic Regression
+
+Note* Hyperparameters were optimized using cross validation.
+
+Data availability
+
+Barr, V., & Stephenson, C. (2011). Bringing computational thinking to K-12: What is
+involved and what is the role of the computer science education community? ACM
+Inroads, 2(1), 48–54. https://doi.org/10.1145/1929887.1929905
+Bradley, J., & Rajendran, S. (2021). Increasing adoption rates at animal shelters: A twophase approach to predict length of stay and optimal shelter allocation. BMC
+Veterinary Research, 17(1), 1–16. https://doi.org/10.1186/s12917-020-02728-2
+Bradley, J., & Rajendran, S. (2022). Developing predictive models for early detection of
+intervertebral disc degeneration risk. Healthcare Analytics, 2, Article 100054.
+https://doi.org/10.1016/j.health.2022.100054
+Brennan, K., & Resnick, M. (2012). New frameworks for studying and assessing the
+development of computational thinking. Proceedings of the 2012 annual meeting of the
+American Educational Research Association, 1, 1–25. https://scratched.gse.harvard.
+edu/ct/files/AERA2012.pdf.
+Bull, G., Garofalo, J., & Hguyen, N. R. (2020). Thinking about computational thinking.
+Journal of Digital Learning in Teacher Education, 36(1), 6–18. https://doi.org/
+10.1080/21532974.2019.1694381
+Csizmadia, A., Curzon, P., Dorling, M., Humphreys, S., Ng, T., Selby, C., & Woollard, J.
+(2015). Computational thinking: A guide for teachers. https://eprints.soton.ac.
+uk/424545/.
+Denner, J., Campe, S., & Werner, L. (2019). Does computer game design and
+programming benefit children? A meta-synthesis of research. ACM Transactions on
+Computing Education, 19(3). https://doi.org/10.1145/3277565. Article 19.
+Ersozlu, Z., Taheri, S., & Koch, I. (2024). A review of machine learning methods used for
+educational data. Education and Information Technologies, 29, 22125–22145. https://
+doi.org/10.1007/s10639-024-12704-0
+Ezeamuzie, N. O. (2023). Abstractive-based programming approach to computational
+thinking: Discover, extract, create, and assemble. Journal of Educational Computing
+Research, 61(3), 605–638. https://doi.org/10.1177/07356331221134423
+Ezeamuzie, N. O. (2024). Influence of school characteristics on computational thinking:
+A supervised machine learning approach. Education and Information Technologies, 29
+(15), 20077–20101. https://doi.org/10.1007/s10639-024-12644-9
+
+The authors do not have permission to share data.
+References
+Akiba, T., Sano, S., Yanase, T., Ohta, T., & Koyama, M. (2019). Optuna: A nextgeneration hyperparameter optimization framework. In Proceedings of the 25th ACM
+SIGKDD international conference on knowledge discovery & data mining (pp.
+2623–2631). ACM.
+Alhassan, A., Zafar, B., & Mueen, A. (2020). Predict students’ academic performance
+based on their assessment grades and online activity data. International Journal of
+Advanced Computer Science and Applications, 11(4), 185–194. https://doi.org/
+10.14569/IJACSA.2020.0110425
+Allen, J., Robbins, S. B., Casillas, A., & Oh, I. S. (2008). Third-year college retention and
+transfer: Effects of academic performance, motivation, and social connectedness.
+Research in Higher Education, 49(7), 647–664. https://www.jstor.org/stable/
+25704590.
+Asselman, A., Khaldi, M., & Aammou, S. (2023). Enhancing the prediction of student
+performance based on the machine learning XGBoost algorithm. Interactive Learning
+Environments, 31(6), 3360–3379. https://doi.org/10.1080/10494820.2021.1928235
+Atmatzidou, S., & Demetriadis, S. (2016). Advancing students’ computational thinking
+skills through educational robotics: A study on age and gender relevant differences.
+Robotics and Autonomous Systems, 75, 661–670. https://doi.org/10.1016/j.
+robot.2015.10.008
+Avcu, Y. E., & Ayverdi, L. (2020). Examination of the computer programming selfefficacy’s prediction towards the computational thinking skills of the gifted and
+talented students. International Journal of Educational Methodology, 6(2), 259–270.
+https://doi.org/10.12973/ijem.6.2.259
+
+14
+
+N.K. Jha and M.-J. Tsai
+
+Computers in Human Behavior Reports 21 (2026) 100896
+
+Ezeamuzie, N. O., & Leung, J. S. C. (2022). Computational thinking through an empirical
+lens: A systematic review of literature. Journal of Educational Computing Research, 60
+(2), 481–511. https://doi.org/10.1177/07356331211033158
+Ezeamuzie, N. O., Leung, J. S., Fung, D. C., & Ezeamuzie, M. N. (2024). Educational
+policy as predictor of computational thinking: A supervised machine learning
+approach. Journal of Computer Assisted Learning, 40(6), 2872–2885. https://doi.org/
+10.1111/jcal.13041
+Fraillon, J. (2024). An international perspective on digital literacy: Results from ICILS
+2023. International association for the evaluation of educational achievement. http://
+files.eric.ed.gov/fulltext/ED661744.pdf.
+Fraillon, J., Ainley, J., Schulz, W., Duckworth, D., & Friedman, T. (2019). IEA
+international computer and information literacy study 2018: Assessment framework.
+Springer. https://doi.org/10.1007/978-3-030-19389-8
+Fraillon, J., Ainley, J., Schulz, W., Friedman, T., & Duckworth, D. (2020). Preparing for
+life in a digital world: IEA international computer and information literacy study 2018
+international report. Springer Nature. https://doi.org/10.1007/978-3-030-38781-5
+Friedman, J. H. (2002). Stochastic gradient boosting. Computational Statistics & Data
+Analysis, 38(4), 367–378. https://doi.org/10.1016/S0167-9473(01)00065-2
+Gagné, R. M. (1985). The conditions of learning and theory of instruction. Holt. https://une
+sdoc.unesco.org/ark:/48223/pf0000167421.
+Ghahramani, Z. (2015). Probabilistic machine learning and artificial intelligence. Nature,
+521(7553), 452–459. https://doi.org/10.1038/nature14541
+Grover, S., & Pea, R. (2013). Computational thinking in K–12: A review of the state of the
+field. Educational Researcher, 42(1), 38–43. https://doi.org/10.3102/
+0013189x12463051
+Gul, M. N., Abbasi, W., & Babar, M. Z. (2025). Data driven decisions in education: A
+comprehensive machine learning framework for student performance prediction.
+Interactive Educational Technology, 5, 1–18. https://doi.org/10.1007/s10791-02509585-3
+Guzdial, M. (2008). Paving the way for computational thinking. Communications of the
+ACM, 51(8), 25–27. https://doi.org/10.1145/1378704.1378713
+Hsu, T.-C., Chang, S.-C., & Hung, Y.-T. (2018). How to learn and how to teach
+computational thinking: Suggestions based on a review of the literature. Computers &
+Education, 126, 296–310. https://doi.org/10.1016/j.compedu.2018.07.004
+Hussain, S. S., & Zaidi, S. S. H. (2024). Adaboost ensemble approach with weak classifiers
+for gear fault diagnosis and prognosis in dc motors. Applied Sciences, 14(7). https://
+doi.org/10.3390/app14073105. Article 3105.
+Jha, N. K., Bhowmik, P. K., & Bhagat, K. K. (2024). Investigating the effect of multiple
+try-feedback on students computational thinking skills through online inquiry-based
+learning platform. Educational Technology Research and Development, 72(6),
+3295–3347. https://doi.org/10.1007/s11423-024-10397-3
+Jonassen, D. H. (2000). Toward a design theory of problem solving. Educational
+Technology Research & Development, 48(4), 63–85. https://doi.org/10.1007/
+bf02300500
+Knuth, D. E. (1974). Computer science and its relation to mathematics. The American
+Mathematical Monthly, 81(4), 323–343. https://doi.org/10.1080/
+00029890.1974.11993556
+Kong, S. C., & Lai, M. (2023). Effects of a teacher development program on teachers’
+knowledge and collaborative engagement, and students’ achievement in
+computational thinking concepts. British Journal of Educational Technology, 54(2),
+489–512. https://doi.org/10.1111/bjet.13256
+Kong, S. C., & Shen, W. (2024). Using students’ cognitive, affective, and demographic
+characteristics to predict their understanding of computational thinking concepts: A
+machine learning-based approach. Interactive Learning Environments, 32(10),
+7647–7660. https://doi.org/10.1080/10494820.2024.2331148
+Kumar, S. (2024). Basic regression. In Python for accounting and finance: An integrative
+approach to using python for research (pp. 303–317). Cham: Springer Nature
+Switzerland. https://doi.org/10.1007/978-3-031-54680-8.
+Kurz, C. F., Maier, W., & Rink, C. (2020). A greedy stacking algorithm for model
+ensembling and domain weighting. BMC Research Notes, 13(1), 1–6. https://doi.org/
+10.1186/s13104-020-4931-7
+Lee, S. W.-Y., Liang, J.-C., Hsu, C.-Y., Chien, F. P., & Tsai, M.-J. (2023a). Exploring
+potential factors to students’ computational thinking: Interactions between gender
+and ICT-resource differences in Taiwanese junior high schools. Educational
+Technology & Society, 26(3), 176–189. https://doi.org/10.30191/ETS.202307_26
+(3).0013
+Lee, S. W. Y., Liang, J. C., Hsu, C. Y., & Tsai, M. J. (2023b). Students’ beliefs about
+computer programming predict their computational thinking and computer
+programming self-efficacy. Interactive Learning Environments, 32(8), 4088–4108.
+https://doi.org/10.1080/10494820.2023.2194929
+Liu, Z., Kang, H., & Wu, Z. (2024). Bringing computational thinking into classrooms: A
+systematic review of teachers’ professional development in K-12. International
+Journal of STEM Education, 11(1), 12. https://doi.org/10.1186/s40594-024-00510-6
+Lundberg, S. M., & Lee, S. I. (2017). A unified approach to interpreting model
+predictions. Advances in Neural Information Processing Systems, 30. https://procee
+dings.neurips.cc/paper_files/paper/2017/file/8a20a8621978632d76c43dfd28b6
+7767-Paper.pdf.
+Lye, S. Y., & Koh, J. H. L. (2014). Review on teaching and learning of computational
+thinking through programming: What is next for K-12? Computers in Human Behavior,
+41, 51–61. https://doi.org/10.1016/j.chb.2014.09.012
+Mannila, L., Dagiene, V., Demo, B., Grgurina, N., Mirolo, C., Rolandsson, L., & Settle, A.
+(2014). Computational thinking in K-9 education. In A. Clear, & R. Lister (Eds.),
+Proceedings of the working group reports of the 2014 on innovation & technology in
+computer science education conference (pp. 1–29). ACM. https://doi.org/10.1145/
+2713609.2713610.
+
+Martin, G., Richardson, A., Bergen, H., Roeger, L., & Allison, S. (2005). Perceived
+academic performance, self-esteem and locus of control as indicators of need for
+assessment of adolescent suicide risk: Implications for teachers. Journal of
+Adolescence, 28(1), 75–87. https://doi.org/10.1016/j.adolescence.2004.04.005
+Nardelli, E. (2019). Do we really need computational thinking? Communications of the
+ACM, 62(2), 32–35. https://doi.org/10.1145/3231587
+National Research Council. (2013). Next generation science standards: For states, by states.
+The National Academies Press. https://doi.org/10.17226/18290
+Noh, J., & Lee, J. (2020). Effects of robotics programming on the computational thinking
+and creativity of elementary school students. Educational Technology Research &
+Development, 68(1), 463–484. https://doi.org/10.1007/s11423-019-09708-w
+Organisation for Economic Co-operation and Development. (2018). PISA 2021
+mathematics framework. OECD Publishing. https://www.oecd.org/pisa/sitedocum
+ent/PISA-2021-mathematics-framework.pdf.
+Palop, B., Díaz, I., Rodriguez-Muniz, L. J., & Santaengracia, J. J. (2025). Redefining
+computational thinking: A holistic framework and its implications for K-12
+education. Education and Information Technologies, 1–26. https://doi.org/10.1007/
+s10639-024-13297-4
+Papert, S. (1980). Mindstorms: Children, computers, and powerful ideas. Basic Books.
+Parvin, H., MirnabiBaboli, M., & Alinejad-Rokny, H. (2015). Proposing a classifier
+ensemble framework based on classifier selection and decision tree. Engineering
+Applications of Artificial Intelligence, 37, 34–42. https://doi.org/10.1016/j.
+engappai.2014.08.005
+Polikar, R. (2012). Ensemble learning. In Ensemble machine learning (pp. 1–34). Boston,
+MA, USA: Springer. https://doi.org/10.1007/978-1-4419-9326-7_1.
+Popat, S., & Starkey, L. (2019). Learning to code or coding to learn? A systematic review.
+Computers & Education, 128, 365–376. https://doi.org/10.1016/j.
+compedu.2018.10.005
+Qiuqian, W., GaoMin, KeZhu, Z., & Chenchen. (2025). A light gradient boosting machine
+learning-based approach for predicting clinical data breast cancer. Multiscale and
+Multidisciplinary Modeling, Experiments and Design, 8(1), 75. https://doi.org/
+10.1007/s41939-024-00662-6
+Rajendran, S., Chamundeswari, S., & Sinha, A. A. (2022). Predicting the academic
+performance of middle-and high-school students using machine learning algorithms.
+Social Sciences & Humanities Open, 6(1). https://doi.org/10.1016/j.
+ssaho.2022.100357. Article 100357.
+Ranasinghe, P., Wathurapatha, W. S., Mathangasinghe, Y., & Ponnamperuma, G. (2017).
+Emotional intelligence, perceived stress and academic performance of Sri Lankan
+medical undergraduates. BMC Medical Education, 17(1), 1–7. https://doi.org/
+10.1186/s12909-017-0884-5
+Rodriguez, J. J., Kuncheva, L. I., & Alonso, C. J. (2006). Rotation forest: A new classifier
+ensemble method. IEEE Transactions on Pattern Analysis and Machine Intelligence, 28
+(10), 1619–1630. https://doi.org/10.1109/TPAMI.2006.211
+Sanusi, I. T., Oyelere, S. S., Vartiainen, H., Suhonen, J., & Tukiainen, M. (2023).
+A systematic review of teaching and learning machine learning in K–12 education.
+Education and Information Technologies, 28, 5967–5997. https://doi.org/10.1007/
+s10639-022-11416-7
+Scherer, R., Siddiq, F., & Viveros, B. S. (2019). The cognitive benefits of learning
+computer programming: A meta-analysis of transfer effects. Journal of Educational
+Psychology, 111(5), 764–792. https://doi.org/10.1037/edu0000314
+Scherer, R., Siddiq, F., & Viveros, B. S. (2020). A meta-analysis of teaching and learning
+computer programming: Effective instructional approaches and conditions.
+Computers in Human Behavior, 109. https://doi.org/10.1016/j.chb.2020.106349.
+Article 106349.
+Selby, C., & Woollard, J. (2013). Computational thinking: the developing definition. https:
+//eprints.soton.ac.uk/356481/.
+Shahin, M., Gonsalvez, C., Whittle, J., Chen, C., Li, L., & Xia, X. (2022). How secondary
+school girls perceive computational thinking practices through collaborative
+programming with the micro: Bit. Journal of Systems and Software, 183, Article
+111107. https://doi.org/10.1016/j.jss.2021.111107
+Sheather, S. (2009). A modern approach to regression with R. Springer Science & Business
+Media. https://doi.org/10.1007/978-0-387-09608-7
+Shute, V. J., Sun, C., & Asbell-Clarke, J. (2017). Demystifying computational thinking.
+Educational Research Review, 22, 142–158. https://doi.org/10.1016/j.
+edurev.2017.09.003
+Sikora, R. (2015). A modified stacking ensemble machine learning algorithm using
+genetic algorithms. In Handbook of research on organizational transformations through
+big data analytics (pp. 43–53). IGI Global. https://doi.org/10.4018/978-1-52251759-7.ch016.
+Singh, M., Nagar, H., & Sant, A. (2016). Using data mining to predict primary school
+student performance. IJARIIE-ISSN, 2(1), 43–46. http://ijariie.com/AdminUploa
+dPdf/Using_Data_Mining_to_Predict_Primary_School__Student_Performance_ijarii
+e1543.pdf.
+Srinivas, S. (2020). A machine learning-based approach for predicting patient
+punctuality in ambulatory care centers. International Journal of Environmental
+Research and Public Health, 17(10). https://doi.org/10.3390/ijerph17103703.
+Article 3703.
+Sun, L., Hu, L., & Zhou, D. (2022). Programming attitudes predict computational
+thinking: Analysis of differences in gender and programming experience. Computers
+& Education, 181. https://doi.org/10.1016/j.compedu.2022.104457. Article
+104457.
+Tsai, M. J., Chien, F. P., Wen-Yu Lee, S., Hsu, C. Y., & Liang, J. C. (2022a). Development
+and validation of the computational thinking test for elementary school students
+(CTT-ES): Correlate CT competency with CT disposition. Journal of Educational
+Computing Research, 60(5), 1110–1129.
+
+15
+
+N.K. Jha and M.-J. Tsai
+
+Computers in Human Behavior Reports 21 (2026) 100896
+Proceedings of the 14th workshop in primary and secondary computing education.
+https://doi.org/10.1145/3361721.3361729
+Wainer, J. (2016). Comparison of 14 different families of classification algorithms on 115
+binary datasets. arXiv preprint arXiv:1606.00930. https://doi.org/10.48550/
+arXiv.1606.00930
+Weintrop, D., Beheshti, E., Horn, M., Orton, K., Jona, K., Trouille, L., & Wilensky, U.
+(2016). Defining computational thinking for mathematics and science classrooms.
+Journal of Science Education and Technology, 25(1), 127–147. https://doi.org/
+10.1007/s10956-015-9581-5
+Whalen, S., & Pandey, G. (2013). A comparative analysis of ensemble classifiers: Case
+studies in genomics. December. In Proceedings of the IEEE international conference on
+data mining (pp. 807–816) (pp. 7–10). https://doi.org/10.1109/ICDM.2013.21.
+Dallas, TX, USA: ICDM.
+Wing, J. (2006). Computational thinking. Communications of the ACM, 49(3), 33–35.
+https://doi.org/10.1145/1118178.1118215
+Zhang, L., & Nouri, J. (2019). A systematic review of learning computational thinking
+through scratch in K-9. Computers & Education, 141. https://doi.org/10.1016/j.
+compedu.2019.103607. Article 103607.
+
+Tsai, M.-J., Liang, J.-C., Hou, H.-T., & Tsai, C.-C. (2015). Males are not as active as
+females in online discussion: Gender differences in face-to-face and online discussion
+strategies. Australasian Journal of Educational Technology, 31(3), 263–277.
+Tsai, M.-J., Liang, J.-C., & Hsu, C.-Y. (2021). The computational thinking scale for
+computer literacy education. Journal of Educational Computing Research, 59(4),
+579–602.
+Tsai, M.-J., Liang, J.-C., Lee, S. W.-Y., & Hsu, C.-Y. (2022b). Structural validation for the
+Developmental Model of Computational Thinking. Journal of Educational Computing
+Research, 60(1), 56–73. https://doi.org/10.1177/07356331211017794
+Tsai, M.-J., & Tsai, C.-C. (2010). Junior high school students’ internet usage and selfefficacy: A re-examination of the gender gap. Computers & Education, 54(4),
+1182–1192.
+Tsai, M.-J., Wang, C.-Y., & Hsu, P.-F. (2019). Developing the Computer Programming
+Self-Efficacy Scale (CPSES) for computer literacy education. Journal of Educational
+Computing Research, 56(8), 1345–1360. https://doi.org/10.1177/
+0735633117746747
+Tsarava, K., Leifheit, L., Ninaus, M., Román-González, M., Butz, M. V., Golle, J.,
+Trautwein, U., & Moeller, K. (2019). Cognitive correlates of computational thinking.
+
+16
+
+

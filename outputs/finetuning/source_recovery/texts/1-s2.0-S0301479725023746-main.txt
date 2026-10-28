@@ -1,0 +1,1054 @@
+Journal of Environmental Management 390 (2025) 126398
+
+Contents lists available at ScienceDirect
+
+Journal of Environmental Management
+journal homepage: www.elsevier.com/locate/jenvman
+
+Research article
+
+Predicting adolescents’ environmental action: From individual to
+national-level factors using an explainable machine learning approach
+Bo Hu a , Jing Gao b, Yannuo Feng c , Ziqian Xia d , Kun Wang e, Liuna Geng a,*
+a
+
+School of Social and Behavioral Science, Nanjing University, PR China
+School of Psychical Education, Northeast Normal University, PR China
+c
+School of Information Science and Technology, Northeast Normal University, PR China
+d
+Doerr School of Sustainability, Stanford University, United States
+e
+Faculty of Education, The University of Melbourne, Australia
+b
+
+A R T I C L E I N F O
+
+A B S T R A C T
+
+Keywords:
+Environmental action
+Shapley additive explanations
+Machine learning
+Adolescents
+
+As a key force in future environmental actions, youth play a crucial role in driving societal transformation.
+However, the factors influencing youth environmental actions have not been fully validated, and the role of
+national-level influences is often overlooked. This study aims to identify the factors that are associated with
+adolescents’ public-sphere and private-sphere environmental actions. Unlike prior studies, which typically use
+single-level analyses, we simultaneously examine individual, school, and national factors to capture the oftenoverlooked national context. Using PISA-2018 data on 420,339 adolescents from 66 countries, we used
+LightGBM and XGBoost to build predictive models. Shapley Additive Explanations (SHAP) were then applied to
+detect non-linear threshold effects and to quantify each feature’s contribution to environmental action. Results
+indicate that individual-level factors, such as environmental attitudes, the discussion of international events in
+school, and critical thinking, are significantly associated with adolescents’ private-sphere environmental actions.
+Conversely, national-level factors, such as Sustainable Development Goal (SDG) performance and country
+vulnerability, play a particularly strong role in shaping public-sphere environmental actions. This study underscores the importance of incorporating national-level factors, which have often been under-emphasized in
+research on youth environmental behavior.
+
+1. Introduction
+In the context of environmental crises such as global warming, air
+pollution, and resource depletion, addressing climate issues requires the
+concerted effort of multiple generations (Jamieson, 2015; Law et al.,
+2025). Adolescents are a crucial force for future environmental action
+(Barraclough et al., 2021; Körfgen et al., 2017). Early environmental
+actions can foster individual environmental awareness and contribute to
+broader societal environmental transformation. (Ballesteros et al.,
+2025). As a bridging generation in the climate-commitment gap, adolescents’
+environmental
+actions
+are
+especially
+significant.
+Pro-environmental practices during school years lay the foundation for
+lifelong behavior patterns (Hahn, 2021). Additionally, adolescents, soon
+to become the largest workforce globally, will reshape future
+socio-economic systems (Sayal et al., 2016; Wijaya and Kokchang,
+2023).
+
+However, existing studies have long neglected the differences in the
+driving mechanisms between public-sphere and private-sphere environmental actions (Hansmann and Binder, 2020; Liobikienė and Poškus,
+2019). This oversight has led to one-size-fits-all educational policies that
+fail to design targeted interventions for different types of actions.
+Furthermore, existing research tends to focus on single-level analyses,
+lacking a comprehensive consideration of cross-level factors. Different
+levels of factors, such as individual environmental attitudes, school-level
+educational support, and national-level policy frameworks, may have
+distinct impacts on adolescent environmental actions (Aral and
+López-Sintas, 2022; Huoponen, 2024; Mónus, 2022). Whereas traditional statistical models often falter when faced with multicollinearity
+among numerous factors, interpretable machine-learning algorithms
+can seamlessly handle such high-dimensional, correlated data sets,
+modeling complex relationships automatically and delivering superior
+predictive accuracy (Lundberg and Lee, 2017; Olden et al., 2008).
+
+* Corresponding author. Liuna Geng School of Social and Behavioral Sciences, Xianlin campus, Nanjing University, Nanjing, Jiangsu Province, PR China.
+E-mail address: gengliuna@nju.edu.cn (L. Geng).
+https://doi.org/10.1016/j.jenvman.2025.126398
+Received 20 March 2025; Received in revised form 20 June 2025; Accepted 25 June 2025
+Available online 28 June 2025
+0301-4797/© 2025 Elsevier Ltd. All rights are reserved, including those for text and data mining, AI training, and similar technologies.
+
+B. Hu et al.
+
+Journal of Environmental Management 390 (2025) 126398
+
+Moreover, post-hoc explanation techniques can identify which factors
+matter most and reveal threshold or diminishing-return effects within
+these relationships; pinpointing such turning points offers policymakers
+concrete targets for intervention. A deeper exploration and systematic
+analysis of these multi-level influences, particularly in a globalized
+context, can help us better understand the driving factors behind youth
+environmental actions.
+
+significant advances in abstract reasoning and moral judgment, equipping them to connect individual behaviors with broader environmental
+consequences (Hahn, 2021). The formation and development of environmental actions in adolescents is therefore a complex, multi-layered
+process shaped by factors at the individual, school, and national levels
+(Huoponen, 2024; D. Li et al., 2019; Otto et al., 2019; Pisano and Lubell,
+2017). Given that most adolescents remain embedded within formal
+education systems, the school environment, via civic- and
+climate-education curricula, extracurricular initiatives such as environmental clubs, and peer norms, emerges as a universally accessible
+and potent context for fostering environmental agency (Lenzi et al.,
+2012). Simultaneously, adolescents are particularly receptive to
+macro-level sociopolitical cues that shape their understanding of collective responsibility; national-level sustainability discourses, legislative
+developments, and media representations thus serve as critical sources
+of information that scaffold their developing civic worldviews
+(Wray-Lake and Ballard, 2023).
+At the individual level, substantial research has highlighted the
+profound influence of cognitive structures, attitudes, and emotional
+states on adolescents’ environmental actions. Individual attitudes toward the environment, climate-change understanding, and critical
+thinking have been shown to significantly shape both private and public
+environmental behaviors (Brosch, 2021; Langenbach et al., 2020; Piao
+and Managi, 2024; Zhang and Li, 2023). These cognitive and attitudinal
+factors serve as the foundation for understanding adolescent engagement in environmental action.
+The school level is uniquely influential because schools are not only
+spaces for transmitting knowledge but also for fostering social responsibility and collective consciousness (Soutter and Clark, 2024).
+School environments—through environmental education curricula,
+cultural atmospheres, and campus activities—play a subtle yet significant role in shaping adolescents’ environmental behavior. Offering
+climate-change courses, organizing environmental volunteer activities,
+and cultivating a green campus culture can enhance environmental
+awareness and encourage participation in public environmental actions
+(Goldman et al., 2018; Ma et al., 2023; Meitiyani et al., 2022).
+Furthermore, schools’ social networks and exposure to international
+perspectives can stimulate concern for global environmental issues and
+prompt action among adolescents (Nordström, 2008; Pong and Tam,
+2023). This school-specific influence is particularly important during
+adolescence, as it provides a unique environment for developing both
+individual and collective environmental behaviors.
+However, while the individual and school levels have been extensively discussed, the national level, which represents the macroenvironment, has received comparatively less attention despite its substantial role. National policies, environmental legislation, and social
+governance shape adolescents’ living environments (Urwin and Jordan,
+2008), as well as the opportunities and motivations they have to engage
+in environmental actions. National investments in environmental protection, climate change response, and the promotion of Sustainable
+Development Goals all contribute to shaping adolescents’ environmental awareness and attitudes (Craig and Petrun Sayers, 2019; Kadir,
+2022). Additionally, cultural backgrounds, social values, and a country’s
+emphasis on environmental issues influence how adolescents’ environmental actions are nurtured and expressed. Research shows that cultural
+dimensions such as collectivism and long-term orientation positively
+affect both private- and public-sphere environmental actions, whereas
+uncertainty avoidance tends to reduce private-sphere actions (Mi et al.,
+2020; Riaz et al., 2023). Despite these insights, national-level factors
+remain underexplored in understanding youth environmental behavior,
+highlighting the need for further research that integrates individual,
+school, and country influences within a comprehensive framework.
+
+1.1. Differences between private-sphere and public-sphere environmental
+actions
+Environmental actions are often defined and studied within two
+distinct domains: the public sphere and the private sphere (Hadler and
+Haller, 2011; Kleespies et al., 2024; Zheng et al., 2019). Public-sphere
+environmental actions are those in which individuals benefit the environment indirectly through collective or civic engagement; for example,
+joining environmental demonstrations, participating in eco-clubs or
+community clean-ups, or advocating for environmental policies. When
+adopted by groups, such public actions can generate substantial environmental impacts. In contrast, private-sphere environmental actions
+are those in the personal or household sphere where individuals directly
+influence the environment through their behavior; for instance, saving
+electricity at home, recycling waste, or reducing personal water use (Lou
+and Li, 2023).
+Public- and private-sphere environmental actions follow distinct
+motivational logics that emerge from different socialization spheres
+during adolescence. Consistent with the Value–Belief–Norm and identity
+frameworks (Ajibade and Boateng, 2021; Gkargkavouzi et al., 2019;
+Stern et al., 1999), adolescents act privately when sustainable behavior
+aligns with their internalized moral obligations and self-concept; hence
+individual cognition, self-efficacy, and family socialization are the primary engines of private engagement (Alscher et al., 2022; Lenzi et al.,
+2012; Singh et al., 2020). Private-sphere actions take shape largely
+within the family context during adolescence, where daily routines and
+parental modeling cultivate personal norms, values, and environmental
+self-identity (Gifford and Nilsson, 2014; Gkargkavouzi et al., 2019).
+Public-sphere actions depend on collective efficacy, social norms, and
+institutional trust. School civic education quality and peer networks
+supply the social support and normative cues that galvanize collective
+behavior, while national-level policies and public discourse further
+signal whether such participation is valued (Ainger and Fanetti, 2024;
+Salazar et al., 2022). Public-sphere environmental actions often hinge
+on a sense of collective efficacy and normative expectations within one’s
+community or peer group (van Zomeren et al., 2008). For example,
+feeling part of an environmental activist community can motivate individuals to protest or vote for green policies due to a shared group norm
+of acting. Collective norms and peer influences play a pivotal role. Trust
+in government and institutions can also shape public behavior; when
+people believe that authorities will respond to citizen action, they are
+more likely to participate. (Xing et al., 2022).
+Adolescents’ actions in both the public and private domain can
+mutually reinforce one another. Private-sphere environmental actions
+can drive greater environmental awareness and participation in publicsphere environmental actions (J. Wang and Kong, 2023); conversely,
+increased awareness and social movements from public-sphere environmental actions can also foster the development of private-sphere
+environmental actions (Saunders et al., 2013). Understanding the
+environmental actions of adolescents in both domains and their influencing factors can offer a better understanding of their comprehensive
+motivations and behavior patterns related to environmental action.
+1.2. Influencing factors on adolescent environmental action
+Adolescence represents a critical developmental stage characterized
+by the transition from parent-guided routines to the formation of selfdirected civic identities. During this period, young people experience
+
+1.3. Explainable machine learning in environmental social science
+As data-driven approaches gain prominence in environmental social
+2
+
+B. Hu et al.
+
+Journal of Environmental Management 390 (2025) 126398
+
+science, researchers are increasingly adopting explainable machine
+learning techniques to bridge predictive modeling with theoretical
+insight (Hino et al., 2018; Rolnick et al., 2022). However, these sophisticated models often operate as black boxes, leaving scholars and
+policymakers asking why a model made a given prediction. Explainable
+machine-learning methods have thus emerged as a vital means of
+ensuring transparency and interpretability in this domain (Barredo
+Arrieta et al., 2020; Rudin, 2019).
+Explainability tools help researchers reveal which variables influence model decisions, linking complex analytics to social science theory
+and making results actionable. Among post-hoc methods, Local Interpretable Model-Agnostic Explanations (LIME) and SHapley Additive
+exPlanations (SHAP) are most widely used in environmental studies.
+LIME explains a single prediction by perturbing inputs around that case
+and fitting a simple local surrogate; its insights are instance-specific and
+not automatically generalizable (Ribeiro et al., 2016). SHAP, grounded
+in cooperative-game theory, assigns each feature a Shapley value indicating its contribution to a prediction and satisfying fairness and consistency properties (Lundberg and Lee, 2017). Aggregating Shapley
+values across all cases yields both local explanations and global importance rankings, offering a comprehensive view of model behavior.
+These explainability methods are rapidly gaining adoption in sustainability research and environmental applications. Interpretability
+techniques can successfully uncover which factors most strongly influence model predictions, lending credibility and transparency. For
+example, Li et al. (2024) present a multimodal deep-learning ensemble
+(CITAB) that blends time-series indicators with policy-related text to
+forecast China’s carbon emissions; ablation tests confirm the hybrid
+model’s clear edge over single-source baselines, highlighting the added
+value of textual information. Wang et al. (2025) develop an
+IVMD-Autoformer-ELM pipeline for carbon-allowance price forecasting
+and use SHAP to show that macro-economic indices and coking-coal
+prices are the leading drivers of long-, medium-, and short-term price
+trends. Explainable Machine Learning allows researchers to assess the
+contribution of specific variables to outcomes, thereby validating and
+enriching theoretical frameworks. In domains from climate-change risk
+assessment to biodiversity management, scholars use Explainable Machine Learning to identify key drivers, detect nonlinear interactions, and
+even discover emergent patterns that traditional methods might miss.
+
+Adolescence is a formative period for civic and environmental
+values, and adolescents’ environmental actions must be understood
+within developmental and sociopolitical contexts (Wray-Lake and Ballard, 2023). Building on these gaps, this study employs machine learning
+algorithms to explore the factors influencing adolescent environmental
+actions from a multi-dimensional, cross-level perspective. By distinguishing the concepts of public- and private-sphere environmental
+actions, this research provides a more precise and detailed understanding pathway, helping to fill the gap in environmental action
+research regarding behavioral levels and typology. Additionally, this
+study not only focuses on individual-level factors but also explores the
+influence of school and national levels on adolescent actions. By systematically analyzing the three levels, individual, school, and national,
+this study proposes an integrated, multi-level framework for understanding the influences on environmental actions. Finally, this study
+uses machine learning methods to uncover the complex relationships
+between variables. Compared to traditional regression analysis, machine learning can effectively capture the combined effects of multiple
+factors on action, offering more accurate and personalized prediction
+results, and providing a scientific basis for the formulation of intervention strategies for environmental actions.
+2. Method
+2.1. Data source
+This study uses the 2018 Programme for International Student
+Assessment (PISA 2018) dataset, a global educational assessment project
+providing information on education, environment, social behavior,
+emotions, and other societal factors (Schleicher, 2019).1 PISA 2018 uses
+a two-stage, stratified, probability-proportional-to-size design (OECD,
+2019). Schools were first sampled with probabilities proportional to
+their enrolment of 15-year-olds, after which a random set of up to 42
+students was selected within each participating school. To safeguard
+coverage, PISA set international response rate targets of 85 %
+(weighted) at the school level and 80 % (weighted) at the student level.
+Systems that failed to reach these thresholds were excluded from the
+public database, ensuring nationally representative samples. Nevertheless, caution is warranted when extrapolating to non-participating nations or to out-of-school youth, who were not covered by the PISA frame.
+After
+excluding
+adolescents
+who
+did
+not
+answer
+the
+environmental-action items, the final sample comprised 420,339 adolescents from 66 countries.
+
+1.4. The present study
+Despite the accumulation of research on adolescent environmental
+actions, existing studies still have several limitations. First, most
+research tends to treat adolescent environmental actions as a single
+behavioral pattern, lacking differentiation and comparison between
+private and public-sphere environmental actions. However, the driving
+forces and realization pathways for private and public-sphere environmental actions may be fundamentally different, so it is essential to
+consider these differences when predicting adolescent environmental
+actions. Second, traditional regression models may be ill-suited to capture the multi-level interaction effects and non-linear relationships
+present in our data – especially given the large number of predictors. In
+contrast, machine learning algorithms can handle high-dimensional
+data and automatically model complex interactions. Moreover, machine learning often achieves higher predictive accuracy, providing a
+more reliable identification of key factors (Pargent et al., 2023; Zhu
+et al., 2023). Finally, research on youth environmental action has been
+fragmented. Many studies focus on individual-level factors within single
+countries or compare national outcomes without examining the
+within-country dynamics. This leaves a gap in understanding how
+multi-level factors collectively shape environmental behavior. Additionally, while school influences (e.g., environmental education) have
+been studied, the broader national context, such as a country’s environmental performance or cultural orientation, is often missing from the
+conversation.
+
+2.2. Variable selection
+Each selected variable was grounded in prior research on environmental action. Individual-level factors like environmental attitudes and
+knowledge are central in models of environmental action (Ajzen, 1991;
+Liobikienė and Poškus, 2019), and socio-emotional factors have been
+linked to youth engagement in social issues (Davidson and Kecinski,
+2022; Zheng et al., 2019). School-level factors such as a collaborative
+school climate, inclusion of climate change in the curriculum, and students’ feeling of school belonging have been shown to foster civic and
+environmental engagement during adolescence (Huoponen, 2024;
+Soutter and Clark, 2024). At the national level, we considered objective
+sustainability indicators which signal a country’s environmental
+context, as well as cultural dimensions known to influence collective
+action tendencies (Günther et al., 2025; Hadler and Haller, 2011; Pisano
+and Lubell, 2017; Tam, 2024).
+The environmental behaviors of adolescents are categorized into
+1
+Although PISA 2022 data have recently become available, it does not
+include the same environmental behavior measures as 2018; therefore, we
+focused on PISA 2018, which contains the most relevant variables for our study.
+
+3
+
+B. Hu et al.
+
+Journal of Environmental Management 390 (2025) 126398
+
+private and public-sphere environmental actions, and the following
+variables were selected at different levels. The individual level includes
+variables such as gender, parents’ education levels, life satisfaction, and
+climate-change explanatory capacity, along with other psychological
+and attitudinal measures. The school level includes variables such as
+school location, school type, collaborative school climate, the presence
+of a climate change course in the curriculum, student participation in
+environmental clubs or voluntary service, and overall school belonging.
+The national level includes variables such as the Environmental Performance Index (EPI), Sustainable Development Goals Scores, and the
+country’s Climate Risk Index. Table S1 displays the coding information
+and scale items for all the variables included in this study.
+Table S2 presents the descriptive statistics and reliability for all
+variables. Fig. S1 presents the correlation matrix of the included variables. The predictor variables and the individual and school-level
+response variables were extracted from the 2018 PISA dataset. The
+data were pre-processed such that higher values of continuous variables
+represent greater values, and binary variables were coded as 0 and 1.
+Below is a detailed explanation of the national-level influencing factors.
+Environmental Performance Index (EPI): The EPI evaluates the
+protection of human health from environmental harm and the safeguarding of ecosystems (Wolf et al., 2022). It is a data-driven global
+summary of sustainability performance, scoring 180 countries on
+climate change performance, environmental health, and ecosystem vitality using 40 performance indicators. The EPI is considered a benchmark for measuring the closeness of countries to global environmental
+policy goals.
+Country Culture: Based on Hofstede’s framework, six cultural dimensions are identified across 214 countries: power distance, individualism, masculinity, uncertainty avoidance, long-term orientation, and
+indulgence (Hofstede, 2011).
+Global Climate Risk Index (CRI): The CRI analyzes the extent to
+which countries have been affected by weather-related loss events (e.g.,
+storms, floods, heatwaves) with higher values indicating greater risk
+(Eckstein et al., 2018). This study focuses on two levels of CRI: CRI 2018
+represents the local climate risk at the time of the survey, while CRI
+1999–2018 reflects the climate risk experienced by adolescents in their
+local areas from birth to the time of the survey.
+Human Development Index (HDI): The HDI is a summary measure of
+average achievement in key dimensions of human development,
+including a long and healthy life, being knowledgeable, and having a
+decent standard of living, with higher values indicating better national
+development (Sagar and Najam, 1998).
+World Governance Index (WGI): The WGI describes the wide patterns of governance quality perceptions across countries and periods
+(Kaufmann et al., 2011), with higher values indicating better governance. It includes (1) the process by which governments are selected,
+monitored, and replaced, (2) the government’s capacity to formulate
+and implement effective policies, and (3) the respect for institutions
+governing economic and social interactions among citizens.
+Sustainable Development Score (SDS): The SDS measures a country’s
+progress towards achieving 17 Sustainable Development Goals (SDGs).
+This study focuses on the average SDG index, which represents the mean
+score of the different SDGs. Recent studies have also examined the
+balanced SDG index, which measures the equilibrium among the
+different SDGs (Y. Liu et al., 2024). We include both indices to further
+explore the relationship between SDG progress and individual environmental actions.
+Notre Dame Global Adaptation Initiative (ND-GAIN): The ND-GAIN
+Index uses a data-driven approach to show which countries are best
+prepared to deal with global changes caused by overcrowding, resource
+constraints, and climate disruption (C. Chen et al., 2015). This study
+focuses on two sub-dimensions of the ND-GAIN Index: Vulnerability and
+Readiness scores. Vulnerability measures a country’s exposure, sensitivity, and capacity to adapt to the negative effects of climate change,
+with higher scores indicating greater vulnerability. Readiness measures
+
+a country’s ability to leverage investments and convert them into
+adaptation actions, with higher scores indicating greater preparedness
+and adaptability.
+2.3. Machine learning modeling
+To assess the effect of the variable relationship on adolescent environmental actions, this study employed four common machine learning
+algorithms for model training and prediction. We included two gradientboosting tree ensembles, LightGBM and XGBoost, because, across a wide
+range of tabular data sets, they consistently deliver state-of-the-art
+predictive accuracy while remaining computationally efficient
+(Shwartz-Ziv and Armon, 2022). Both frameworks (i) natively handle
+heterogeneous feature types and missing values, (ii) capture high-order
+interactions and non-linearities without manual feature engineering,
+and (iii) incorporate built-in regularization and early stopping mechanisms that curb over-fitting. The Light Gradient Boosting Machine
+(LightGBM) is a gradient-boosting algorithm framework that provides
+efficient training speeds and lower memory consumption (Ke et al.,
+2017). It is suitable for large datasets and effectively handles classification and regression problems. Extreme Gradient Boosting (XGBoost) is
+a widely used boosting tree algorithm that reduces overfitting by
+introducing regularization terms (T. Chen and Guestrin, 2016). It converges quickly on large datasets and has excellent generalization ability
+and the capacity to handle complex features. Random Forest integrates
+multiple decision trees for classification, offering a robust model that
+reduces over-fitting and handles complex data, particularly
+high-dimensional data (Breiman, 2001). Multilayer Perceptron (MLP) is
+a feedforward neural network model trained via the backpropagation
+algorithm, suitable for data with nonlinear relationships (Murtagh,
+1991). Through a multi-layer neural network structure, MLP can capture
+complex patterns and relationships within the data. Random Forest and
+a Multilayer Perceptron (MLP) were retained as representative baselines
+for bagging-based ensembles and neural networks, respectively.
+During data pre-processing, the dataset was split into training (90 %)
+and testing (10 %) sets. Ten-fold cross-validation was applied to the
+training set, and the testing set was reserved for final model evaluation.
+Missing values were imputed with the predictive mean matching
+method in the MICE package (Buuren and Groothuis-Oudshoorn, 2011),
+and minority class samples were oversampled using the Synthetic Minority Oversampling Technique (SMOTE) algorithm to address sample
+imbalance (Chawla et al., 2002). Fig. S2 presents the results of variable
+imputation.
+Hyperparameter tuning was performed using Optuna, a framework
+based on Bayesian optimization that automatically searches the hyperparameter space and progressively optimizes the results through trial
+and feedback mechanisms, effectively preventing overfitting and
+improving model stability, especially when handling large datasets
+(Akiba et al., 2019). For every algorithm we conducted stratified
+ten-fold cross-validation on the training data, repeating the fold split
+across 20 Optuna trials. Mean cross-validated accuracy served as the
+optimization objective, while Recall, AUC, and F1 were recorded for
+robustness. The algorithm–hyper-parameter combination that achieved
+the highest average accuracy in cross-validation was then retrained on
+the full training set and evaluated on the 10 % hold-out test set. Integer
+parameters were sampled on a unit grid (step = 1) with suggest_int,
+whereas continuous parameters were drawn from a uniform distribution
+over the stated bounds (log-uniform for α in the MLP). The search spaces
+mirrored the ranges defined in our optimization script: for XGBoost we
+varied n_estimators (100-1,000), learning_rate (0.01–0.30), max_depth
+(2–16), subsample (0.50–1.00), colsample_bytree (0.50–1.00), and gamma
+(0–0.50); for LightGBM we explored n_estimators (100-1,000), learning_rate (0.01–0.30), max_depth (2–16), num_leaves (20–80), and feature_fraction (0.50–1.00); for the Random Forest we tuned n_estimators
+(100-1,000), max_depth (2–16), min_samples_split (2–20), and min_samples_leaf (1–10); and for the MLP we searched across hidden-layer
+4
+
+B. Hu et al.
+
+Journal of Environmental Management 390 (2025) 126398
+
+structures {(50), (100), (50, 50), (100, 50)}, activation {tanh, relu},
+solver {sgd, adam}, alpha (10− 5-10− 1, log-uniform), learning_rate {constant, adaptive}, and max_iter (100–500). The best hyper-parameter set
+for each model was selected according to the highest cross-validated
+accuracy.
+To evaluate model performance, this study used accuracy as the
+primary evaluation metric. Accuracy represents the proportion of
+correctly predicted cases out of all cases and reflects the model’s predictive power in classification tasks. Based on accuracy, the bestperforming model was selected as the final prediction model, and
+additional metrics (F1, Recall, and AUC) were reported. Table S3 presents the definitions and formulas for the performance metrics.
+After model selection and evaluation, this study used SHAP to further
+understand the contribution of each variable to the prediction outcomes
+(Lundberg and Lee, 2017). SHAP is a method for explaining machine
+learning model predictions by quantifying the contribution of each
+feature to the final prediction, helping to understand how the model
+makes its decisions. In this study, SHAP values for each variable were
+calculated to associate with private and public environmental actions,
+and variables were ranked according to their contribution. Higher SHAP
+values indicate a greater influence on the model’s predictions. A global
+
+dependency analysis was also conducted to explore the relationship
+between features and model outputs, helping to reveal the nonlinear
+relationships between variables.
+3. Result
+Tables S4 and S5 present the performance of the four algorithms on
+the validation and test sets, respectively. For the validation set
+(Table S4), LightGBM achieved the highest accuracy (0.699), F1 score
+(0.698), and recall (0.699), with an AUC value of 0.762. These performance metrics were superior to those of the other models. On the test set
+(Table S5), LightGBM also performed the best, with an accuracy of
+0.700, F1 score of 0.702, recall of 0.702, with an AUC value of 0.767.
+Overall, LightGBM exhibited optimal performance on both the validation and test sets for public-sphere environmental actions, with high
+consistency between the validation and test results, indicating good
+generalization ability of the model.
+Tables S6 and S7 display the performance of the four algorithms on
+the validation and test sets, respectively. For the validation set
+(Table S6), XGBoost achieved the highest accuracy (0.830) and recall
+(0.830), with an AUC value of 0.709. Random Forest achieved the
+
+Fig. 1. Feature importance ranking of factors influencing public and private-sphere environmental actions.
+5
+
+B. Hu et al.
+
+Journal of Environmental Management 390 (2025) 126398
+
+highest F1 score (0.780), whereas Random Forest recorded the highest
+F1 score (0.780 vs 0.768 for LightGBM). On the test set (Table S7),
+XGBoost again achieved the highest accuracy and recall (both 0.833)
+with an AUC of 0.718, whereas Random Forest posted a slightly higher
+F1 score (0.781 vs 0.772). Accordingly, XGBoost was selected for
+private-sphere actions because it demonstrated high accuracy and
+robustness on both sets and generalized well to new data.
+To assess variance distribution, we computed intraclass correlation
+coefficients (ICCs) from unconditional three-level models. For privatesphere action, ICCs were 0.02 at the school level and 0.06 at the country level, indicating that about 8 % of the variance was between clusters.
+For public-sphere action, ICCs were 0.03 (school) and 0.23 (country),
+implying that 26 % of the variance was between clusters.
+Fig. 1 presents the feature importance ranking of the top 30 variables
+for private and public-sphere environmental actions. In the case of
+private-sphere environmental actions, individual and school factors play
+a more significant role, while in the case of public-sphere environmental
+actions, individual, school, and national factors collectively influence
+the outcome. Figs. 2–4 show the influence of individual, school, and
+national variables on private- and public-sphere actions (top ten variables) and their relative importance.
+The drivers of adolescent private-sphere environmental actions are
+mainly concentrated at the individual and school levels. For example,
+environmental attitudes, international event discussion in school, and
+critical thinking were highly significant associates of private-sphere
+environmental actions. Adolescents’ environmental awareness and
+critical thinking are key motivators for acting in the family setting. A
+sense of life meaning and school belonging also play important roles in
+private-sphere environmental actions, indicating that emotional factors
+and a sense of identification with a group can influence adolescents’
+environmental actions in the family.
+
+In contrast, public-sphere environmental actions are associated with
+individual, school, and national factors. The average value of national
+sustainable development goals, environmental attitudes, and international event discussion in school ranked highest in the SHAP values for
+public-sphere environmental actions. Key variables for public-sphere
+environmental actions, such as country vulnerability, adolescents’
+sense of school belonging, and long-term-orientation culture reveal that
+participation in public-sphere actions is driven by social interaction and
+national context, thereby enhancing adolescents’ awareness of collective action.
+Figs. 5 and 6 illustrate the nonlinear relationships of the SHAP values
+for the top 30 influencing factors of private and public-sphere environmental actions. These relationships were verified through linear and
+polynomial regression models, with the model providing the best fit
+chosen for visualization. Analysis of private-sphere actions revealed that
+school-collaboration atmosphere, climate-change explanation, sense of
+life meaning, local climate-risk index, respect for cultural differences,
+power distance, indulgence, and WGI each exhibited an inverted Ushaped relationship. Understanding climate change, individualism,
+mean SDS, EPI, and long-term orientation showed a U-shaped relationship. For public-sphere actions, school belonging, WGI, sense of life
+meaning, CRI, respect for cultural differences, and power distance
+demonstrated inverted U-shaped relationships, while MeanSDS, environmental attitude, vulnerability, long-term orientation, critical
+thinking, ERI, uncertainty avoidance, feeling lively, and feeling proud
+followed a U-shaped trend.
+4. Discussion
+This study systematically analyses adolescent environmental actions
+using interpretable machine learning methods. While much of the
+
+Fig. 2. Feature Importance of Individual Factors in Public and Private-sphere Environmental Actions. Note: (a) The SHAP importance ranking and mean value plot
+for individual features. (b) The contribution of each feature within the private and public-sphere environmental actions in terms of their overall influence.
+6
+
+B. Hu et al.
+
+Journal of Environmental Management 390 (2025) 126398
+
+Fig. 3. Feature Importance of School Factors in Public and Private-sphere Environmental Actions Note: (a) The SHAP importance ranking and mean value plot for
+school-level features. (b) The contribution of each feature within the private and public-sphere environmental actions in terms of their overall influence.
+
+geographic region) to see if adolescent environmental behavior follows
+region-specific trends or cultural norms. Such an analysis may provide a
+more nuanced understanding of how the national context influences
+youth environmental action, complementing our current findings.
+Interestingly, our models achieved better predictive performance for
+private-sphere actions than for public-sphere actions. This pattern implies that adolescents’ private environmental behavior is chiefly governed by individual-level factors that were well represented in our
+dataset, thereby boosting accuracy. Public actions, by contrast, hinge on
+broader social and institutional dynamics that extend beyond the indicators captured in our model, leaving greater unexplained variance.
+Similarly, prior work shows that collective environmental engagement
+draws on diffuse motivational and contextual factors (Becker and
+Tausch, 2015; Reed et al., 2018; Uysal et al., 2024). The comparatively
+lower performance for public-sphere actions than private-sphere actions
+likely reflect larger set of unobserved structural and cultural influences
+shaping adolescents’ participation in collective environmental efforts.
+Through the application of explainable machine learning models,
+this study also highlights several key features that have been insufficiently explored in traditional research. For example, the importance of
+life meaning and exposure to different cultural groups in private-sphere
+environmental actions, and the significance of school belonging and
+international event discussion in associating public-sphere environmental actions. These variables are still relatively rare in environmental
+action studies, especially regarding adolescents. This underscores the
+importance of the school as a primary venue for socialization and
+learning, where its cultural atmosphere and social support systems play
+a crucial role in the formation of adolescents’ public-sphere environmental actions (Y.-B. Liu et al., 2022). Feature importance analysis from
+the machine learning models reveals the potential influence of these
+variables, further emphasizing that adolescent environmental actions
+
+existing research has predominantly focused on individual influences,
+this study underscores the significant role of national-level and schoollevel factors, which have often been overlooked. Based on the PISA
+2018 dataset, we found that private-sphere environmental actions are
+more influenced by individual and school-level factors, while publicsphere environmental actions are shaped by a combination of individual, school, and crucially, national factors. This highlights the importance of integrating national-level influences into the understanding of
+adolescent environmental action.
+Consistent with previous research, environmental attitude emerged
+as a key factor of both private- and public-sphere actions, aligning with
+theoretical perspectives (e.g., Theory of Planned Behavior) that attitude
+is a prerequisite for action (Ajzen, 1991; Yadav and Pathak, 2016; Yuriev
+et al., 2020). Regarding private-sphere environmental actions, our study
+also indicates the significant influence of cognitive factors such as critical thinking and the ability to explain climate change. Adolescents with
+greater climate change knowledge are more likely to engage in environmental actions in their personal lives (P. Liu et al., 2020; Mago et al.,
+2024). For public-sphere environmental actions, adolescents’ social
+identity and sense of school belonging play a pivotal role. Our findings
+show that social support in school, particularly discussion of international events and a sense of belonging, is strongly associated with adolescents’ participation in public-sphere actions. Moreover,
+national-level factors such as mean SDS, vulnerability, and EPI are
+also significantly associated with public-sphere actions. Unlike
+private-sphere environmental actions, public actions are more driven by
+external social and cultural environments, providing empirical evidence
+for designing context-specific environmental policies across different
+national settings. Furthermore, we acknowledge that deeper patterns
+might emerge by examining regional or cultural clusters of countries.
+Future research could classify countries into typologies (such as by
+7
+
+B. Hu et al.
+
+Journal of Environmental Management 390 (2025) 126398
+
+Fig. 4. Feature Importance of National Factors in Public and Private Environmental Actions. Note: (a) The SHAP importance ranking and mean value plot for
+national features. (b) The contribution of each feature within the private and public-sphere environmental actions in terms of their overall influence.
+
+are not only driven by individual cognition but are deeply shaped by
+social and cultural factors. Additionally, the role of national mean SDS
+and the EPI in environmental action is particularly prominent, with
+these variables exhibiting a U-shaped relationship with both public and
+private-sphere environmental actions. This result suggests that government efforts related to environmental issues may enhance adolescent
+environmental actions. However, this effect could have diminishing
+returns, with excessive government performance potentially having a
+counterproductive effect, leading to a crowding-out effect (Knook et al.,
+2022; Rabaa et al., 2024; Y. Wang and Hao, 2020), reducing adolescents’ sense of environmental responsibility. Future research could
+explore how educational strategies at the school level combine with
+national policies and individual attitudes to collectively promote adolescents’ environmental actions.
+
+engagement during the teenage years is best understood as a coconstruction between maturing psychological capacities and the opportunity structures afforded by schools and national institutions
+(Wray-Lake and Ballard, 2023). Ecological–systems perspectives situate
+the classroom as adolescents’ most immediate mesosystem for
+rehearsing civic roles (Wray-Lake et al., 2017), while macro-systems,
+such as a country’s sustainability narrative or climate legislation, supply the cultural scripts that signal whether collective environmental
+participation is valued (Dunlap & and York, 2008; Pearson et al., 2024).
+Our finding that international event discussion, school belonging, and
+national SDG performance strongly align with public-sphere action
+dovetails with this developmental–ecological model: these contexts
+provide the scaffolding that transforms nascent concern into outward
+activism once cognitive and identity capacities are development-ready.
+Early and mid-adolescence are periods of pronounced heterogeneity:
+some youth accelerate toward civic action, whereas others disengage if
+contexts are unsupportive. This heterogeneity helps explain why
+private-sphere behaviors in our study remained highly individual,
+driven by personal attitudes and efficacy, whereas public-sphere behaviors were more predictable from contextual cues. By interpreting our
+machine-learning results, we underscore that fostering adolescent
+environmental action requires both strengthening individual competencies and engineering supportive school and national environments.
+Our findings resonate with the Civic Voluntarism Model (Verba et al.,
+1995), which proposes that civic participation is driven by resources,
+psychological engagement, and recruitment opportunities. In our
+context, adolescents’ resources and engagement (e.g., knowledge, attitudes, and critical thinking skills) fueled private-sphere environmental
+actions, while recruitment and institutional support (e.g., peer and
+school influences, opportunities to join environmental initiatives)
+
+4.1. Theoretical and practical implications
+From a theoretical perspective, this study offers a deeper exploration
+of the differences between public and private-sphere environmental
+actions and identifies important factors through machine learning
+models, addressing gaps in the theoretical framework of adolescent
+environmental action research. Adolescents’ environmental actions are
+influenced not only by individual cognition but also by multiple factors
+across the school, family, and national levels. National and school-level
+factors play a more significant role in public-sphere environmental actions. This finding broadens the perspective on environmental action
+research and provides new directions for further exploration of the
+multidimensional influences on environmental actions.
+Adopting a developmental lens clarifies why multilevel contexts
+weigh so heavily on adolescents’ environmental conduct. Civic
+8
+
+B. Hu et al.
+
+Journal of Environmental Management 390 (2025) 126398
+
+Fig. 5. SHAP Dependence Plot of Private-sphere Environmental Actions. Note: Each dependence plot shows how a single feature affects the output of the prediction
+model. The solid black line represents a curved relationship, and the dashed black line represents a linear relationship.
+
+enabled public-sphere actions. This suggests that fostering both personal
+capacities and supportive social structures is vital for promoting
+adolescent environmental involvement.
+Drawing directly on our empirical results, we outline three complementary avenues for action. First, households and community organizations can reinforce the individual drivers of private-sphere behavior,
+environmental attitude, climate-change understanding, and critical
+thinking, by creating regular opportunities for adolescents to practice
+and reflect on sustainable habits. For example, organize short ecochallenge campaigns and inter-generational conversations in which
+young people explain climate topics to relatives. Second, schools, the
+primary social arena for most adolescents, should focus on fostering a
+welcoming, collaborative climate. Service-learning projects and studentled green clubs give young people visible roles, reinforce a sense of
+belonging, and normalize collective environmental action. International
+exchanges, whether virtual or in-person, can further expand students’
+perspectives and encourage public-sphere engagement by exposing
+them to peers who model civic environmental participation. Third,
+governments and educational authorities can amplify these efforts by
+embedding climate and sustainability topics across the curriculum and
+by signaling institutional support for youth engagement. Policy options
+include integrating climate literacy into core subjects, funding youthdriven environmental initiatives, and ensuring adolescents have a
+voice in local or national sustainability planning. Because our findings
+highlight the distinctive influence of national context on public actions,
+
+policymakers should pair content-rich education with visible commitments, such as clear national sustainability targets and transparent
+progress reporting, to demonstrate that youth activism is valued and can
+effect change.
+4.2. Limitations
+This study has some limitations. First, because the data come from
+PISA 2018, they do not capture potential shifts in youth environmental
+action that may have occurred due to events like the surge of global
+youth climate activism in 2019 or the COVID-19 pandemic. We
+acknowledge this time-based limitation and encourage future studies to
+analyze newer data to assess trends over time. It is important to note
+that, given the cross-sectional nature of the PISA 2018 data, the associations we observe do not establish directionality, and reverse causality
+cannot be ruled out. Additionally, although this study identified multiple important variables using machine learning models, there may still
+be some potential factors that have not been fully recognized. Future
+studies can further expand the selection of variables and explore the
+deeper mechanisms behind environmental actions.
+CRediT authorship contribution statement
+Bo Hu: Writing – review & editing, Writing – original draft, Visualization, Validation, Software, Project administration, Methodology,
+9
+
+B. Hu et al.
+
+Journal of Environmental Management 390 (2025) 126398
+
+Fig. 6. SHAP Dependence Plot of Public-sphere Environmental Actions. Note: Each dependence plot shows how a single feature affects the output of the prediction
+model. The solid black line represents a curved relationship, and the dashed black line represents a linear relationship.
+
+Investigation, Formal analysis, Conceptualization. Jing Gao: Visualization, Validation, Supervision, Software, Methodology, Investigation,
+Formal analysis, Data curation, Conceptualization. Yannuo Feng:
+Writing – original draft, Visualization, Validation, Software, Methodology, Investigation, Formal analysis. Ziqian Xia: Writing – review &
+editing, Writing – original draft, Validation, Software, Methodology,
+Conceptualization. Kun Wang: Writing – review & editing, Validation,
+Methodology, Conceptualization. Liuna Geng: Writing – review &
+editing, Writing – original draft, Supervision, Project administration,
+Investigation, Formal analysis, Data curation.
+
+Data availability
+Data will be made available on request.
+References
+Ainger, F., Fanetti, S., 2024. Youth climate activism: political and regulatory outcomes.
+In: Social Mobilisation for Climate Change. Routledge.
+Ajibade, I., Boateng, G.O., 2021. Predicting why people engage in pro-sustainable
+behaviors in Portland Oregon: the role of environmental self-identity, personal
+norm, and socio-demographics. J. Environ. Manag. 289, 112538. https://doi.org/
+10.1016/j.jenvman.2021.112538.
+Ajzen, I., 1991. The theory of planned behavior. Organ. Behav. Hum. Decis. Process. 50
+(2), 179–211. https://doi.org/10.1016/0749-5978(91)90020-T.
+Akiba, T., Sano, S., Yanase, T., Ohta, T., Koyama, M., 2019. Optuna: a next-generation
+hyperparameter optimization framework. In: Proceedings of the 25th ACM SIGKDD
+International Conference on Knowledge Discovery & Data Mining, pp. 2623–2631.
+https://doi.org/10.1145/3292500.3330701.
+Alscher, P., Ludewig, U., McElvany, N., 2022. Civic education, teaching quality and
+students’ willingness to participate in political and civic life: political interest and
+knowledge as mediators. J. Youth Adolesc. 51 (10), 1886–1900. https://doi.org/
+10.1007/s10964-022-01639-9.
+Aral, Ö.H., López-Sintas, J., 2022. Is pro-environmentalism a privilege? Country
+development factors as moderators of socio-psychological drivers of proenvironmental behavior. Environmental Sociology 8 (2), 211–227. https://doi.org/
+10.1080/23251042.2021.2018123.
+Ballesteros, M.I., López-Fernández, C., Paños, E., Ruiz-Gallardo, J.-R., 2025. Empowering
+communities: the transformative influence of school agenda 21. J. Environ. Educ. 56
+(1), 1–20. https://doi.org/10.1080/00958964.2024.2437486.
+Barraclough, A.D., Schultz, L., Måren, I.E., 2021. Voices of young biosphere stewards on
+the strengths, weaknesses, and ways forward for 74 UNESCO biosphere reserves
+
+Funding
+Not Application.
+Declaration of competing interest
+The authors declare that they have no known competing financial
+interests or personal relationships that could have appeared to influence
+the work reported in this paper.
+Appendix A. Supplementary data
+Supplementary data to this article can be found online at https://doi.
+org/10.1016/j.jenvman.2025.126398.
+10
+
+B. Hu et al.
+
+Journal of Environmental Management 390 (2025) 126398
+
+across 83 countries. Glob. Environ. Change 68, 102273. https://doi.org/10.1016/j.
+gloenvcha.2021.102273.
+Barredo Arrieta, A., Díaz-Rodríguez, N., Del Ser, J., Bennetot, A., Tabik, S., Barbado, A.,
+Garcia, S., Gil-Lopez, S., Molina, D., Benjamins, R., Chatila, R., Herrera, F., 2020.
+Explainable artificial intelligence (XAI): concepts, taxonomies, opportunities and
+challenges toward responsible AI. Inf. Fusion 58, 82–115. https://doi.org/10.1016/j.
+inffus.2019.12.012.
+Becker, J.C., Tausch, N., 2015. A dynamic model of engagement in normative and nonnormative collective action: psychological antecedents, consequences, and barriers.
+Eur. Rev. Soc. Psychol. 26 (1), 43–92. https://doi.org/10.1080/
+10463283.2015.1094265.
+Breiman, L., 2001. Random forests. Mach. Learn. 45 (1), 5–32. https://doi.org/10.1023/
+A:1010933404324.
+Brosch, T., 2021. Affect and emotions as drivers of climate change perception and action:
+a review. Current Opinion in Behavioral Sciences 42, 15–21. https://doi.org/
+10.1016/j.cobeha.2021.02.001.
+Buuren, S. van, Groothuis-Oudshoorn, K., 2011. Mice: multivariate imputation by
+chained equations in R. J. Stat. Software 45, 1–67. https://doi.org/10.18637/jss.
+v045.i03.
+Chawla, N.V., Bowyer, K.W., Hall, L.O., Kegelmeyer, W.P., 2002. SMOTE: synthetic
+minority over-sampling technique. J. Artif. Intell. Res. 16, 321–357. https://doi.org/
+10.1613/jair.953.
+Chen, C., Noble, I., Hellmann, J., Coffee, J., Murillo, M., Chawla, N., 2015. University of
+Notre Dame Global Adaptation Index. University of Notre Dame.
+Chen, T., Guestrin, C., 2016. XGBoost: a scalable tree boosting system. In: Proceedings of
+the 22nd ACM SIGKDD International Conference on Knowledge Discovery and Data
+Mining, pp. 785–794. https://doi.org/10.1145/2939672.2939785.
+Craig, C.A., Petrun Sayers, E.L., 2019. Building clean energy support with young
+millennials in the United States. Electr. J. 32 (1), 18–24. https://doi.org/10.1016/j.
+tej.2019.01.007.
+Davidson, D.J., Kecinski, M., 2022. Emotional pathways to climate change responses.
+WIREs Climate Change 13 (2), e751. https://doi.org/10.1002/wcc.751.
+Dunlap, R.E., York, R., 2008. The globalization of environmental concern and the limits
+of the postmaterialist values explanation: evidence from four multinational surveys.
+Sociol. Q. 49 (3), 529–563. https://doi.org/10.1111/j.1533-8525.2008.00127.x.
+Eckstein, D., Hutfils, M.-L., Winges, M., 2018. Global climate risk index 2019. In: Who
+Suffers Most from Extreme Weather Events, vol. 36.
+Gifford, R., Nilsson, A., 2014. Personal and social factors that influence proenvironmental concern and behaviour: a review. Int. J. Psychol. 49 (3), 141–157.
+https://doi.org/10.1002/ijop.12034.
+Gkargkavouzi, A., Halkos, G., Matsiori, S., 2019. Environmental behavior in a privatesphere context: integrating theories of planned behavior and value belief norm, selfidentity and habit. Resour. Conserv. Recycl. 148, 145–156. https://doi.org/
+10.1016/j.resconrec.2019.01.039.
+Goldman, D., Ayalon, O., Baum, D., Weiss, B., 2018. Influence of ‘green school
+certification’ on students’ environmental literacy and adoption of sustainable
+practice by schools. J. Clean. Prod. 183, 1300–1313. https://doi.org/10.1016/j.
+jclepro.2018.02.176.
+Günther, A., Engel, L., Hornsey, M.J., Nielsen, K.S., Roy, J., Steg, L., Tam, K.-P., van
+Valkengoed, A.M., Wolske, K.S., Wong-Parodi, G., Hahnel, U.J.J., 2025.
+Psychological and contextual determinants of clean energy technology adoption.
+Nature Reviews Clean Technology 1–19. https://doi.org/10.1038/s44359-02500075-9.
+Hadler, M., Haller, M., 2011. Global activism and nationally driven recycling: the
+influence of world society and national contexts on public and private environmental
+behavior. Int. Sociol. 26 (3), 315–345.
+Hahn, E.R., 2021. The developmental roots of environmental stewardship: Childhood
+and the climate change crisis. Curr. Opin. Psychol. 42, 19–24. https://doi.org/
+10.1016/j.copsyc.2021.01.006.
+Hansmann, R., Binder, C.R., 2020. Determinants of different types of positive
+environmental behaviors: an analysis of public and private sphere actions.
+Sustainability 12 (20), 20. https://doi.org/10.3390/su12208547.
+Hino, M., Benami, E., Brooks, N., 2018. Machine learning for environmental monitoring.
+Nat. Sustain. 1 (10), 583–588. https://doi.org/10.1038/s41893-018-0142-9.
+Hofstede, G., 2011. Dimensionalizing cultures: the hofstede model in context. Online
+Readings in Psychology and Culture 2 (1), 8.
+Huoponen, A., 2024. From concern to behavior: barriers and enablers of adolescents’
+pro-environmental behavior in a school context. Environ. Educ. Res. 30 (5),
+677–699. https://doi.org/10.1080/13504622.2023.2180374.
+Jamieson, D., 2015. Responsibility and Climate Change. Global Justice : Theory Practice
+Rhetoric, vol. 8, 2. https://doi.org/10.21248/gjn.8.2.86, 2.
+Kadir, A., 2022. How can governmental incentives inspire youth to be more engaged in
+environmental protection? An analysis of factors affecting Djiboutian young people’s
+engagement toward the environment. Public Governance, Administration and
+Finances Law Review 7 (2), 2. https://doi.org/10.53116/pgaflr.2022.2.5.
+Kaufmann, D., Kraay, A., Mastruzzi, M., 2011. The worldwide governance indicators:
+methodology and analytical issues1. Hague Journal on the Rule of Law 3 (2),
+220–246.
+Ke, G., Meng, Q., Finley, T., Wang, T., Chen, W., Ma, W., Ye, Q., Liu, T.-Y., 2017.
+LightGBM: a highly efficient gradient boosting decision tree. Proceedings of the 31st
+International Conference on Neural Information Processing Systems, pp. 3149–3157.
+Kleespies, M.W., Feucht, V., Tille, T.J., Bambach, A.M., Gricar, E., Claus, M., Konertz, M.
+M.G., Kokott, L., Rupp, V., Bergmann, V., Wenzel, V., Dierkes, P.W., 2024.
+Environmental behavior in the private sphere – development and evaluation of the
+personal pro-environmental behavior (PPB) scale. Measurement: Interdisciplinary
+
+Research and Perspectives 22 (2), 160–174. https://doi.org/10.1080/
+15366367.2023.2246113.
+Knook, J., Dorner, Z., Stahlmann-Brown, P., 2022. Priming for individual energy
+efficiency action crowds out support for national climate change policy. Ecol. Econ.
+191, 107239. https://doi.org/10.1016/j.ecolecon.2021.107239.
+Körfgen, A., Keller, L., Kuthe, A., Oberrauch, A., Stötter, H., 2017. (climate) change in
+young people’s minds – from categories towards interconnections between the
+anthroposphere and natural sphere. Sci. Total Environ. 580, 178–187. https://doi.
+org/10.1016/j.scitotenv.2016.11.127.
+Langenbach, B.P., Berger, S., Baumgartner, T., Knoch, D., 2020. Cognitive resources
+moderate the relationship between pro-environmental attitudes and green behavior.
+Environ. Behav. 52 (9), 979–995.
+Law, K.F., Colaizzi, G., Syropoulos, S., 2025. Climate change is an intergenerational
+challenge that requires intergenerationally focused behavioral solutions. Current
+Opinion in Behavioral Sciences 61, 101467. https://doi.org/10.1016/j.
+cobeha.2024.101467.
+Lenzi, M., Vieno, A., Perkins, D.D., Santinello, M., Elgar, F.J., Morgan, A., Mazzardis, S.,
+2012. Family affluence, school and neighborhood contexts and adolescents’ civic
+engagement: a cross-national study. Am. J. Community Psychol. 50 (1–2), 197–210.
+https://doi.org/10.1007/s10464-012-9489-7.
+Li, D., Zhao, L., Ma, S., Shao, S., Zhang, L., 2019. What influences an individual’s proenvironmental behavior? A literature review. Resour. Conserv. Recycl. 146, 28–34.
+https://doi.org/10.1016/j.resconrec.2019.03.024.
+Li, Y., Wang, Z., Liu, S., 2024. Enhance carbon emission prediction using bidirectional
+long short-term memory model based on text-based and data-driven multimodal
+information fusion. J. Clean. Prod. 471, 143301. https://doi.org/10.1016/j.
+jclepro.2024.143301.
+Liobikienė, G., Poškus, M.S., 2019. The importance of environmental knowledge for
+private and public sphere pro-environmental behavior: modifying the value-beliefnorm theory. Sustainability 11 (12). https://doi.org/10.3390/su11123324. Article
+12.
+Liu, P., Teng, M., Han, C., 2020. How does environmental knowledge translate into proenvironmental behaviors?: the mediating role of environmental attitudes and
+behavioral intentions. Sci. Total Environ. 728, 138126. https://doi.org/10.1016/j.
+scitotenv.2020.138126.
+Liu, Y., Du, J., Wang, Y., Cui, X., Dong, J., Gu, P., Hao, Y., Xue, K., Duan, H., Xia, A.,
+Hu, Y., Dong, Z., Wu, B., Kropp, J.P., Fu, B., 2024. Overlooked uneven progress
+across sustainable development goals at the global scale: challenges and
+opportunities. Innovation 5 (2), 100573. https://doi.org/10.1016/j.
+xinn.2024.100573.
+Liu, Y.-B., Hou, X.-Y., Chen, B.-B., 2022. Links between Chinese vocational school
+students’ perception of parents’ emotional support and school cooperation climate
+and their academic performance: the mediating role of school belonging. Front.
+Psychol. 13. https://doi.org/10.3389/fpsyg.2022.952001.
+Lou, X., Li, L.M.W., 2023. The relationship of environmental concern with public and
+private pro-environmental behaviours: a pre-registered meta-analysis. Eur. J. Soc.
+Psychol. 53 (1), 1–14. https://doi.org/10.1002/ejsp.2879.
+Lundberg, S.M., Lee, S.-I., 2017. A unified approach to interpreting model predictions. In:
+Guyon, I., Luxburg, U.V., Bengio, S., Wallach, H., Fergus, R., Vishwanathan, S.,
+Garnett, R. (Eds.), Advances in Neural Information Processing Systems, vol. 30.
+Curran Associates, Inc. In: https://proceedings.neurips.cc/paper_files/paper/2017/f
+ile/8a20a8621978632d76c43dfd28b67767-Paper.pdf.
+Ma, L., Shahbaz, P., Haq, S. ul, Boz, I., 2023. Exploring the moderating role of
+environmental education in promoting a clean environment. Sustainability 15 (10).
+https://doi.org/10.3390/su15108127. Article 10.
+Mago, M., Yadav, M., Sharma, S., Kaur, H., 2024. Environmental knowledge influencing
+pro-environmental behavior among university students: a serial mediation and MGA
+approach. Int. J. Sustain. High Educ. https://doi.org/10.1108/IJSHE-02-2024-0110.
+Meitiyani, M., Astra, I.M., Safitri, D., 2022. The relationship between personality and
+environmentally responsible behavior in green high school. Cypriot Journal of
+Educational Sciences 17 (9). https://doi.org/10.18844/cjes.v17i9.8084. Article 9.
+Mi, L., Qiao, L., Xu, T., Gan, X., Yang, H., Zhao, J., Qiao, Y., Hou, J., 2020. Promoting
+sustainable development: the impact of differences in cultural values on residents’
+pro-environmental behaviors. Sustain. Dev. 28 (6), 1539–1553. https://doi.org/
+10.1002/sd.2103.
+Mónus, F., 2022. Environmental education policy of schools and socioeconomic
+background affect environmental attitudes and pro-environmental behavior of
+secondary school students. Environ. Educ. Res. 28 (2), 169–196. https://doi.org/
+10.1080/13504622.2021.2023106.
+Murtagh, F., 1991. Multilayer perceptrons for classification and regression.
+Neurocomputing 2 (5), 183–197. https://doi.org/10.1016/0925-2312(91)90023-5.
+Nordström, H.K., 2008. Environmental education and multicultural education – too close
+to be separate? Int. Res. Geogr. Environ. Educ. 17 (2), 131–145. https://doi.org/
+10.1080/10382040802148604.
+OECD, 2019. PISA 2018 Assessment and Analytical Framework. OECD. https://doi.org/
+10.1787/b25efab8-en.
+Olden, J.D., Lawler, J.J., Poff, N.L., 2008. Machine learning methods without tears: a
+primer for ecologists. Q. Rev. Biol. 83 (2), 171–193. https://doi.org/10.1086/
+587826.
+Otto, S., Evans, G.W., Moon, M.J., Kaiser, F.G., 2019. The development of children’s
+environmental attitude and behavior. Glob. Environ. Change 58, 101947. https://
+doi.org/10.1016/j.gloenvcha.2019.101947.
+Pargent, F., Schoedel, R., Stachl, C., 2023. Best practices in supervised machine learning:
+a tutorial for psychologists. Adv. Methods Pract. Psychol. Sci. 6 (3),
+25152459231162559.
+
+11
+
+B. Hu et al.
+
+Journal of Environmental Management 390 (2025) 126398
+
+Pearson, S., Hornsey, M.J., Rekker, S., Wade, B., Greig, C., 2024. Publicly expressed
+climate scepticism is greatest in regions with high CO2 emissions. Clim. Change 177
+(5), 79. https://doi.org/10.1007/s10584-024-03740-3.
+Piao, X., Managi, S., 2024. Determinants of pro-environmental behaviour: effects of
+socioeconomic, subjective, and psychological well-being factors from 37 countries.
+Humanit. Soc. Sci. Commun. 11 (1), 1–17. https://doi.org/10.1057/s41599-02403790-z.
+Pisano, I., Lubell, M., 2017. Environmental behavior in cross-national perspective: a
+multilevel analysis of 30 countries. Environ. Behav. 49 (1), 31–58.
+Pong, V., Tam, K.-P., 2023. Relationship between global identity and pro-environmental
+behavior and environmental concern: a systematic review. Front. Psychol. 14.
+https://doi.org/10.3389/fpsyg.2023.1033564.
+Rabaa, S., Wilken, R., Geisendorf, S., 2024. Does recalling energy efficiency measures
+reduce subsequent climate-friendly behavior? An experimental study of moral
+licensing rebound effects. Ecol. Econ. 217, 108051. https://doi.org/10.1016/j.
+ecolecon.2023.108051.
+Reed, M.S., Vella, S., Challies, E., de Vente, J., Frewer, L., Hohenwallner-Ries, D.,
+Huber, T., Neumann, R.K., Oughton, E.A., Sidoli del Ceno, J., van Delden, H., 2018.
+A theory of participation: what makes stakeholder and public engagement in
+environmental management work? Restor. Ecol. 26 (S1), S7–S17. https://doi.org/
+10.1111/rec.12541.
+Riaz, W., Gul, S., Lee, Y., 2023. The influence of individual cultural value differences on
+pro-environmental behavior among international students at Korean universities.
+Sustainability 15 (5). https://doi.org/10.3390/su15054490. Article 5.
+Ribeiro, M.T., Singh, S., Guestrin, C., 2016. “why should I trust you?”: explaining the
+predictions of any classifier. In: Proceedings of the 22nd ACM SIGKDD International
+Conference on Knowledge Discovery and Data Mining, pp. 1135–1144. https://doi.
+org/10.1145/2939672.2939778.
+Rolnick, D., Donti, P.L., Kaack, L.H., Kochanski, K., Lacoste, A., Sankaran, K., Ross, A.S.,
+Milojevic-Dupont, N., Jaques, N., Waldman-Brown, A., Luccioni, A.S., Maharaj, T.,
+Sherwin, E.D., Mukkavilli, S.K., Kording, K.P., Gomes, C.P., Ng, A.Y., Hassabis, D.,
+Platt, J.C., et al., 2022. Tackling climate change with machine learning. ACM
+Comput. Surv. 55 (2), 42. https://doi.org/10.1145/3485128, 1-42:96.
+Rudin, C., 2019. Stop explaining black box machine learning models for high stakes
+decisions and use interpretable models instead. Nat. Mach. Intell. 1 (5), 206–215.
+https://doi.org/10.1038/s42256-019-0048-x.
+Sagar, A.D., Najam, A., 1998. The human development index: a critical review. Ecol.
+Econ. 25 (3), 249–264.
+Salazar, C., Leiva, M., Jaime, M., González, N., 2022. Environmental educational
+programs in Chile: do the characteristics of local governments affect school
+participation? Environ. Educ. Res. 28 (12), 1755–1776. https://doi.org/10.1080/
+13504622.2022.2064974.
+Saunders, C., Büchs, M., Papafragkou, A., Wallbridge, R., Smith, G., 2013. Beyond the
+activist ghetto: a deductive blockmodelling approach to understanding the
+relationship between contact with environmental organisations and public attitudes
+and behaviour. Soc. Mov. Stud. 13 (1), 158.
+Sayal, R., Bidisha, S.H., Lynes, J., Riemer, M., Jasani, J., Monteiro, E., Hey, B., De
+Souza, A., Wicks, S., Eady, A., 2016. Fostering systems thinking for youth leading
+environmental change: a multinational exploration. Ecopsychology 8 (3), 188–201.
+https://doi.org/10.1089/eco.2016.0023.
+Schleicher, A., 2019. PISA 2018: Insights and Interpretations. ERIC.
+Shwartz-Ziv, R., Armon, A., 2022. Tabular data: deep learning is not all you need. Inf.
+Fusion 81, 84–90. https://doi.org/10.1016/j.inffus.2021.11.011.
+Singh, P., Sahadev, S., Oates, C.J., Alevizou, P., 2020. Pro-environmental behavior in
+families: a reverse socialization perspective. J. Bus. Res. 115, 110–121. https://doi.
+org/10.1016/j.jbusres.2020.04.047.
+Soutter, M., Clark, S., 2024. Orienting all students toward justice: cultivating social
+responsibility in privileged schooling environments. Educ. Citizen Soc. Justice 19
+(2), 253–271.
+Stern, P.C., Dietz, T., Abel, T., Guagnano, G.A., Kalof, L., 1999. A value-belief-norm
+theory of support for social movements: the case of environmentalism. Hum. Ecol.
+Rev. 6 (2), 81–97.
+
+Tam, K.-P., 2024. Culture and pro-environmental behavior. Curr. Opin. Psychol.,
+101986. https://doi.org/10.1016/j.copsyc.2024.101986.
+Urwin, K., Jordan, A., 2008. Does public policy support or undermine climate change
+adaptation? Exploring policy interplay across different scales of governance. Glob.
+Environ. Change 18 (1), 180–191. https://doi.org/10.1016/j.
+gloenvcha.2007.08.002.
+Uysal, M.S., Vestergren, S., Varela, M., Lindner, C., 2024. “System change, not climate
+change”: effective environmental policies and state repression moderate the
+relationship between psychological predictors and environmental collective action.
+Global Environmental Psychology 2, 1–23. https://doi.org/10.5964/gep.11259.
+van Zomeren, M., Postmes, T., Spears, R., 2008. Toward an integrative social identity
+model of collective action: a quantitative research synthesis of three sociopsychological perspectives. Psychol. Bull. 134 (4), 504–535. https://doi.org/
+10.1037/0033-2909.134.4.504.
+Verba, S., Schlozman, K.L., Brady, H.E., 1995. Voice and Equality: Civic Voluntarism in
+American Politics. Harvard University Press.
+Wang, B., Wang, Z., Yao, Z., 2025. Enhancing carbon price point-interval multi-stepahead prediction using a hybrid framework of autoformer and extreme learning
+machine with multi-factors. Expert Syst. Appl. 270, 126467. https://doi.org/
+10.1016/j.eswa.2025.126467.
+Wang, J., Kong, Y., 2023. The influencing mechanism of pro-environmental behaviors in
+the private domain on those in the public domain. Chinese Journal of Population,
+Resources and Environment 21 (4), 212–218. https://doi.org/10.1016/j.
+cjpre.2023.11.002.
+Wang, Y., Hao, F., 2020. Public perception matters: individual waste sorting in Chinese
+communities. Resour. Conserv. Recycl. 159, 104860. https://doi.org/10.1016/j.
+resconrec.2020.104860.
+Wijaya, D.I., Kokchang, P., 2023. Factors influencing generation z’s pro-environmental
+behavior towards Indonesia’s energy transition. Sustainability 15 (18). https://doi.
+org/10.3390/su151813485. Article 18.
+Wolf, M.J., Emerson, J.W., Esty, D.C., Sherbinin, A. de, Wendling, Z.A., 2022. 2022
+Environmental Performance Index (EPI) Results. Yale Center for Environmental Law
+& Policy, New Haven, CT.
+Wray-Lake, L., Ballard, P.J., 2023. Civic engagement across adolescence and early
+adulthood. In: Crockett, L.J., Carlo, G., Schulenberg, J.E. (Eds.), APA Handbook of
+Adolescent and Young Adult Development. American Psychological Association,
+pp. 573–593. https://doi.org/10.1037/0000298-035.
+Wray-Lake, L., Schulenberg, J., Keyes, K.M., Shubert, J., 2017. The developmental course
+of community service across the transition to adulthood in a national U.S. sample.
+Dev. Psychol. 53 (12), 2397–2408. https://doi.org/10.1037/dev0000377.
+Xing, Y., Li, M., Liao, Y., 2022. Trust, identity, and public-sphere pro-environmental
+behavior in China: an extended attitude-behavior-context theory. Front. Psychol. 13.
+https://doi.org/10.3389/fpsyg.2022.919578.
+Yadav, R., Pathak, G.S., 2016. Young consumers’ intention towards buying green
+products in a developing nation: extending the theory of planned behavior. J. Clean.
+Prod. 135, 732–739. https://doi.org/10.1016/j.jclepro.2016.06.120.
+Yuriev, A., Dahmen, M., Paillé, P., Boiral, O., Guillaumie, L., 2020. Pro-environmental
+behaviors through the lens of the theory of planned behavior: a scoping review.
+Resour. Conserv. Recycl. 155, 104660. https://doi.org/10.1016/j.
+resconrec.2019.104660.
+Zhang, N., Li, D., 2023. Mind the gap: how zhongyong thinking affects the effectiveness
+of media use on pro-environmental behaviours in China. Environmental
+Communication 17 (4), 437–451. https://doi.org/10.1080/
+17524032.2023.2206977.
+Zheng, J., Yang, M., Xu, M., Zhao, C., Shao, C., 2019. An empirical study of the impact of
+social interaction on public pro-environmental behavior. Int. J. Environ. Res. Publ.
+Health 16 (22). https://doi.org/10.3390/ijerph16224405. Article 22.
+Zhu, J.-J., Yang, M., Ren, Z.J., 2023. Machine learning in environmental research:
+common pitfalls and best practices. Environmental Science & Technology 57 (46),
+17671–17689. https://doi.org/10.1021/acs.est.3c00026.
+
+12
+
+

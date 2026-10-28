@@ -1,0 +1,2642 @@
+Received: 20 September 2024 | Accepted: 20 March 2025
+DOI: 10.1111/bmsp.12390
+
+ARTICLE
+
+A path signature perspective of process data feature
+extraction
+Xueying Tang1 | Jingchen Liu2
+
+| Zhiliang Ying2
+
+1
+
+University of Arizona, Tucson, Arizona, USA
+
+2
+
+Columbia University, New York, New York,
+USA
+Correspondence
+Xueying Tang, 617 N Santa Rita Ave., Tucson,
+AZ 85721, USA.
+Email: xytang@math.arizona.edu
+Funding information
+National Science Foundation
+
+Abstract
+Computer-­based interactive items have become prevalent
+in recent educational assessments. In such items, the entire
+human-­computer interactive process is recorded in a log file
+and is known as the response process. These data are noisy,
+diverse, and in a nonstandard format. Several feature extraction methods have been developed to overcome the difficulties in process data analysis. However, these methods often
+focus on the action sequence and ignore the time sequence
+in response processes. In this paper, we introduce a new feature extraction method that incorporates the information in
+both the action sequence and the response time sequence.
+The method is based on the concept of path signature from
+stochastic analysis. We apply the proposed method to both
+simulated data and real response process data from PIAAC.
+A prediction framework is used to show that taking time
+information into account provides a more comprehensive
+understanding of respondents' behaviors.
+K EY WOR DS
+action sequence, feature extraction, path signature, response process,
+timestamp sequence
+
+1 | I N T RODUC T ION
+With the development of technology, computer-­based interactive items have been used to assess respondents' problem-­solving skills in large-­scale assessments. In these items, participants complete real-­life
+tasks in simulated environments. Computer technology not only provides a flexible environment to evaluate their skills but also helps collect rich data for studying participants' problem-­solving behaviours. As
+participants interact with the computer interface to complete the tasks, their problem-­solving processes
+are recorded in computer log files as a sequence of actions as well as their specific timestamps. Such data
+describe how the participants solve the tasks and are often referred to as process data.
+In classical tests, the recorded responses to items are often the final outcomes. Each item response
+is a univariate categorical variable. Such data have been studied both intensively and extensively (Rupp
+et al., 2010; van der Linden, 2016; von Davier & Lee, 2019). Models such as item response theory
+Br J Math Stat Psychol. 2025;78:939–964.
+
+wileyonlinelibrary.com/journal/bmsp
+
+© 2025 British Psychological Society.
+
+| 939
+
+|   
+
+TANG et al .
+
+models (Lord, 1980; Rasch, 1961; Reckase, 2009; Samejima, 1997) and cognitive diagnosis models (de
+la Torre, 2011; de la Torre & Douglas, 2004; Junker & Sijtsma, 2001; Templin & Henson, 2006) have
+been developed for measuring respondents' latent abilities based on such data. Process data contain
+respondents' entire problem-­solving processes and thus provide much more information than classic
+responses. Nonetheless, process responses are often difficult to analyse for the following reasons. First,
+the response process often has very detailed information on file, much of which is irrelevant to the latent
+skills of interest. Therefore, it brings in both additional useful information and noise. Second, process
+data are in the format of a sequence of actions (along with their timestamps) whose lengths vary a lot
+among observations. Thus, the actions are not well aligned for standard parametric models. Such data
+pattern also adds to the difficulty of the analysis.
+A natural approach to analysing process data is to extract features from the response processes
+and then apply standard analysis to the features. The diversity of problem-­solving tasks adds to
+the difficulty in extracting features from process data. Response processes for each task have their
+unique patterns. Many works on process data are case-­by-­case studies (Greiff et al., 2016; Kroehne &
+Goldhammer, 2018), where features of response processes are defined and validated based on domain
+knowledge and respondents' cognitive processes. Performing such analyses on a wide range of items
+requires a considerable amount of resources because designing the features is usually item-­specific and
+relies on domain knowledge.
+Several generic methods for extracting features from response processes have been developed in the
+literature. He and von Davier (2015, 2016) adopted the concept of n-­g rams from natural language processing to explore the association between action sequence patterns and traditional item responses. Tang
+et al. (2020) proposed to extract features from action sequences via multidimensional scaling (MDS).
+A neural-­network-­based method is proposed in Tang, Wang, et al. (2021). The features extracted from
+these methods have been used to demonstrate the rich information in response processes and identify
+behaviour patterns closely related to the final response outcome and respondents' demographics (He &
+von Davier, 2015; Zhang et al., 2021). The extracted features have also been used to improve assessment
+precision (Zhang et al., 2023). These methods focus solely on the action sequences in response processes. The time sequences are ignored when extracting features. Intuitively, time sequences record respondents' reaction time and the pace of problem-­solving processes, which could be useful for assessing
+respondents' latent traits or understanding their problem-­solving behaviours. Therefore, it is desirable
+to incorporate the timestamp sequences in feature extraction.
+Time information related to response processes has been studied in the literature. Timestamps have
+been used in statistical modelling of response processes (Chen, 2020; Chen et al., 2019; Xu et al., 2020).
+In terms of feature extraction, the time spent on solving an item (hereafter total response time) is
+the most commonly used time-­related feature (Goldhammer et al., 2014; Liao et al., 2019; van der
+Linden, 2007; Wang & Xu, 2015; Zhan et al., 2018). Features containing more detailed time information
+have been considered in a few recent studies (Albert & Steinberg, 2011; Eichmann et al., 2019; Qiao &
+Jiao, 2018; Ulitzsch et al., 2021; Zhang & Andersson, 2023). Although these studies show that simple
+summary statistics of timestamp sequences such as time to the first action and variation of time intervals are useful for improving test design and assessment, there is no systematic approach to extract the
+information in the timestamp sequence, inhibiting a thorough investigation of additional useful information in the timestamp sequences.
+In this article, we propose a feature extraction method that systematically incorporates the information in both action and timestamp sequences. It can also be used to extract features from the action
+sequences or the timestamp sequences alone. When applied to the timestamp sequences, the proposed
+method produces more informative features than the simple summary statistics that have been used in
+the literature. Similar to other generic feature extraction methods, our method is applicable to response
+processes generated from a wide range of human–computer interfaces.
+The proposed method is based on path signature. It is a set of infinite elements describing the characteristics of a path. The concept originates from the study of piecewise regular paths (Chen, 1958)
+and is then extended to characterize the interactions between highly oscillatory systems (Lyons
+
+20448317, 2025, 3, Downloaded from https://bpspsychub.onlinelibrary.wiley.com/doi/10.1111/bmsp.12390 by Beykent University, Wiley Online Library on [24/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+940
+
+| 941
+
+et al., 2007). Recently, path signature has been used as a tool for feature extraction in various machine
+learning applications including disease prediction (Moore et al., 2019), quantitative finance (Lyons
+et al., 2014), computer vision (Li et al., 2019; Yang et al., 2016, 2017) and speech recognition (Wang
+et al., 2019). In the proposed method, a response process is first treated as a path that monitors the
+action and time usage during the problem-­solving process. Then features reflecting the respondent's
+behaviour at different levels of granularity are extracted from the path using path signature.
+The features extracted from the proposed method can be treated as surrogates of response processes in a standard matrix format. Incorporating both action and time information, these features can
+be used for revealing latent structures of response processes, exploring heterogeneity in respondents'
+problem-­solving behaviours and improving existing psychometric practice. We demonstrate the utility
+of these extracted features through simulations and empirical analysis. In particular, in the empirical
+analysis, the proposed method is applied to process data from the Problem Solving in Technology
+Rich Environments (PSTRE) items in the 2012 Programme for the International Assessment of Adult
+Competencies (PIAAC). Using a prediction procedure similar to Tang et al. (2020), the extracted features are used to explore whether problem-­solving behaviours vary among respondents with different
+latent characteristics or demographics. Furthermore, we demonstrate the potential of the extracted features for improving assessment precision by constructing process-­based scores of respondents' PSTRE
+skills using the approach proposed by Zhang et al. (2023). Our analyses also show that the timestamp
+sequences in response processes contain useful information that the action sequences are not able to
+characterize. The features capturing the information are often more complex than simple summary
+statistics of the timestamp sequences such as the total response time and time to the first action. One
+limitation of the method is that path signatures are designed to capture interaction between actions and
+their ability to capture higher-­level problem-­solving strategies is relatively weak.
+The rest of this article is organized as follows. We begin with describing the path representation
+of response processes in Section 2. In Section 3, we introduce a method for extracting features
+from process data using the concept of path signature and log signature. A simulation study is presented in Section 4 to demonstrate the method and how the latent structure of response processes
+is revealed in extracted features. In Section 5, we present the case study of response processes from
+PIAAC PSTRE to demonstrate that the extracted features can be used for examining respondents'
+heterogeneous problem-­solving behaviours and improving assessment precision. Concluding remarks are made in Section 6.
+
+2 | PAT H R EPR E SE N TAT ION OF R E SP ONSE PROC E S S
+A response process for an item is a time-­stamped action sequence describing how a respondent
+solved a task. A generic response process o is often represented as a time-­stamped action sequence
+o = ((s1 , t1 ), …, (sL , tL )), where, for l = 1, …, L , sl is the action taken at step l and tl is the corresponding timestamp recording the time elapsed since the start of the response process until taking sl . The
+first action s1 is often a special action, denoted by ‘Start’ in this article, indicating the start of the response process. The first timestamp t1 is 0. For l = 2, …, L , sl takes the value from the item's action
+set 𝒜 = {a1 , …, aM }, where M is the number of possible actions of the item. We call s = (s1 , …, sL )
+and t = (t1 , …, tL ) the action and timestamp sequence of o , respectively. Note that t is an increasing
+sequence 0 = t1 < t2 < … < tL with tL being the total response time for the item.
+We view a response process o for an item with M possible actions as M + 1 sequences
+w 1 , …, w M , w M+1. The last sequence w M+1 is the time sequence. The first M sequences can be seen
+as an expanded version of the action sequence s . Each of the M sequences corresponds to one action
+in the action set 𝒜, recording how many times the action has been used up to a step. More specifically,
+w j = (nj 1 , nj 2 , …, njL ), j = 1, …, M;
+w M+1 = (t1 , t2 , …, tL ),
+
+(1)
+
+20448317, 2025, 3, Downloaded from https://bpspsychub.onlinelibrary.wiley.com/doi/10.1111/bmsp.12390 by Beykent University, Wiley Online Library on [24/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+  
+
+RESPONSE PATH SIGNATURE
+
+|   
+
+TANG et al .
+
+where njl is the number of appearances of action aj up to step l . These M + 1 sequences altogether describe
+one problem-­solving process. Consider an example of an item with three possible actions 𝒜 = {A, B, C }:
+õ = ((‘ ‘ Start’’, . 0), (A, 1. 0), (B, 2. 5), (B, 2. 7), (A, 3. 9), (B, 5. 4)).
+
+(2)
+
+In this case, process õ is coded as four sequences:
+Action A:
+
+w1 =(
+
+0,
+
+1,
+
+1,
+
+1,
+
+2,
+
+2),
+
+Action B:
+
+w2 =(
+
+0,
+
+0,
+
+1,
+
+2,
+
+2,
+
+3),
+
+Action C :
+
+w3 =(
+
+0,
+
+0,
+
+0,
+
+0,
+
+0,
+
+0),
+
+Timestamp: w 4 = ( . 0, 1. 0, 2. 5, 2. 7, 3. 9, 5. 4).
+
+We further extend w j to the interval [1, L] by linear interpolation. Let W (u) = (W1 (u), …, WM+1 (u))
+denote the continuous path after interpolation. That is, for u ∈ [l , l + 1] and l = 1, …, L − 1,
+Wj (u) = njl + (u − l )(nj ,l +1 − njl ), j = 1, …, M;
+WM+1 (u) = tjl + (u − l )(tj ,l +1 − tjl ).
+
+We call W the path representation of a response process, or simply the response path. Figure 1 shows the
+response path of õ as in (2). Each panel corresponds to one component in the response path. The dots represent the elements in sequences w 1 , …, w M+1. The path representation connects the dots via straight lines.
+Response path provides a means to visualize and to numerically summarize the problem-­solving
+progress. It is used to construct features in Section 3. In the path representation W , the first M components are related to the action sequence and WM+1 is related to the timestamp sequence. We distinguish
+the two types of components in the discussions. As the information extracted from response time is
+limited if there is only one timestamp component, we will further expand the component in Section 3
+to enrich the information in the extracted features.
+The path representation of response processes described earlier is closely related to the marked
+point process framework for modelling process data. Chen (2020) proposed a continuous time dynamic
+measurement model for process data, where the action and timestamp sequence pair (s, t ) of a response
+process is treated as a realization of a marked point process where timestamps represent the event occurrence times and actions serve as the marks indicating the type of an occurred event. In this framework, each event type (action) is associated with a counting process that tracks the number of events
+of that type up to a given time t . In our path representation, for j = 1, …, M , each count sequence w j ,
+along with w M+1, can be seen as a realization of the counting process associated with event type (action)
+j . Despite this connection, the two approaches have distinct goals. The marked point process framework focuses on statistical modelling and thus imposes distributional assumptions on the action and
+timestamp sequences, whereas the path representation in this article is used for mathematical feature
+extraction and does not need such assumptions.
+
+FIGUR E 1
+
+Components of the path representation of response process õ in (2).
+
+20448317, 2025, 3, Downloaded from https://bpspsychub.onlinelibrary.wiley.com/doi/10.1111/bmsp.12390 by Beykent University, Wiley Online Library on [24/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+942
+
+| 943
+
+3 | SIGNAT U R E S OF PAT HS
+In this section, we introduce signature features and log signature features of response paths. The
+two types of features are related to the concept of path signature and log signature (Chevyrev &
+Kormilitzin, 2016) in stochastic analysis. Each feature is extracted using one or more components of
+the response path. A feature based on k components is a level-­k feature. We first define lower-­level
+(level-­one and level-­t wo) signature features and log signature features in Sections 3.1 and 3.2. The interpretation of level-­t wo features is provided in Sections 3.3–3.5. Higher-­level features are discussed in
+Section 3.6.
+
+3.1 | Level-­one and level-­two signatures
+Given a component Wj of a response path, its level-­one signature over interval [1, L], denoted by xj , is
+xj = Wj (L) − Wj (1).
+
+(3)
+
+It is the count of action aj up to step L for j = 1, …, M . For the response time ( j = M+1), it is the
+total time.
+For two components Wj and Wj ′, the level-­two signature xj ,j ′ is the area of the shaded part in
+Figure 2. The solid curve in the figure is the trajectory of (Wj (u), Wj ′ (u)) as u increases from 1 to
+L . As each Wj is a non-­decreasing function in u , the trajectory lies within the rectangle formed
+by the dotted vertical and horizontal lines at the starting point (Wj (1), Wj ′ (1)) and the end point
+(Wj (L), Wj ′ (L)). For response processes with level-­one features xj and xj ′, their trajectories always
+start from (0, 0) and end at (xj , xj ′ ). The shaded area is a numerical summary reflecting how the trajectory moves from the starting point to the end point, that is, how the response process progresses.
+The mathematical definition of level-­t wo signatures and other technical details are provided in the
+Appendix.
+
+FIGUR E 2
+
+Level-­one and level-­t wo signature features.
+
+20448317, 2025, 3, Downloaded from https://bpspsychub.onlinelibrary.wiley.com/doi/10.1111/bmsp.12390 by Beykent University, Wiley Online Library on [24/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+  
+
+RESPONSE PATH SIGNATURE
+
+|   
+
+TANG et al .
+
+�
+Level-one and level-t wo signatures have some connections. For instance, if j = j , then
+′
+xj ,j � = xj ,j = xj2 ∕2, which provides similar information as xj . Moreover, if j ≠ j , xj ,j ′ and xj ′ ,j are generally different with xj ′ ,j being the area of the lower half of the rectangle in Figure 2; furthermore,
+xj ,j � + xj � ,j = xj xj �. Therefore, a full set of signatures contains some redundant information. This motivates the introduction of log signatures.
+
+3.2 | Level-­one and level-­two log signature features
+Similar to signature features, each log signature feature is constructed based on one or more components from the response path. Let x̃ j denote the level-­one log signature of Wj and x̃ j ,j � denote the
+level-­t wo log signature feature of Wj and Wj ′. Level-­one log signatures are the same as the level-­one
+signatures:
+x̃ j = xj .
+
+Level-­t wo log signatures are computed directly from level-­t wo signatures. Recall that a level-­t wo signature
+feature is defined for each pair (Wj , Wj ′ ). Level-­two log signatures are only defined for (Wj , Wj ′ ) when
+j < j ′, more specifically,
+1
+x̃ j ,j � = (xj ,j � − xj � ,j ).
+2
+
+(4)
+
+According to the discussion in Section 3.1, xj ,j ′ and xj ′ ,j reflect the same characteristic of a response process.
+The log signature x̃ j ,j � reduces the redundancy by synthesizing the two signatures into one. Although a more
+straightforward way of reducing the redundancy in level-­two signature features is to drop the redundant
+features (e.g. removing xj ,j and one of xj ,j ′ and xj ′ ,j ), the concept of log signature features is more general and
+could be generalized to higher levels by means of the so-­called Lie bracket.
+
+3.3 | Level-­two action features
+We now proceed to the interpretations of level-­t wo signatures. The left panel of Figure 3 illustrates the
+trajectory of components W1 and W2 of the example process õ defined in (2) and signature x1,2. A level-two action feature describes the co-­occurrence of the two actions. If actions aj and aj ′ tend to appear
+alternately (co-­occurred), then the corresponding trajectory moves around the diagonal of the rectangle.
+In this case, xj ,j ′ is roughly 21 xj xj ′. If these two actions are completely separated, then xj ,j ′ is close to 0
+or xj xj ′, depending on which action appears first. The middle and right panels of Figure 3 demonstrate
+feature x1,2 for response processes
+o 1 = ((‘ ‘ Start’’, . 0), (A, 1. 0), (B, 2. 5), (A, 3. 0), (B, 3. 9), (A, 5. 4)),
+
+(5)
+
+o 2 = ((‘ ‘ Start’’, . 0), (A, 1. 0), (A, 2. 5), (A, 3. 0), (B, 3. 9), (B, 5. 4)).
+
+(6)
+
+and
+These processes have the same length and action counts (L = 6, x1 = 3, x2 = 2). In o 1, A and B appear
+alternatively; in o 2, all A actions are before B actions. The level-­t wo signature x12 characterizes the order of
+the two actions.
+
+20448317, 2025, 3, Downloaded from https://bpspsychub.onlinelibrary.wiley.com/doi/10.1111/bmsp.12390 by Beykent University, Wiley Online Library on [24/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+944
+
+~
+o
+
+o2
+
+2
+
+2
+
+3
+
+o1
+
+| 945
+
+x1,2
+
+1
+
+W2
+
+1
+
+x1,2
+
+0
+
+0
+
+0
+
+1
+
+W2
+
+W2
+
+2
+
+x1,2
+
+0
+
+1
+
+2
+
+0
+
+W1
+
+FIGUR E 3
+
+1
+
+2
+
+3
+
+0
+
+W1
+
+1
+
+2
+
+3
+
+W1
+
+Level-­t wo action signature feature x1,2 of õ , o 1 and o 2.
+
+3.4 | Level-­two time features
+To extract more detailed information from the timestamp sequence, we expand the time component
+WM+1 to two distinct processes Wlead and Wlag. The expanded processes Wlead and Wlag are identical
+to WM+1 at u = 1, …, L . The leading component Wlead reaches tl = WM+1 (l ) half-­step earlier than
+WM+1, while the lagging component Wlag reaches tl half-­step later than WM+1. More precisely, for
+l = 1, …, L ,
+Wlead (l ) = Wlag (l ) = WM+1 (l ),
+
+(7)
+
+Wlead (l − Δl ) = Wlag (l + Δl +1 ) = WM+1 (l ),
+
+(8)
+
+where Δl =. 5 and Δ1 = ΔL+1 = 0. Equations (7) and (8) specify Wlead and Wlag at the integer steps
+1, …, L and their mid-­points. At other u ∈ [1, L], Wlead (u) and Wlag (u) are defined via linear interpolation. The left panel of Figure 4 displays the lead and lag components of the response process õ
+described in (2).
+Although Wlead and Wlag have the same values at integer steps, they are distinct at other u. Therefore,
+the level-­two signature features constructed from them can reveal more information than xM+1,M+1.
+The area of the shaded region in the right panel of Figure 4 demonstrates the signature feature corresponding to (Wlead , Wlag ). We denote this feature by xe,a where the subscripts e and a represent ‘lead’ and
+‘lag’, respectively. With some calculation,
+xe,a =
+
+L∑
+−1
+
+L −1
+1
+1 ∑
+(tL − tl )(tl +1 − tl ) = tL2 +
+(tl +1 − tl )2 .
+2
+2
+l =1
+l =1
+
+(9)
+
+Note that tl +1 − tl is the time elapsed between taking actions at steps l and l + 1. Given the total response time, higher variation in the time elapsed between two consecutive actions leads to a larger
+xe,a.
+
+3.5 | Level-­two action–time features
+In this section, we consider level-­t wo signature features that are constructed based on one action process and one time process. The action process is Wj , and the time process is either Wlead or Wlag. For
+j = 1, …, M , we use xe,j and xa,j to denote the features constructed from (Wlead , Wj ) and (Wlag , Wj ),
+
+20448317, 2025, 3, Downloaded from https://bpspsychub.onlinelibrary.wiley.com/doi/10.1111/bmsp.12390 by Beykent University, Wiley Online Library on [24/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+  
+
+RESPONSE PATH SIGNATURE
+
+|   
+
+TANG et al .
+
+5
+4
+3
+
+xe,a
+
+1
+0
+
+0
+
+1
+
+2
+
+2
+
+Wlag
+
+3
+
+4
+
+5
+
+WM1u
+Wleadu
+Wlagu
+
+1
+
+2
+
+3
+
+4
+
+5
+
+6
+
+0
+
+1
+
+2
+
+5
+
+0
+
+1
+
+2
+
+3
+Wlead
+
+4
+
+5
+
+W2
+
+xa,2
+
+0
+
+1
+
+2
+
+3
+
+4
+
+5
+
+0.0 0.5 1.0 1.5 2.0 2.5 3.0
+
+W2
+
+xe,2
+
+0.0 0.5 1.0 1.5 2.0 2.5 3.0
+
+Left: WM+1, Wlead and Wlag of response process õ . Right: level-­t wo time signature feature xe,a of õ .
+
+0.0 0.5 1.0 1.5 2.0 2.5 3.0
+
+W2
+
+4
+
+Wlead
+
+u
+FIGUR E 4
+
+3
+
+Wlead
+Wlag
+
+0
+
+1
+
+Wlag
+
+2
+
+3
+
+4
+
+5
+
+Wlead or Wlag
+
+F I G U R E 5 Left and middle: level-­t wo action–time signature features xe,2 and xa,2 of õ . The shaded area in the right
+panel demonstrates xe,2 − xa,2.
+
+respectively. The left and middle panels of Figure 5 demonstrate xe,2 and xa,2 of the response process õ
+defined in (2).
+Compared to the action features and time features that contain information of either action sequences or the time sequence, the action–time features take into account the interaction between the
+two types of sequences. They reflect the timing of taking each action aj . A response process where
+action aj is used later has a larger xe,j and xa,j . To see this, consider two processes,
+o 3 = ((‘ ‘ Start’’, .0), (B, 1. 0), (A, 1. 5), (B, 3. 0), (B, 3. 9), (C , 5. 4)),
+
+(10)
+
+o 4 = ((‘ ‘ Start’’, .0), (B, 1. 0), (B, 1. 5), (B, 3. 0), (A, 3. 9), (C , 5. 4)).
+
+(11)
+
+and
+Action A appears once in both processes, but its appearance is earlier in o 3. Features xe,1 for the two response processes are illustrated in Figure 6. The level-­t wo signature of o 3 is smaller than that of o 4. Direct
+calculation of the area of the shaded regions gives that xe,1 is 1.375 for o 3 and 3.675 for o 4.
+Although both xa,j and xe,j reflect the timing of taking action aj , they are distinct features. In fact,
+the difference between the two features gives half of the inter-­arrival time between aj and the previous
+action. The area of the three shaded parallelograms in the right panel of Figure 5 illustrates xe,2 − xa,2.
+
+20448317, 2025, 3, Downloaded from https://bpspsychub.onlinelibrary.wiley.com/doi/10.1111/bmsp.12390 by Beykent University, Wiley Online Library on [24/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+946
+
+o3
+
+1
+
+1
+
+o4
+
+xe,1
+
+W1
+0
+
+0
+
+W1
+
+xe,1
+
+0
+
+1
+
+2
+
+3
+
+4
+
+5
+
+0
+
+1
+
+Wlead
+
+FIGUR E 6
+
+| 947
+
+2
+
+3
+
+4
+
+5
+
+Wlead
+
+Level-­t wo action–time signature features xe,1 of o 3 and o 4.
+
+Each parallelogram corresponds to one appearance of action B in õ . Basic geometry calculation gives
+xe,2 − xa,2 = . 5 × (2. 5 − 1. 0)+ . 5 × (2. 7 − 2. 5)+ . 5 × (5. 4 − 3. 9) = 1. 6. We use the lead and lag components instead of the original time component WM+1 to construct action–time features. Although the action–time feature constructed from (WM+1 , Wj ) still reflects the timing of taking action aj , it is difficult
+to produce quantities related to the time spent on action aj from such action–time features.
+
+3.6 | Higher-­level features
+With the leading and lagging time processes, we augment the response path W described in Section 2
+by replacing the single time process WM+1 with Wlead and Wlag:
+W P = (Wlead , Wlag , W1 , …, WM ).
+
+(12)
+
+Each of the features discussed in the previous sections is constructed from one or two components of
+W P. In general, for k indices i1 , …, ik from ℐ P = {e, a, 1, …, M}, a level-­k signature feature xi1 ,…,ik is con-
+
+structed using Wi1 , …, Wik through path integrals. Each feature describes certain geometric characteristic of
+the trajectory formed by the components in a k-­dimensional space. The mathematical expression of xi1 ,…,ik
+is provided in Appendix. Theoretically, there are infinitely many such features:
+𝒳 P = {xi1 ,…,ik : k ≥ 1; i1 , …, ik ∈ ℐ P }.
+
+This set of features is the path signatures of W P. We call them the process signature (PS) features, which
+altogether fully characterize the process path W P with higher-­level features characterizing more delicate
+structures of the response process. As only a finite number of features can be used in practice, we will focus
+on PS features up to a level. We will show in Section 5 that PS features up to level two often already contain
+a good amount of information of response processes.
+
+20448317, 2025, 3, Downloaded from https://bpspsychub.onlinelibrary.wiley.com/doi/10.1111/bmsp.12390 by Beykent University, Wiley Online Library on [24/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+  
+
+RESPONSE PATH SIGNATURE
+
+TANG et al .
+
+We also consider the action processes and time processes separately: W A = (W1 , …, WM ) and
+lead , Wlag ), and the corresponding action signature (AS) and time signature (TS) features are
+
+W T = (W
+
+𝒳 A = {xi1 ,…,ik : k ≥ 1; i1 , …, ik = 1, …, M}
+
+and
+𝒳 T = {xi1 ,…,ik : k ≥ 1; i1 , …, ik = a, e}.
+
+Note that although W P is composed of W A and W T, level-­k PS features include more features than level-­k
+AS and level-­k TS features combined. The features related to the interaction between the action and timestamp sequences (e.g. action–time features discussed in Section 3.5) are also PS features, but they are not
+AS or TS features.
+Higher-­level log signature features can also be constructed from W P. Similar to the path signature
+features, given k ≥ 1, a level-­k process log signature (PLS) feature x̃ i1 ,…,ik can be constructed from
+components Wi1 , …, Wik of W P. However, not all combinations of indices from ℐ P correspond to a
+PLS feature. Only a combination of indices forming a Lyndon word (Reizenstein, 2017) defines a PLS
+feature. The set
+̃ P = {x̃ i ,…,i : k ≥ 1; (i1 , …, ik ) is a Lyndon word of ℐ P }
+𝒳
+1
+k
+
+is the so-­called log signature of W P. For k ≥ 2, there are much fewer level-­k PLS features than level-­k PS
+features. In fact, each level-­k PLS features can be expressed as a polynomial of PS features up to level k
+(Chevyrev & Kormilitzin, 2016). We will show in Section 5 that empirically PLS features summarize similar
+information as PS features while being more compact. In the same vein, action log signature (ALS) features
+̃ A and time log signature (TLS) features 𝒳
+̃ T can also be constructed based on the action path W A and
+𝒳
+T
+W , separately.
+
+3.7 | Comparison between AS features and N-­gram features
+N-­g ram features have been used for analysing action sequences of response processes (He & von
+Davier, 2015, 2016; Qiao & Jiao, 2018; Stadler et al., 2019). Originating from natural language processing, these features record the number of appearances of n-­g rams (short sequences of consecutive
+actions) in an action sequence. Similar to the AS features proposed in this article, each n-­g ram feature
+involves one or more actions and these features can be grouped based on the number of actions involved. When a single action is involved, the AS feature and n-­g ram feature are equivalent, as both
+measure the count of that action. However, when multiple actions are involved, the two types of features characterize different aspects of action sequences. AS features describe the relative positions of
+actions within an action sequence, while n-­g ram features capture the frequency of action patterns. A
+resulting key distinction is that n-­g ram features only focus on consecutive actions, whereas AS features
+have no such restriction. For example, for the sequence (A, B, C , A, B, C ), the n-­g ram feature associated
+with the action pair (A, C ) has a value of 0, as actions A and C never occur consecutively. In contrast,
+the corresponding AS feature has a value of 3, as explained in Section 3.1.
+
+4 | SI M U L AT IONS
+In this section, we demonstrate the performance of the extracted features in exploring the characteristics of response processes through simulation experiments.
+
+20448317, 2025, 3, Downloaded from https://bpspsychub.onlinelibrary.wiley.com/doi/10.1111/bmsp.12390 by Beykent University, Wiley Online Library on [24/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+|   
+
+948
+
+  
+
+| 949
+
+4.1 | Experiment settings
+We consider response processes with 12 possible actions denoted by A, …, L in the simulation experiments. Among them, A and L denote the start and the end of a response process, respectively, meaning
+that each action sequence always starts with A and ends with L. As a result, only 10 of the 12 actions, B,
+…, K, are related to problem solving and thus used for constructing process paths.
+Two experiments are conducted to investigate whether the features extracted from the proposed
+method can reveal latent group structures in response processes. In both experiments, 100 datasets of
+500 response processes are generated. In Experiment I, we focus on action sequences and omit timestamp sequences. Following Tang et al. (2020), we use Markov models to generate action sequences
+with a two-­g roup structure. Markov models have been used for describing response processes in the
+literature (Han et al., 2021). For each dataset, the 500 action sequences are generated from two different
+Markov models with 250 sequences from each. The probability transition matrices, P (1) and P (2), of
+the two models are randomly generated in the same way as in Tang et al. (2020). Once generated, they
+are fixed and used to simulate all 100 datasets. Given a probability transition matrix, we generate an
+action sequence by starting from A and sampling the subsequence actions according to the matrix until
+L appears. After data generation, we extract ALS features up to level two (55 features) for each action
+sequence. We would like to examine how well these extracted features can reveal the action sequences'
+group identity defined according to the model from which they are generated. To achieve this, each
+dataset is randomly split into a training set with 400 action sequences and a test set with the remaining
+100 action sequences. A logistic regression of the group identity on the extracted features is fitted on the
+training set, and its performance on predicting the group identity is evaluated on the test set. Prediction
+accuracy, that is, the proportion of correct predictions, is used as the evaluation criterion. To compare
+the ALS features with features extracted using other methods, we also extract 55 MDS features and use
+them for predicting the group identity for each dataset.
+In Experiment II, both action sequences and timestamp sequences of response processes are considered. Each dataset in this experiment also has a two-­g roup structure, but the structure is reflected in
+the timestamp sequences not in the action sequences. For the 250 response processes in the first group,
+the action sequences are generated from the Markov model with P (1) obtained in Experiment I as the
+probability transition matrix. The action sequences in the second group are set as the same as those in
+the first group. For both groups, given a generated action sequence (s1 , …, sL ), the corresponding timestamp sequence (t1 , …, tL ) is generated by first setting t1 to zero and then generating the time elapsed
+between sl and sl +1 for l = 1, …, L − 1. More specifically, for a response process in group g , each tl +1 − tl
+(g)
+is generated independently from the exponential distribution with mean 1∕𝜆sl ,sl +1. The mean parameters are group-­specific to embed group difference in the timestamp sequences. They also depend on
+the actions taken at steps l and l + 1 to induce dependence between action and timestamp sequences as
+(g)
+in real response processes. In the experiment, 𝜆jj ′ , g = 1, 2, j , j � = A, …, L are generated independently
+from the uniform distribution on interval (0, 1) and are used for simulating all 100 datasets. With this
+data generation process, the response processes in the two groups can be paired based on the action sequences. The two processes in a pair have the same action sequence but different timestamp sequences.
+We extract TLS and PLS features up to level two for each response process. This produces three TLS
+features and 78 PLS features. For each of the two sets of features, we examine how well they unveil the
+latent group structure using logistic regression as in Experiment I.
+
+4.2 | Results
+The prediction accuracy obtained from each logistic regression for each dataset is recorded in our
+experiments. The average and the standard deviation of the prediction accuracies across 100 datasets
+under each setting are reported in Table 1. In Experiment I, both types of features lead to excellent
+prediction of the group structure with the ALS features being slightly better. The results suggest that
+
+20448317, 2025, 3, Downloaded from https://bpspsychub.onlinelibrary.wiley.com/doi/10.1111/bmsp.12390 by Beykent University, Wiley Online Library on [24/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+RESPONSE PATH SIGNATURE
+
+|   
+
+TANG et al .
+
+TA BL E 1
+
+The average (standard deviation) of prediction accuracies in the simulation studies.
+Accuracy
+
+Experiment
+
+Log signature
+
+MDS features
+
+I
+
+.978 (.010)
+
+.933 (.035)
+
+II (PLS)
+
+.769 (.078)
+
+–
+
+II (TLS)
+
+.575 (.018)
+
+–
+
+signature features are comparable with MDS features in terms of unveiling the latent structure in action
+sequences. In Experiment II, as the two groups of response processes are identical in action sequences,
+features extracted solely from action sequences, for example, MDS features, are not able to distinguish
+the two groups. As shown in the table, TLS features can detect the group difference to some extent,
+but PLS features, which synthesize information in both action sequences and timestamp sequences,
+perform much better. It is not surprising that the group prediction accuracy is lower in Experiment II
+as the group structure is more subtle.
+
+5 | C A SE S T U DY
+In this section, we present a case study of PIAAC 2012 data to demonstrate how path signature features
+help investigate response processes.
+
+5.1 | Data
+The dataset we use is obtained from PIAAC 2012 study, the first round of Cycle I PIAAC. Participants
+from 17 countries1 are included in the dataset. We consider the response processes of 12,108 participants
+who completed all 14 PSTRE items in the PIAAC 2012 study. Due to an incomplete codebook for item
+U21, response processes from 13 out of 14 items are used in our analysis. Some elements in response processes are system events automatically generated by the computer for summarizing the item interface's state
+change caused by participants' actions. These elements are removed in our analysis as they are redundant in
+reflecting respondents' problem-­solving behaviours. Besides the response process, a polytomous score is
+also recorded for each respondent–PSTRE item pair. The number of score categories ranges from two to
+four across items. Table 2 gives a brief description and several summary statistics of the response processes
+by item. The items vary in the item interface, the complexity of the required task and difficulty level. The
+diversity of the items poses a great challenge to extract informative features from response processes. As
+we show later in this section, our proposed feature extraction method can be applied to all of these items.
+Our dataset also contains a wide range of background information about participants' demographics, education level and employment status. The extracted features, along with the background information, are
+used in the case study to explore the variations in the problem-­solving behaviours in both action and timestamp sequences.
+
+5.2
+
+|
+
+Feature extraction
+
+We apply the proposed feature extraction method to the PIAAC process data and extract time features,
+action features and process features for each response process from each of the 13 items.
+1
+Austria, Belgium, Denmark, Estonia, Finland, Germany, Ireland, Japan, Netherlands, Norway, Poland, Republic of Korea, Russia, Slovakia,
+Sweden, the United Kingdom of Great Britain and Northern Ireland, and the United States.
+
+20448317, 2025, 3, Downloaded from https://bpspsychub.onlinelibrary.wiley.com/doi/10.1111/bmsp.12390 by Beykent University, Wiley Online Library on [24/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+950
+
+TA BL E 2
+
+| 951
+
+Descriptive statistics of the 13 PIAAC PSTRE items used in the case study.
+
+ID
+
+Description
+
+M
+
+U01a
+
+Party invitations – can/cannot come
+
+55
+
+U01b
+
+Party invitations – accommodations
+
+58
+
+Avg. L
+
+Avg. T
+
+p
+
+18.0
+
+123.4
+
+59.1
+
+26.7
+
+203.9
+
+51.0
+
+U02
+
+Meeting rooms
+
+101
+
+27.0
+
+256.6
+
+14.8
+
+U03a
+
+CD tally
+
+67
+
+9.1
+
+141.5
+
+42.1
+
+U04a
+
+Class attendance
+
+1118
+
+39.5
+
+386.0
+
+14.2
+
+U06a
+
+Sprained ankle – site evaluation table
+
+30
+
+9.8
+
+155.6
+
+25.0
+
+U06b
+
+Sprained ankle – reliable/trustworthy site
+
+26
+
+15.2
+
+135.4
+
+50.0
+
+U07
+
+Digital photography book purchase
+
+40
+
+18.7
+
+128.6
+
+50.1
+
+U11b
+
+Locate e-­mail – File 3 e-­mails
+
+137
+
+25.5
+
+130.8
+
+24.8
+
+U16
+
+Reply all
+
+894
+
+33.4
+
+169.6
+
+62.4
+
+U19a
+
+Club membership – member ID
+
+176
+
+17.6
+
+120.7
+
+75.1
+
+U19b
+
+Club membership – eligibility for club
+president
+
+490
+
+20.9
+
+204.0
+
+51.1
+
+U23
+
+Lamp return
+
+169
+
+22.5
+
+154.2
+
+38.0
+
+Note: M = number of possible actions; Avg. L = average process length; Avg. T = average total response time; p = percentage of correct
+responses (for items with polytomous scores, the score category indicating a full score is treated as correct and other categories are treated as
+incorrect).
+
+The extracted time features include TS and TLS features up to level eight. The total response time
+and time to the first action are also extracted as time features. We call them the baseline time features
+as they have been used in the literature to study respondents' time-­related behaviours.
+As shown in Table 2, PIAAC items can have a large number of possible actions. Taking all actions
+into account in the proposed method will lead to high dimensional paths and thus higher dimensional
+features which are technically difficult to handle and often unnecessary. Some actions, in particular,
+rare actions, do not play a significant role in revealing respondents' latent traits. For these reasons, only
+d most common actions in each item are used to construct the action and process paths for extracting
+features using the proposed method. Several choices of d , 5, 10, 15, 20, 25 and 30 are considered to
+investigate the effect of d on the information contained in the extracted features. For each d , we extract
+signature features and log signature features up to only level three from the resulting action path and
+process path as this already produces more than 10,000 features for each item when d = 30. Besides, we
+would like to compare AS and log signature features with features extracted using alternative methods
+for action sequences. Although there are multiple alternative methods (e.g. MDS, autoencoder and n-gram), we only consider MDS features here as our exploratory analysis shows that these alternative features often yield similar prediction performance. For each item, 100 MDS features are extracted using
+R package ProcData (Zhang et al., 2021). The (log) signature features are extracted using Python
+library iisignature (Reizenstein & Graham, 2018). Table 3 summarizes the features we extracted
+and their dimension.
+
+5.3 | Analysis framework
+We conduct three sets of analyses to investigate the proposed feature extraction method and the information contained in the extracted features. In Analysis I, we examine the effect of feature types (signature or log signature), level of features and choice of path dimension (d ) on the information contained in
+the extracted features. In Analysis II, we use the extracted features to explore the information contained
+in response processes about respondents' demographics and latent traits. In Analysis III, the extracted
+features are used to construct respondents' process-­based problem-­solving scores.
+
+20448317, 2025, 3, Downloaded from https://bpspsychub.onlinelibrary.wiley.com/doi/10.1111/bmsp.12390 by Beykent University, Wiley Online Library on [24/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+  
+
+RESPONSE PATH SIGNATURE
+
+|   
+
+TA BL E 3
+
+TANG et al .
+
+Summary of extracted features in the case study. The feature dimension marked with † are for d = 30.
+
+Data
+
+Features
+
+Path dimension
+
+Feature dimension
+
+Time
+
+Total response time and time to first action
+
+–
+
+2
+
+TS features up to level eight
+
+2
+
+510
+
+TLS features up to level eight
+
+2
+
+71
+
+AS features up to level three
+
+d
+
+27,930 †
+
+ALS features up to level three
+
+d
+
+9455†
+
+MDS features
+
+–
+
+100
+
+PS features up to level three
+
+d +2
+
+33,824†
+
+PLS features up to level three
+
+d +2
+
+11,440 †
+
+Action
+
+Process
+
+Abbreviations: ALS, action log signature; AS, action signature; MDS, multidimensional scaling; PLS, path log signature; PS, path signature;
+TLS, time log signature; TS, time signature.
+
+A prediction framework is adopted in Analyses I and II for comparing information in features. For
+a given variable of interest Y and a set of covariates 𝜼, we consider a generalized linear model (GLM)
+g(𝜇) = 𝛽 0 + 𝜼⊤ 𝜷
+
+(13)
+
+for describing the relation between Y and 𝜼, where g is a link function, 𝜇 = E(Y ) and 𝛽 0 and 𝜷 are coefficients. The out-­of-­sample prediction performance of the fitted model is used to quantify the information
+contained in 𝜼 on Y with better prediction indicating more information.
+In addition to comparing information, the prediction framework can also reveal whether respondents with different Y perform differently in problem-­solving process. For example, consider a comparison of the performance of PLS features versus traditional item responses for predicting respondents'
+gender. A better prediction performance of the PLS features suggests that female and male exhibit
+distinct behaviours in the recorded problem-­solving processes.
+In Analyses I and II, we focus on predicting respondents' age, gender and usage of information and
+computer technology at home (ICTHOME) to investigate whether heterogeneity exists in the problem-solving behaviours of respondents. The three variables were directly recorded or derived from the
+information in the background questionnaires. Their relationships with respondents' problem-­solving
+behaviours have been previously studied in the literature (Tang et al., 2020; Tang, Zhang, et al., 2021;
+Zhang et al., 2021). Prediction of background variables is of importance. In the analysis differential
+item functioning (DIF), process features could serve as surrogate variables for the background variables
+and the unobserved attributes causing DIF. By appropriately incorporating process data information
+in the measurement model, DIF could be substantially reduced or potentially completely removed.
+Higher predictability helps the DIF reduction analysis. For each variable, the participants with a missing
+value are removed from the analysis. Among the three variables, age and ICTHOME are continuous
+variables, and gender is a binary variable coded as 1 for male and 0 for female. We use the identity link
+function g(𝜇) = 𝜇 for a continuous Y and the logit function g(𝜇) = 𝜇∕(1 − 𝜇) for a binary Y . The distributions for the two continuous variables are assumed to be normal, which seems reasonable based
+on their histograms shown in Figure 7. With these choices, Model (13) becomes linear regression for
+continuous Y and logistic regression for binary Y .
+For a given target variable Y , various models differing in the choices of 𝜼 are fitted and evaluated in
+the two analyses. The detailed choices of 𝜼 for each set of analyses are given in Sections 5.4.1 and 5.5.1.
+The out-­of-­sample prediction performance of the models is evaluated by five-­fold cross-­validation in
+the study. The evaluation criterion is the squared correlation between the predicted and the observed
+values (OSR 2) for a continuous response variable and the proportion of correct prediction (prediction
+accuracy) for a binary response variable. The averaged value of the evaluation criterion across five folds
+for each model is recorded for comparison.
+
+20448317, 2025, 3, Downloaded from https://bpspsychub.onlinelibrary.wiley.com/doi/10.1111/bmsp.12390 by Beykent University, Wiley Online Library on [24/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+952
+
+ICTHOME
+
+20
+
+FIGUR E 7
+
+1000
+0
+
+500
+
+Frequency
+
+200 400 600 800
+0
+
+Frequency
+
+1500
+
+1200
+
+Age
+
+| 953
+
+30
+
+40
+
+50
+
+60
+
+70
+
+0
+
+2
+
+4
+
+6
+
+8
+
+Histograms of age and ICTHOME.
+
+As shown in Table 3, the dimension of the signature and log signature features can be quite high,
+particularly in cases with large d . To reduce the computational burden and possible overfitting brought
+by high dimensional covariates, we use L1 regularized regression (Tibshirani, 1996) to select the most
+relevant features for a given Y from each set of features for each item before fitting the prediction models involving signature and log signature features. The penalty parameter is determined through five-fold cross-­validation. For each item and target variable pair, the number of selected features is typically
+fewer than 200. Only these selected features are used in Analyses I and II.
+In each round of cross-­validation for evaluating the prediction performance of various models, we
+further apply L2 regularization to 𝜷 in each model to mitigate the potential multicollinearity among the
+covariates. Based on our experience, this additional L2 regularization often helps to improve models'
+prediction performance. The penalty parameter for L2 regularization is determined by evaluating a
+model's prediction performance on a validation set, which is created by randomly sampling 10% of the
+cross-­validation training set (consisting of four folds of data). The validation set is not used when fitting
+the model.
+
+5.4 | Analysis I
+5.4.1
+
+|
+
+Settings
+
+In Analysis I, we investigate how the configuration of several variables in the proposed method affects
+the information contained in the extracted features. For each item, we create different feature sets from
+the extracted signature and log signature features according to the data used for feature extraction,
+the number of actions used for constructing action and process paths and the highest level of features.
+These feature sets are labelled as TS(k), TLS(k), AS(d , l ), ALS(d , l ), PS(d , l ) and PLS(d , l ) for k = 2, …, 8,
+d = 5, 10, 15, 20, 25, 30 and l = 2, 3. In the labels, k specifies the highest level of TS or TLS features, d
+specifies the number of actions used for constructing the action path or process path and l is the highest
+level of action features or process features. For example, TS(5) represents the set containing the TS features up to level five, and PLS(20, 2) represents the set containing the log signature features up to level
+two of the process path constructed from the 20 most common actions in the item. For a given item,
+each of the feature sets is used as the covariate vector 𝜼 to fit a GLM (13) for each response variable Y
+and to make predictions. We call the model with TS(k) as covariates the TS(k) model. Models with other
+choices of feature sets are named similarly. The prediction performances of these models are recorded
+
+20448317, 2025, 3, Downloaded from https://bpspsychub.onlinelibrary.wiley.com/doi/10.1111/bmsp.12390 by Beykent University, Wiley Online Library on [24/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+  
+
+RESPONSE PATH SIGNATURE
+
+|   
+
+TANG et al .
+
+for examining the differences between signature features and log signature features, the effect of feature
+complexity (the highest level of signature or log signature features) and the effect of the number of most
+common actions involved in extracting action and process features.
+
+5.4.2 | Results
+To compare the signature features and log signature features, we plot the prediction performance of
+signature models against that of the corresponding log signature models in Figure 8. The columns in
+the figure correspond to the three variables we predict and the rows correspond to action models, time
+models and process models. The figure shows that log signature features and signature features often
+produce comparable prediction results. As log signature features are often of much lower dimension
+than signature features, they are more compact in terms of preserving information in response processes. We will only present the results for log signature features in the remaining part of this section.
+Next, we examine how the information contained in the extracted features changes with feature
+complexity. Figure 9 presents the prediction performance of TLS(k) models for k = 2, 3, …, 8. In general, the prediction performance improves as more complex (higher-­level) features are included in the
+models. However, the improvement is nominal for most items if features higher than level five are
+added. In Figure 10, the results for ALS(d , 2) models and ALS(d , 3) models are compared in the top
+row and the results for PLS(d , 2) models and PLS(d , 3) are compared in the bottom row. In general, the
+level-­t wo feature models and the level three feature models produce comparable results with the latter
+ones being slightly better.
+Finally, we investigate the effects of the number of actions involved in constructing the action and
+process paths for extracting ALS and PLS features. In Figure 11, the prediction performance of ALS(d ,
+2) models and PLS(d , 2) is plotted against d . In general, increasing the action dimension can compress
+more information in the extracted features. However, the contribution in prediction is small for most of
+the items when the number passes 20.
+According to the results, involving more actions in feature extraction and extracting higher-­order
+features will help preserve more information. However, the number of features increases rapidly with
+path dimension and feature complexity. Including a large number of complex features in subsequent
+analysis often does not improve the results significantly. For this reason, we will only consider TLS(5),
+ALS(20, 2) and PLS(20, 2) from different items in the rest of the investigations.
+
+5.5 | Analysis II
+5.5.1
+
+|
+
+Settings
+
+In Analysis II, we study the information in the action sequences, timestamp sequences and the two
+types of sequences combined for different variables of interest. We consider various groups of features
+extracted from response processes for each item. These feature groups are summarized in Table 4. Each
+group contains one or more sets of features created in Analysis I or listed in Table 3.
+For each variable of interest (i.e. age, gender or ICTHOME) and each group of features, we fit a
+sequence of 13 models involving different numbers of items. The covariate vector of the j th model, de⊤ ⊤
+noted by 𝜼j , consists of the given group of features for items 1, …, j . More specifically, 𝜼j = (x ⊤
+1 , …, x j )
+where x j denote the group of features for item j . Varying the number of items in the models enables
+us to study the effects of aggregating information from multiple items. We call the models with the
+features in the baseline group as covariates the baseline models. The models with features in Group g
+as covariates are referred to as Model g .
+The prediction results from the baseline models provide a baseline of information contained in the
+traditional item responses. Comparing the prediction performance of the baseline models and other
+
+20448317, 2025, 3, Downloaded from https://bpspsychub.onlinelibrary.wiley.com/doi/10.1111/bmsp.12390 by Beykent University, Wiley Online Library on [24/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+954
+
+Gender
+
+0.05
+
+0.10
+
+0.15
+
+0.20
+
+0.12
+0.08
+0.06
+
+action signature
+
+0.02
+
+0.52
+0.00
+
+0.04
+
+0.58
+0.54
+
+0.56
+
+action signature
+
+0.10
+
+0.60
+
+0.20
+0.15
+0.10
+0.05
+
+action signature
+
+ICTHOME
+
+0.62
+
+Age
+
+| 955
+
+0.52
+
+0.54
+
+0.56
+
+0.58
+
+0.02
+
+action log signature
+
+0.06
+
+0.10
+
+action log signature
+
+0.08
+
+0.10
+
+0.12
+
+0.525
+
+0.535
+
+0.545
+
+0.02
+
+0.60
+
+process signature
+
+0.58
+0.56
+
+0.20
+
+0.25
+
+0.08
+
+0.06
+0.04
+
+0.52
+0.15
+
+process log signature
+
+0.06
+
+time log signature
+
+0.54
+
+process signature
+
+0.25
+0.20
+0.15
+
+0.10
+
+0.04
+
+0.14
+
+time log signature
+
+0.10
+
+process signature
+
+0.05
+
+0.07
+0.03
+
+0.515
+
+0.12
+
+0.06
+
+time log signature
+
+0.10
+
+0.04
+
+0.08
+
+0.02
+
+0.05
+
+time signature
+
+0.54
+0.52
+
+0.53
+
+time signature
+
+0.10
+0.08
+0.06
+0.04
+
+time signature
+
+0.12
+
+0.55
+
+0.09
+
+action log signature
+
+0.52
+
+0.54
+
+0.56
+
+0.58
+
+process log signature
+
+0.60
+
+0.04 0.06 0.08 0.10 0.12 0.14
+process log signature
+
+F I G U R E 8 Prediction performance of signature models and log signature models for age, gender and ICTHOME. The
+red dashed line in each plot is the identity line.
+
+models helps us examine the extra information provided by the response processes. Besides, we compare the performance of Models 1, 2 and 3 to inspect whether the time features extracted from the
+proposed method provide more information than simple time sequence summary statistics. We also
+compare the performance of Models 4, 5 and 6 to see whether the action features extracted from
+the proposed method provide similar information to those from existing feature extraction methods.
+Finally, we compare the performance of Models 7 and 8 to investigate whether the action–time interaction features in PLS(20, 2) provide additional information for the variables of interest.
+
+5.5.2 | Results
+To begin with, we present the results related to the information in timestamp sequences. In Figure 12,
+the prediction performance of the baseline models and Models 1, 2 and 3 are plotted against the number
+of items involved in the models for each predicted variable. Several observations can be made from the
+
+20448317, 2025, 3, Downloaded from https://bpspsychub.onlinelibrary.wiley.com/doi/10.1111/bmsp.12390 by Beykent University, Wiley Online Library on [24/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+  
+
+RESPONSE PATH SIGNATURE
+
+|   
+
+TANG et al .
+Gender
+
+0.08
+0.06
+
+0.535
+
+Pred Acc
+
+0.04
+
+0.525
+3
+
+4
+
+5
+
+6
+
+7
+
+8
+
+0.02
+
+0.515
+2
+
+2
+
+3
+
+Level
+
+FIGUR E 9
+one item.
+
+ICTHOME
+
+0.545
+
+0.02 0.04 0.06 0.08 0.10 0.12
+
+OSR2
+
+Age
+
+4
+
+5
+
+6
+
+7
+
+8
+
+2
+
+3
+
+4
+
+Level
+
+5
+
+6
+
+7
+
+8
+
+Level
+
+Prediction performance of TLS(k) models for different choices of k. Each line represents the results from
+
+Gender
+
+ICTHOME
+
+0.15
+
+0.52
+
+0.55
+
+0.56
+
+0.57
+
+0.02
+
+Action Level 2
+
+0.04
+
+0.06
+
+0.08
+
+0.10
+
+Action Level 2
+0.14
+0.12
+0.10
+
+Process Level 3
+
+0.58
+0.56
+0.52
+
+0.06
+
+0.54
+
+Process Level 3
+
+0.25
+0.20
+0.15
+0.10
+
+Process Level 3
+
+0.54
+
+0.60
+
+Action Level 2
+
+0.53
+
+0.08
+
+0.10
+
+0.10
+0.02
+
+0.52
+0.05
+
+0.06
+
+Action Level 3
+
+0.58
+0.56
+0.54
+
+Action Level 3
+
+0.15
+0.10
+0.05
+
+Action Level 3
+
+0.20
+
+Age
+
+0.10
+
+0.15
+
+Process Level 2
+
+0.20
+
+0.52 0.53 0.54 0.55 0.56 0.57
+Process Level 2
+
+0.04
+
+0.06
+
+0.08
+
+0.10
+
+0.12
+
+Process Level 2
+
+F I G U R E 1 0 Prediction performance of ALS(d , l ) models (top row) and PLS(d , l ) models (bottom row). The red dashed
+line in each plot is the identity line.
+
+figure. First, Models 1 and 2 produce better predictions of age and ICTHOME than the baseline models. This observation suggests that timestamp sequences provide extra information about respondents'
+age and ICTHOME than the polytomous score. Intuitively, older respondents may not be as familiar
+with information technology as younger ones. Also, respondents who often use computers at home
+should be more familiar with the interface of the PSTRE items. As a result, younger respondents and
+respondents with higher ICTHOME values may get their hands on the items more quickly. They may
+also click buttons or type faster. These behaviours can be reflected in the timestamp sequences, thus
+providing information about respondents' age and ICTHOME. The second observation from Figure 12
+is that incorporating time information in the models does not significantly improve the performance of
+
+20448317, 2025, 3, Downloaded from https://bpspsychub.onlinelibrary.wiley.com/doi/10.1111/bmsp.12390 by Beykent University, Wiley Online Library on [24/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+956
+
+Gender
+
+20
+
+25
+
+30
+
+10
+
+15
+
+30
+
+5
+
+10
+
+15
+
+20
+
+25
+
+30
+
+20
+
+25
+
+30
+
+20
+
+25
+
+30
+
+0.10
+
+0.12
+
+d
+
+0.04
+
+Process OSR2
+
+Process Pred Acc
+15
+
+25
+
+0.52 0.53 0.54 0.55 0.56 0.57
+
+0.20
+0.15
+
+10
+
+20
+d
+
+0.10
+
+Process OSR2
+
+5
+
+0.08
+
+0.10
+5
+
+d
+
+0.08
+
+15
+
+0.06
+
+10
+
+0.06
+0.02
+
+0.52
+5
+
+0.04
+
+Action OSR2
+
+0.56
+0.55
+0.53
+
+0.54
+
+Action Pred Acc
+
+0.15
+0.10
+0.05
+
+Action OSR2
+
+ICTHOME
+
+0.57
+
+Age
+
+| 957
+
+5
+
+d
+
+10
+
+15
+
+20
+
+25
+
+30
+
+5
+
+10
+
+d
+
+15
+d
+
+F I G U R E 1 1 Prediction performance of the ALS(d , 2) models (top row) and PLS(d , 2) models (bottom row) for different
+choices of d . Each line represents the results from one item.
+
+TA BL E 4
+
+Groups of features used in Analysis II.
+
+Group
+
+Included features
+
+Baseline
+
+Polytomous scores
+
+1
+
+Polytomous scores + time summary
+
+2
+
+Polytomous scores + TLS(5)
+
+3
+
+Polytomous scores + time summary + TLS(5)
+
+4
+
+Polytomous scores + MDS
+
+5
+
+Polytomous scores + ALS(20, 2)
+
+6
+
+Polytomous scores + ALS(20, 2) + MDS
+
+7
+
+Polytomous scores + ALS(20, 2) + TLS(5)
+
+8
+
+Polytomous scores + PLS(20, 2) + TLS(5)
+
+predicting gender, indicating that the time sequences from females and males do not possess different
+patterns that can be characterized by the extracted time features. Last but not the least, TLS features
+are more informative in reflecting respondents' age and ICTHOME than the simple time sequence
+summary statistics considered in the study. As Figure 12 shows, for the two response variables, the
+TLS feature models significantly outperform the models with simple time sequence summary statistics.
+At the same time, adding time sequence summary statistics to the models with TLS features does not
+significantly improve the prediction performance, indicating that the information in the time sequence
+summary statistics is covered in the TLS features. A close examination of the features selected by L1
+regularization in the screening step confirms the findings. The total response time, that is, level-­one
+TLS feature, is selected in 12 out of 13 items for modelling age and ICTHOME. In addition, the time
+
+20448317, 2025, 3, Downloaded from https://bpspsychub.onlinelibrary.wiley.com/doi/10.1111/bmsp.12390 by Beykent University, Wiley Online Library on [24/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+  
+
+RESPONSE PATH SIGNATURE
+
+|   
+
+TANG et al .
+Gender
+
+0.14
+0.08
+
+0.51
+2
+
+4
+
+6
+
+8
+
+10
+
+12
+
+2
+
+Number of Items
+
+baseline
+
+FIGUR E 12
+
+0.12
+0.10
+
+OSR2
+
+0.53
+
+Pred Acc
+
+0.55
+
+0.25
+0.20
+0.15
+
+OSR2
+
+ICTHOME
+
+0.57
+
+Age
+
+4
+
+6
+
+8
+
+10
+
+12
+
+2
+
+Number of Items
+
+time summary
+
+TLS(5)
+
+4
+
+6
+
+8
+
+10
+
+12
+
+Number of Items
+
+summary + TLS(5)
+
+Prediction performance of time features for age, gender and ICTHOME.
+
+interval variation, that is, level-­t wo TLS feature, is selected in 12 out of 13 items for age and 11 out of 13
+items for ICTHOME, and some higher-­level log signature features (features corresponding to indices
+11122 and 11212 for age and 112 and 1222 for ICTHOME, where 1 and 2 stand for the lead and the lag
+dimensions of the time path, respectively) are selected for all 13 items. These features contribute to the
+improved prediction performance of Model 2 over Model 1. Although the higher-­order TLS features
+are not easily interpretable, this finding hints that more detailed patterns in timestamp sequence are
+worth studying.
+Next, we examine the information in the action sequence. The prediction performance of the baseline model and Models 4, 5 and 6 is shown in Figure 13. The models with either ALS features or MDS
+features outperform the baseline models regardless of the number of items involved in the models, implying that action sequences capture more information about respondents' age, gender and ICTHOME
+than the polytomous scores. These results agree with the findings in Tang et al. (2020). The figure also
+shows that the prediction performances of ALS feature models and MDS feature models are similar,
+suggesting that the proposed method and the MDS method are comparable in terms of extracting information from action sequences. However, the proposed method can also extract useful information
+from timestamp sequences as shown earlier.
+Finally, we examine the information in the entire response process. The prediction performance of
+Models 7 and 8 is presented in Figure 14. We also include the results for the baseline model and Models
+2 and 5 in the figure for reference. We expect that the prediction based on both action sequences and
+timestamp sequences (Models 7 and 8) is no worse than that based solely on the action sequence (Model
+4) or the timestamp sequences (Model 2), and this is indeed in the case in the figure. The left panel
+shows that, for predicting age, the models with both ALS(20,2) and TLS(5) features as covariates outperform the models with only action features or time features. This observation not only corroborates
+our earlier findings that both action sequences and timestamp sequences contain information about
+respondents' age but also suggests that each of the two types of sequences contains information unique
+to the other type of sequences. For gender, the performance of the models with both ALS(20, 2) and
+TLS(5) features is almost identical to that of the models with only ALS(20, 2) features, which agrees
+with the previous finding that timestamp sequences do not provide much information of respondents'
+gender.
+For the comparison between Models 7 and 8, although there is still a tiny but consistent improvement in predicting age and gender if the interactions are incorporated, in general, Models 7
+and 8 have very close prediction performance for all three variables of interest, meaning that the
+action–time interaction characterized by PLS(20, 2) does not reveal much about respondents' age,
+gender and ICTHOME.
+
+20448317, 2025, 3, Downloaded from https://bpspsychub.onlinelibrary.wiley.com/doi/10.1111/bmsp.12390 by Beykent University, Wiley Online Library on [24/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+958
+
+Gender
+
+0.10
+4
+
+6
+
+8
+
+10
+
+12
+
+0.08
+2
+
+4
+
+Number of Items
+
+FIGUR E 1 3
+
+6
+
+8
+
+10
+
+12
+
+2
+
+4
+
+Number of Items
+
+baseline
+
+ALS(20,2)
+
+6
+
+8
+
+10
+
+12
+
+Number of Items
+
+MDS
+
+ALS(20,2) + MDS
+
+Prediction performance of action features for age, gender and ICTHOME.
+
+4
+
+6
+
+8
+
+10
+
+12
+
+Number of Items
+
+baseline
+
+0.16
+0.14
+0.12
+0.08
+
+0.10
+
+OSR2
+
+Pred Acc
+
+0.25
+0.15
+
+2
+
+ICTHOME
+
+0.52 0.54 0.56 0.58 0.60 0.62
+
+Gender
+
+0.35
+
+Age
+
+OSR2
+
+0.12
+
+OSR2
+
+0.14
+
+0.60
+Pred Acc
+
+0.56
+0.52
+
+2
+
+FIGUR E 14
+
+ICTHOME
+0.16
+
+0.15 0.20 0.25 0.30 0.35 0.40
+
+OSR2
+
+Age
+
+| 959
+
+2
+
+4
+
+6
+
+8
+
+10
+
+12
+
+2
+
+Number of Items
+
+ALS(20,2)
+
+TLS(5)
+
+4
+
+6
+
+8
+
+10
+
+12
+
+Number of Items
+
+ALS(20,2) + TLS(5)
+
+PLS(20,2) + TLS(5)
+
+Prediction performance of process features for age, gender and ICTHOME.
+
+5.6 | Analysis III
+In this section, we demonstrate the features extracted from the proposed method are helpful for
+improving the precision of latent trait assessment. Recently, Zhang et al. (2023) proposed a generic
+Rao-­Blackwellization procedure for improving the precision of latent trait assessment by using the information in response processes. In the procedure, process information comes from features extracted
+from response processes. More specifically, the procedure first obtains sufficient statistics of the latent
+trait 𝜃 using the extracted features and item-­response-­theory-­based (IRT-­based) estimates of 𝜃. Then
+a process-­based estimate of 𝜃 is constructed from the sufficient statistics. It is shown theoretically and
+empirically that the process-­based estimate obtained from this procedure is more accurate than the IRT-based estimates. In this analysis, we adopt this procedure with process information provided through
+various log signature features to construct and compare process-­based estimates.
+
+5.6.1 | Settings
+We consider TLS(5), ALS(20, 2) and PLS(20, 2) of the 13 PIAAC PSTRE items as the features used in
+Zhang et al. (2023) procedure. The 13 items are randomly split into a reference set of seven items and
+
+20448317, 2025, 3, Downloaded from https://bpspsychub.onlinelibrary.wiley.com/doi/10.1111/bmsp.12390 by Beykent University, Wiley Online Library on [24/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+  
+
+RESPONSE PATH SIGNATURE
+
+|   
+
+TANG et al .
+
+a scoring set of six items. We obtain respondents' IRT-­based PSTRE scores from the reference items
+and use these scores as a reference of respondents' latent traits. For each type of features, process-­based
+̂P
+̂T , 𝜃
+̂A
+PSTRE scores are constructed based on the scoring items. Let 𝜃
+Proc Proc and 𝜃 Proc denote the process-based scores from TLS(5), ALS(20, 2) and PLS(20, 2), respectively. For comparison, we also compute
+̂IRT from the six scoring items. Pearson's correlation, Kendall's 𝜏 and mean
+the IRT-­based scores 𝜃
+squared error (MSE) are used to evaluate the quality of the scores (relative to the reference score). The
+reference-­scoring split and the subsequent analyses are repeated 50 times.
+
+5.6.2 | Results
+P
+T
+A
+𝜃 Proc. The three process-­based
+𝜃 Proc, ̂
+𝜃 Proc and ̂
+𝜃 IRT, ̂
+Figure 15 presents the three evaluation criteria for ̂
+scores outperform the IRT-­based score, indicating the potential of the log signature features for im̂P has the best performance,
+proving the precision of latent assessment. Among the three scores, 𝜃
+Proc
+T
+A
+𝜃 Proc does not excel as the other two process-­based scores, the
+slightly better than that of ̂𝜃Proc. Although ̂
+𝜃 IRT is still impressing, considering the time process X T has only two components.
+improvement over ̂
+
+6 | DIS C US SION
+In this article, we proposed a method for extracting features from response processes recorded in interactive problem-­solving items. The method incorporates the information in both action and timestamp
+sequences into the extracted features, which are the signature or log signature of a path constructed
+from a response process.
+Besides the ability to account for timestamp sequences in feature extractions, another potential advantage of the proposed method over the MDS and the autoencoder feature extraction methods is that
+it is a model-­free method. Both MDS and autoencoder methods require model fitting using observed response processes. If a new set of response processes becomes available, one may consider to recalibrate
+the model used for extracting features. In this case, the features of the old response processes are likely
+to change as well, which may lead to substantial revision in the subsequent analysis. In contrast, the
+signature and log signature features of a response process do not depend on other response processes.
+Also, as no model fitting is needed, extracting signature or log signature features is computationally fast.
+It takes only a few seconds to extract all the signature and log signature features used in the case study.
+The PIAAC case study shows that, for some variables of interest, TS and TLS features can provide
+more information than the total response time and time to the first action. The results suggest that
+Kendall's Tau
+
+IRT
+
+Time
+
+Action Process
+
+MSE
+
+0.25
+
+0.30
+
+0.35
+
+0.40
+
+0.54 0.56 0.58 0.60 0.62 0.64
+
+0.72 0.74 0.76 0.78 0.80 0.82 0.84
+
+Pearson's Correlation
+
+IRT
+
+Time
+
+Action Process
+
+IRT
+
+Time
+
+Action Process
+
+F I G U R E 1 5 Boxplots of Pearson's correlation, Kendall's 𝜏 and MSE between the scores obtained from the scoring items
+and the reference score.
+
+20448317, 2025, 3, Downloaded from https://bpspsychub.onlinelibrary.wiley.com/doi/10.1111/bmsp.12390 by Beykent University, Wiley Online Library on [24/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+960
+
+  
+
+| 961
+
+further investigation of the more granular time data in response processes can help us obtain a better
+understanding of respondents' problem-­solving behaviours. Developing statistical models for time sequences is a potential future direction.
+Dependence between action sequences and time sequences is often observed in response processes. For
+example, certain actions are usually associated with longer times until the next action is taken, and repeated
+actions tend to have shorter time intervals in between. The proposed method does not explicitly account for
+such dependencies when extracting signature or log signature features. However, comparing the prediction
+performance of the resulting features can reveal the relationships to some extent. For instance, Figure 14
+shows that both action features and time features contain substantial information about ICTHOME as the
+prediction performance improves significantly when using ALS(20,2) or TLS(5) compared to the baseline
+model, but combining ALS(20,2) and TLS(5) provides only a small amount of additional improvement,
+suggesting that action features and time features overlap in the information they capture.
+In Analyses I and II of the PIAAC case study, we use GLMs to predict the target variables and use
+an L1 regularization followed by L2 regularization procedure to enhance the stability of the models'
+prediction performance. These choices are made for convenience and to achieve relatively low computational cost. Alternative approaches can be considered. For example, machine learning models such as
+random forests (Breiman, 2001), XGBoost (Chen & Guestrin, 2016) and neural networks (Hastie, 2009,
+Chapter 11) could be used in place of GLMs. Similarly, statistical methods such as SURE screening (Fan
+& Lv, 2008) and elastic net regularization (Zou & Hastie, 2005) can be used for feature selection and to
+mitigate overfitting. We explored these alternative methods and found that they produced results and
+conclusions consistent with those obtained in Sections 5.4 and 5.5.
+The analyses in Section 5.5 focus on demonstrating that there exist differences in respondents'
+problem-­solving behaviours by comparing the prediction performance of the extracted features without
+identifying specific behaviour patterns that distinguish respondents. Despite the challenges brought by
+the high dimensionality of the extracted features, there are existing methods which can help interpret
+the results. For instance, sparse principal component analysis (Zou et al., 2006) can be used to obtain
+principal components that load on only a few of the original features, producing lower dimensional
+features associated with more meaningful behaviour patterns and improving the interpretability of the
+prediction models. Additionally, when black-­box machine learning models such as boosting or neural
+networks are used for prediction, interpretable machine learning tools (Molnar, 2022) such as feature
+importance rankings and partial dependence plot can be used to better understand the effects of specific features of interest. With that being said, statistical-­learning-­based features are able to capture
+relatively simple patterns of the response process. Their abilities to capture the higher-­level problem-solving strategies are still limited.
+Although signature and log signature features cannot be directly used to identify specific distinct
+behaviour patterns among respondents, they still have practical utility. As demonstrated in Section 5.6,
+these features can help improve the precision of latent trait assessment. Beyond this, features extracted
+from process data can also be used in other psychometric applications such as item selection in computerized adaptive testing and mitigating the issue of DIF (Qi, 2023).
+AU T HOR C ON T R I BU T ION S
+Xueying Tang: methodology. Jingchen Liu: methodology. Zhiliang Ying: methodology.
+AC K NOW L E D G E M E N T S
+Tang's research is supported by National Science Foundation grant DMS-­2310664. Liu and Ying's research is supported by National Science Foundation grants SES-­1826540 and IIS-­1633360.
+DATA AVA I L A BI L I T Y S TAT E M E N T
+The data that support the findings of this study are available on request from the corresponding author.
+The data are not publicly available due to privacy or ethical restrictions. The data that support the findings of this study are available from Educational Testing Services. Restrictions apply to the availability
+
+20448317, 2025, 3, Downloaded from https://bpspsychub.onlinelibrary.wiley.com/doi/10.1111/bmsp.12390 by Beykent University, Wiley Online Library on [24/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+RESPONSE PATH SIGNATURE
+
+|   
+
+TANG et al .
+
+of these data, which were used under license for this study. Data are available from the author(s) with
+the permission of Educational Testing Services.
+ORC I D
+Jingchen Liu
+
+https://orcid.org/0009-0008-9021-5684
+
+R EF ER ENCES
+Albert, D., & Steinberg, L. (2011). Age differences in strategic planning as indexed by the tower of london. Child Development,
+82(5), 1501–1517.
+Breiman, L. (2001). Random forests. Machine Learning, 45, 5–32.
+Chen, K.-­T. (1958). Integration of paths–a faithful representation of paths by noncommutative formal power series. Transactions
+of the American Mathematical Society, 89(2), 395–407.
+Chen, T., & Guestrin, C. (2016). Xgboost: A scalable tree boosting system. In Proceedings of the 22nd acm sigkdd international conference
+on knowledge discovery and data mining (pp. 785–794).
+Chen, Y. (2020). A continuous-­t ime dynamic choice measurement model for problem-­solving process data. Psychometrika, 85(4),
+1052–1075.
+Chen, Y., Li, X., Liu, J., & Ying, Z. (2019). Statistical analysis of complex problem-­solving process data: An event history analysis
+approach. Frontiers in Psycholog y, 10, 486.
+Chevyrev, I., & Kormilitzin, A. (2016). A primer on the signature method in machine learning. arXiv preprint arXiv:1603.03788.
+https://​doi.​org/​10.​48550/​​a rXiv.​1603.​03788​
+de la Torre, J. (2011). The generalized DINA model framework. Psychometrika, 76(2), 179–199. https://​doi.​org/​10.​1007/​s1133​
+6-­​011-­​9207-­​7
+de la Torre, J., & Douglas, J. A. (2004). Higher-­order latent trait models for cognitive diagnosis. Psychometrika, 69(3), 333–353.
+Eichmann, B., Goldhammer, F., Greiff, S., Pucite, L., & Naumann, J. (2019). The role of planning in complex problem solving.
+Computers & Education, 128, 1–12. https://​doi.​org/​10.​1016/j.​compe​du.​2 018.​08.​0 04
+Fan, J., & Lv, J. (2008). Sure independence screening for ultrahigh dimensional feature space. Journal of the Royal Statistical Society
+Series B: Statistical Methodolog y, 70(5), 849–911.
+Goldhammer, F., Naumann, J., Stelter, A., Tóth, K., Rölke, H., & Klieme, E. (2014). The time on task effect in reading and
+problem solving is moderated by task difficulty and skill: Insights from a computer-­based large-­scale assessment. Journal
+of Educational Psycholog y, 106(3), 608.
+Greiff, S., Niepel, C., Scherer, R., & Martin, R. (2016). Understanding students' performance in a computer-­based assessment of
+complex problem solving: An analysis of behavioral data from computer-­generated log files. Computers in Human Behavior,
+61, 36–46. https://​doi.​org/​10.​1016/j.​chb.​2 016.​02.​095
+Han, Y., Liu, H., & Ji, F. (2021). A sequential response model for analyzing process data on technology-­based problem-­solving
+tasks. Multivariate Behavioral Research, 57, 960–977.
+Hastie, T. (2009). The elements of statistical learning: Data mining, inference, and prediction. Springer.
+He, Q., & von Davier, M. (2015). Identifying feature sequences from process data in problem-­solving items with n-­g rams. In L.
+A. van der Ark, D. M. Bolt, W.-­C . Wang, J. A. Douglas, & S.-­M. Chow (Eds.), Quantitative psycholog y research (pp. 173–190).
+Springer International Publishing.
+He, Q., & von Davier, M. (2016). Analyzing process data from problem-­solving items with n-­g rams: Insights from a computer-based large-­scale assessment. In Y. Rosen, S. Ferrara, & M. Mosharraf (Eds.), Handbook of research on technolog y tools for real-world skill development (pp. 749–776). Information Science Reference.
+Junker, B. W., & Sijtsma, K. (2001). Cognitive assessment models with few assumptions, and connections with nonparametric
+item response theory. Applied Psychological Measurement, 25(3), 258–272. https://​doi.​org/​10.​1177/​01466​21012​2 032064
+Kroehne, U., & Goldhammer, F. (2018). How to conceptualize, represent, and analyze log data from technology-­based assessments? A generic framework and an application to questionnaire items. Behaviormetrika, 45(2), 527–563. https://​doi.​org/​
+10.​1007/​s4123​7-­​018-­​0 063-­​y
+Li, C., Zhang, X., Liao, L., Jin, L., & Yang, W. (2019). Skeleton-­based gesture recognition using several fully connected layers
+with path signature features and temporal transformer module. In Proceedings of the AAAI conference on artificial intelligence
+(Vol. 33, pp. 8585–8593).
+Liao, D., He, Q., & Jiao, H. (2019). Mapping background variables with sequential patterns in problem-­solving environments:
+An investigation of united states adults' employment status in piaac. Frontiers in Psycholog y, 10, 646.
+Lord, F. M. (1980). Applications of item response theory to practical testing problems. Routledge.
+Lyons, T., Ni, H., & Oberhauser, H. (2014). A feature set for streams and an application to high-­frequency financial tick data. In
+Proceedings of the 2014 international conference on big data science and computing (pp. 1–8).
+Lyons, T. J., Caruana, M., & Lévy, T. (2007). Differential equations driven by rough paths. Springer.
+Molnar, C. (2022). Interpretable machine learning (2nd ed.). https://​chris​tophm.​g ithub.​io/​i nter ​preta​ble-­​m l-­​book
+Moore, P., Lyons, T., Gallacher, J., & Initiative, A. D. N. (2019). Using path signatures to predict a diagnosis of Alzheimer's
+disease. PLoS One, 14(9), e0222212.
+
+20448317, 2025, 3, Downloaded from https://bpspsychub.onlinelibrary.wiley.com/doi/10.1111/bmsp.12390 by Beykent University, Wiley Online Library on [24/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+962
+
+  
+
+| 963
+
+Qi, J. (2023). Process data applications in educational assessment. PhD thesis, Columbia University. https://​doi.​org/​10.​7916/​9scg-­​as21
+Qiao, X., & Jiao, H. (2018). Data mining techniques in analyzing process data: A didactic. Frontiers in Psycholog y, 9, 2231. https://​
+doi.​org/​10.​3389/​f psyg.​2 018.​02231​
+Rasch, G. (1961). On general laws and the meaning of measurement in psychology. In Proceedings of the fourth berkeley symposium on
+mathematical statistics and probability (Vol. 4, pp. 321–333).
+Reckase, M. (2009). Multidimensional item response theory. Springer New York.
+Reizenstein, J. (2017). Calculation of iterated-­integral signatures and log signatures. arXiv preprint arXiv:1712.02757. https://​doi.​
+org/​10.​48550/​​a rXiv.​1712.​02757​
+Reizenstein, J., & Graham, B. (2018). The iisignature library: efficient calculation of iterated-­integral signatures and log signatures. arXiv preprint arXiv:1802.08252. https://​doi.​org/​10.​48550/​​a rXiv.​1802.​08252​
+Rupp, A. A., Templin, J., & Henson, R. A. (2010). Diagnostic measurement: Theory, methods, and applications. Guilford Press.
+Samejima, F. (1997). Graded response model. In W. J. van der Linden & R. K. Hambleton (Eds.), Handbook of modern item response
+theory (pp. 85–100). Springer.
+Stadler, M., Fischer, F., & Greiff, S. (2019). Taking a closer look: An exploratory analysis of successful and unsuccessful strategy
+use in complex problems. Frontiers in Psycholog y, 10, 777.
+Tang, X., Wang, Z., He, Q., Liu, J., & Ying, Z. (2020). Automatic feature construction for process data using multidimensional
+scaling. Psychometrika, 85, 378–397.
+Tang, X., Wang, Z., Liu, J., & Ying, Z. (2021). An exploration of process data by action sequence autoencoder. British Journal of
+Mathematical and Statistical Psycholog y, 74, 1–33.
+Tang, X., Zhang, S., Wang, Z., Liu, J., & Ying, Z. (2021). Procdata: An r package for process data analysis. Psychometrika, 86,
+1058–1083. https://​doi.​org/​10.​1007/​s1133​6 -­​021-­​09798​-­​7
+Templin, J. L., & Henson, R. A. (2006). Measurement of psychological disorders using cognitive diagnosis models. Psychological
+Methods, 11(3), 287.
+Tibshirani, R. (1996). Regression shrinkage and selection via the lasso. Journal of the Royal Statistical Society Series B, 58(1), 267–288.
+Ulitzsch, E., He, Q., Ulitzsch, V., Molter, H., Nichterlein, A., Niedermeier, R., & Pohl, S. (2021). Combining clickstream analyses and graph-­modeled data clustering for identifying common response processes. Psychometrika, 86(1), 190–214.
+van der Linden, W. (2016). Handbook of item response theory: Three volume set. Chapman and Hall/CRC.
+van der Linden, W. J. (2007). A hierarchical framework for modeling speed and accuracy on test items. Psychometrika, 72(3), 287.
+von Davier, M., & Lee, Y. (2019). Handbook of diagnostic classification models: Models and model extensions, applications, software packages.
+Springer.
+Wang, B., Liakata, M., Ni, H., Lyons, T., Nevado-­Holgado, A. J., & Saunders, K. (2019). A path signature approach for speech
+emotion recognition. In Interspeech 2019 (pp. 1661–1665). https://​doi.​org/​10.​21437/​​I nter​speech.​2 019-­​2624
+Wang, C., & Xu, G. (2015). A mixture hierarchical model for response times and response accuracy. British Journal of Mathematical
+and Statistical Psycholog y, 68(3), 456–477.
+Xu, H., Fang, G., & Ying, Z. (2020). A latent topic model with Markov transition for process data. British Journal of Mathematical
+and Statistical Psycholog y, 73(3), 474–505.
+Yang, W., Jin, L., Ni, H., & Lyons, T. (2016). Rotation-­free online handwritten character recognition using dyadic path signature
+features, hanging normalization, and deep neural network. In 2016 23rd international conference on pattern recognition (icpr) (pp.
+4083-4088).
+Yang, W., Lyons, T., Ni, H., Schmid, C., Jin, L., & Chang, J. (2017). Leveraging the path signature for skeleton-­based human
+action recognition. arXiv preprint arXiv:1707.03993. https://​a rxiv.​org/​abs/​1707.​03993​
+Zhan, P., Jiao, H., & Liao, D. (2018). Cognitive diagnosis modelling incorporating item response times. British Journal of
+Mathematical and Statistical Psycholog y, 71(2), 262–286. https://​doi.​org/​10.​1111/​bmsp.​12114​
+Zhang, M., & Andersson, B. (2023). Identifying problem-­solving solution patterns using network analysis of operation sequences and response times. Educational Assessment, 28(3), 172–189. https://​doi.​org/​10.​1080/​10627​197.​2 023.​2 222585
+Zhang, S., Tang, X., He, Q., Liu, J., & Ying, Z. (2021). External correlates of adult digital problem-­solving behavior: Log data
+analysis of a large-­scale assessment. arXiv preprint arXiv:2103.15036. https://​doi.​org/​10.​48550/​​a rXiv.​2103.​15036​
+Zhang, S., Wang, Z., Qi, J., Liu, J., & Ying, Z. (2023). Accurate assessment via process data. Psychometrika, 88(1), 76–97.
+Zou, H., & Hastie, T. (2005). Regularization and variable selection via the elastic net. Journal of the Royal Statistical Society Series B:
+Statistical Methodolog y, 67(2), 301–320.
+Zou, H., Hastie, T., & Tibshirani, R. (2006). Sparse principal component analysis. Journal of Computational and Graphical Statistics,
+15(2), 265–286.
+
+How to cite this article: Tang, X., Liu, J., & Ying, Z. (2025). A path signature perspective of
+process data feature extraction. British Journal of Mathematical and Statistical Psycholog y, 78, 939–964.
+https://doi.org/10.1111/bmsp.12390
+
+20448317, 2025, 3, Downloaded from https://bpspsychub.onlinelibrary.wiley.com/doi/10.1111/bmsp.12390 by Beykent University, Wiley Online Library on [24/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+RESPONSE PATH SIGNATURE
+
+|   
+
+TANG et al .
+
+A P P E N DI X
+MATHEMATICAL EXPRESSION OF SIGNATURE FEATURES
+Let W ∗ = (W1∗ , …, WD∗ ) denote a d -­d imensional path derived from a response process with length L .
+Each component Wd is a real-­value function on [1, L]. Given integer k ≥ 1, the signature feature of W ∗
+corresponding to indices j1 , …, jk ∈ {1, 2, …, D} is
+=
+
+xj1 ,…,jk
+
+dWj∗ (u1 )⋯dWj∗ (uk )
+
+∫
+
+k
+
+1
+
+1<u1 <⋯<uk <L
+
+=
+
+∫
+
+⋯
+
+∫
+
+1<uk <L 1<uk − 1 <uk
+
+∫
+
+dWj∗ (u1 )⋯dWj∗ (uk − 1 )dWj∗ (uk ).
+k−1
+
+1
+
+k
+
+1<u1 <u2
+
+The integrals above are in the Riemann–Stieltjes sense.
+For k = 1,
+xj1 =
+
+∫
+
+dWj∗ (u1 ) = Wj∗ (L) − Wj∗ (1).
+1
+
+1
+
+1
+
+1<u1 <L
+
+For k = 2,
+xj1 ,j2 =
+
+∫
+
+∫
+
+1<u2 <L
+
+1<u1 <u2
+
+dWj∗ (u1 )dWj∗ (u2 ) =
+1
+
+2
+
+∫
+
+1<u2 <L
+
+[
+
+]
+Wj∗ (u2 ) − Wj∗ (1) d Wj2 (u2 ).
+1
+
+1
+
+20448317, 2025, 3, Downloaded from https://bpspsychub.onlinelibrary.wiley.com/doi/10.1111/bmsp.12390 by Beykent University, Wiley Online Library on [24/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+964
+
+

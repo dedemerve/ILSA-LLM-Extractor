@@ -1,0 +1,78 @@
+{
+  "created_utc": "2026-10-20T20:38:55.493561+00:00",
+  "script": "run_pisa_model_input_uncertainty_v4.py",
+  "script_sha256": "c51497ecfab0b1d52d3a59027670323ab4cee9631daf0525ceadb24f712ee13a",
+  "version": "v4",
+  "panel_domain_filter": "Only rows whose domain matches the score domain are used to construct each country series.",
+  "n_draws": 250,
+  "seed": 20261015,
+  "draw_seed_range": [
+    2109560123,
+    1049997571
+  ],
+  "historical_target_cycles": [
+    2012,
+    2015,
+    2018,
+    2022
+  ],
+  "domains": [
+    "mathematics",
+    "reading",
+    "science"
+  ],
+  "models": [
+    "Persistence",
+    "LinearTrend",
+    "Ridge",
+    "RandomForest",
+    "XGBoost"
+  ],
+  "se_coverage": {
+    "mathematics": {
+      "total_obs": 469,
+      "obs_with_se": 469
+    },
+    "reading": {
+      "total_obs": 511,
+      "obs_with_se": 511
+    },
+    "science": {
+      "total_obs": 469,
+      "obs_with_se": 469
+    }
+  },
+  "sample_definition": "Frozen common three-domain country set in each historical fold.",
+  "sampling_assumption": "Within each draw, each country/domain/cycle score is sampled once from N(published mean, published marginal SE^2). That value is shared when it serves as a historical context input or training label. Cross-country and cross-cycle sampling/link covariance are not modeled.",
+  "refit_scope": "Ridge, Random Forest, and XGBoost are refitted on each draw's perturbed historical features and training labels for every domain and target cycle. Held-out target means remain fixed for scoring. Persistence and linear trend are recomputed from the perturbed context.",
+  "fit_parallelism": "Single-threaded. Compared with n_jobs=-1 on the same seeded draw; maximum fold/model MAE difference was 3.2e-14.",
+  "note_timesfm_excluded": "TimesFM model-input uncertainty excluded: refitting TimesFM per draw requires GPU and is infeasible in this analysis. TimesFM point predictions from pisa_all_models_quadratic_trend_v1 are not perturbed here.",
+  "note_target_held_fixed": "Target scores (true_score) are always the published OECD means. Only context input scores are perturbed. This is orthogonal to the target-score SE analysis in pisa_target_sampling_uncertainty_v3.",
+  "note_retrospective": "PISA 2025 is excluded. All folds are historical temporal validation. Results do not constitute prospective or blind evaluation.",
+  "inputs": {
+    "panel": "/Users/mrved/Desktop/ILSA_LLMs/outputs/stage5/pisa_forecasting_panel_v2.csv",
+    "panel_sha256": "91f44322fe036f9aa44dfc5a39c3387495879ff2e381a3a823374e4f2a3fc7f9",
+    "folds": "/Users/mrved/Desktop/ILSA_LLMs/analysis/03_data_feasibility/audit/pisa_historical_folds_v1.json",
+    "folds_sha256": "98b343b2b4ba3a15cd4f4f996ae04d41c8b38c9cb8d247c0367a03a1ae4f8e81",
+    "country_estimates": "/Users/mrved/Desktop/ILSA_LLMs/outputs/stage4/country_estimates.csv",
+    "country_estimates_sha256": "cbc86d45fa1623ca2033f16197d2058596ff6905b12e52e38b7b5b2705c9500e",
+    "pisa_2000_reading_crosswalk": "/Users/mrved/Desktop/ILSA_LLMs/analysis/03_data_feasibility/audit/pisa_2000_reading_country_crosswalk.csv",
+    "pisa_2000_reading_crosswalk_sha256": "708c017d906e426bed9550f169e5b9558322a38d2d486477a3d595d3d0f95bbb"
+  },
+  "outputs": {
+    "metrics": "/Users/mrved/Desktop/ILSA_LLMs/outputs/reproducibility_check_v3/model_input_shards/draws_0750_1000/model_input_uncertainty_metrics.csv",
+    "paired": "/Users/mrved/Desktop/ILSA_LLMs/outputs/reproducibility_check_v3/model_input_shards/draws_0750_1000/model_input_uncertainty_paired.csv",
+    "winner_prob": "/Users/mrved/Desktop/ILSA_LLMs/outputs/reproducibility_check_v3/model_input_shards/draws_0750_1000/model_input_uncertainty_winner_prob.csv",
+    "checkpoints": "/Users/mrved/Desktop/ILSA_LLMs/outputs/reproducibility_check_v3/model_input_shards/draws_0750_1000/checkpoints"
+  },
+  "output_sha256": {
+    "metrics": "998cedf5618a54f86fc9454be521b76762db27eafddec05af3e27836056dd521",
+    "paired": "b40d044778f86735c79c7c03f0879da9de4e3f79d93bc7a210fc69438907557f",
+    "winner_prob": "adca4b035d7ca3bc4d88252d38d0f8ad2000fb2f08f061e636b1ef01445fe13f"
+  },
+  "python_version": "3.13.2",
+  "sklearn_version": "1.9.1",
+  "xgboost_version": "3.4.1",
+  "numpy_version": "2.5.3",
+  "pandas_version": "3.0.6"
+}

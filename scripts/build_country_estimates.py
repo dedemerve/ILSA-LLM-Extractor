@@ -95,13 +95,24 @@ CATALOG: list[CycleSpec] = [
         [f"PV{i}SCIE" for i in range(1, 11)],
         "W_FSTURWT", (1, 80), "BRR_FAY"),
 
-    # PISA 2018 ana student dosyası (CY07_MSU_STU_QQQ) indirmede eksik kalmış;
-    # dosya temin edildiğinde buraya tam yolu ekle ve satırın başındaki # kaldır.
-    # CycleSpec("PISA", 2018, "mathematics",
-    #     str(ILSA_BASE / "PISA Datasets/PISA 2018 Data/CY07_MSU_STU_QQQ.sav"),
-    #     "CNT", "W_FSTUWT",
-    #     [f"PV{i}MATH" for i in range(1, 11)],
-    #     "W_FSTURWT", (1, 80), "BRR_FAY"),
+    CycleSpec("PISA", 2018, "mathematics",
+        "/Users/mrved/Desktop/ILSA Datasets for LLM Extraction"
+        "/PISA Datasets/PISA 2018 Data/STU/CY07_MSU_STU_QQQ.sav",
+        "CNT", "W_FSTUWT",
+        [f"PV{i}MATH" for i in range(1, 11)],
+        "W_FSTURWT", (1, 80), "BRR_FAY"),
+    CycleSpec("PISA", 2018, "reading",
+        "/Users/mrved/Desktop/ILSA Datasets for LLM Extraction"
+        "/PISA Datasets/PISA 2018 Data/STU/CY07_MSU_STU_QQQ.sav",
+        "CNT", "W_FSTUWT",
+        [f"PV{i}READ" for i in range(1, 11)],
+        "W_FSTURWT", (1, 80), "BRR_FAY"),
+    CycleSpec("PISA", 2018, "science",
+        "/Users/mrved/Desktop/ILSA Datasets for LLM Extraction"
+        "/PISA Datasets/PISA 2018 Data/STU/CY07_MSU_STU_QQQ.sav",
+        "CNT", "W_FSTUWT",
+        [f"PV{i}SCIE" for i in range(1, 11)],
+        "W_FSTURWT", (1, 80), "BRR_FAY"),
 
     CycleSpec("PISA", 2022, "reading",
         str(ILSA_BASE / "PISA Datasets/PISA 2022 Data"

@@ -1,0 +1,56 @@
+{
+  "_generated": "2026-10-06",
+  "_purpose": "Priority 3 — Audit baseline prompt freeze status",
+
+  "searched_locations": [
+    "outputs/finetuning/baseline/ (all files)",
+    "prompts/ (all files)",
+    "outputs/finetuning/ (*.md, *.json, *.txt)",
+    "EVALUATION_PROTOCOL_v1.md §6.3 (baseline output storage spec)",
+    "git log across all prompt-related paths",
+    "tests/test_extraction_prompt_postprocess.py"
+  ],
+
+  "required_file": "outputs/finetuning/baseline/baseline_prompt_frozen.txt",
+  "required_file_exists": false,
+
+  "related_files_found": [
+    {
+      "path": "prompts/extraction_system_prompt.txt",
+      "sha256": "2d2d1a6bef923ce52e4e6af7d679301031428c406394df80e48ebe414e68b6ff",
+      "git_history": [
+        "841720a feat: add extraction_system_prompt.txt as standalone file",
+        "89aeec8 Add meta-analysis pipeline, RAG synthesis outputs, and prompt templates"
+      ],
+      "description": "General ILSA extraction system prompt for the full metadata schema (ILSAArticleMetadata). Covers all extraction fields across the full schema including research design, ML techniques, etc.",
+      "is_few_shot_evaluation_prompt": false,
+      "is_baseline_prompt_for_evidence_pair_extraction": false,
+      "notes": "This prompt extracts the full metadata schema. The evaluation protocol (§3.1) specifies a different, narrower task: extracting predictor-outcome evidence pairs with a 10-field schema (predictor, ilsa_variable, canonical_construct, outcome, effect_type, direction, effect_size, plausible_values_handling, student_weights_used, evidence_text). The general extraction prompt is NOT equivalent to the baseline_prompt_frozen.txt required by the protocol."
+    }
+  ],
+
+  "evaluation_protocol_baseline_spec": {
+    "input_template": "PROGRAM: {program}\\nCYCLE: {cycle}\\nSOURCE: {file_name}\\n\\nSOURCE TEXT (abstract + methods + results excerpt):\\n{source_text}\\n\\nTASK: Extract all predictor–outcome evidence pairs from this text.",
+    "output_schema": "10-field JSON per evidence pair: predictor, ilsa_variable, canonical_construct, outcome, effect_type, direction, effect_size, plausible_values_handling, student_weights_used, evidence_text",
+    "model_specified": "NOT SPECIFIED in protocol — TBD",
+    "temperature_specified": "NOT SPECIFIED in protocol",
+    "max_tokens_specified": "NOT SPECIFIED in protocol",
+    "source_location": "EVALUATION_PROTOCOL_v1.md §3"
+  },
+
+  "training_configuration_status": {
+    "path": "outputs/finetuning/audit/training_configuration.json",
+    "status": "TEMPLATE — blocking_issues listed, model_id=null, prompt draft only, not frozen",
+    "notes": "This file is the old training configuration template (pre-v1.3). It is not the baseline_prompt_frozen.txt required by the evaluation protocol."
+  },
+
+  "conclusion": "BASELINE_PROMPT_NOT_FROZEN — No file 'outputs/finetuning/baseline/baseline_prompt_frozen.txt' exists. The general extraction prompt at prompts/extraction_system_prompt.txt is NOT equivalent to the evaluation baseline prompt (different schema, different task scope). No frozen few-shot evaluation prompt template has been committed to the repository.",
+
+  "what_is_needed": [
+    "Create baseline_prompt_frozen.txt in outputs/finetuning/baseline/ containing the exact system prompt and user template for the evidence-pair extraction task",
+    "The prompt must implement the §3.1 input template with {program}, {cycle}, {file_name}, {source_text} slots",
+    "The prompt must specify model, temperature, max_tokens, and few-shot example format",
+    "Commit and freeze before baseline run"
+  ],
+  "blocker": true
+}

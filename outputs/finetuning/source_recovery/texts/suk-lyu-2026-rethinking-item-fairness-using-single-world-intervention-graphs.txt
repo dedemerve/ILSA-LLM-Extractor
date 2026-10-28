@@ -1,0 +1,1341 @@
+Manuscript
+
+Journal of Educational and Behavioral Statistics
+Vol. 00, No. 0, pp. 1–33
+DOI: 10.3102/10769986251415570
+Article reuse guidelines: sagepub.com/journals-permissions
+Ó 2026 AERA. https://journals.sagepub.com/home/jeb
+
+Rethinking Item Fairness Using Single World
+Intervention Graphs
+Youmi Suk
+Columbia University
+Weicong Lyu
+University of Macau
+Since the 1960s, the testing community has striven to ensure fairness in tests
+and test items. Differential item functioning (DIF) is a widely used statistical
+notion for items that may unfairly disadvantage specific subgroups of testtakers. However, traditional DIF analyses focus only on statistical relationships
+in observed data and cannot explain why such unfairness occurs. To fill this
+gap, we introduce a novel causal framework for defining and detecting unfair
+items using single-world intervention graphs (SWIGs). By leveraging SWIGs
+and potential outcomes, we define causal DIF (CDIF) as the difference in item
+functioning between two hypothetical worlds: one where individuals were
+assigned to one group and another where they were assigned to a different
+group. We also connect CDIF to related fairness concepts, including group versus individual fairness and item impact. In particular, we use SWIGs to graphically distinguish between item fairness at the individual level and the
+population level. Additionally, we discuss causal identification strategies using
+SWIGs and demonstrate how our approach differs from traditional DIF methods
+through a simulation study. We further illustrate its application to a controversial item from New York’s Regents math exam and a real dataset from the
+Trends in International Mathematics and Science Study, concluding with
+broader implications of promoting causal fairness in testing practices.
+Keywords: differential item functioning; test fairness; causal fairness; causality; SWIG
+
+Introduction
+Differential item functioning (DIF; Pine, 1977; Thissen et al., 1988) is one of
+the most widely used notions in the testing community for describing (un)fairness in test items. An item flagged as DIF functions differently between testtakers from different demographic or behavioral groups after conditioning on
+their abilities (Bolt et al., 2002; Holland & Wainer, 1993; Magis et al., 2010;
+1
+
+Causal DIF
+Zumbo, 2007). Since DIF analysis can have ethical or legal implications, it is
+essential for test developers to examine whether the performance of test-takers
+can be explained by factors beyond their abilities. Importantly, DIF is a statistical
+notion that depicts associations between items and test-takers’ characteristics in
+observed data, but such association-based notions are limited in explaining the
+underlying mechanisms and in uncovering the causes of unfairness. In contrast,
+causality-based fairness notions provide more nuanced reasoning about the
+mechanisms behind unfairness (Carey & Wu, 2022; Chiappa, 2019; Kilbertus
+et al., 2017). They enable researchers to raise counterfactual questions, like what
+an individual’s performance would have been if they had been in a different
+group, say high socioeconomic status (SES) instead of low SES. Through the
+lens of causal fairness, the overall goal of this article is to propose a new framework for DIF by leveraging causal tools from the fields of causal inference and
+algorithmic fairness.
+In algorithmic fairness research, fairness notions are generally categorized into
+two types: association-based and causality-based. In the early stages of this field,
+most research efforts focused on association-based measures (e.g., demographic
+parity, equalized odds) that describe statistical relationships in the observed data
+(Chouldechova, 2017; Dwork et al., 2012; Hardt et al., 2016). These measures
+can examine whether an algorithm is unfair based on given metrics with the
+observed data at hand, but they cannot explain why the unfairness occurs, even
+with an unlimited amount of data. In contrast, causality-based notions (e.g., counterfactual fairness, unresolved discrimination) try to model the data-generating
+process and uncover the underlying causal mechanisms behind unfairness, but
+they require more complex modeling and stronger assumptions about the data
+and causal structures (Carey & Wu, 2022; Kilbertus et al., 2017; Kusner et al.,
+2017; Plečko & Bareinboim, 2024). Such notions are typically developed within
+two main causal frameworks: the potential outcome framework (Neyman, 1923;
+Rubin, 1974) and the structural causal model, along with directed acyclic graphs
+(DAGs; Pearl, 2009). Potential outcomes are a key concept in causal inference
+that represent the hypothetical outcomes an individual would obtain under different treatment conditions. Under the potential outcomes framework, these potential outcomes are compared to formalize causal effects. In contrast, the structural
+causal model uses structural equations and DAGs to represent causal relationships between variables and derive counterfactuals under certain assumptions;
+see Chapters 2 and 3 of Morgan and Winship (2015) for an overview of these
+two frameworks.
+Recently, Richardson and Robins (2013) introduced a new causal framework
+that unifies causal graphs and potential outcomes, known as Single-World
+Intervention Graphs (SWIGs). SWIGs have been increasingly adopted in statistics and epidemiology but have yet to be applied in education and psychology.
+Unlike DAGs, SWIGs illustrate the variables and causal relationships that would
+2
+
+Suk and Lyu
+be observed in a hypothetical world where all individuals were intervened on to
+receive a fixed treatment. This single-world graph encodes counterfactual variables within the graph and clarifies the underlying independencies between variables. Furthermore, SWIGs can distinguish between two possible causal
+interpretations of a missing arrow in the graph: (i) the absence of a causal effect
+at the individual level and (ii) the absence of an average causal effect at the population level (Richardson & Robins, 2013). To date, there is no research on
+exploring the connection between SWIGs and fairness, yet we find that SWIGs
+provide a conceptual tool that could inform and enrich the ongoing debate on
+fairness, including group fairness versus individual fairness1 and unresolved
+discrimination.
+The main goal of this article is to propose a novel causal framework for assessing item fairness using SWIGs. Specifically, by leveraging SWIGs and potential
+outcomes, we define causal DIF (CDIF) as the difference in item functioning
+between two hypothetical worlds: one where individuals were assigned to one
+group (e.g., high SES) and another where they were assigned to a different group
+(e.g., low SES). We connect CDIF with related fairness issues, including group
+versus individual fairness, item impact, and intersectionality,2 to enhance the
+understanding of causal fairness in testing practices. Using SWIGs, we also discuss nonparametric identification strategies under various fairness scenarios. We
+then demonstrate how our approach differs from traditional DIF through a simulation study and illustrate its application to a controversial item from New York’s
+Regents math exam and a real dataset from the Trends in International
+Mathematics and Science Study (TIMSS).
+Motivating Example: Regents Math Item
+The Regents exams are standardized assessments administered by the New
+York State Education Department (NYSED) to assess the academic achievement
+of high school students across the state. These exams cover core subjects such as
+Mathematics, Science, English Language Arts, and Social Studies. To earn a
+Regents Diploma, students are required to pass at least five Regents exams, with
+a minimum score of 65 on each. For more details, see the website of NYSED.3
+Given the high stakes of these exams and their role in graduation eligibility,
+there have been many efforts to develop Regents items that are free from
+construct-irrelevant sources. Despite these efforts, in 2019, a math item from the
+Regents Algebra I exam raised fairness concerns among educators and stakeholders. Figure 1 provides this item (Question 37), which has since been discussed as a potentially biased question.
+According to a local New York newspaper,4 Jared Goldsmith, a high school
+math teacher, raised concerns about cultural and linguistic bias in the test: ‘‘I
+know that last year on the algebra exam there was a question about bicycles and
+3
+
+Causal DIF
+
+FIGURE 1. Question 37 from the 2019 Regents Algebra I exam.
+Source. https://www.nysedregents.org/algebraone/119/algone12019-exam.pdf
+
+tricycles, and it was necessary to know for the problem that a bicycle has two
+wheels and a tricycle has three wheels, which seems completely obvious. But
+really, I have some students who have not been in the country and speaking
+English very long, and they should be able to succeed on a math test without
+knowing that the prefix ‘bi’ in English means two.’’ Goldsmith argues that
+Question 37 may disadvantage English language learners (ELLs) by requiring
+knowledge unrelated to mathematical skills. In addition, another stakeholder
+from the New York City Department of Education noted that ‘‘I remember a particular point being raised about what would be considered a tricycle by the students. We saw a lot of kids calculating tricycles as having four wheels. The
+hypothesis was that bicycles with training wheels are cheaper and longer-lasting
+than actual tricycles. Families with financial constraints are more likely to buy
+those instead of a tricycle, leading the kids to think a bicycle with two training
+wheels is a tricycle.’’ This comment raises concerns that SES may influence how
+
+4
+
+Suk and Lyu
+students interpret the item, potentially making it more difficult for those from
+lower SES backgrounds.
+These discussions indicate that this item may be influenced by constructirrelevant factors, associated with SES and ELL status. However, it remains
+unclear which factors, if any, causally explain differential responses beyond differences attributable to the construct-relevant ability being measured. Throughout
+this articles, we use this bicycle item as a motivating example to illustrate how
+our proposed CDIF framework can help identify the underlying sources of item
+unfairness.
+The remainder of the article is organized as follows. We first review the relevant literature on test fairness and SWIGs. Next, we introduce our CDIF framework using SWIGs. We then provide the results of a simulation study that
+compares an outcome regression method for detecting CDIF to traditional DIF
+methods. Subsequently, we apply our approach to the bicycle item from the
+Regents math exam and a real dataset from TIMSS. Finally, we discuss our findings and their implications for promoting causal fairness in testing.
+Literature Review
+Test Fairness: DIF and Equity
+The concept of test fairness emerged in the 1960s and has evolved with various association-based measures, like Cleary’s (1968) criterion and Darlington’s
+(1971) cultural optimality. Among these measures, DIF has become the most
+widely used notion for assessing test fairness at the item level (i.e., item fairness)
+within the testing community and is used to detect items that exhibit
+discriminatory bias in assessments (Holland & Wainer, 1993). An item exhibits
+DIF if individuals with the same ability, but from different groups, have different
+probabilities of endorsing the item (Magis et al., 2010; Pine, 1977). Formally,
+DIF is defined as:
+Definition 1 (DIF). An item exhibits DIF if
+0
+
+PðYi = 1 j Yi = u, Ai = aÞ 6¼ PðYi = 1 j Yi = u, Ai = a Þ
+0
+
+0
+
+for some ability level u and some values a and a attainable by A, where a 6¼ a .
+Here, Yi represents whether examinee i’s response to a test item is correct
+(Yi = 1) or incorrect (Yi = 0), Yi represents examinee i’s ability score, and Ai
+represents a protected variable that should not lead to discriminatory outcomes
+(e.g., SES). This variable typically consists of two groups: a disadvantaged group
+0
+(Ai = a; e.g., low SES) and an advantaged group (Ai = a ; e.g., high SES). Test
+developers perform DIF analysis to create tests where test performance accurately
+
+5
+
+Causal DIF
+reflects examinees’ abilities and is not influenced by construct-irrelevant factors
+(Ackerman, 1992). When an item is flagged as exhibiting DIF, it potentially discriminates against examinees based on their group membership (Holland &
+Wainer, 1993). Although DIF is a well-established concept in the test fairness literature, it can only reveal associations between test items and group membership,
+without elucidating the underlying mechanisms. This limitation is common
+among association-based fairness measures.
+Another important concept in test fairness is equity, as proposed by Lord
+(1980) in the context of test equating. When examinees take alternate test forms,
+it is important to examine score comparability across these forms. We achieve
+equity if examinees with the same ability level receive comparable scores, regardless of whether they take test S or test Q. Formally, equity requires that the conditional distribution f ðs j uÞ of score s under test S is the same as the conditional
+distribution f ðsðqÞ j uÞ of the transformed score sðqÞ under another test Q for any
+given ability level u (Lord, 1980):
+Definition 2 (Equity). Equity between test S and test Q holds if
+f ðs j uÞ = f ðsðqÞ j uÞ for all s, q, and u.
+Here, sðqÞ is a one-to-one transformation of score q. Thomasson (1997) emphasizes that this equity notion operates at the conditional population level, not the
+individual level; that is, the score distributions must be equal across alternate test
+forms for groups of examinees with the same ability level u, not for individual
+examinees. Achieving equity at the individual level is more challenging because
+most examinees take only one test and/or designing perfectly equitable tests is
+inherently difficult (Thomasson, 1997).
+These test fairness notions above are association-based measures and closely
+align with modern algorithmic fairness concepts, such as conditional statistical
+parity (Corbett-Davies et al., 2017) and differential algorithmic functioning (Suk
+& Han, 2024). However, test fairness has yet to be integrated into causal frameworks. There have been some attempts to use test-takers’ covariates, the propensity score (i.e., a summary score of covariates), multidimensional abilities, or
+contextual factors in DIF analysis (Belzak, 2022; Chao et al., 2024; Zumbo,
+2007); see Zumbo (2007) for a discussion of three generations of DIF analysis.
+However, these efforts are largely explanatory and do not yet provide a formal
+causal framework to explain why item unfairness occurs. A causal perspective
+allows researchers to move beyond mere associations and explore the underlying
+mechanisms of unfairness by asking counterfactual questions, such as: ‘‘Would
+an examinee have the same probability of endorsing an item if they were in a different group?’’ or ‘‘Would an examinee receive the same score if they took a different test form?’’
+
+6
+
+Suk and Lyu
+
+ with a treatment effect, and
+FIGURE 2. DAGs for a randomized trial: (a) DAG G
+(b) DAG G that has a missing arrow between A and Y, assuming no treatment effect for
+any individual.
+Note. DAG = directed acyclic graph.
+
+SWIGs: A Unified Causal Framework
+SWIGs, introduced by Richardson and Robins (2013), are graphical representations of potential outcome distributions that unify the DAG and potential outcome frameworks (Richardson & Robins, 2013).5 Figure 2 presents the simplest
+DAGs based on data from a randomized trial. Figure 2a illustrates that treatment
+A has a direct effect on outcome Y .
+Here, a directed arrow from A to Y (i.e., A ! Y ) indicates that A is a direct
+cause of Y ; changes in A can alter the distribution of Y . Likewise, X ! Y indicates that X is a direct cause of Y . A missing arrow between A and X means that
+neither variable causally affects the other, and this absence is because of the randomized experimental setting. In this setting, researchers are often interested in
+the conditional average treatment effect (CATE), which represents the average
+treatment effect (ATE) among subpopulations determined by pre-treatment covariates X = x, denoted as tð xÞ. For example, when X is motivation, the CATE
+corresponds to the ATE within each subpopulation defined by different motivation levels. Formally, the CATE is defined as:
+tð xÞ :¼ EðY a = 1 j X = xÞ  EðY a = 0 j X = xÞ:
+
+Here, Y a = 1 is an individual’s potential outcome if they took the treatment
+(a = 1), and Y a = 0 is the potential outcome for the same individual under the
+control condition (a = 0). All individuals in the population have both potential
+outcomes Y a = 1 and Y a = 0, but only one of them is observed in practice. Thus,
+individual-level treatment effects are not identifiable. In addition, Figure 1b
+assumes no treatment effect on the outcome for any individual (i.e., the
+individual-level exclusion) in a DAG. In other words, A does not appear in the
+structural model for Y, and thus, the CATE is zero. These DAGs only use the
+7
+
+Causal DIF
+
+ ðaÞ with a
+FIGURE 3. SWIGs for directed acyclic graphs in Figure 2: (a) SWIG G
+treatment effect, and (b) SWIG GðaÞ assuming no treatment effect for any individual.
+Note. SWIG = single world intervention graph.
+
+observed variables and do not encode the potential (counterfactual) outcomes in
+the graphs. Therefore, the causal estimand, tð xÞ, cannot be linked to the DAGs,
+and also the underlying causal assumptions with counterfactual variables cannot
+be inferred from them.
+Figure 3 presents the SWIGs corresponding to the DAGs in Figure 2.6 In
+Figure 3a, the node-splitting transformation splits A into two components: a random half A and a fixed half a 2 f0, 1g. Here, A denotes the naturally occurring
+(pre-intervention) treatment, and a denotes the treatment under the intervention
+(the value to which A is set). By node-splitting, each SWIG represents a single
+world where all individuals were intervened on to take the value A = a. The
+SWIG explicitly includes potential outcomes (Y a ) in their structure, as splitting
+the node of A alters all the downstream variables that are directly or indirectly
+influenced by A. When a variable, say S, is a descendant of A in a DAG,7 its corresponding SWIG contains the counterfactual variable S a instead of the observed
+variable S. Thus, the outcome variable Y is replaced with Y a in Figure 3a. This
+SWIG allows us to ask the same counterfactual ‘‘what if’’ questions posed by the
+potential outcome framework: ‘‘What would the outcome be in a world where
+everyone received the advantaged treatment ða = 1Þ or the disadvantaged treatment ða = 0Þ?’’ In contrast, Figure 3b presents the SWIG version of Figure 2b,
+assuming no treatment effect for any individual (i.e., Y a = 0 = Y a = 1 = Y ). The
+missing arrow indicates individual-level exclusion restriction.
+In the SWIG framework, the same d-separation rules (Pearl, 2009) used for
+DAGs can be applied to identify (conditional) independencies between the variables. d-separation includes the fork rule (A
+C ! Y ; A and Y are independent
+when conditioning on C), chain rule (A ! M ! Y ; conditioning on M blocks
+the path between A and Y ), collider rule (A ! L
+Y ; A and Y are marginally
+independent, but conditioning on L or any of its descendants introduces dependence between A and Y ). These rules also apply to SWIGs to read
+8
+
+Suk and Lyu
+
+ ðaÞ with a
+FIGURE 4. SWIGs for directed acyclic graphs in Figure 2: (a) SWIG G
+ G ðaÞ assuming the absence of
+treatment effect (identical to Figure 3a), and (b) SWIG G
+an average causal effect at the population level.
+Note. SWIG = single world intervention graph.
+
+independencies between variables. For example, in Figure 3a, A is independent
+of Y a , both unconditionally and conditionally on X , that is, A?Y a and A?Y a j X .
+This is because there is no backdoor path between A and Y a in Figure 3a.
+Additionally, in the SWIG, the node-splitting transformation blocks the forward
+path between A and Y a because we assume a single world where everyone
+received treatment a. Thus, the observed A no longer affects Y a .
+Compared to the DAGs, SWIGs can distinguish between two possible causal
+interpretations of a missing arrow in the graph: the absence of a causal effect at
+the individual level versus the absence of an average causal effect at the popula ðaÞ with a treatment effect (identical to
+tion level. Figure 4 illustrates the SWIG G
+
+Figure 3a) and its modified SWIG GG ðaÞ, which assumes the absence of an aver G ðaÞ is derived from G
+ ðaÞ, but
+age effect at the population level. By definition, G
+removes any arrows that are absent in the subgraph G of Figure 2b. The SWIG
+ ðaÞ, but imposes
+ G ðaÞ inherits all causal relationships and properties from G
+G
+population-level exclusion rather than individual-level exclusion. It implies that
+interventions on A have no effect on the distribution of Y . Therefore, the potential
+outcome Y a still remains in the SWIG 
+GG ðaÞ, unlike Figure 3b (with the observed
+Y and individual-level exclusion). Under 
+GG ðaÞ, negative and positive treatment
+effects at the individual level may exist, but they balance out over the target population. These SWIGs provide researchers with the flexibility to express different
+opinions on missing arrows (i.e., the absence of causal effects); see chapter 7 of
+Richardson and Robins (2013) for further details.
+In practice, researchers frequently use observational data for causal studies
+due to ethical or practical issues. Such data have more complex graph structures,
+compared to those from randomized trials. For example, the confounder structure
+(A
+X ! Y ) and the mediator structure (A ! X ! Y ) can capture complex
+relationships among variables. Figure 5 presents the SWIGs with confounder and
+
+9
+
+Causal DIF
+
+FIGURE 5. Single-world intervention graphs for confounding (a) and mediation (b).
+
+mediator structures; see the next section for more details on these causal
+structures.
+Lastly, by definition, SWIGs make single-world assumptions rather than
+cross-world assumptions, which are inherent in structural causal models. Crossworld assumptions0 involve counterfactual variables from two hypothetical worlds,
+such as Y a, x ? X a . Because two counterfactuals cannot be observed for the same
+unit, such cross-world assumptions are not testable, and thus, it is impossible to
+design experiments to verify them. In contrast, single-world assumptions, such as
+Y a, x ? X a , are empirically testable through future experiments at least in principle. For example, suppose researchers conduct one randomized trial where both
+treatment A and mediator X are randomly assigned and another randomized trial
+where only A is randomized. If the outcome distribution in the first experiment
+differs from the conditional outcome distribution in the second experiment, the
+single-world independence assumption is not met, and an unmeasured confounder may be present between X and Y (Richardson & Robins, 2013; Robins et al.,
+2022). See section 38.2.6 of Robins et al. (2022) for more details.
+
+Our Proposal: CDIF
+We introduce a novel causal framework for DIF using SWIGs, which we refer
+to as CDIF. We also connect this framework to related fairness issues, including
+group versus individual fairness, item impact, and intersectionality. To illustrate
+these ideas, consider examinee i as a study unit. We suppress the subscript i
+unless necessary. Let Ai denote examinee i’s protected variable (e.g., high SES
+vs. low SES), which is considered a treatment variable in the DIF context. Let
+Yi denote examinee i’s ability. Let Yi denote examinee i’s response to an item,
+and let Yia denote examinee i’ potential (counterfactual) outcome if the examinee
+were in group A = a. In this article, we assume that ability scores are either
+known or have been accurately estimated using anchor items; see Supplemental
+
+10
+
+Suk and Lyu
+
+ and single world intervention graph G
+ ða j YÞ for
+FIGURE 6. Directed acyclic graph G
+
+
+CDIF. (a) G for CDIF (b) Gða j YÞ for CDIF.
+Note. CDIF = causal differential item functioning.
+
+Appendix S1 (available in the online version of this article) for more details on
+ability estimation.
+
+Subgroup CDIF
+In this subsection, we start with the simplest scenario with A, Y, and Y . In this
+scenario, we formally and graphically define CDIF and provide nonparametric
+identification strategies. Notably, one of the underlying identification assumptions (i.e., conditional independence) can be directly inferred from the SWIG.
+We also provide graphical representations for item fairness at the population level
+versus the individual level and extend our discussion to address confounding.
+
+Definition. Figure 6 presents the simplest DAG and SWIG that illustrate CDIF
+with three variables A, Y, and Y (or Y a ). In Figure 6a, the DAG includes the path
+Y ! Y and the path A ! Y . The path Y ! Y is always present in testing settings, as ability is a strong (or the strongest) predictor of item responses. The path
+A ! Y is present if a direct effect of A on Y is possible, that is, evidence for
+CDIF. Note that the path A ! Y can also be allowed based on domain knowledge; see the next subsection for a scenario with this path.
+Figure 6b shows the corresponding SWIG that represents a world where all
+examinees were assigned to a fixed group a and their potential outcomes of interest were Y a . In this SWIG, we are interested in evaluating whether examinees’
+responses to an item would differ between two hypothetical worlds where they
+0
+were in group A = a versus A = a . In particular, we evaluate these differences
+among subpopulations defined by ability levels. To represent subgroup effects,
+ ða j YÞ, where Y is a conditioning variable. Formally,
+our SWIG is labeled as G
+subgroup CDIF is defined as:
+11
+
+Causal DIF
+Definition 3 (Subgroup CDIF). An item has subgroup CDIF if
+0
+
+PðY a = 1 j Y = uÞ 6¼ PðY a = 1 j Y = uÞ
+0
+
+0
+
+for some ability level u and some values a and a attainable by A, where a 6¼ a .
+Here, PðY a = 1 j Y = uÞ is the counterfactual probability of endorsing an
+item if all examinees were in group A = a conditioning on the same ability level
+Y = u. A difference in these counterfactual probabilities indicates that changing
+A alters the conditional probability distribution of Y . Although Y is often a posttreatment variable of A, we can still use it as a conditioning variable because it
+does not causally depend on A (Pearl, 2015), as shown in Figure 6. We emphasize that Definition 3 is linked to the subgroup average treatment effect, that is,
+the ATE among subpopulations determined by a subset of covariates (Yang et al.,
+2021). Subgroup ATE seeks to answer the counterfactual question: ‘‘What would
+the average outcome be for a specific subgroup of examinees if they were in the
+disadvantaged group A = a (e.g., low SES group) or the advantaged group
+0
+A = a (e.g., high SES group)?’’8
+Let tðuÞ denote the linear contrast between the two counterfactual probabilities given the ability u. To identify tðuÞ, we use the independence A?Y a , Y,
+which can be read directly from Figure 6b, along with other standard causal
+assumptions: consistency and positivity (Hernan & Robins, 2020). The consistency assumption links the potential outcome Y a to the observed outcome Y as
+Y = Y a = 1 A + Y a = 0 ð1  AÞ.9 The positivity assumption states that the (conditional) probabilities of receiving A = 0 and A = 1 are non-zero. With these
+assumptions, tðuÞ can be identified as:
+
+
+tðuÞ :¼ E Yia = 1 j Yi = u  E Yia = 0 j Yi = u
+
+= E Yia = 1 j Yi = u, Ai = 1  E Yia = 0 j Yi = u, Ai = 0
+= EðYi j Yi = u, Ai = 1Þ  EðYi j Yi = u, Ai = 0Þ:
+
+ðA?Y a , YÞ
+ðConsistencyÞ
+
+The second equality follows from the independence A ? Y a , Y. The third equality follows from the consistency assumption. The conditional expectations above,
+and throughout the manuscript, are well-defined by the positivity assumption.
+After causal identification, the subgroup CDIF effect is equivalent to the traditional DIF defined in Definition 1. This equivalence suggests that, in this simplistic scenario, traditional DIF can be interpreted as a causal effect.
+
+Item Fairness. We define item fairness as the absence of a CDIF effect. Using
+SWIGs, we distinguish between item fairness at the individual level versus population level. This distinction aligns with the test fairness literature, which differentiates individual-level versus population-level fairness in equity studies (Lord,
+1980; Thomasson, 1997), and reflects recent discussions on individual fairness
+12
+
+Suk and Lyu
+
+FIGURE 7. Directed acyclic graph G for individual fairness (a), and single world
+intervention graphs: Gða j YÞ for individual fairness (b) and 
+GG ða j YÞ for group fairness (c).
+
+versus group fairness in the algorithmic fairness literature (Barocas et al., 2023;
+Dwork et al., 2012; Su et al., 2022).
+Figure 7 visualizes the DAG and SWIGs for item fairness, that is, the absence
+of a CDIF effect. In testing practices, items that are not considered unfair (or
+DIF-free) are referred to as anchor items, and they are used to estimate the ability
+scores (Kopf et al., 2014). Figure 7a presents a DAG G that excludes the path
+A ! Y , where this missing arrow implies no effect of A on Y for any individual
+and assumes individual-level item fairness. Figure 7b presents the corresponding
+SWIG Gða j YÞ for individual fairness, where the protected variable A operates
+node-splitting, but Y remains the same because it is not a descendant variable of
+A in the DAG G.
+Suppose that Peter comes from the low SES group. Then individual-level item
+fairness asks a counterfactual question: ‘‘Would Peter’s probability of endorsing
+an anchor item be the same if he were assigned to the high SES group?’’ To
+achieve individual-level fairness, Peter’s probability of endorsing the item should
+remain the same between the actual low SES world versus the counterfactual
+high SES world. If this holds, the subgroup CDIF effect is necessarily absent,
+that is, tðuÞ = 0. Unfortunately, individual-level item fairness is not identifiable
+as only one of the potential outcomes is observed for each individual in practice.
+As a result, individual-level item fairness is neither estimable nor testable. While
+some researchers (Kusner et al., 2017) have explored causal fairness at the individual level, such approaches require very strong causal modeling assumptions,
+13
+
+Causal DIF
+such as modeling or learning counterfactual outcomes. These are highly delicate
+and daunting tasks. Therefore, our framework follows the common view in the
+literature that individual-level effects (or individual-level fairness) are not identifiable or estimable.
+In contrast, Figure 7c visualizes a SWIG for group fairness, which is derived
+ ða j YÞ in Figure 6b, but assumes tðuÞ = 0, that is, a population-level
+from G
+exclusion restriction. This SWIG implies that the subgroup effect of A on Y is
+absent at the population level, though
+not necessarily at the individual level. That
+0
+is, it does not assume Y a = Y a . Continuing to use Peter’s example, group fairness asks another counterfactual question: ‘‘Would the probability distribution of
+endorsing an anchor item among individuals with the same ability score as Peter
+be the same if they were assigned to the high SES group?’’ To satisfy group fairness, there should be no CDIF effect among subpopulations with the same ability
+levels, rather than for Peter himself. However, individual treatment effects may
+still vary within each subpopulation. Achieving group (or population-level) fairness, while still difficult, is generally more feasible than individual-level fairness.
+Our CDIF framework pursues this more tractable notion of group fairness. Note
+that this graphical distinction between individual and group fairness holds even
+when more complex causal structures are added to the graph.
+Confounding. So far, the SWIGs presented have included only A, Y, and Y in
+the simplest scenarios. However, DIF studies are typically conducted using observational data rather than data from randomized trials. In observational studies,
+there is often a set of confounders X = fX 1 , . . . , X p g that affect both the protected variable A and outcome Y . SWIGs express these relationships and allow
+researchers to read conditional independence restrictions between treatment and
+counterfactual outcomes using d-separation rules.
+Figure 8 illustrates a SWIG with confounder X. In SWIGs, the random half of
+the split node inherits all incoming arrows directed into A, while the fixed half
+inherits all outgoing arrows from A. In Figure 8, we read the conditional independence A?Y a , Y j X because all the paths between A and Y a are blocked after conditioning on X (i.e., A and Y a are d-separated given X ) and A is independent of
+Y. This conditional independence allows us to identify the conditional expectation of counterfactual outcomes under A = a as:
+
+
+
+E Yia j Yi = u = E E Yia j Yi = u, Ai = a, Xi j Yi = u
+= EfEðYi j Yi = u, Ai = a, Xi Þ j Yi = ug
+
+ðA?Y a , Y j X Þ
+ðConsistencyÞ
+
+We use this identification strategy to identify the subgroup CDIF effect, tðuÞ.
+Therefore, it is necessary to measure these confounders (e.g., immigrant status)
+to identify and estimate the causal effect. Otherwise, we cannot disentangle the
+CDIF effect from any spurious associations due to X . This approach differs from
+14
+
+Suk and Lyu
+
+FIGURE 8. Single-world intervention graph for CDIF with confounding.
+Note. CDIF = causal differential item functioning.
+
+traditional DIF, so traditional DIF cannot be interpreted as a causal effect when
+such confounding is present. Note that these confounders can serve as potential
+construct-irrelevant sources that lead to item unfairness.
+
+Controlled CDIF
+Impact. In this subsection, we assume that the protected variable A directly
+affects the ability Y (i.e., the path A ! Y exists). When this path is present, the
+distribution of the ability Y differs between advantaged and disadvantaged
+groups (e.g., high SES vs. low SES). This phenomenon is often referred to as
+item impact (Ackerman, 1992). Figure 9a presents a DAG for impact, where the
+ability Y is a mediator on the causal pathway between protected variable A and
+outcome Y . This figure visualizes that impact is conceptually distinct from DIF.
+Specifically, there is no direct path from A to Y (i.e., no effect for any individual
+and thus, no evidence of CDIF), yet the total effect of A on Y is not zero due to
+the indirect path A ! Y ! Y .
+Figure 9b presents the corresponding SWIG Gða, uÞ when impact is present.
+In this SWIG, both A and Y are split into random and fixed components, and
+the descendants of fixed nodes are relabeled accordingly (e.g., Y becomes Ya ; Y
+becomes Y u ).10 In this single-world scenario, all examinees were hypothetically
+assigned to group A = a and their ability were set to Ya = u, and only ability
+has a direct effect on the outcome. As a result, the potential outcome of interest
+in this world becomes Y u .
+From a perspective of causal fairness (Kilbertus et al., 2017), the ability Y is
+considered a resolving mediator because impact reflects (intrinsic) differences in
+ability between groups. Therefore, the path of A ! Y ! Y is viewed as nondiscriminatory. However, we consider (i) the direct effect of A on Y and (ii) any
+indirect path from A to Y via non-resolving mediators (i.e., mediators other than
+ability) to be discriminatory. We can represent this discrimination graphically by
+adding the causal path A ! Y .
+15
+
+Causal DIF
+
+FIGURE 9. Directed acyclic graph G and single-world intervention graph Gða, uÞ for
+item impact. (a) G for impact. (b) Gða, uÞ for impact.
+
+Definition. Figure 10 visualizes the SWIG 
+Gða, uÞ when both CDIF and impact
+are present.
+This SWIG is similar to Figure 9b, but it includes a direct path from A = a to
+the corresponding potential outcome Y a, u . In this case, we are interested in evaluating whether individuals’ responses to an item would differ between two
+hypothetical worlds, one where they were in group A = a and the other where
+0
+they were in group A = a , while holding their ability constant at u. Formally,
+controlled CDIF is defined as:
+Definition 4 (Controlled CDIF). An item has controlled CDIF if
+0
+
+P Y a, u = 1 6¼ PðY a , u = 1Þ
+
+0
+
+0
+
+for some ability level u and some values a and a attainable by A, where a 6¼ a .
+Here, PðY a, u = 1Þ is a counterfactual probability of endorsing an item if all
+examinees were assigned to group A = a and their ability score were set to u.
+This definition corresponds to the controlled direct effect in the causal mediation
+literature (Pearl, 2001; VanderWeele, 2010). In our context, the controlled direct
+effect means the causal effect of SES on item response while holding ability constant at a specific value. Note that Definition 3 is different from Definition 4, as
+simply conditioning on ability does not mean intervening on it (i.e., holding ability constant). In graphs, controlled CDIF applies the node-splitting operation to
+the ability variable (see Figure 10), whereas subgroup CDIF uses the observed
+ability variable (see Figure 6b).
+From Figure 10, we read two key independencies (i) A?Y a, u and (ii)
+a
+Y ?Y a, u j A = a. Using these independencies and standard causal assumptions,
+we identify the counterfactual expectation, E Yia, u , as:
+
+16
+
+Suk and Lyu
+
+ ða, uÞ for CDIF and item impact.
+FIGURE 10. Single world intervention graph G
+Note. CDIF = causal differential item functioning.
+
+
+
+E Yia, u = E Yia, u j Ai = a
+
+a, u
+= E Yi j Ai = a, Yai = u
+= EðYi j Ai = a, Yi = uÞ
+
+ðA?Y a, u Þ
+ðYa ?Y a, u j A = aÞ
+ðConsistencyÞ
+
+We denote the linear contrast between the counterfactual expectations for A = a
+0
+and A = a as t ðuÞ. Using the above identification strategy, t ðuÞ can be identified as:
+
+
+t ðuÞ :¼ E Yia = 1, u  E Yia = 0, u
+= EðYi j Ai = 1, Yi = uÞ  EðYi j Ai = 0, Yi = uÞ:
+
+Here, t ðuÞ 6¼ 0 indicates the presence of controlled CDIF. After causal identification, the controlled CDIF effect, t ðuÞ, is identical to the traditional DIF (i.e.,
+Definition 1). Therefore, in the absence of confounding, the traditional DIF effect
+can be interpreted as a causal effect. However, in practice, the assumption of no
+confounding is implausible, as DIF studies typically use observational data.
+
+Confounding. In observational studies, there are often confounders that affect
+the relationships between A, Y, and Y . When impact is absent, we only consider
+confounders that affect both A and Y, as discussed earlier. In the presence of
+impact, confounders can be categorized into three types: (i) confounders affecting both A and Y, denoted as W1 , (ii) those affecting both A and Y, denoted as
+W2 , and (iii) those affecting both Y and Y, denoted as W3 . Figure 11 visualizes a
+SWIG for CDIF and impact when these three types of confounders are present.
+In this scenario, we no longer achieve marginal independence due to confounders. Instead, we read the following conditional independencies from Figure 11:
+(i) A?Y a, u j W2 , W3 and (ii) Ya ?Y a, u j A = a, W2 , W3 .11 Note that we do not need
+to condition on W1. Using these independencies, we identify the counterfactual
+expectation E Yia, u as:
+
+17
+
+Causal DIF
+
+FIGURE 11. Single world intervention graph for CDIF and item impact with
+confounding.
+Note. CDIF = causal differential item functioning.
+
+
+
+E Yia, u = EfE Yia, u j Ai = a, W2 , W3 g
+ðA?Y a, u j W2 , W3 Þ
+
+a, u
+a
+= EfE Yi j Ai = a, Yi = u, W2 , W3 g ðYa ?Y a, u j A = a, W2 , W3 Þ
+ðConsistencyÞ
+= EfEðYi j Ai = a, Yi = u, W2 , W3 Þg
+
+In the presence of confounding, this identification strategy is used to identify
+t ðuÞ as:
+t ðuÞ = EfEðYi j Ai = 1, Yi = u, W2 , W3 Þg  EfEðYi j Ai = 0, Yi = u, W2 , W3 Þg:
+
+Therefore, traditional DIF differs from our target CDIF effect. When there are
+confounders like W2 and W3, we must include them in our CDIF analysis.
+Without considering these confounders, we cannot correctly isolate the CDIF
+effect from spurious associations with them.
+We remark that we also define our CDIF framework with intersectionality,
+where multiple protected variables are of interest. Since this extension is straightforward, we include the definitions and associated SWIGs in Supplemental
+Appendix S2 (available in the online version of this article).
+
+Comparison With Traditional DIF
+Our proposed CDIF framework relies on causal reasoning to infer what would
+happen under different treatment groups. This approach explains how CDIF
+effects occur and pinpoint the causes of unfairness in SWIGs. In DIF studies
+typically using observational data, the CDIF framework differs from traditional
+DIF. In essence, the CDIF framework accounts for the underlying causal structures among key variables (i.e., A, Y, Y ) as well as other crucial variables (e.g.,
+X , W s). Unlike traditional DIF, it can distinguish between unfairness arising
+18
+
+Suk and Lyu
+TABLE 1.
+Agreement Between Traditional DIF Versus CDIF After Identification
+Scenario
+
+Agreement
+
+Figure 6: CDIF
+Figure 8: CDIF with confounding
+Figure 10: CDIF and impact
+
+Yes
+No
+Yes
+
+Figure 11: CDIF and impact
+with confounding
+
+No
+
+Independence
+A?Y a , Y
+A?Y a , Y j X
+(i) A?Y a, u
+(ii) Ya ?Y a, u j A = a
+(i) A?Y a, u j W2 , W3
+(ii) Ya ?Y a, u j A = a, W2 , W3
+
+Note. DIF = differential item functioning; CDIF = causal DIF.
+
+from different causal mechanisms (e.g., CDIF only vs. CDIF and impact) and differentiate true causal effects from statistical disparities.
+Table 1 provides a summary of the comparisons between traditional DIF and
+CDIF. Generally speaking, in the absence of confounding (e.g., Figure 6: CDIF,
+Figure 10: CDIF and impact), the traditional DIF definition corresponds to the
+subgroup CDIF and controlled CDIF effects after causal identification. In such
+cases, CDIF effects can be identified from the observed data without covariate
+adjustment, and thus, the traditional DIF results can provide causal evidence.
+However, when there is confounding, this correspondence no longer holds.
+For example, in the presence of confounders X (see Figure 8), we must measure
+the confounders that affect both the protected variable A and outcome Y to
+satisfy the conditional independence A ? Y a j X . When impact is also present
+(see Figure 11), it is necessary to measure two types of confounders (i.e., W2 and
+W3 ) to identify a CDIF effect.
+We make two important remarks about SWIGs and data structures. First,
+SWIGs depend on the accuracy of the hypothesized causal relationships among
+the variables. If the SWIG does not reflect the true causal relationships, the CDIF
+effects may be incorrectly identified and estimated. Second, while this article
+focuses on confounder and mediator structures, other causal structures (e.g., colliders) can also lead to discrepancies between traditional DIF and CDIF.
+Simulation Study
+Simulation Designs and Evaluation
+We conducted a simulation study to examine whether items exhibit CDIF
+under various simulation conditions based on posited SWIGs. Our CDIF detection method is based on an outcome model that regresses the outcome on the
+treatment variable and confounders, chosen using the d-separation rules. Since
+the outcome (i.e., item response) is binary, we use logistic regression and perform
+19
+
+Causal DIF
+
+FIGURE 12. Simulation Scenarios: Scenario 1 represents neither CDIF nor impact,
+Scenario 2 represents CDIF only, Scenario 3 represents impact only, and Scenario 4
+represents both CDIF and impact. (a) Scenario 1. (b) Scenario 2. (c) Scenario 3.
+(d) Scenario 4.
+Note. CDIF = causal differential item functioning.
+
+a likelihood ratio test that compares a restricted model (with covariates only) and
+a full model (with both covariates and the treatment variable). This approach is
+denoted as Reg Adj.12 We compare the performance of Reg Adj with three traditional DIF methods: the standardized D-statistic (denoted as Std; Dorans &
+Kulick, 1986), Mantel–Haenszel test (denoted as MH; Holland & Thayer, 1986),
+and logistic regression (denoted as Logistic; Swaminathan & Rogers, 1990).
+In this study, there are three designs: Design 1 that has no confounder, Design
+2 that introduces a confounder between the protected variable and outcome variable (denoted as W2 ), and Design 3 that includes both W2 and an additional confounder between the mediator and outcome (denoted as W3 ). Within each design,
+we consider four scenarios, as illustrated in Figure 12: (1) neither CDIF nor
+impact, (2) CDIF only, (3) impact only, and (4) both CDIF and impact. Designs
+1, 2, and 3 include all four scenarios, but Design 2 adds a confounder between A
+and Y to each scenario, and Design 3 further adds another confounder between
+Y and Y .
+More specifically, our data-generating models are based on logistic regression
+with one binary protected variable and unidimensional ability. We consider both
+the true/known ability and estimated ability scores (or sum scores for traditional
+DIF methods) in our simulations. To estimate the ability, we fit appropriate item
+response theory models with 60 anchor items,13 and then use the expected a posteriori ability estimates to detect the presence of CDIF for 30 pilot items. We
+include the simulation results with the estimated ability or sum scores in the next
+subsection, and report those with the true ability in Supplemental Appendix S3
+(available in the online version of this article).
+For all the conditions, we evaluated the performance of the detection methods
+by measuring true positive and false positive rates across 30 pilot items. Each
+method, except for the standardized D-statistic, was evaluated at the 5% alpha
+level to determine whether it provides evidence for DIF. As for the standardized
+20
+
+Suk and Lyu
+TABLE 2.
+Average Detection Rates of CDIF Without Confounding: Design 1
+Scenario
+
+Reg Adj
+
+Std
+
+MH
+
+Logistic
+
+½1 Neither CDIF nor impact
+½2 CDIF only
+½3 Impact only
+½4 Both CDIF and impact
+
+0.051
+0.993
+0.050
+0.994
+
+0.015
+0.981
+0.034
+0.974
+
+0.045
+0.997
+0.055
+0.991
+
+0.049
+0.993
+0.060
+0.982
+
+Note. Bold fonts indicate true positive rates, and regular fonts indicate false positive rates. Reg Adj
+= regression with covariate adjustment; Std = standardized D-statistic; MH = Mantel–Haenszel test;
+Logistic = logistic regression; CDIF = causal differential item functioning.
+
+D-statistic, an absolute value larger than 0.05 provides evidence for DIF (Dorans
+et al., 1992). The average detection rates represent the true positive rates when
+there is a non-zero CDIF effect, like Scenarios (2) and (4); otherwise, they represent the false positive rates. We repeated the simulation with each condition 500
+times. The R code for our simulations is available in the first author’s GitHub
+repository (https://github.com/youmisuk/causalDIF).
+Simulation Results
+Table 2 summarizes the simulation results when there are no confounders. The
+Reg Adj method shows similar results to traditional DIF detection methods (i.e.,
+Std, MH, Logistic). When CDIF exists (Scenarios 2 and 4), all the methods exhibit high detection rates, with the Std method showing about 1% to 1.5% lower
+detection rates. When the effect is absent (Scenarios 1 and 3), all the methods
+show very low detection rates. This is expected because we do not have confounders, so the CDIF method behaves similarly to traditional ones.
+However, when there exists a confounder between the protected and outcome
+variables, the Reg Adj approach no longer targets the same quantity as traditional
+DIF after identification. Table 3 presents the simulation results under confounding. Under this design, the Reg Adj method maintains similar performance to the
+first design; that is, when there is a CDIF effect (Scenarios 2 and 4), the Reg Adj
+method shows high detection rates, while in the absence of CDIF (Scenarios 1
+and 3), the Reg Adj method shows low detection rates. The similar performance
+is because of its ability to separate the target causal effect from the spurious association with the confounder. In contrast, all the traditional DIF methods show different performance compared to their respective case under the first design.
+These different results are due to the fact that the traditional methods estimate
+the observed statistical disparity along with all the paths from the protected variable to outcome variable, including ones with confounders. Therefore, traditional
+DIF methods are not capable of distinguishing between the causal effect of
+21
+
+Causal DIF
+TABLE 3.
+Average Detection Rates of CDIF With a Confounder Between the Protected Variable
+and Outcome: Design 2
+Scenario
+
+Reg Adj
+
+Std
+
+MH
+
+Logistic
+
+½1 Neither CDIF nor impact
+½2 CDIF only
+½3 Impact only
+½4 Both CDIF and impact
+
+0.051
+0.980
+0.052
+0.978
+
+0.976
+0.027
+0.986
+0.075
+
+0.991
+0.062
+0.996
+0.099
+
+0.985
+0.062
+0.992
+0.096
+
+Note. Bold fonts indicate true positive rates, and regular fonts indicate false positive rates. Reg Adj
+= regression with covariate adjustment; Std = standardized D-statistic; MH = Mantel–Haenszel test;
+Logistic = logistic regression; CDIF = causal differential item functioning.
+
+TABLE 4.
+Average Detection Rates of CDIF With Two Confounders, W 2 (Confounder Between the
+Protected Variable and Outcome) and W 3 (Confounder Between the Mediator and
+Outcome).
+Scenario
+½1 Neither CDIF
+nor impact
+½2 CDIF only
+½3 Impact only
+½4 Both CDIF
+and impact
+
+Reg AdjðW2 , W3 Þ
+
+Reg AdjðW3 Þ
+
+Std
+
+MH
+
+Logistic
+
+0.050
+
+0.841
+
+0.725
+
+0.873
+
+0.821
+
+0.973
+0.055
+0.970
+
+0.104
+0.825
+0.102
+
+0.041
+0.469
+0.197
+
+0.119
+0.635
+0.325
+
+0.099
+0.572
+0.260
+
+Note. Bold fonts indicate true positive rates, and regular fonts indicate false positive rates.
+Reg Adj = regression with covariate adjustment; Std = standardized D-statistic; MH = Mantel–
+Haenszel test; Logistic = logistic regression; CDIF = causal differential item functioning.
+
+interest versus spurious association due to the confounder, even with an infinite
+number of data.
+Lastly, Table 4 summarizes the results in the presence of two confounders, W2
+and W3 . We implement the Reg Adj method with both confounders (denoted as
+Reg AdjðW2 , W3 Þ ) and with W3 only (denoted as Reg AdjðW3 Þ ). In this design, Reg
+AdjðW2 , W3 Þ performs well; it yields high detection rates when CDIF is present and
+low detection rates when CDIF is absent. In contrast, Reg AdjðW3 Þ shows unsuccessful performance because remaining confounding from W2 biases CDIF detection. As expected, all traditional DIF methods show undesirable performance.
+These results highlight the importance of measuring and adjusting for all confounders to accurately distinguish CDIF from mere statistical associations.
+
+22
+
+Suk and Lyu
+
+FIGURE 13. Single world intervention graph that assumes no confounding for the
+Regents math item.
+
+Applications
+In this section, we demonstrate both conceptual and empirical applications of
+the CDIF framework. The conceptual demonstration revisits the Regents math
+item, discussed in section ‘‘Motivating Example: Regents Math Item,’’ and the
+empirical demonstration is based on TIMSS data.
+
+Applying CDIF to the Regents Math Item
+This application focuses on how domain knowledge can be used to develop
+SWIGs, and how the CDIF approach conceptually differs from the traditional
+DIF approach. Let the group variable of interest A denote students’ SES (high
+SES vs. low SES), Y denote their algebra ability, and Y denote their response to
+the math item. We assume that SES has an impact on math ability.
+Let’s start with drawing a SWIG that reflects CDIF and impact with no concerns about confounding. In this case, a CDIF effect is equivalent to the traditional DIF effect after causal identification. The SWIG uses the observed variable
+A and counterfactual versions of Y and Y, as illustrated in Figure 13.
+In this SWIG, we target  the controlled CDIF effect, for example,
+E Y a = LowSES, u  Y a = HighSES, u . After analysis, we may conclude that there is
+strong evidence for CDIF attributed to SES. However, such a conclusion could
+be misleading since the SWIG omits other causal structures with confounders.
+A high school math teacher, Jared Goldsmith, pointed out in a local newspaper that this item may be more difficult for ELLs, especially those with limited
+English proficiency. In this case, ELL status serves as a confounder that affects
+both ability and item response. Thus, we revise the SWIG to add the ELL variable, as shown in Figure 14.
+In Figure 14, we may see that the controlled CDIF effect is reduced but still
+meaningfully non-zero. This suggests that the math item still has CDIF driven by
+SES, though the effect is smaller than in Figure 13, where the effect is inflated
+due to a spurious association with the omitted confounder ELL. This conclusion
+
+23
+
+Causal DIF
+
+FIGURE 14. Single world intervention graph with a confounder, English language
+learner (ELL) for the Regents math item.
+
+FIGURE 15. Single-world intervention graph with two confounders, English language
+learner (ELL) and immigrant status (IS) for the Regents math item.
+
+may be valid if the assumption that ELL is the only relevant confounder is
+correct.
+However, we argue that even this revised SWIG is incomplete, as it overlooks
+another confounder between SES and item response, namely immigrant status
+(denoted as IS). Figure 15 presents the updated SWIG that includes both ELL
+and IS as confounders. After conditioning on these variables, confounding will
+be eliminated, and we may find that the CDIF effect is close to zero. Under this
+correctly represented SWIG, we would conclude that SES does not causally drive
+unfair response patterns on this item.
+We emphasize that ELL and IS are potential DIF sources because they are
+construct-irrelevant factors that directly affect item responses, as shown in Figure
+15. Researchers may then investigate whether ELL or IS, rather than SES, is
+responsible for unfair response patterns by intervening on those variables within
+our CDIF framework.
+
+24
+
+Suk and Lyu
+
+FIGURE 16. Item M032595 from the 2011 Trends in International Mathematics and
+Science Study mathematics assessment.
+Source. https://nces.ed.gov/timss/released-questions.asp
+
+Applying CDIF to TIMSS Data
+We used data from the 2011 TIMSS mathematics assessment for U.S. 8thgrade students to illustrate the distinction between DIF and CDIF in practice.
+Because students were given different test booklets, we focus on those who
+received Booklet 1, which contains 26 mathematics items.14 Among these, 19
+DIF-free items were chosen as anchor items using the regularized DIF detection
+method of Lyu et al. (2025). These anchor items were used to estimate students’
+math ability scores. For demonstration, we focus on an item labeled M032595 to
+compare DIF and CDIF approaches; see Figure 16 for the item about the percentage of caps for sale. The final sample consists of 660 respondents after data
+cleaning (e.g., excluding students who did not complete all items, answered all
+25
+
+Causal DIF
+TABLE 5.
+Results of DIF and CDIF Analyses for Item M032595 from TIMSS 2011 Data
+Reg Adj
+Item
+
+p-Value
+
+M032595
+
+:088
+
+Std
+
+MH
+
+Statistic
+no CDIF
+
+:100
+
+Logistic
+
+p-Value
+DIF
+
+:003
+
+p-Value
+DIF
+
+:010
+
+DIF
+
+Note. Reg Adj = regression with covariate adjustment; Std = standardized D-statistic;
+MH = Mantel–Haenszel test; Logistic = logistic regression; DIF = differential item functioning;
+CDIF = causal differential item functioning; TIMSS = Trends in International Mathematics and
+Science Study.
+
+items correctly or incorrectly, or had missing values in the variables used). The R
+code for the TIMSS data analysis is available in the first author’s GitHub repository. (https://github.com/youmisuk/causalDIF)
+Our protected variable of interest A is sex (ITSEX) with two levels: girls and
+boys. The outcome variable Y is students’ response to item M032595. We assume
+the presence of item impact, that is, that there are group differences in ability
+scores. Since sex is exogenous, we assume that there are no confounders that
+directly affect the sex variable. However, we are concerned about confounding
+between the ability and the outcome, so we use home educational resources
+(BSDGHER) as a confounder that influences the two variables. We chose this
+variable (viewed as an SES proxy) because students with more home resources
+consistently scored higher in mathematics than those with fewer (Mullis et al.,
+2012), and because SES-related experiences (e.g., frequency of visiting sporting
+goods stores) may influence responses to the item. The assumed data-generating
+model is similar to Figure 14, but with a different confounder.
+Table 5 summarizes the results of the TIMSS item using both the proposed
+CDIF approach and traditional DIF methods. All the traditional methods (i.e.,
+Std, MH, Logistic) flag the item as exhibiting DIF, in particular favoring boys
+over girls. Based on this, researchers might conclude that this item is biased and
+may interpret the item content (about sales at a sporting goods store) as more
+familiar or appealing to boys. In contrast, our Reg Adj method adjusts covariates
+chosen using d-separation rules under the assumed SWIG. After adjusting for
+home educational resources, the Reg Adj method finds no CDIF for this item.
+This indicates that sex does not causally lead to unfair responses on the item.
+Overall, these findings illustrate how the CDIF framework separates the causal
+effect of the protected variable (here, sex) from spurious associations that arise
+from confounding, under the assumed SWIG with observed variables. However,
+when unmeasured confounders are present, our causal conclusions are still vulnerable to confounding bias.
+26
+
+Suk and Lyu
+Discussion and Conclusions
+This article introduces a causal framework for DIF analysis to assess causal
+fairness in test items. The framework utilizes SWIGs to define causality-based
+DIF, where researchers draw SWIGs to represent causal relationships among
+variables. We define CDIF as the difference in item functioning between two
+hypothetical worlds: one where individuals were in one group and another where
+they were in a different group. Specifically, we introduce two types of causal
+effects, subgroup CDIF and controlled CDIF, depending on whether item impact
+is present. To summarize, our CDIF approach offers the following contributions:
+1.
+
+2.
+3.
+
+4.
+
+5.
+6.
+
+It builds on established psychometric concepts, such as anchor items and
+item impact, to make the causal framework more meaningful and relevant
+to researchers in psychometrics and measurement.
+It visually distinguishes between CDIF and item impact, which are often
+conceptually disentangled in the DIF literature.
+Using potential outcomes, it provides formal definitions of CDIF effects
+(i.e., subgroup CDIF and controlled CDIF), linking psychometrics to the
+causal inference and algorithmic fairness literature.
+It incorporates and enriches broader fairness considerations, including
+group versus individual fairness, nonresolved discrimination, and intersectionality, in the context of DIF studies.
+It visually distinguishes item fairness at the individual level versus the
+population level using SWIGs.
+It clarifies which covariates should be included for identification based
+on SWIGs, using d-separation rules (e.g., X for subgroup CDIF; W2 , W3
+for controlled CDIF).
+
+In algorithmic fairness research, researchers are increasingly moving beyond
+simply finding associations with unfair patterns and now seek to determine
+whether algorithms causally lead to unfairness (Su et al., 2022). Using statistical
+measures only cannot differentiate between causal mechanisms that transmit
+change and those that generate disparity, even with unlimited data (Plečko &
+Bareinboim, 2024). In line with this shift, we believe that the testing community
+can benefit from adopting causal fairness to facilitate discussions on the mechanisms underlying (un)fairness in assessments, such as DIF in item development
+and automated scoring, or equity in test equating. Unlike association-based fairness notions, causality-based notions can examine how and why unfairness
+occurs under assumed data-generating processes and provide a nuanced causal
+reasoning. Although prior work has explored using covariates for DIF analysis
+(Belzak, 2022; Chao et al., 2024; Zumbo, 2007), these are still exploratory and
+do not incorporate causality to explain unfairness. In contrast, our CDIF framework is the first to formalize item (un)fairness using causality and to demonstrate
+27
+
+Causal DIF
+how SWIGs can serve as a powerful tool for representing and communicating
+fairness.
+Based on the findings of this article, we provide some suggestions for future
+research on causal fairness in DIF analysis. First, we assume that ability scores
+are known or can be accurately estimated using anchor items. However, in practice, anchor items may be unknown, so researchers need to estimate the ability
+and DIF effects at the same time. Future research would explore how to detect
+CDIF with unknown anchor items, potentially using item purification or regularization methods, and how inaccurate estimates of ability would affect our CDIF
+analysis. Second, this article focuses on the unidimensional ability, but our framework can accommodate multidimensional abilities by denoting ability as a vector,
+that is, Y = ðY1 , Y2 , . . . , YL Þ. Future work would extend the CDIF framework
+with multidimensional abilities by connecting them with multiple mediators from
+the causal mediation literature. Third, we use a simple detection method based on
+outcome regression. Future research could develop other detection methods for
+CDIF, such as weighting and doubly robust methods. Fourth, we assume that all
+confounders are known and measured, which may be difficult to meet in practice.
+Further research would investigate how the CDIF framework performs in the
+presence of unmeasured confounding, for example, by conducting sensitivity
+analysis or using robust causal methods against unmeasured confounding (e.g.,
+proximal inference).
+Overall, our CDIF framework highlights the benefits of promoting causal fairness in testing and assessment practices. The proposed CDIF complements the
+traditional DIF approach by providing an additional capability to explain the
+mechanisms underlying item unfairness. We hope that this causal approach contributes to creating a more equitable testing environment and advancing fairness
+in educational assessments.
+Acknowledgments
+The authors are grateful to Dan Bolt, Chan Park, and Peter Steiner for their insightful comments on an earlier version of the manuscript. We also thank Xinyu Pan for sharing an
+example item used in this work.
+
+Declaration of Conflicting Interests
+The authors declared no potential conflicts of interest with respect to the research, authorship, and/or publication of this article.
+
+Funding
+The authors received no financial support for the research, authorship, and/or publication
+of this article.
+
+28
+
+Suk and Lyu
+ORCID iDs
+Youmi Suk
+https://orcid.org/0000-0003-0316-6201
+Weicong Lyu
+https://orcid.org/0000-0002-8159-2161
+
+Notes
+1. Group fairness aims to treat different groups similarly, whereas individual fairness aims
+to treat similar individuals similarly (Barocas et al., 2023).
+
+2. Intersectionality is a theoretical framework that examines how overlapping categories
+interact to create unique inequalities for disadvantaged or marginalized groups
+(Crenshaw, 1989; Suk & Han, 2025).
+3. https://www.nysed.gov/state-assessment/high-school-regents-examinations
+4. https://www.star-revue.com/new-york-teachers-question-regents-exams/
+5. SWIGs are based on an underlying Finest Fully Randomized Causally Interpreted
+Structural Tree Graph (FFRCISTG) model.
+6. More precisely, this figure represents single-world intervention templates. However, in
+this article, we use the term SWIG more broadly to refer to both a single world intervention graph and template.
+7. A descendant refers to any node (variable) in the graph that can be reached through a
+directed path originating from a given node.
+8. Our framework differs from counterfactual fairness in Kusner et al. (2017). First, the
+definition proposed by Kusner et al. (2017) focuses on individual-level fairness, but
+our framework targets group-level fairness. Second, unlike ours, their framework does
+not consider path-specific causal effects, such as the direct effect of a sensitive variable
+(e.g., SES or gender) on item response. Third, they rely on Pearl’s structural causal
+models (which often rely on cross-world assumptions), whereas we adopt the SWIG
+framework, with single-world assumptions that are empirically testable in principle.
+9. This implies that there is no interference and there are no hidden versions of the protected variable, which are plausible conditions in DIF and assessment settings.
+10. There are different labeling schemes in SWIGs. The minimal scheme uses Y u , while
+the temporal scheme uses Y a, u . We use the minimal scheme in this article to seamlessly represent individual and group fairness within the SWIGs.
+11. Specifically, A is independent of Y a, u conditional on W2 , and also both unconditionally and conditionally on W3 , that is, A ? Y a, u j W2 and A ? Y a, u j W2 , W3 . Likewise,
+Ya is independent of Y a, u conditional on W3 , and also both unconditionally and conditionally on W2 , that is, Ya ? Y a, u j A = a, W3 and Ya ? Y a, u j A = a, W2 , W3 .
+12. In our study, we use a parametric outcome regression with covariate adjustment to
+detect CDIF for simplicity. However, alterative estimation methods, such as semiparametric or non-parametric approaches, as well as other classes of causal methods,
+like weighting or doubly robust methods, can also be used under the same SWIG
+structure.
+13. We fit the two-parameter logistic (2PL) item response theory models when there is no
+impact, and when impact is present, we fit multiple-group 2PL models.
+
+29
+
+Causal DIF
+14. Responses are dichotomized so that only fully correct responses are coded as 1, while
+both partially correct and incorrect responses are coded as 0.
+
+References
+Ackerman, T. A. (1992). A didactic explanation of item bias, item impact, and item validity from a multidimensional perspective. Journal of Educational Measurement, 29(1),
+67–91. https://doi.org/10.1111/j.1745-3984.1992.tb00368.x
+Barocas, S., Hardt, M., & Narayanan, A. (2023). Fairness and machine learning: Limitations and opportunities. MIT Press. http://www.fairmlbook.org
+Belzak, W. C. M. (2022). The multidimensionality of measurement bias in high-stakes testing: Using machine learning to evaluate complex sources of differential item functioning. Educational Measurement: Issues and Practice, 42(1), 24–33. https://doi.org/10.
+1111/emip.12486
+Bolt, D. M., Cohen, A. S., & Wollack, J. A. (2002). Item parameter estimation under conditions of test speededness: Application of a mixture Rasch model with ordinal constraints. Journal of Educational Measurement, 39(4), 331–348. https://doi.org/10.1111/
+j.1745-3984.2002.tb01146.x
+Carey, A. N., & Wu, X. (2022). The causal fairness field guide: Perspectives from social
+and formal sciences. Frontiers in Big Data, 5, 892837. https://doi.org/10.3389/fdata.
+2022.892837
+Chao, H.-Y., Chen, J.-H., & Chen, C.-C. (2024). Mitigating omitted variable bias in
+exploratory differential item functioning assessment: A propensity score adjustment
+approach. Journal of Educational and Behavioral Statistics, 50, 927–961. https://doi.
+org/10.3102/10769986241280308
+Chiappa, S. (2019). Path-specific counterfactual fairness. Proceedings of the AAAI Conference on Artificial Intelligence, 33(01), 7801–7808. https://doi.org/10.1609/aaai.v33i01.
+33017801
+Chouldechova, A. (2017). Fair prediction with disparate impact: A study of bias in recidivism prediction instruments. Big Data, 5(2), 153–163. https://doi.org/10.1089/big.
+2016.0047
+Cleary, T. A. (1968). Test bias: Prediction of grades of Negro and white students in integrated colleges. Journal of Educational Measurement, 5(2), 115–124. https://doi.org/
+10.1111/j.1745-3984.1968.tb00613.x
+Corbett-Davies, S., Pierson, E., Feller, A., Goel, S., & Huq, A. (2017). Algorithmic decision making and the cost of fairness. In Proceedings of the 23rd ACM SIGKDD international conference on knowledge discovery and data mining (pp. 797–806).
+Association for Computing Machinery. https://doi.org/10.1145/3097983.3098095
+Crenshaw, K. (1989). Demarginalizing the intersection of race and sex: A black feminist
+critique of antidiscrimination doctrine, feminist theory and antiracist politics. University of Chicago Legal Forum, 1989(1), 139–167.
+Darlington, R. B. (1971). Another look at cultural fairness. Journal of Educational Measurement, 8(2), 71–82. https://doi.org/10.1111/j.1745-3984.1971.tb00908.x
+Dorans, N. J., & Kulick, E. (1986). Demonstrating the utility of the standardization
+approach to assessing unexpected differential item performance on the scholastic
+
+30
+
+Suk and Lyu
+aptitude test. Journal of Educational Measurement, 23(4), 355–368. https://doi.org/10.
+1111/j.1745-3984.1986.tb00255.x
+Dorans, N. J., Schmitt, A. P., & Bleistein, C. A. (1992). The standardization approach to
+assessing comprehensive differential item functioning. Journal of Educational Measurement, 29(4), 309–319. https://doi.org/10.1111/j.1745-3984.1992.tb00379.x
+Dwork, C., Hardt, M., Pitassi, T., Reingold, O., & Zemel, R. (2012). Fairness through
+awareness. In Proceedings of the 3rd innovations in theoretical computer science conference (pp. 214–226). Association for Computing Machinery. https://doi.org/10.1145/
+2090236.2090255
+Hardt, M., Price, E., & Srebro, N. (2016). Equality of opportunity in supervised learning.
+In D. Lee, M. Sugiyama, U. Luxburg, I. Guyon, & R. Garnett (Eds.), Advances in
+neural information processing systems (Vol. 29, pp. 3315–3323). https://proceedings.
+neurips.cc/paper/2016/file/9d2682367c3935defcb1f9e247a97c 0d-Paper.pdf
+Hernan, M. A., & Robins, J. M. (2020). Causal inference: What if. Chapman & Hall/CRC.
+https://cdn1.sph.harvard.edu/wp-content/uploads/sites/1268/2021/03/ciwhatif_hernanrobins_30mar21.pdf
+Holland, P. W., & Thayer, D. T. (1986). Differential item functioning and the MantelHaenszel procedure. ETS Research Report Series, 1986(2), i–24. https://doi.org/10.
+1002/j.2330-8516.1986.tb00186.x
+Holland, P. W., & Wainer, H. (Eds.). (1993). Differential item functioning. Lawrence Erlbaum Associates. https://doi.org/10.4324/9780203357811
+Kilbertus, N., Rojas Carulla, M., Parascandolo, G., Hardt, M., Janzing, D., & Schölkopf,
+B. (2017). Avoiding discrimination through causal reasoning. In I. Guyon, U. von Luxburg, S. Bengio, H. Wallach, R. Fergus, S. Vishwanathan, & R. Garnett (Eds.),
+Advances in Neural Information Processing Systems (Vol. 30, pp. 656–666).
+Kopf, J., Zeileis, A., & Strobl, C. (2014). Anchor selection strategies for DIF analysis:
+Review, assessment, and new approaches. Educational and Psychological Measurement, 75(1), 22–56. https://doi.org/10.1177/0013164414529792
+Kusner, M. J., Loftus, J., Russell, C., & Silva, R. (2017). Counterfactual fairness. Advances in
+Neural Information Processing Systems, 30 (NIPS 2017).
+Lord, F. M. (1980). Applications of item response theory to practical testing problems.
+Lawrence Erlbaum Associates.
+Lyu, W., Wang, C., & Xu, G. (2025). Detecting differential item functioning across multiple groups using group pairwise penalty. Psychometrika, 90(5), 1594–1621. https://doi.
+org/10.1017/psy.2025.10034
+Magis, D., Béland, S., Tuerlinckx, F., & De Boeck, P. (2010). A general framework and an
+R package for the detection of dichotomous differential item functioning. Behavior
+Research Methods, 42(3), 847–862. https://doi.org/10.3758/brm.42.3.847
+Morgan, S. L., & Winship, C. (2015). Counterfactuals and causal inference: Methods and
+principles for social research (2nd ed.). Cambridge University Press.
+Mullis, I. V. S., Martin, M. O., Foy, P., & Arora, A. (2012). Timss 2011 international
+results in mathematics. TIMSS & PIRLS International Study Center, Boston College.
+https://timssandpirls.bc.edu/timss2011/international-results-mathematics.html
+Neyman, J. S. (1923). On the application of probability theory to agricultural experiments:
+Essay on principles. Statistical Science, 4, 465–480.
+
+31
+
+Causal DIF
+Pearl, J. (2001). Direct and indirect effects. In J. S. Breese & D. Koller (Eds.), Proceedings
+of the Seventeenth Conference on Uncertainty in Artificial Intelligence (pp. 411–420).
+Morgan Kaufmann.
+Pearl, J. (2009). Causality: Models, reasoning, and inference. Cambridge University Press.
+https://doi.org/10.1017/CBO9780511803161
+Pearl, J. (2015). Conditioning on post-treatment variables. Journal of Causal Inference,
+3(1), 131–137. https://doi.org/10.1515/jci-2015-0005
+Pine, S. M. (1977). Applications of item characteristic curve theory to the problem of test
+bias. In D. J. Weiss (Ed.), Applications of computerized adaptive testing: Proceedings
+of a symposium presented at the 18th annual convention of military testing association
+(pp. 37–43). University of Minnesota, Department of Psychology, Psychometric Methods Program.
+Plečko, D., & Bareinboim, E. (2024). Causal fairness analysis: A causal toolkit for fair
+machine learning. Foundations and TrendsÒ in Machine Learning, 17(3), 304–589.
+https://doi.org/10.1561/2200000106
+Richardson, T. S., & Robins, J. M. (2013). Single world intervention graphs (SWIGs): A
+unification of the counterfactual and graphical approaches to causality (Working Paper
+No. 128). Center for the Statistics and the Social Sciences, University of Washington
+Series.
+Robins, J. M., Richardson, T. S., & Shpitser, I. (2022, February). An interventionist
+approach to mediation analysis. In H. Geffner, R. Dechter, & J. Y. Halpern (Eds.)
+Probabilistic and causal inference (pp. 713–764). ACM. https://doi.org/10.1145/
+3501714.3501754
+Rubin, D. B. (1974). Estimating causal effects of treatments in randomized and nonrandomized studies. Journal of Educational Psychology, 66(5), 688–701. https://doi.org/10.
+1037/h0037350
+Su, C., Yu, G., Wang, J., Yan, Z., & Cui, L. (2022). A review of causality-based fairness
+machine learning. Intelligence & Robotics, 2(3), 244–274. https://doi.org/10.20517/ir.
+2022.17
+Suk, Y., & Han, K. T. (2024). A psychometric framework for evaluating fairness in algorithmic decision making: Differential algorithmic functioning. Journal of Educational
+and Behavioral Statistics, 49(2), 151–172. https://doi.org/10.3102/1076998623117
+1711
+Suk, Y., & Han, K. T. (2025). Evaluating intersectional fairness in algorithmic decision
+making using intersectional differential algorithmic functioning. Journal of Educational and Behavioral Statistics, 50(5), 833–862. https://doi.org/10.3102/107699
+86241269820
+Swaminathan, H., & Rogers, H. J. (1990). Detecting differential item functioning using
+logistic regression procedures. Journal of Educational Measurement, 27(4), 361–370.
+https://doi.org/10.1111/j.1745-3984.1990.tb00754.x
+Thissen, D., Steinberg, L., & Wainer, H. (1988). Use of item response theory in the study
+of group differences in trace lines. In H. Wainer & H. I. Braun (Eds.), Test validity
+(pp. 147–169). Lawrence Erlbaum.
+Thomasson, G. L. (1997). The goal of equity within and between computerized adaptive
+tests and paper and pencil forms. Paper presented at the Annual Meeting of the
+National Council on Measurement in Education, Chicago, IL.
+
+32
+
+Suk and Lyu
+VanderWeele, T. J. (2010). Controlled direct and mediated effects: Definition, identification and bounds. Scandinavian Journal of Statistics, 38(3), 551–563. https://doi.org/10.
+1111/j.1467-9469.2010.00722.x
+Yang, S., Lorenzi, E., Papadogeorgou, G., Wojdyla, D. M., Li, F., & Thomas, L. E. (2021).
+Propensity score weighting for causal subgroup analysis. Statistics in Medicine, 40(19),
+4294–4309. https://doi.org/10.1002/sim.9029
+Zumbo, B. D. (2007). Three generations of DIF analyses: Considering where it has been,
+where it is now, and where it is going. Language Assessment Quarterly, 4(2), 223–233.
+https://doi.org/10.1080/15434300701375832
+
+Authors
+YOUMI SUK is an assistant professor in the Department of Human Development at
+Teachers College, Columbia University, 525 West 120th Street, New York, NY 10027;
+e-mail: ysuk@tc.columbia.edu. Her research areas include causal machine learning,
+quasi-experimental designs, optimal treatment regimes, multilevel modeling, and algorithmic fairness.
+WEICONG LYU is an assistant professor in the Faculty of Education at the University of
+Macau, E33-1020, University of Macau, Taipa, Macao SAR, China; e-mail: weiconglyu@um.edu.mo. His research areas include item response theory, Bayesian methods,
+and causal inference.
+Manuscript received March 28, 2025
+Revision received December 12, 2025
+Accepted December 18, 2025
+
+33
+
+

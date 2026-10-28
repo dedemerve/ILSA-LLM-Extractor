@@ -3,24 +3,24 @@
 ICILS ve PIAAC için Single-Transition Hold-Out Validation (M0 / M1)
 
 LOCO (pair-based) bu programlar için çalışmıyor:
-  - PIAAC: sadece 2 cycle (2012, 2017) → pair gereksinimi karşılanamaz
+  - PIAAC: sadece 2 cycle (2012, 2022) → pair gereksinimi karşılanamaz
   - ICILS: 2013∩2018 overlap = 3 ülke → n_train < p
 
 Bu script, tek seferlik hold-out (single-transition) uygular:
   PIAAC:
-    - Lag: PARENTAL_EDUCATION at 2012 → test 2017
+    - Lag: PARENTAL_EDUCATION at 2012 → test 2022
     - Train: tüm 2012 satırları (country-level; lag lag_PARENTAL_EDUCATION=2012 değerinden gelir)
     - Wait, lag at test cycle = value from training cycle → standard lag design
     - Actually: since we only have 1 transition, train/test distinction means:
       X_train = [{PIAAC_literacy_2012, lag features}] for countries in 2012
-      y_train = PIAAC_literacy_2017 (for countries in both 2012 and 2017)
-      X_test = same features, predict 2017 scores
+      y_train = PIAAC_literacy_2022 (for countries in both 2012 and 2022)
+      X_test = same features, predict 2022 scores
       → This is leave-one-out at country level (LOOCV) on the single transition
       → Or: simple OLS/Ridge train-on-all, evaluate on same set (very optimistic but standard for 1-fold)
 
   Actually the cleanest design:
-    Train: use 2012 predictors to predict 2017 scores (no temporal leakage since 2012 < 2017)
-    Test: predict 2017 scores → evaluate MAE
+    Train: use 2012 predictors to predict 2022 scores (no temporal leakage since 2012 < 2022)
+    Test: predict 2022 scores → evaluate MAE
     Model comparison: M0 (no lit weights) vs M1 (√W_j)
     Note: with only 1 fold, this is treated as diagnostic, not as evidence of generalization
 
@@ -86,12 +86,12 @@ def fit_ridge_holdout(
 
 def run_piaac_holdout(weights: dict) -> list[dict]:
     """
-    PIAAC single-transition: train on 2012 data → predict 2017 scores.
+    PIAAC single-transition: train on 2012 data → predict 2022 scores.
 
     Design:
-      - Overlap countries (present in both 2012 and 2017)
+      - Overlap countries (present in both 2012 and 2022)
       - X = [PIAAC_literacy_2012, lag_PARENTAL_EDUCATION_2012]
-      - y = PIAAC_literacy_2017
+      - y = PIAAC_literacy_2022
       - Evaluate MAE on overlap set
     """
     est = pd.read_csv(STAGE5_DIR / "icils_piaac_estimates.csv")
@@ -103,9 +103,9 @@ def run_piaac_holdout(weights: dict) -> list[dict]:
             ["country_iso3", "mean"]
         ].rename(columns={"mean": f"PIAAC_{domain}_2012"})
 
-        d17 = piaac[(piaac.cycle == 2017) & (piaac.domain == domain)][
+        d17 = piaac[(piaac.cycle == 2022) & (piaac.domain == domain)][
             ["country_iso3", "mean"]
-        ].rename(columns={"mean": f"PIAAC_{domain}_2017"})
+        ].rename(columns={"mean": f"PIAAC_{domain}_2022"})
 
         pared12 = piaac[(piaac.cycle == 2012) & (piaac.domain == "PARENTAL_EDUCATION")][
             ["country_iso3", "mean"]
@@ -123,8 +123,8 @@ def run_piaac_holdout(weights: dict) -> list[dict]:
         log.info("PIAAC %s: n=%d overlap countries", domain, n)
 
         feature_cols = [c for c in df.columns
-                        if c not in ("country_iso3", f"PIAAC_{domain}_2017")]
-        target_col   = f"PIAAC_{domain}_2017"
+                        if c not in ("country_iso3", f"PIAAC_{domain}_2022")]
+        target_col   = f"PIAAC_{domain}_2022"
 
         X = df[feature_cols].values.astype(float)
         y = df[target_col].values.astype(float)
@@ -154,7 +154,7 @@ def run_piaac_holdout(weights: dict) -> list[dict]:
 
         rows.append({
             "program": "PIAAC", "domain": domain,
-            "train_cycles": "2012", "test_cycle": 2017,
+            "train_cycles": "2012", "test_cycle": 2022,
             "n_overlap": n, "n_features": len(feature_cols),
             "design": "single_transition_in_sample",
             "MAE_M0": round(mae_m0, 4), "MAE_M1": round(mae_m1, 4),

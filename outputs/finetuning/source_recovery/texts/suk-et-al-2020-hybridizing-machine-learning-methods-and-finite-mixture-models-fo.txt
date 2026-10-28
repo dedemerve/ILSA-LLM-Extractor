@@ -1,0 +1,1388 @@
+Article
+
+Journal of Educational and Behavioral Statistics
+2021, Vol. 46, No. 3, pp. 323–347
+DOI: 10.3102/1076998620951983
+Article reuse guidelines: sagepub.com/journals-permissions
+© 2020 AERA. http://jebs.aera.net
+
+Hybridizing Machine Learning Methods and Finite
+Mixture Models for Estimating Heterogeneous
+Treatment Effects in Latent Classes
+Youmi Suk
+Jee-Seon Kim
+Hyunseung Kang
+University of Wisconsin–Madison
+There has been increasing interest in exploring heterogeneous treatment
+effects using machine learning (ML) methods such as causal forests, Bayesian
+additive regression trees, and targeted maximum likelihood estimation.
+However, there is little work on applying these methods to estimate treatment
+effects in latent classes defined by well-established finite mixture/latent class
+models. This article proposes a hybrid method, a combination of finite mixture
+modeling and ML methods from causal inference to discover effect heterogeneity in latent classes. Our simulation study reveals that hybrid ML methods
+produced more precise and accurate estimates of treatment effects in latent
+classes. We also use hybrid ML methods to estimate the differential effects of
+private lessons across latent classes from Trends in International Mathematics and Science Study data.
+Keywords: causal inference; machine learning methods; observational studies; multilevel
+propensity score matching; finite mixture modeling
+
+1. Introduction
+1.1. Motivation
+There has been a growing interest in causal inference to estimate conditional
+average treatment effects (CATEs) using machine learning (ML) methods
+(Athey & Imbens, 2016; Hill, 2011; Imai & Ratkovic, 2013; Künzel et al.,
+2019; Su et al., 2009; Wager & Athey, 2018). These methods show great promise
+in understanding treatment effect heterogeneity based on observable characteristics of the study population. However, in some settings, observable characteristics are thought to emerge from meaningful latent processes. For example,
+many studies in education and psychology posit the existence of latent classes
+defined by parameters in latent class/finite mixture models in order to better
+323
+
+Hybridizing Machine Learning Methods
+understand observed student behaviors such as Internet and smartphone addiction or teen smoking (Clogg, 1995; McLachlan & Peel, 2000; Mok et al., 2014;
+Sutfin et al., 2009). Differences in observed behaviors are hypothesized to arise
+due to differences in latent classes, and, as such, there is a strong emphasis on
+understanding the differences between latent classes by examining the parameters of latent class/profile models or latent class regression models; see
+Magidson and Vermunt (2004) for details. In such cases where latent classes
+play a vital role in the scientific understanding of observed phenomena, understanding how the effects of a new treatment, program, or policy vary across these
+latent classes is of great interest.
+To provide a concrete example that motivated this work, consider an observational study estimating the effect of taking private science lessons (i.e., treatment) on science test scores (i.e., outcome) among middle-school students. Each
+student’s choice to have private tutors is based on a number of observable
+characteristics, such as their previous grades and the location of their schools,
+as well as unobservable, latent characteristics, such as students’ motivations,
+academic resilience,1 or science self-efficacy.2 For example, some students who
+are academically resilient may seek private tutors to supplement classroom
+instruction compared to those who are less resilient. Some students may opt for
+a private tutor because they are self-motivated, while others may not seek a tutor
+because they are less motivated. Or, the driving factor for private lessons may be
+similar for all students in the same school because of deficiencies (or lack
+thereof) in school resources. Regardless, these characteristics may not be directly
+observable, but rich latent class models exist in psychology to help us better
+understand them; see McLachlan and Peel (2000), Kaplan et al. (2009), and
+Masyn (2013) for examples. More importantly, variation in these latent classes
+may lead to differential effects of having a private tutor. For instance, a private
+tutor may be more helpful in raising test scores among students who are academically resilient or self-motivated compared to students who are less resilient or
+less motivated.
+If an investigator uses one of the aforementioned ML-based estimators to
+study effect heterogeneity of private tutoring, these methods will only to reveal
+variations in treatment effects among observable characteristics of the student;
+they would not be able to reveal variations in treatment effects among latent
+classes representing resilience and self-motivation. To better illustrate this point,
+consider Figure 1 where we constructed a hypothetical two-class latent structure
+and students belong to either one of the two latent classes; say one class represents strong academic resilience, while another class represents weak academic
+resilience. The average treatment effect of having private tutors in the first latent
+class (in yellow) is two, whereas the average treatment effect in the second latent
+class (in green) is zero. When we use causal forests (Athey et al., 2019), an
+ML-based causal inference method based on random forests, to estimate treatment effects, the causal forests masks these two latent classes’ treatment effects.
+324
+
+Suk et al.
+
+FIGURE 1. Distributions of individual conditional average treatment effect estimates. The
+left plot shows our method, hybrid causal forests, while the right plot shows causal forests.
+Dashed lines represent class-specific treatment effect estimates; see Section 4 for details.
+
+In contrast, our hybrid methods, which we explain below, are able to reveal the
+two latent classes and their respective treatment effects. Specifically, Figure 1
+uses our hybrid methods based on causal forests, which we refer to as hybrid
+causal forests.
+1.2. Prior Work and Our Contribution
+Prior works on treatment effect estimation in latent classes are diverse. Kang
+and Schafer (2010) and Schuler et al. (2014) used latent class models to identify
+latent treatment classes based on manifest/observed items. Butera et al. (2014)
+and Lanza et al. (2013) discussed estimating treatment effects when the outcome variables are latent classes. Specifically, the underlying construct of the
+outcomes was measured using observed items, and the goal was to estimate
+treatment effects on latent class membership of the outcomes. Jo et al. (2009)
+discussed latent trajectory structures in three outcome measures of attention
+deficit among children and revealed heterogeneity in longitudinal outcomes
+across latent classes. The work most related to ours is by Kim and Steiner
+(2015) who used a latent class regression model to model different latent
+representations of students’ selection into treatment (or control) and used multilevel propensity score matching to estimate the treatment effect within each
+latent class.
+The goal of this article is to complement these prior works and provide a
+general “hybrid” framework to study treatment effect variation within latent
+classes by combining latent class modeling with ML-based methods in causal
+inference. Specifically, in a two-level setting common in education, we propose a
+two-step hybrid procedure that first uses latent class/finite mixture modeling to
+identify latent class structures and second uses modern ML methods in causal
+325
+
+Hybridizing Machine Learning Methods
+inference to estimate treatment effects within each latent class. Our rationale for
+using ML methods in the second step is to leverage ML’s flexibility in modeling
+potentially complex propensity score and outcome regression models in each
+latent class. More broadly, our approach to this problem follows a growing trend
+of combining ML methods with well-established models in psychology to capitalize on the advantages of each approach (Ma, 2018; Suk et al., 2019). This
+article focuses on three popular ML methods in causal inference—causal forests
+(Athey et al., 2019; Wager & Athey, 2018), Bayesian additive regression trees
+(BART) (Hill, 2011), and targeted maximum likelihood estimation (TMLE; van
+der Laan & Rubin, 2006)—but our framework can be extended to other ML
+methods. We validate our proposed methods through a simulation study and a
+large-scale educational assessment study concerning the effect of private science
+lessons on science achievement scores. We show that our ML-based hybrid methods have more precise and accurate estimates of the variations in treatment effects
+associated with latent classes than other parametric methods used in this research.
+2. Review: Notation, Causal Assumptions, and the Propensity Score
+We use the Neyman–Rubin causal model (Neyman, 1923; Rubin, 1974) and
+its extension to multilevel data to define causal effects (Hong & Raudenbush,
+2006). Let Yij ð1Þ be the potential outcome if individual i at cluster j were to be
+treated ðZij ¼ 1Þ. Let Yij ð0Þ be the potential outcome if individual i at cluster j
+were to be untreated ðZij ¼ 0Þ. The notation assumes the stable unit treatment
+value assumption (SUTVA; Rubin, 1986) where the potential outcomes of each
+individual are not affected by others’ treatment assignments, and there is only a
+single version of treatment. This allows us to write the observed outcome Yij as
+Yij ¼ Zij Yij ð1Þ þ ð1  Zij ÞYij ð0Þ. Let Xij and Wj denote pretreatment covariates
+for individual i in cluster j, where Xij are individual-specific covariates and Wj
+are cluster-specific covariates.
+Under the potential outcomes framework, we assume strong ignorability:
+Yij ð1Þ; Yij ð0Þ ⊥ Zij jXij ; Wj and 0 < eðXij ; Wj Þ ¼ PrðZij ¼ 1jXij ; Wj Þ < 1;
+
+where ⊥ denotes independence between two random variables and eðXij ; Wj Þ is
+the propensity score (Rosenbaum & Rubin, 1983). In single-level data, propensity scores are typically estimated with logistic regression. In multilevel data,
+propensity scores are typically estimated with random or fixed effects logistic
+regression (Leite, 2016). Propensity scores are often used in matching methods to
+match treated and control units or to weigh individuals’ outcomes via inverse
+probability weighing.
+We conclude the section by defining the causal estimand of interest. Let Kij ¼
+f1; : : : ; Cg denote the latent class membership of individual i in cluster j from a
+latent class model. The goal in this article is to estimate the CATE for individuals
+who belong to latent class Kij ¼ k and is formalized as follows:
+326
+
+Suk et al.
+
+
+tðkÞ ¼ E Yij ð1Þ  Yij ð0ÞjKij ¼ k :
+
+The estimand tðkÞ cannot be directly estimated with observed data since latent
+class membership Kij is unobserved. More precisely, the function that relates the
+observable characteristics Xij ; Wj to their latent counterparts Kij is unknown and
+must be modeled based on context-specific finite mixture/latent class models. In
+contrast, the usual CATE formalized as
+
+
+tðx; wÞ ¼ E Yij ð1Þ  Yij ð0ÞjXij ¼ x; Wj ¼ w
+
+can be directly estimated from the observed data under strong ignorability and
+SUTVA; see Imbens and Rubin (2015) for more details about identification of
+CATE. Modern ML methods in causal inference (e.g., causal forests) provide
+consistent and asymptotically Normal estimates of tðx; wÞ. However, tðx; wÞ
+only reveals treatment heterogeneity among observable characteristics and
+masks treatment variability in latent classes. The next section discusses our
+proposed approach, hybrid ML methods, which sequentially integrate latent class
+modeling and ML methods to estimate tðkÞ.
+
+3. Hybridizing Latent Class Modeling and ML for Causal Inference
+Our hybrid approach has two steps. The first step estimates latent classes via
+context-specific latent class/finite mixture modeling, and the second part uses
+ML-based methods to estimate treatment effects within each latent class. Subsequent sections elaborate on each step.
+3.1. Step 1: Latent Class/Finite Mixture Modeling
+Latent class or finite mixture models have been frequently used to group
+individuals or data into unobserved latent classes that can be inferred from the
+observed data (McLachlan & Peel, 2000; Vermunt & Magidson, 2003). In a
+standard latent class model, latent classes are identified using categorical latent
+class indicators (e.g., dichotomous survey items), and parameters defining latent
+classes are response probabilities (Muthén & Muthén, 2017; J. Wang & Wang,
+2012). More generally, there are many types of latent class/finite mixture models
+based on regression analysis, path analysis, and factor analysis; see Magidson
+and Vermunt (2004), McLachlan and Peel (2000), Kaplan et al. (2009), and
+Masyn (2013) for more details. The choice of which latent model to use is
+context-specific and so long as researchers choose an identifiable finite mixture
+model to estimate latent classes and each class meets the aforementioned casual
+assumptions, our methodology will work.
+In our real data study of private science tutoring and school achievement
+scores, we focus on a type of latent class models that describe how students in
+each school select themselves into treatment (i.e., private science tutoring), also
+327
+
+Hybridizing Machine Learning Methods
+referred to as latent selection/propensity score models, and latent class membership applies at the cluster level (i.e., at the school level) so that Kij ¼ k for
+everyone in the same cluster. In particular, each cluster belongs to one of k ¼
+1; : : : ; C propensity score models that govern how students within each school
+select themselves into treatment, and the parameters of each propensity score
+define the latent classes; in other words, students’ selection behaviors in private
+tutoring are homogeneous within each cluster, but there are hidden heterogeneous structures across schools that can be inferred from the data. As an illustration of the chosen latent class model, suppose that school principals emphasize
+academic achievements. In such schools, students may seek private lessons to
+receive higher achievement scores. Additionally, although a school principal’s
+emphasis on academic achievement can play a role in students seeking private
+tutors, its importance may differ depending on the location of the school; private
+education services are more readily available in urban areas than in rural areas.
+We remark that this model is also called a restricted multiple group latent class
+model (Vermunt, 2003), and Kim and Steiner (2015) provide additional interpretations as well as some limitations of the model.
+The overall goal of the latent class selection model in our real data example is
+to understand which of the C selection models govern students’ choices to select
+private tutors. Formally, let pk ¼ PðKj ¼ kÞ; k ¼ 1; : : : ; C be the marginal probability of being in latent class k. For this latent class model, we drop the subscript
+i in Kij for clarity, but we can define Kij ¼ Kj to fit it into the general notation, and
+we use the two notations interchangeably. Consider a latent class random effects
+logistic regression model where each student’s choice to seek treatment (e.g.,
+private tutors) is a mixture of C different selection models. Specifically, each
+latent class k has its own selection model ek ðXij ; Wj ; yk Þ ¼ PðZij ¼ 1jXij ; Wj ; yk Þ
+where yk parameterizes the model; for two-level data, the selection model for
+each latent class k is a random effects logistic model. Then, a latent class selection model assumes that PðZij ¼ 1jXij ; Wj Þ is C mixtures of selection models
+with mixing probabilities pk , k ¼ 1; : : : ; C:
+PðZij ¼ 1jXij ; Wj Þ ¼
+
+C
+X
+
+pk ek ðXij ; Wj ; yk Þ;
+
+0  pk  1;
+
+k¼1
+
+C
+X
+
+pk ¼ 1;
+
+ð1Þ
+
+k¼1
+
+where
+pk ¼ PðKj ¼ kÞ ¼
+
+expðgk Þ
+C
+X
+
+:
+
+ð2Þ
+
+expðgk Þ
+
+k¼1
+
+That is, pk is modeled by a multinomial logistic model with gk representing a
+class-specific multinomial intercept. The parameters in the models (i.e.,
+yk ; pk ; k ¼ 1; : : : ; C) are estimated by an expectation–maximization algorithm
+(Dempster et al., 1977; Leisch, 2004; McLachlan & Peel, 2000). Using Bayes’s
+328
+
+Suk et al.
+rule, we can compute the posterior probability that each cluster belongs to latent
+class k. Specifically, individual ij is assigned to one of C latent classes with the
+highest posterior probability, also known as modal assignment. Some alternatives to modal assignment are proportional assignment and random assignment
+(Goodman, 2007; Vermunt, 2010). Here, we use modal assignment due to its
+simplicity and optimality under certain assumptions about Bayes classification
+error rates (Bakk et al., 2013). Regardless, let K^ j (or K^ ij ¼ K^ j ) denote the estimated latent class membership for each cluster. We will use the estimated membership in the second step of our proposed algorithm.
+There are some important implementation details in estimating latent class
+models and we briefly summarize four issues that are most relevant to our setting;
+see Everitt and Hand (1981), Titterington et al. (1985), and McLachlan and Peel
+(2000) for detailed discussions. First, typically, the number of latent classes C is
+initially specified based on subject-matter theories about latent class structure,
+but later verified by a data-driven approach based on various measures of model
+fit, such as the likelihood ratio statistic, Pearson’s Chi-square, the Akaike information criterion (AIC), or the Bayesian information criterion (BIC) (Kaplan
+et al., 2009). While there is always a risk of incorrectly specifying the number
+of latent classes, either through over-extraction (i.e., more latent classes were
+specified than the true number of latent classes) or under-extraction (i.e., fewer
+latent classes were specified than the true number of latent classes), it is generally
+preferable to have more latent classes than fewer latent classes for estimating
+treatment effects, as the former would be able to identify diverse structures of
+latent classes. Second, latent class models are only identifiable up to labeling
+permutations of latent classes because estimated class labels are arbitrary. For
+example, if there are three latent classes, the estimated parameters for Class 1 can
+equally be labeled as Class 2 or Class 3 and the data will be observationally
+equivalent. This issue primarily affects label assignment, but not estimation of
+model parameters (Leisch, 2004). Also, many algorithms have been developed to
+detect label switching issues and to relabel latent classes using ordering constraints and Stephens’s methods (e.g., Stephens, 2000; Tueller et al., 2011).
+Third, in general, mixtures of univariate Normal, gamma, exponential, Cauchy,
+and Poisson distributions are identifiable, whereas mixtures of uniform distributions are not identifiable. Mixtures of binomial and multinomial distributions can
+be identified under some assumptions on the number of latent classes and the size
+of the support of Zij ; Xij , and Wj (Allman et al., 2009; Everitt & Hand, 1981;
+Grün & Leisch, 2008; Titterington et al., 1985). Finally, to prevent overfitting the
+latent selection model, we can set the prior class probabilities to be far away from
+zero and set yk to be sufficiently different (Leisch, 2004). Adding random effects
+in ek can also help avoid overfitting (Lenk & DeSarbo, 2000).
+For software to implement Step 1, we used the software Mplus8 (Muthén &
+Muthén, 2017) and the MplusAutomation package (Hallquist & Wiley, 2017) in
+329
+
+Hybridizing Machine Learning Methods
+R (R Core Team, 2019) to estimate the latent class Kbij . We also applied a “class
+assignment-based algorithm” to resolve potential label switching issues (Tueller
+et al., 2011).
+3.2. Step 2: ML Methods for Causal Inference
+This section describes some methods in causal inference that utilize ML to
+estimate heterogeneous treatment effects. We remind readers that the specific
+choice of the ML method is not critical so long as they provide consistent point
+estimators and valid confidence intervals. Also, for one of the ML methods,
+causal forests, we follow a suggestion from recent work (Suk et al., 2019) to
+improve its performance in two-level data.
+3.2.1. General approach. At a high level, almost all ML-based methods for
+causal inference require estimating either the outcome model, the propensity
+score model, or both. Briefly, the outcome model is the conditional expectation
+of the outcome given the observed covariates and treatment assignment, say
+mðx; w; zÞ ¼ E½Yij jXij ¼ x; Wj ¼ w; Zij ¼ z; some methods also estimate the
+conditional expectation of the outcome given only the covariates, say
+mðx; wÞ ¼ E½Yij jXij ¼ x; Wj ¼ w. As mentioned above, the propensity score
+model is the probability of being assigned to treatment given observed covariates, that is, eðx; wÞ ¼ PðZij ¼ 1jXij ¼ x; Wj ¼ wÞ. Each ML-based method in
+causal inference estimates the outcome model or the propensity score model
+using different supervised ML algorithms. For example, BART uses Bayesian
+regression trees to estimate mðÞ. TMLE, combined with SuperLearner (van der
+Laan et al., 2007), uses an ensemble of supervised learning algorithms to estimate
+mðÞ and eðÞ. Causal forests uses a modified random forest to estimate mðÞ and
+eðÞ. Also, each ML-based method aggregates estimates of mðÞ and eðÞ differently to arrive at the final estimate of CATE. For example, typical BART only
+uses mðÞ to estimate CATE. Causal forests, which we describe below in Section
+3.2.2., uses mðÞ and eðÞ through a weighted linear regression approach. TMLE
+uses both mðÞ and eðÞ through a “clever covariate” to estimate the CATE. If the
+underlying supervised ML algorithm can consistently estimate mðÞ and eðÞ,
+these methods not only provide a consistent estimate of the CATE but also, under
+additional assumptions, provide valid p values and confidence intervals.
+To incorporate ML-based methods into latent class estimation in two-level
+settings, we outline the following approach. First, for each estimated latent class
+k, use any of the aforementioned ML-based CATE estimators to estimate the
+CATE within each k by only using the data from the latent class and denote this
+as tðx; w; kÞ; note that if the encompassing ML method requires estimation of
+eðÞ, one can use a random effects logistic regression model instead of the
+associated supervised learning algorithm to improve performance in clustered/
+multilevel data. Second, average tðx; w; kÞ among individuals with the same k to
+330
+
+Suk et al.
+arrive at the final estimator for tðkÞ. We show an example of this general recipe
+based on causal forests below.
+3.2.2 Vanilla causal forests and modified causal forests. Causal forests (Athey
+et al., 2019; Wager & Athey, 2018) is a type of random forests (Breiman, 2001)
+that is used to estimate the CATE as well as the average treatment effect. Specifically, a causal forest estimator of the CATE is a weighted linear regression of
+^ ðijÞ ðx; wÞ and a single residualized regressor
+residualized outcome Y~ij ¼ Yij  m
+ðijÞ
+Z~ij ¼ Zij  e^ ðx; wÞ.
+X
+^t ðx; WÞ ¼
+
+
+
+^ ðijÞ ðXij ; Wj Þ Zij  e^ðijÞ ðXij ; Wj Þ
+Yij  m
+:
+
+2
+X
+a ðx; wÞ Zij  e^ðijÞ ðXij ; Wj Þ
+ij ij
+
+a ðx; wÞ
+ij ij
+
+
+
+ð3Þ
+
+Here, 0  aij ðx; wÞ  1 weighs how much each unit ij contributes to the estimate
+of CATE, tðx; wÞ. The ðijÞ superscript represents out-of-bag leave-one-out
+estimates in ML, that is, the estimates of functions when unit ij‘s data are not
+^ ðijÞ ðx; wÞ and e^ðijÞ ðx; wÞ are obtained
+used. In causal forests, the estimates of m
+by a honest random forest algorithm in Procedure 1 of Wager and Athey (2018).
+Wager and Athey (2018) and Athey et al. (2019) showed that the causal forests
+estimator is consistent for the CATE and has an asymptotic pivotal Gaussian
+distribution under some assumptions; the latter property allows researchers to
+construct valid p values and confidence intervals for the CATE.
+To estimate class-specific treatment effects in two-level data using causal
+forests, we do the following. First, instead of using a random forest to estimate
+the propensity score, we use a multilevel logistic regression in Step 1 to account
+for clustering structures inside causal forests (Suk et al., 2019). Second, we run
+causal forests among units that are in the same latent class k. Combined, the
+modified CATE estimator using causal forests can be formalized as
+
+
+
+ðijÞ
+^ k ðXij ; Wj Þ Zij  e^k ðXij ; Wj Þ
+aij ðx; wÞ Yij  m
+b
+ij:K ij ¼k
+X
+:
+
+
+bij ¼k aij ðx; wÞ Zij  e^k ðXij ; Wj Þ
+ij:K
+
+X
+^t ðx; w; kÞ ¼
+ðijÞ
+
+^ k bears a subscript k to denote that it has been estimated using data
+Note that m
+from individuals who belong to latent class k. Also, e^k no longer has the ðijÞ
+superscript to denote that it has been estimated using a multilevel logistic regression instead of the default regression forests. Averaging ^t ðx; w; kÞ across all
+individuals in the same latent class k is our estimate of the average treatment
+effect within latent class k, that is
+^t ðkÞ ¼
+
+1 X
+^t ðx; w; kÞ;
+Nk
+b
+ij:K ij ¼k
+
+331
+
+Hybridizing Machine Learning Methods
+where Nk denotes the sample size in each latent class, k.
+Finally, we briefly remark that instead of the proposed approach, an alternative approach to combine latent class estimates with ML methods is to use the
+estimated latent class as a “covariate” in ML methods; see Appendix A in the
+online version of the journal. We show in the online Appendix that our approach
+has better finite sample performance than the alternative approach in terms of
+bias and mean squared error (MSE).
+
+4. Simulation Study
+4.1. Simulation Design and Evaluation
+We conducted a simulation study to investigate the performance of hybrid
+ML methods. Our data generating models follow Kim and Steiner (2015),
+Kim et al. (2016), and our motivating data, which had a two-level structure
+with one continuous outcome and one binary treatment. We consider four
+continuous covariates, two of which are individual-level covariates and the
+other two are cluster-level covariates. We also assume two latent classes
+defined by the latent selection model discussed before, and each latent class
+has its own unique treatment effect. The details of our data generating
+procedure are stated below.
+1. Let nC1 and nC2 represent the number of clusters in latent class k ¼ 1 and latent
+class k ¼ 2. For each cluster in each latent class, we generate the number of
+individuals nj based on drawing samples from a Normal distribution with mean
+nS set to either 30 or 50, variance v set to either 4 or 16, and round them to the
+nearest integer.
+2. For each individual i in cluster j, randomly sample two cluster-level covariates,
+Wj ¼ ðW1j ; W2j Þ and two individual-level covariates, Xij ¼ ðX 1ij ; X 2ij Þ, from the
+following distributions:
+
+
+m1j
+m2j
+
+W 1j
+*N
+W 2j
+
+!
+
+
+¼
+
+"
+
+0:1
+0:08
+
+0
+
+!
+
+0
+0:05
+0:1
+
+;
+
+2
+
+0:2
+
+0:2
+
+2
+
+
+
+W 1j
+W 2j
+
+!#
+;
+
+
+þ
+
+
+
+k1j
+;
+k2j
+
+X 1ij
+*N
+X 2ij
+
+
+"
+
+k1j
+*N
+k2j
+
+m1j
+
+!
+;
+
+m2j
+"
+
+0
+0
+
+!
+;
+
+10
+
+2
+
+2
+
+15
+
+!#
+;
+
+1
+
+0:1
+
+0:1
+
+1
+
+!#
+:
+
+We remark that the individual-level covariates’ means mj are a function of the
+cluster-level covariates Wj and random errors kj . We set larger variances for
+individual-level covariates than cluster-level covariates to reflect typically
+higher variations in individual-level covariates than cluster-level covariates.
+
+332
+
+Suk et al.
+3. For each latent class k ¼ 1; 2, define the propensity score model ek ðÞ based on a
+random effects logistic selection model.
+
+
+logit e 1 ðXij ; Wj Þ ¼ 0 þ 0:15X 1ij þ 0:1X 2ij þ 0:1W1j þ 0:2W 2j þ 0:1X 1ij W2j þ Rj1 ;
+
+
+tlogit e 2 ðXij ; Wj Þ ¼ 0:05 þ 0:05X 1ij  0:05X 2ij þ 0:2W 1j þ 0:05W2j þ Rj2 ;
+Rj1 *N ð0; 0:5Þ;
+
+Rj2 *N ð0; 0:2Þ:
+
+Here, ek ðÞ is the propensity score for individual i in cluster j which belongs to latent
+class k. Rjk is the random effect for cluster j in class k. The slope coefficients for
+Class 1 and Class 2 differ where Class 1 has a stronger selection than Class 2. The
+intraclass correlations for Class 1 and Class 2 are around .13 and .06, respectively.
+4. For each individual i in cluster j which belongs to latent class k, generate individual treatment status, Zij (0 ¼ untreated; 1¼treated) from a Bernoulli distribution with the propensity score specified above.
+(
+
+
+Bernoulli e 1 ðXij ; Wj Þ ; if i belongs to latent class k¼ 1:
+
+
+Zij *
+Bernoulli e 2 ðXij ; Wj Þ ; if i belongs to latent class k¼ 2:
+5. For each individual i in cluster j which belongs to latent class k, generate potential
+outcomes and observed outcomes based on random effects linear regression
+models.
+2
+tYij1 ðzÞ ¼ 100 þ 2:5  z þ 2X1ij þ 1X 2ij þ 2W 1j þ 1:5W 2j þ 0:5X 2ij W 1j þ 0:3X 2ij
+þ Uj1 þ Eij1 ;
+
+Yij2 ðzÞ ¼ 80 þ 0  z þ 1X 1ij þ 0:5X 2ij þ 1W 1j þ 0:5W 2j þ 0:2X 2ij W 1j þ 0:2W 1j W 2j þ Uj2 þ Eij2 ;
+Yij ¼ Zij Yijk ð1Þ þ ð1  Zij ÞYijk ð0Þ; Uj1 *N ð0; 10Þ;
+
+Uj2 *N ð0; 7Þ;
+
+Eijk *N ð0; 100Þ:
+
+The term Ujk is the random effect for cluster j in latent class k, and Eijk is the
+random error for individual i in cluster j which belongs to latent class k. The
+treatment effect is positive for Class 1, but zero for Class 2 so that each latent
+class has distinct treatment effects. The intraclass correlations are .10 and .07 for
+Classes 1 and 2, respectively. Additionally, there are nonlinear and/or interaction
+terms in the outcome model.
+
+In our simulation study, we varied the following simulation parameters: the
+size of each latent class, nC1 and nC2, and the mean size of each cluster nS. We
+examined the performance of hybrid ML methods—hybrid causal forests, hybrid
+BART, and hybrid TMLE—in estimating latent class average treatment effects
+tðkÞ. In online Appendix D, we examine the estimated individual CATE. As for
+software, we use the grf package (Tibshirani et al., 2019) for causal forests,
+333
+
+Hybridizing Machine Learning Methods
+bartCause package (Dorie & Hill, 2019) for BART, and tmle package (Gruber &
+van der Laan, 2012) for TMLE, all implemented in R (R Core Team, 2019) As a
+comparison, we ran within-class matching (Kim & Steiner, 2015; Kim et al.,
+2016) as an alternative to hybrid ML methods which estimate average treatment
+effects within each latent class via propensity score within-class matching. In brief,
+within-class matching is a type of multilevel matching that matches treated and
+control units across clusters, but within the same latent classes defined by latent
+selection models. Within-class matching uses the same latent selection model as
+above to identify latent classes and requires specifying a weighing function that
+depends on the estimated propensity score to obtain estimates of the treatment
+effect within each latent class. For our simulation, the propensity score for withinclass matching was estimated using random effects logistic regression. For
+weighing, we used inverse probability weighting (IPW) and marginal mean
+weighing through stratification (MMW-S; Hong & Hong, 2009). Specifically,
+the IPW estimator for latent class k using within-class matching is
+^t IPW ðkÞ ¼
+
+Yij Zij
+1 X
+1 X Yij ð1  Zij Þ
+
+;
+e ðX ; W Þ Nk
+1  ek ðXij ; Wj Þ
+Nk
+bij ¼k k ij j
+bij ¼k
+ij:K
+ij:K
+
+and the MMW-S estimator for latent class k using within-class matching is
+8E
+z1ðkÞ
+>
+>
+>
+>
+O
+>
+z1ðkÞ
+>
+>
+<.
+.
+oz;ijðkÞ ¼ .
+>
+>
+>
+>
+EzSðkÞ
+>
+>
+>
+:O
+
+if ek ðX ij ;W j Þ in stratum 1 of latent class k
+
+if ek ðXij ;W j Þ in stratum S of latent class k
+
+zSðkÞ
+
+^t MMWS ðkÞ ¼
+
+1 X
+1 X
+Yij Zij o1;ijðkÞ 
+Yij ð1  Zij Þo0;ijðkÞ ;
+N
+N
+b
+b
+ij:K ij ¼k
+ij:K ij ¼k
+
+where OzsðkÞ is the observed frequency of individuals in treatment status z 2
+f0; 1g and stratum s 2 f1; 2; : : : ; Sg of the distribution of the propensity score
+in latent class k, and EzsðkÞ is the expected frequency assuming the distributions
+between treated and untreated units are the same across strata. We created 10
+strata of propensity scores for MMW-S. We also computed the doubly robust
+(DR) estimator as follows:
+1
+^t DR ðkÞ ¼
+N
+1
+
+N
+
+334
+
+X
+k
+
+bij ¼k
+ij:K
+
+2
+
+3
+Z
+Y
+fZ
+
+e
+ðX
+;
+W
+Þg
+ij
+ij
+ij
+k
+ij
+j
+4
+
+mk ðXij ; Wj ; 1Þ5
+ek ðXij ; Wj Þ
+ek ðXij ; Wj Þ
+
+X
+k
+
+bij ¼k
+ij:K
+
+2
+
+3
+ð1
+
+Z
+ÞY
+fZ
+
+e
+ðX
+;
+W
+Þg
+ij
+ij
+ij
+k
+ij
+j
+4
+þ
+mk ðXij ; Wj ; 0Þ5:
+1  ek ðXij ; Wj Þ
+1  ek ðXij ; Wj Þ
+
+Suk et al.
+Here, ek ðXij ; Wj Þ is the propensity score estimated by random-effects logistic
+regression models within each latent class k. mk ðXij ; Wj ; 0Þ and mk ðXij ; Wj ; 1Þ
+are outcome models based on random-effects linear regression models within
+each latent class k. Both models are specified to be the same as those from the
+data generating models. For more details on other propensity score techniques,
+see Schafer and Kang (2008), Austin (2011), and Steiner and Cook (2013).
+Each method was evaluated based on the absolute bias and MSE of classspecific average treatment effect estimates. Specifically, given m ¼ 1; : : : ; 400
+simulation replications and their corresponding estimates ^t m ðkÞ ðm ¼ 1;
+: : : ; 400Þ, the absolute bias and MSE within each class are defined as
+1 X
+ð^t m ðkÞ  tðkÞÞ ;
+400 m¼1
+400
+
+j BiasðkÞj ¼
+
+1 X
+ð^t m ðkÞ  tðkÞÞ 2 :
+400 m¼1
+400
+
+MSEðkÞ ¼
+
+We also evaluate the overall performance across latent classes by computing the
+overall bias and MSE as follows:
+1 XX Nk
+ð^t m ðkÞ  tðkÞÞ ;
+400 m¼1 k¼1 Nm
+400
+
+j Biasj ¼
+
+2
+
+1 XX Nk
+ð^t m ðkÞ  tðkÞÞ 2 :
+400 m¼1 k¼1 Nm
+400
+
+MSE ¼
+
+2
+
+The term Nk denotes the true sample size in each latent class k, and Nm denotes
+the total sample size in each simulation replication.
+4.2. Simulation Results
+Table 1 summarizes the mean percentage of correctly identifying latent
+class membership. Mean percentages for modal assignment were calculated
+by comparing the true class membership of each individual with the estimated class membership from the mixture model, while for proportional
+assignment, the mean percentages were computed by using a weighted average of the latent class posterior probabilities in each true class. We found
+that modal assignment classified the latent classes more accurately than
+proportional assignment. Also, classification rates were affected by cluster
+sizes and the number of clusters. In particular, we found that increasing the
+size of the clusters had a larger impact on classification rates than increasing
+the number of clusters.
+Figure 2 displays results of class-specific average treatment effect estimates;
+see Table B1 in online Appendix B for numerical results. Across simulation
+conditions, hybrid ML methods generally performed better than DR and nonDR methods in terms of overall bias and MSE. Indeed, it is not surprising that
+with the misclassification of the latent classes, the outcome model and/or the
+propensity scores are inherently incorrect inside the DR and non-DR estimators, and thus, traditional parametric methods—IPW, MMW-S, and DR estimators—are directly affected by misclassified units in latent classes. In
+335
+
+Hybridizing Machine Learning Methods
+TABLE 1.
+Classification Rate (%) in Class Membership
+(nC1, nC2, nS)
+
+Modal Assignment
+
+Proportional Assignment
+
+(25, 25, 30)
+(25, 25, 50)
+(50, 50, 30)
+
+73.42
+84.04
+78.81
+
+71.04
+81.22
+74.92
+
+Note. nC1, nC2, and nS represent the number of clusters for the first latent class, the number of
+clusters for the second latent class, and average cluster sizes, respectively.
+
+contrast, ML methods are often “local” nonparametric methods that are more
+robust to model misspecifications. Of course, if the misclassification rate is
+fairly high, then it is unlikely that any method will work properly. Also, as seen
+from Figure 2, when the sample sizes increased from (25, 25, 30) to (25, 25, 50)
+or (50, 50, 30), we saw that overall bias and overall MSE decreased across
+different estimators, but the magnitudes varied depending on the exact sample
+proportions within each latent class.
+We remark that the bias of the IPW estimator in Latent Class 1 was surprisingly small, but the overall bias was still larger than other methods. This suggests
+that the IPW estimator trade off a large bias reduction in Latent Class 1 at the
+expense of an increase in bias in Latent Class 2. But this trade-off was not
+“balanced” and led to a large overall bias. In contrast, hybrid methods like BART
+had a large bias in Latent Class 1 and a small bias in Latent Class 2 but achieved
+the smallest overall bias. In online Appendix C, we further examined the bias
+trade-off between latent classes and found that the IPW estimator exhibited this
+phenomenon in other settings. Overall, our results demonstrate that hybrid ML
+methods provide accurate and precise estimates of the treatment effect and are an
+attractive alternative to those based on parametric propensity score techniques,
+IPW and MMW-S, or parametric DR methods.
+5. TIMSS Data Study: The Effects of Private Science Lessons
+5.1. Data and Variables
+We revisit the question in the Introduction and study the heterogeneous effects
+of private science lessons on students’ science achievement scores where we
+suspected distinct latent selection processes across clusters of students. The data
+come from the 2015 Trends in International Mathematics and Science Study
+(TIMSS) data. TIMSS is an international educational assessment that examines
+the progression of students’ performance in mathematics and science, and it was
+first conducted in 1995 by the International Association for the Evaluation of
+Educational Achievement. Since 1995, TIMSS has been conducted for fourth and
+eighth graders every 4 years in more than 40 countries. The recent data
+336
+
+337
+
+FIGURE 2. Performance of class-specific treatment effect estimates with classification rates and sample sizes. The three
+values in parentheses represent the number of clusters for the first latent class, the number of clusters for the second
+latent class, and the average cluster sizes, respectively. The true treatment effects are 2.5 and 0 for the first and second
+latent classes, respectively. IPW ¼ inverse-propensity weighting; MMW-S ¼ marginal mean weighting through stratification; DR ¼ doubly robust estimator; BART ¼ Bayesian additive regression trees; TMLE ¼ targeted maximum
+likelihood estimation.
+
+Hybridizing Machine Learning Methods
+collection, which took place in 2015, was conducted in 60 countries, and a new
+data collection was planned in 2019. The data are based on a two-stage stratified
+cluster sampling; schools are chosen first according to each country’s important
+demographic variables (e.g., in Korea, school location, and/or whether schools
+are gendered), and then at least one intact classroom is randomly chosen from
+each school (Martin et al., 2016). We used the Korea TIMSS 2015 data of eighth
+graders for our analysis.
+The original data included 5,309 students from 150 middle schools with
+varying school sizes (a range of 6–75; mean of 35.4 students per school; median
+of 32 students per school). We removed students with (1) inconsistent responses
+about their attendance of private science lessons and (2) missing information in
+seven of 12 covariates (see below for a list of covariates). Our final sample was
+4,874 students (91.81% of the original data) from 149 schools. For simplicity and
+to demonstrate the new methodology, we did not consider multiple plausible
+values of student achievements in the sciences and ignored sampling weights.
+However, to rigorously evaluate the effects of private lessons and generalize
+these results, it is necessary to consider five different plausible values and sampling weights; see Rutkowski et al. (2010) and Foy et al. (2017) for details.
+The treatment variable was whether a student received private science lessons
+ðZij ¼ 1Þ or not ðZij ¼ 0Þ. The outcome Yij was the first plausible value of
+achievement in the sciences. We included 12 covariates that affected the selection and outcome processes, including six student-level covariates Xij and six
+school-level covariates Wj. The student-level covariates were student’s gender
+(male), fathers’ highest education levels (dad.edu, with three levels: no college;
+college graduates, dad.cll; and don’t know, dad.q), the number of books at home
+(books25, with two levels: more than 25 and less than or equal to 25), the number
+of home study supports (hspprt, with three levels: neither own room nor Internet
+connection; one of them, hspprt.1; and both, hspprt.2), student’s confidence in
+science (sci.conf), and student’s perceived value of science (sci.value). The
+school-level covariates were school’s gender type (gender.type, with three levels:
+all-boys; all-girls, girl.sch; and coeducation, coedu), the percentage of economically disadvantaged students (pct.disad, with four levels: 0% to 10%; 11% to
+25%, disad.11; 26% to 50%, disad.26; and more than 50%, disad.M50), school
+location (city.size, with four levels: urban, city.U; suburban, city.Sub; medium
+size city, city.M; and small town), science instruction affected by resource shortage (res.short), school’s emphasis on academic success (aca.emph), and school
+discipline problems (dscpn).
+5.2. Results
+In the first step of our hybrid ML methods, we determined the optimal number
+of latent classes by comparing the AIC measures under different numbers of
+latent classes. The two-class model had the lowest AIC and Latent Class 1 had
+338
+
+Suk et al.
+
+FIGURE 3. Class-specific selection models with respect to individual-level and clusterlevel covariates. Each dot indicates a students’ estimated logit propensity score, logit
+ð^e k Þ. Line of best fit is plotted to guide visualization.
+
+1,556 students from 44 schools, and Latent Class 2 had 3,318 students from 105
+schools. Latent Class 1 was about 60% smaller than Latent Class 2; Latent Class
+1 had 31.9% of the total students from 29.5% of the schools, and Latent Class 2
+had 68.1% of the total students from 70.5% of the schools.
+Figure 3 plots the estimated selection models ebk from each latent class as a
+function of two observed covariates, value in science and resource shortages. The
+figure contains the line of best fit to guide visualization. For Latent Class 2, the
+propensity of taking private lessons was linearly increasing with how much value
+students placed in the sciences (sci.value). However, for Latent Class 1, the
+propensity remained flat, and there was no discernable relationship between
+sci.value and selection probabilities. We also observed that a cluster-level covariate res.short increased the selection probabilities in Class 1, but there was no
+increasing pattern in Class 2.
+We also summarize the student-level and school-level variables in Table 2.
+For most covariates, the two latent classes showed similar descriptive statistics.
+However, we found statistically significant differences in the propensity of taking private science lessons and father’s educational level. Students in Class 1
+were more likely to have a higher probability of taking private lessons and come
+from families whose father did not hold a college degree than those in Class 2.
+Looking at both Table 2 and Figure 3, students in Class 1 likely sought private
+lessons because they may receive inadequate lessons at schools, whereas those in
+Class 2 likely sought private lessons because their families had stronger education backgrounds and may had placed a high value in science. Overall, as suspected from our subject-matter expertise, the latent class selection model
+revealed different latent structures where students in each latent class had different propensities to seek private tutors.
+
+339
+
+Hybridizing Machine Learning Methods
+TABLE 2.
+Descriptive Statistics of the Two Latent Classes
+Class 1
+Variables
+
+Mean or
+Percent
+
+Standard
+Deviation
+
+Student-level variables
+science.score
+math.score
+propensity.score
+sci.conf
+sci.value
+male
+dad.cll
+dad.q
+books25
+hssprt.2
+School-level variables
+res.short
+aca.demph
+dscpn
+girl.sch
+coedu
+disad.11
+disad.26
+disad.M50
+city.U
+city.Sub
+city.M
+
+(N ¼ 1,556 students)
+557.84
+75.94
+608.24
+82.74
+0.42
+8.68
+2.09
+8.98
+1.64
+51.6%
+34.4%
+28.2%
+86.1%
+70.2%
+(J ¼ 44 schools)
+11.71
+2.04
+11.14
+1.84
+10.74
+2.07
+15.9%
+65.9%
+29.5%
+27.3%
+11.4%
+40.9%
+6.8%
+31.8%
+
+Class 2
+Mean or
+Percent
+
+Standard
+Deviation
+
+(N ¼ 3,318 students)
+555.97
+76.25
+605.13
+84.63
+0.28
+8.61
+2.11
+8.92
+1.64
+48.6%
+37.5%
+28.1%
+86.0%
+71.9%
+(J ¼ 105 schools)
+11.79
+2.00
+11.10
+1.87
+11.16
+1.99
+21.9%
+58.1%
+37.1%
+23.8%
+10.5%
+35.2%
+9.5%
+27.6%
+
+Note. Values in boldface are significant differences between classes at a ¼ :05.
+
+Figure 4 shows the distributions of individual CATE estimates from hybrid
+causal forests. The figure also shows vanilla causal forests that did not consider
+latent class membership. Using hybrid causal forests, we see two different distributions centering on one and 10, respectively, to reflect variation in treatment
+effects between latent classes. In contrast, the vanilla causal forests only shows
+variation in treatment effects in the observed covariates and centers on four.
+Online Appendix E shows the distributions of CATE based on other ML
+methods.
+Table 3 summarizes average treatment effect estimates of private science
+lessons within each latent class. As a comparison, we used within-class IPW
+estimator, MMW-S, and DR estimator with parametric propensity score or outcome models to estimate class-specific average treatment effects; we remark that
+340
+
+Suk et al.
+
+FIGURE 4. Distributions of individual conditional average treatment effect estimates
+from causal forests. The left shows hybrid causal forests discovering two latent classes,
+while the right shows vanilla causal forests without consideration for latent classes.
+Dashed lines represent class-specific treatment effect estimates.
+TABLE 3.
+Comparisons of the Class-Specific Average Treatment Effect Estimates
+Two Classes
+
+Prima facie (unadjusted)
+IPW
+MMW-S
+DR
+Hybrid causal forests
+Hybrid BART
+Hybrid TMLE
+
+Class 1
+
+Class 2
+
+One Class
+
+Estimate (SE)
+
+Estimate (SE)
+
+Estimate (SE)
+
+16.99 (3.88)
+11.62 (2.58)
+12.28 (2.69)
+11.78 (2.64)
+10.79 (2.11)
+12.24 (3.26)
+12.19 (3.13)
+
+20.24 (2.93)
+2.93 (2.94)
+2.33 (2.78)
+3.02 (2.89)
+1.24 (2.14)
+0.73 (2.43)
+1.40 (2.39)
+
+18.96 (2.32)
+5.36 (2.06)
+1.73 (2.08)
+5.39 (1.99)
+4.28 (1.58)
+4.36 (1.90)
+4.54 (1.87)
+
+Note. Standard errors (SE) were estimated using bootstrap sampling with 5,000 repetitions. Estimates
+in bold are significant at a ¼ :05. IPW ¼ inverse-propensity weighting; MMW-S ¼ marginal mean
+weighting through stratification; DR ¼ doubly robust estimator; BART ¼ Bayesian additive
+regression trees; TMLE ¼ targeted maximum likelihood estimation.
+
+hybrid ML methods do not require a priori specification of the propensity score
+or the outcome model. We included covariate balance plots in online Appendix
+F. After estimating the average treatment effect within latent classes, we found
+that the prima facie effects amounted to 16.99 and 20.24 for Class 1 and Class 2,
+respectively. The prima facie effect is the unadjusted mean difference in science
+achievement scores between the treated and untreated groups. The treatment
+341
+
+Hybridizing Machine Learning Methods
+effects with IPW, MMW-S, and DR estimators varied depending on the latent
+class; there were significantly positive effects in Class 1, while no significant
+effects existed in Class 2. When we implemented hybrid ML methods, we
+observed that the average treatment effect estimates in both classes were similar
+to parametric methods except that the estimates for Class 2 were generally
+smaller than parametric methods.
+For the one class model (far right column) where we assumed no latent class
+structure, the prima facie effect amounted to 18.96 points. After applying MMWS, the effect decreased to 1.73 points, which was not statistically significant.
+However, one-class IPW and DR methods produced positive, significant, but
+reduced effects. Also, the average treatment effects with hybrid ML methods
+were positive but slightly smaller than IPW and DR estimators. However, as
+mentioned before, none of these effects uncovered the potential effect heterogeneity within latent classes.
+6. Discussion and Conclusions
+We propose hybrid ML methods to estimate heterogeneous treatment effects
+between latent classes. Our proposed hybrid approach uses context-specific finite
+mixture models to identify different latent classes and ML-based causal inference
+methods to estimate treatment effects within each class. Broadly speaking,
+hybrid ML methods extend the capacities of ML methods to capture treatment
+effect heterogeneity defined by latent class mixture models. Our simulation study
+revealed that hybrid ML methods are an attractive alternative to existing propensity score methods. Finally, in our data analysis, we demonstrated that hybrid
+ML methods were able to capture heterogeneous effects and the average treatment effect for each latent class.
+We make three concluding remarks about hybrid ML methods. First, ensuring
+sufficient sample sizes is important when using multilevel latent class mixture
+models. We observed that increasing cluster sizes affected the proportions of
+correctly identifying class membership, and we generally recommend using
+hybrid ML methods when the number of clusters is more than 50 and the mean
+cluster size is more than 30 so that the total sample size is at least 1,500, the
+minimum sample size in our simulation design. Hybrid ML methods did perform
+well in our simulation study even when the maximum misclassification rate was
+about 27%. However, in general, if there are insufficient samples, there is an
+increased likelihood of misclassifying units and consequently, an increased risk
+of biasing the average treatment effect. Second, though ML methods can flexibly
+fit the outcome model and the propensity score model, this does not give a free
+pass for misclassification in latent class models, and it would be an interesting
+topic of future research to design ML methods to be robust to biases arising from
+misclassification in latent class models. Third, we believe that our work here
+provides a more systematic approach of applying ML methods for causal
+342
+
+Suk et al.
+inference to education and psychology. In particular, we hope that the work
+provides a template for researchers to combine other types of latent class modeling with any ML-based causal inference methods to better understand the nature
+of treatment effect heterogeneity and the underlying latent structures in the data.
+Acknowledgments
+The authors are grateful to David Kaplan and Dan Bolt for their useful comments on prior
+versions of this manuscript.
+
+Declaration of Conflicting Interests
+The author(s) declared no potential conflicts of interest with respect to the research,
+authorship, and/or publication of this article.
+
+Funding
+The author(s) disclosed receipt of the following financial support for the research, authorship, and/or publication of this article: Support for this research was provided by the
+Office of the Vice Chancellor for Research and Graduate Education and a Vilas Faculty
+Mid-Career Investigator Award from the University of Wisconsin–Madison.
+
+ORCID iD
+Youmi Suk
+
+https://orcid.org/0000-0003-0316-6201
+
+Notes
+1. Academic resilience is defined as “the heightened likelihood of success in
+school and in other life accomplishments, despite environmental adversities
+brought about by early traits, conditions, and experiences” (M. C. Wang &
+Gordon, 2012).
+2. Self-efficacy is defined as “people’s beliefs in their ability to influence events
+that affect their lives” (Bandura, 2010).
+References
+Allman, E. S., Matias, C., & Rhodes, J. A. (2009). Identifiability of parameters in latent
+structure models with many observed variables. The Annals of Statistics, 37(6A),
+3099–3132.
+Athey, S., & Imbens, G. (2016). Recursive partitioning for heterogeneous causal effects.
+Proceedings of the National Academy of Sciences, 113(27), 7353–7360.
+Athey, S., Tibshirani, J., & Wager, S. (2019). Generalized random forests. The Annals of
+Statistics, 47(2), 1148–1178.
+Austin, P. C. (2011). An introduction to propensity score methods for reducing the
+effects of confounding in observational studies. Multivariate Behavioral Research,
+46, 399–424.
+Bakk, Z., Tekle, F. B., & Vermunt, J. K. (2013). Estimating the association between latent
+class membership and external variables using bias-adjusted three-step approaches.
+Sociological Methodology, 43(1), 272–311.
+
+343
+
+Hybridizing Machine Learning Methods
+Bandura, A. (2010). Self-efficacy. In I. B. Weiner & W. E. Craighead (Eds.), The corsini
+encyclopedia of psychology (4th ed., pp. 1–3). Hoboken, NJ: Wiley.
+Breiman, L. (2001). Random forests. Machine Learning, 45(1), 5–32.
+Butera, N. M., Lanza, S. T., & Coffman, D. L. (2014). A framework for estimating causal
+effects in latent class analysis: Is there a causal link between early sex and subsequent
+profiles of delinquency? Prevention Science, 15(3), 397–407.
+Clogg, C. C. (1995). Latent class models. In M. E. Sobel, G. Arminger, & C. C. Clogg
+(Eds.), Handbook of statistical modeling for the social and behavioral sciences
+(pp. 311–359). Springer.
+Dempster, A. P., Laird, N. M., & Rubin, D. B. (1977). Maximum likelihood from incomplete data via the EM algorithm. Journal of the Royal Statistical Society: Series B
+(Methodological), 39(1), 1–22.
+Dorie, V., & Hill, J. (2019). bartcause: Causal inference using Bayesian additive regression trees [Computer software manual] (R package version 1.0-0). https://github.com/
+vdorie/bartCause
+Everitt, B. S., & Hand, D. J. (1981). Finite mixture distributions. Chapman and Hall.
+Foy, P., Arora, A., & Stanco, G. (2017). TIMSS 2015 user guide for the international
+database. TIMSS & PIRLS International Study Center, Boston College.
+Goodman, L. A. (2007). On the assignment of individuals to latent classes. Sociological
+Methodology, 37(1), 1–22.
+Gruber, S., & van der Laan, M. J. (2012). tmle: An R package for targeted maximum
+likelihood estimation. Journal of Statistical Software, 51(13), 1–35. http://www.jstat
+soft.org/v51/i13/ (doi:10.18637/jss.v051.i13)
+Grün, B., & Leisch, F. (2008). Identifiability of finite mixtures of multinomial
+logit models with varying and fixed effects. Journal of Classification, 25(2),
+225–247.
+Hallquist, M., & Wiley, J. (2017). MplusAutomation: Automating Mplus model estimation
+and interpretation [Computer software manual] (R package version 0.7). https://
+CRAN.R-project.org/package¼MplusAutomation
+Hill, J. L. (2011). Bayesian nonparametric modeling for causal inference. Journal of
+Computational and Graphical Statistics, 20(1), 217–240.
+Hong, G., & Hong, Y. (2009). Reading instruction time and homogeneous grouping in
+kindergarten: An application of marginal mean weighting through stratification. Educational Evaluation and Policy Analysis, 31(1), 54–81.
+Hong, G., & Raudenbush, S. W. (2006). Evaluating kindergarten retention policy: A case
+study of causal inference for multilevel observational data. Journal of the American
+Statistical Association, 101(475), 901–910.
+Imai, K., & Ratkovic, M. (2013). Estimating treatment effect heterogeneity in randomized
+program evaluation. The Annals of Applied Statistics, 7(1), 443–470.
+Imbens, G. W., & Rubin, D. B. (2015). Causal inference in statistics, social, and biomedical sciences. Cambridge University Press.
+Jo, B., Wang, C.-P., & Ialongo, N. S. (2009). Using latent outcome trajectory classes in
+causal inference. Statistics and its Interface, 2(4), 403.
+Kang, J., & Schafer, J. L. (2010). Estimating average treatment effects when the treatment
+is a latent class (Technical Report No. 10-05). Department of Statistics, The Pennsylvania State University.
+
+344
+
+Suk et al.
+Kaplan, D., Kim, J.-S., & Kim, S.-Y. (2009). Multilevel latent variable modeling: Current
+research and recent developments. In R. E. Millsap & A. Maydeu-Olivares (Eds.),
+Handbook of quantitative methods in psychology (pp. 592–612). Sage.
+Kim, J.-S., & Steiner, P. M. (2015). Multilevel propensity score methods for
+estimating causal effects: A latent class modeling strategy. In L. van der Ark,
+D. Bolt, W.-C. Wang, J. Douglas, & M. Wiberg (Eds.), Quantitative psychology
+research: The 80th annual meeting of the psychometric society (pp. 293–306).
+Springer.
+Kim, J.-S., Steiner, P. M., & Lim, W. C. (2016). Mixture modeling methods for causal
+inference with multilevel data. In J. R. Harring, L. M. Stapleton, & S. N. Beretvas (Eds.),
+Advances in multilevel modeling for educational research (pp. 335–359). Information
+Age Publishing.
+Künzel, S. R., Sekhon, J. S., Bickel, P. J., & Yu, B. (2019). Metalearners for estimating
+heterogeneous treatment effects using machine learning. Proceedings of the National
+Academy of Sciences, 116(10), 4156–4165.
+Lanza, S. T., Coffman, D. L., & Xu, S. (2013). Causal inference in latent class analysis.
+Structural Equation Modeling: A Multidisciplinary Journal, 20(3), 361–383.
+Leisch, F. (2004). Flexmix: A general framework for finite mixture models and latent
+glass regression in R. Journal of Statistical Software, 11, 1–18.
+Leite, W. (2016). Practical propensity score methods using R. Sage.
+Lenk, P. J., & DeSarbo, W. S. (2000). Bayesian inference for finite mixtures of generalized linear models with random effects. Psychometrika, 65(1), 93–119.
+Ma, X. (2018). Using classification and regression trees: A practical primer. Information
+Age Publishing.
+Magidson, J., & Vermunt, J. K. (2004). Latent class models. In D. Kaplan (Ed.), The
+Sage handbook of quantitative methodology for the social sciences (pp. 175–198).
+Sage.
+Martin, M. O., Mullis, I. V. S., & Hooper, M. (2016). Methods and procedures in TIMSS
+2015. TIMSS & PIRLS International Study Center, Boston College. http://timssand
+pirls.bc.edu/publications/timss/2015-methods.html
+Masyn, K. E. (2013). Latent class analysis and finite mixture modeling. In T. Little (Ed.),
+The Oxford handbook of quantitative methods (pp. 551–611). Oxford University Press.
+McLachlan, G. J., & Peel, D. (2000). Finite mixture models. Wiley.
+Mok, J.-Y., Choi, S.-W., Kcim, D.-J., Choi, J.-S., Lee, J., Ahn, H., Eun-Jeung, C., & Song,
+W.-Y. (2014). Latent class analysis on Internet and smartphone addiction in college
+students. Neuropsychiatric Disease and Treatment, 10, 817.
+Muthén, L., & Muthén, B. O. (2017). Mplus user’s guide (8th ed.). Los Angeles, CA:
+Muthén & Muthén.
+Neyman, J. S. (1923). On the application of probability theory to agricultural experiments:
+Essay on principles. section 9 (with discussion). Statistical Science, 4, 465–480.
+R Core Team. (2019). R: A language and environment for statistical computing [Computer software manual]. https://www.R-project.org/
+Rosenbaum, P. R., & Rubin, D. B. (1983). The central role of the propensity score in
+observational studies for causal effects. Biometrika, 70, 41–55.
+Rubin, D. B. (1974). Estimating causal effects of treatments in randomized and nonrandomized studies. Journal of Educational Psychology, 66(5), 688–701.
+
+345
+
+Hybridizing Machine Learning Methods
+Rubin, D. B. (1986). Comment: Which is have causal answers. Journal of the American
+Statistical Association, 81(396), 961–962.
+Rutkowski, L., Gonzalez, E., Joncas, M., & von Davier, M. (2010). International largescale assessment data: Issues in secondary analysis and reporting. Educational
+Researcher, 39(2), 142–151.
+Schafer, J. L., & Kang, J. (2008). Average causal effects from nonrandomized studies: A
+practical guide and simulated example. Psychological Methods, 13(4), 279.
+Schuler, M. S., Leoutsakos, J.-M. S., & Stuart, E. A. (2014). Addressing confounding
+when estimating the effects of latent classes on a distal outcome. Health Services and
+Outcomes Research Methodology, 14(4), 232–254.
+Steiner, P. M., & Cook, D. (2013). Matching and propensity scores. In T. Little (Ed.), The
+Oxford handbook of quantitative methods (pp. 236–258). Oxford University Press.
+Stephens, M. (2000). Dealing with label switching in mixture models. Journal of the
+Royal Statistical Society: Series B (Statistical Methodology), 62(4), 795–809.
+Su, X., Tsai, C.-L., Wang, H., Nickerson, D. M., & Li, B. (2009). Subgroup analysis via
+recursive partitioning. Journal of Machine Learning Research, 10(5), 141–158.
+Suk, Y., Kang, H., & Kim, J.-S. (2019, September). Random forests approach for causal
+inference with clustered observational data. PsyArXiv. psyarxiv.com/xgq2k
+Sutfin, E. L., Reboussin, B. A., McCoy, T. P., & Wolfson, M. (2009). Are college student
+smokers really a homogeneous group? A latent class analysis of college student smokers. Nicotine & Tobacco Research, 11(4), 444–454.
+Tibshirani, J., Athey, S., Friedberg, R., Hadad, V., Miner, L., Wager, S., & Wright, M.
+(2019). grf: Generalized random forests (beta) [Computer software manual] (R package version 0.10.3). https://CRAN.R-project.org/package¼grf
+Titterington, D. M., Smith, A. F. M., & Makov, U. E. (1985). Statistical analysis of finite
+mixture distributions. Wiley.
+Tueller, S. J., Drotar, S., & Lubke, G. H. (2011). Addressing the problem of switched class
+labels in latent variable mixture model simulation studies. Structural Equation Modeling, 18(1), 110–131.
+van der Laan, M. J., Polley, E. C., & Hubbard, A. E. (2007). Super learner. Statistical
+Applications in Genetics and Molecular Biology, 6(1), Article 25.
+van der Laan, M. J., & Rubin, D. (2006). Targeted maximum likelihood learning. The
+International Journal of Biostatistics, 2(1), 1–40.
+Vermunt, J. K. (2003). Multilevel latent class models. Sociological Methodology, 33(1),
+213–239.
+Vermunt, J. K. (2010). Latent class modeling with covariates: Two improved three-step
+approaches. Political Analysis, 18(4), 450–469.
+Vermunt, J. K., & Magidson, J. (2003). Latent class models for classification. Computational Statistics & Data Analysis, 41(3-4), 531–537.
+Wager, S., & Athey, S. (2018). Estimation and inference of heterogeneous treatment
+effects using random forests. Journal of the American Statistical Association,
+113(523), 1228–1242.
+Wang, J., & Wang, X. (2012). Structural equation modeling: Applications using Mplus.
+John Wiley & Sons.
+Wang, M. C., & Gordon, E. W. (2012). Educational resilience in inner-city America:
+Challenges and prospects. Routledge.
+
+346
+
+Suk et al.
+Authors
+YOUMI SUK is a PhD candidate in the quantitative methods program in the Department
+of Educational Psychology at the University of Wisconsin–Madison; email: ysuk@
+wisc.edu. Her research interests center on multilevel modeling, causal inference, latent
+variable modeling, and group-score assessment.
+JEE-SEON KIM is a professor in the Department of Educational Psychology at the
+University of Wisconsin–Madison; email: jeeseonkim@wisc.edu. Her research interests include multilevel modeling, latent variable modeling, causal inference, unobserved heterogeneity, and longitudinal data analysis.
+HYUNSEUNG KANG is an assistant professor in the Department of Statistics at the
+University of Wisconsin–Madison; email: hyunseung@stat.wisc.edu. His research
+interests include causal inference, instrumental variables, econometrics, networks, and
+applications of methods to health and social sciences.
+Manuscript received October 23, 2019
+First revision received April 10, 2020
+Second revision received July 16, 2020
+Accepted July 31, 2020
+
+347
+
+

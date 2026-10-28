@@ -1,0 +1,1208 @@
+516
+
+IEEE TRANSACTIONS ON LEARNING TECHNOLOGIES, VOL. 16, NO. 4, AUGUST 2023
+
+Decoding Contextual Factors Differentiating
+Adolescents’ High, Average, and Low Digital
+Reading Performance Through
+Machine-Learning Methods
+Jie Hu , Member, IEEE, Yi Peng , and Xiao Chen
+
+Abstract—The prevalence of information and communication
+technologies (ICTs) has brought about profound changes in the
+field of reading, resulting in a large and rapidly growing number of young digital readers. The article intends to identify key
+contextual factors that synergistically differentiate high and low
+performers, high and average performers, and low and average
+performers in digital reading, through the utilization of machinelearning methods, namely, support vector machine (SVM) and
+SVM recursive feature elimination. In addition, the Shapley additive explanations (SHAP) method was applied to augment the
+machine-learning models and detect the features impact on the final
+output. The latest-released Programme for International Student
+Assessment reading data were analyzed, and the samples included
+276 269 15-year-old students from 38 Organization for Economic
+Cooperation and Development countries. The results show that an
+optimal feature set of contextual factors at the school, classroom,
+and student levels in the high–low model, high–average model, and
+low–average model boast high accuracy. Compared with averageperforming students, high-performing students spend more time
+reading emails and are associated with high-quality teaching that
+incorporates digital literacy, and low-performing students are characterized by a lack of interest in ICT use and are more susceptible to
+the abuse of ICT resources, classroom disorder, and discrimination
+at school. The use of machine-learning algorithms for pairwise comparisons provides new perspectives for personalized digital reading
+education, and the evaluation of the effect of every factor using
+SHAP method offers a clear view for educational researchers. This
+article sheds light on factors that may contribute to the development
+of students’ digital reading literacy and the practice of adopting an
+individualized approach to digital reading pedagogy for educators
+and instructors.
+Manuscript received 11 October 2022; revised 12 April 2023 and 26 April
+2023; accepted 15 May 2023. Date of publication 29 May 2023; date of
+current version 16 August 2023. This work was supported by the Fundamental
+Research Funds for the Central Universities, Zhejiang University, “Research into
+Multimodal Digital Reading Cognitive Mechanism and Literacy Evaluation.”
+(Corresponding author: Jie Hu.)
+This work involved human subjects or animals in its research. Approval of all
+ethical and experimental procedures and protocols was granted by the Research
+Ethics Board of the Department of Psychology and Behavioral Sciences of
+Zhejiang University.
+Jie Hu is with the Department of Linguistics, School of International Studies, Institute of Asian Civilizations, and Global Competency Center, Zhejiang
+University, Hangzhou 310058, China (e-mail: huj@zju.edu.cn).
+Yi Peng is with the Department of Linguistics, School of International Studies,
+Zhejiang University, Hangzhou 310058, China (e-mail: evepeng@zju.edu.cn).
+Xiao Chen is with the School of Computer Science and Engineering, University of Electronic Science and Technology of China, Chengdu 611731, China
+(e-mail: chenxiao_uestc@163.com).
+Digital Object Identifier 10.1109/TLT.2023.3281056
+
+Index Terms—Digital reading, machine learning, PISA reading,
+Programme for International Student Assessment (PISA, Shapley
+additive explanations (SHAP).
+
+I. INTRODUCTION
+N THE age of information and communication technologies (ICTs), the way people read has undergone substantial
+changes from paper reading toward digital reading [1]. Digital
+reading often involves accessing reading materials on the internet (e.g., news and posts on social media) and on digital
+devices (e.g., computers and e-book readers) [2]. Compared with
+printed text, it is presented in a more interactive and experiential
+way, e.g., by incorporating dynamic elements (e.g., video clips
+and pop-up windows) to visually attract readers’ interest [3].
+In addition, the nonlinearity of digital reading can increase
+the cognitive load of readers [4]. Readers in the digitalized
+world should thus acquire digital reading skills to successfully
+participate in current academic, social, and career contexts [5].
+Regarding the novelty of digital reading, researchers started
+to analyze the factors that may distinguish students with different digital reading performance, achieving fruitful results.
+Most of the studies concentrated on students at high- and
+low-performance levels. For low-performing readers, a series
+of predictors were identified as crucial (e.g., socioeconomic
+constraints, motivations, metacognition, ICT skills, and student–
+teacher interactions) [6]. Recently, researchers distinguished
+high- and low-performing students based on their digital reading scores in Progress in International Reading Literacy Study
+(PIRLS). These two cohorts of students differ greatly in their
+reading motivation, home literacy environment, and perceived
+teacher fairness and instruction [7], [8]. However, there is a
+paucity of research on average performers in digital reading into
+consideration for a more comprehensive analysis of adolescents’
+digital reading profiles.
+Conducted by the Organization for Economic Cooperation
+and Development (OECD), the Programme for International
+Student Assessment (PISA) is a triennial assessment that measures 15-year-old students’ literacy in reading, mathematics, and
+science. The latest round of PISA incorporated digital reading
+into its assessment framework. Students’ reading outcomes were
+classified into proficiency levels ranging from Level 1b to Level
+
+I
+
+This work is licensed under a Creative Commons Attribution 4.0 License. For more information, see https://creativecommons.org/licenses/by/4.0/
+
+HU et al.: DECODING CONTEXTUAL FACTORS DIFFERENTIATING ADOLESCENTS’ HIGH, AVERAGE AND LOW
+
+6 based on the cutoff points, and the low performers, average
+performers, and top performers in digital reading were identified
+accordingly [9]. Students’ interests in reading, as well as other
+demographic and contextual features, varied across proficiency
+levels. In this regard, the current article intends to leverage a
+machine-learning algorithm to identify factors that can distinguish high and low performers, high and average performers,
+and low and average performers, respectively, in PISA 2018, to
+provide a detailed analysis of the learning profiles of students at
+various levels.
+The rest of this article is organized as follows. Section II
+provides the review of the related works dealing with factors of
+students’ digital reading performance, along with the research
+scope and research questions (RQs) of the present article. In
+Section III, the research materials and methods are presented
+to show how the prediction models are built, validated, and
+explained. This process is composed of five phases, namely,
+data extraction, data cleaning, model building, model evaluation,
+and model interpretation. Section IV shows the results of the
+experiment, including the performance and validation of the
+machine-learning models, the ranking of the important features,
+and the influencing direction of these features on the final
+prediction. In Section V, the results are discussed to answer
+the RQs in this article. Finally, Section VI concludes this article.
+II. RELATED WORK
+A. Student-Level Factors and Digital Reading Performance
+At the student level, some demographic factors, such as
+socioeconomic status (SES) [8] and home resources [10], especially cultural capital [11] have a significant positive relationship
+with digital reading performance. Gender is a factor that received
+increasing attention in previous education studies. To align
+with the male/female binary question in PISA questionnaire
+[12] and the results descriptions [5], the differences between
+girls and boys are elucidated here. Although a small number
+of researchers found no decisive gender effects on students’
+academic digital reading performances [13], others identified
+significant differences between males and females in digital
+reading. Previous articles found that male college students excel
+their female counterparts in the digital reading assessment [14],
+and the 15-year-old female students outperform male students
+in other circumstances [15]. In addition, males and females
+differ significantly in selective reading and sustained attention
+[16]. Yet, the impact of gender should not be simply examined
+individually because it reacts with other contextual factors [17].
+It is also noted that although some of the previous assessments
+and studies only centered on the binary gender classification
+[13], [14], [15], [16], [17], [18], [19], it cannot accurately capture
+the identity of an individual. Future article should consider
+increasing the number of gender options to better reflect the
+gender diversity for a more comprehensive analysis, and to
+ensure that the respondents feel engaged and respected [20].
+Students’ reading knowledge and skills (e.g., prior knowledge sources, inferential reasoning strategies, and self-regulated
+reading processes) [21] and affective factors (e.g., reading self-concept and reading self-efficacy) [22] contribute to
+successful e-reading. In addition, students in a positive mood
+
+517
+
+do faster in online text processing compared with students
+in a negative mood [23], which indicates the importance of
+students’ emotions in the online reading process. The impacts
+of reading attitudes vary across the diverse purposes of digital
+reading. Attitudes toward academic digital reading are positively
+associated with reading achievements, while attitudes toward
+recreational digital reading are negatively associated with reading achievements [13], [24], [25], [26]. This might be due to the
+different frequencies of use: social reading activities can help
+build familiarity for digital devices, but once students transcend
+the optimum threshold, their competence decreases [27].
+Regarding the ICT-related student-level factors, researchers
+identified the positive effects of self-confidence, interest, and
+autonomy in ICT tasks on students’ traditional reading performance [26], [27], [28], and digital reading performance
+[17]; however, students’ enjoyment of social interaction related
+to ICT negatively correlates with their reading performance
+[8]. Computer game playing, as an exception, contributes to
+the higher performance of boys in digital reading tests [11].
+Although students who hold positive views toward ICT perform
+better in digital reading, their performances are influenced by
+the ICT opinions of their peers at the same school [29]. In
+addition, necessary skills for web surfing (e.g., metacognitive
+strategies, navigation skills, and self-regulation) are positively
+related to digital reading literacy [6], [26], [30], [31]. Specifically, knowledge of metacognitive strategies positively mediates the relationship between ICT use and digital reading
+literacy [32].
+
+B. Classroom-Level Factors and Digital Reading Performance
+Previous articles have identified the importance of teachers’
+role in promoting students’ academic performance, but the
+findings are mixed across subjects and learning environments
+[33]. General instructional support is found insignificant in
+predicting digital reading performance [10], while previous
+articles highlighted the importance of teachers’ specific teaching strategies during class [33]. Instructional behaviors, such
+as objective-focused fast extensive reading [34] and situated
+experimental exploration into the literature [35], could help
+develop components of students’ digital reading capability, such
+as reading fluency and vocabulary.
+The necessity of incorporating digital texts into instruction
+in teaching was also emphasized [36]. Overall, studies suggest
+that teachers should properly utilize the ICT resources and
+adequately assign digital reading tasks during class to improve
+students’ digital reading literacy. Some researchers pointed out
+that the use of video games to train attentional control during
+class improves reading efficiency [37]. Researchers also identified digital storytelling as an effective tool to enhance students’
+digital reading performance [38]. This result further proves the
+importance of the introduction, coordination, and innovation of
+digital resources in reading. In addition, teachers’ professional
+development of ICT use was also a significant predictor of
+students’ digital reading skills [39]. However, compared with
+factors at other levels, the classroom-level factors of digital
+reading are less examined, awaiting further exploration.
+
+518
+
+IEEE TRANSACTIONS ON LEARNING TECHNOLOGIES, VOL. 16, NO. 4, AUGUST 2023
+
+C. School-Level Factors and Digital Reading Performance
+School type and the equity dimension are generally reported
+as important predictors of students’ digital reading performances
+[11]. Recent research found that school SES also plays an indispensable role. The performance of students in high-SES schools
+is more susceptible to student-level factors (e.g., metacognitive
+strategies and achievement motivation), but the performance of
+students in low-SES schools is more sensitive to the countrylevel socioeconomic indicators (e.g., GDP) [40]. Other significant school-level factors include school disciplinary climate
+[41], the provision of reading-related activities [17], student–
+teacher rapport [6], and schools’ partnership with parents [33].
+The influence of the availability of ICT resources at school
+was widely reported in previous articles, showing mixed results.
+Studies revealed that an abundance of e-resources at school (e.g.,
+the availability of laptops, mobile phones, and the Internet)
+can promote students’ digital reading performance, and male
+students are more susceptible to the negative effects of ICT
+resources than female students [14]. Others, however, argued
+that neither the possession of online mobile devices nor the
+availability of digital resources at the school level is a significant
+predictor of students’ digital reading performance [10], [13],
+which might be explained by the inappropriate use of digital equipment. Researchers further indicates the importance of
+incorporating digital reading activities into the school curriculum [36]. Overall, studies suggested that schools and teachers
+should properly utilize ICT resources and adequately assign
+digital reading tasks during class to improve students’ digital
+reading literacy.
+D. Present Study
+To date, there is a series of problems unresolved concerning the factors that influence adolescents’ digital reading performance. First, although some articles have investigated the
+affective and contextual factors that influence students’ digital
+reading performance, questions remain unanswered regarding
+the impacts of individual and environmental factors that might
+jointly function to generate an achievement gap in students’
+digital reading performance [10]. Second, while some articles
+have targeted the factors that can distinguish high performers from low performers in reading [8], [32], the subtle differences between students from different achievement spectra
+should be further explored by including average performers [42].
+Research on top-, average-, and low-performing students might
+thus help explain the mixed findings of impacts identified in
+previous articles. The current research project aims to conduct
+secondary analyses of the large-scale PISA reading dataset to
+identify the key features that boast high accuracy and efficiency in classifying and predicting the performances of the
+three cohorts of students in digital reading while simultaneously
+examining the synergistic and specific effects of these features
+at various levels.
+The following RQs are thoroughly discussed in this analysis.
+1) What are the key factors that synergistically distinguish
+high performers from low performers in digital reading?
+2) What are the digital reading profiles of high, average, and
+low performers, respectively?
+
+3) How can we help readers of different achievement spectra
+improve?
+III. MATERIALS AND METHODS
+A. Research Context and Samples
+Data were extracted from the latest-released PISA reading
+dataset.1 Students from the OECD countries that participated in
+the digital reading test were examined, that is, a total of 276
+269 participants from 38 countries and regions with balanced
+proportions of females (50.2%) and males (49.8%). The classification is based on the OECD’s definition of high, low, and
+average performers, with reading scores at Levels 5 and 6 (i.e.,
+at or above 625.61 score points), at Levels 1a and 1b (less than
+407.47 score points) and in between, respectively. In the PISA,
+10 plausible values (PVs) are used to represent the participants’
+reading performances; however, there are no significant differences between using one PV or five PVs due to the large number
+of the samples [43]. Therefore, the first PV 1 in Reading was
+randomly selected to represent each student’s reading score [8],
+[44]. A total of 150 independent factors/variables were collected
+from the student questionnaire, school questionnaire, and ICT
+familiarity questionnaire. In addition, the country-level factor,
+i.e., GDP per capita, collected from the World Bank dataset2
+was also taken into consideration. Detailed descriptions of the
+150 factors used in this analysis are provided in Supplementary
+Material 1 for ease of reference. This article was approved by
+the Research Ethics Board of the Department of Psychology and
+Behavioral Sciences of the Zhejiang University.
+B. Research Model
+The application of machine learning for reading assessment
+has gained momentum in recent years, including but not limited
+to the monitoring of digital reading speed [45], the prediction
+of students’ reading comprehension [46], and the identification of influencing factors of digital reading [7]. Compared
+with conventional methods (e.g., linear regressions and hierarchical linear models), machine-learning algorithms can avoid
+multicollinearity and clarify the complex interactions between
+variables in high-dimensional and multimodal reading database,
+thus gaining much favor from researchers [47].
+Support vector machine (SVM) is a pattern recognition classifier created using the extended portrait method [48]. As one of
+the most robust machine-learning algorithms, SVM has been
+used for pattern recognition, regression analysis, and binary
+classification. This is accomplished by creating the most “tolerant” multidimensional hyperplane and mapping input data to a
+feature space with kernel functions [49], optimally dividing the
+data into two categories of descriptors. Basically, the hyperplane
+in the sample space can be described as wx + b = 0, where w
+represents the weight vector that decides the direction of the
+hyperplane and b represents the bias that decides the distance
+between the hyperplane and the origin. The hyperplane can thus
+be marked as (w, b). The distance between a random dot x in the
+1 [Online]. Available: http://www.oecd.org/pisa/data/2018database/
+2 [Online]. Available: https://data.worldbank.org/
+
+HU et al.: DECODING CONTEXTUAL FACTORS DIFFERENTIATING ADOLESCENTS’ HIGH, AVERAGE AND LOW
+
+519
+
+feature elimination (SVM-RFE) to identify the most relevant
+variables [50]. SVM-RFE operates by deleting the feature with
+the least weight at each iteration, continuing until all factors
+have been eliminated [51]. In addition, to examine the ability
+to generalize a model to an independent dataset, the SVM-RFE
+cross-validation (CV) can be used to find the best hyperparameters. Given a dataset D = {(x1 , y1 ), (x2 , y2 ), . . . , (xn , yn )} ,
+in k-fold CV, D is divided into k mutually exclusive subsets.
+Each time, the union of the k−1 subset is used as the training
+set, and the remaining subset is used as the test set so that the
+k-group training set can be obtained. Finally, the mean value of
+the k time results is calculated. Together with the SVM-RFE,
+CV can provide insights into the optimal number of features to
+select in the SVM model [52].
+C. Instrument Used and Their Evaluation
+Fig. 1.
+
+Mechanism of the SVM.
+
+sample space and (w, b) is
+r=
+
+|wx + b|
+.
+w
+
+(1)
+
+Supposing the hyperplane (w, b) can classify the samples
+correctly. Given (xi , y_i) ∈ D, if yi = +1, then we have
+wxi + b > 0; if yi = −1, then we have wxi + b < 0. Let
+
+wxi + b ≥ +1, yi = +1
+(2)
+wxi + b ≥ −1, yi = −1.
+Accordingly, training sample dots closest to the hyperplane
+(w, b), which are called as “support vectors,” meet (2).
+Thus, the distance between the two heterogeneous support
+vectors and (w, b) is called “margin,” which is given as
+γ=
+
+2
+.
+w
+
+(3)
+
+To find the partition hyperplane with maximum margin involves finding the parameters w and b that can satisfy the
+constraints in (2) which produce the largest γ, namely
+max
+w,b
+
+2
+w
+
+s.t.yi (wxi + b) ≥ 1, i = 1, 2, . . . , m.
+
+(4)
+
+Evidently, to maximize the margin involves maximizing
+||w||−1 , which equals to minimizing ||w||2 , so (4) can be rewritten as
+w2
+w,b
+2
+
+min
+
+s.t.yi (wxi + b) ≥ 1, i = 1, 2, . . . , m.
+
+The performance of the machine-learning model can be measured by a series of indicators, namely, an accuracy score (ACC),
+a sensitivity score (SEN), a precision score, an F1-score, and an
+area under curve (AUC) score. The ACC refers to the number
+of successfully predicted high performer plus the number of
+successfully predicted low performers, versus the total number
+of students. The SEN indicates the proportion of students that
+were correctly identified by the ML classifier as high performers,
+versus the total number of actual high-performing students. The
+precision is the proportion of students who were actually high
+performers among all those that the ML algorithm predicted
+to be such [49]. The F1-score is a comprehensive indicator of
+precision and recall, which allows for comparisons between
+different algorithms. The AUC is the area under the receiver
+operating characteristic (ROC) that represents the probability
+that the ML classifier decides the scores of high performers are
+higher than those of the low performers [8]. These matrices are
+developed using a confusion matrix composed of true positive
+(TP), false positive, true negative, and false negative (FN).
+TP indicates the positive cases that are correctly predicted by
+the machine-learning methods, and so forth [53]. These five
+indicators can be obtained as follows:
+TN + TP
+(6)
+ACC =
+TP + TN + FP + FN
+TP
+Precision =
+(7)
+TP + FP
+TP
+SEN =
+(8)
+TP + FN
+2T ((TP/TP + FP) × SEN)
+(TP/TP + FP + SEN)
+ 1
+AUC =
+ROC (t) dt.
+
+F 1 − score =
+
+(9)
+(10)
+
+0
+
+(5)
+
+This problem can be transformed to a dual problem through
+the Lagrange function, and the calculation of the parameter can
+be easily achieved. The components of SVM are shown in Fig. 1.
+Considering that the SVM algorithm cannot evaluate the
+importance of predictors, researchers designed SVM recursive
+
+In addition, a novel visual and intuitive technique, namely, the
+Shapley additive explanations (SHAP) method is used here to
+help detect the assign credit for the machine-learning models to
+each factor and visualize the feature attributions. SHAP method
+is well recognized in the enhancement of machine-learning
+interpretability, which has recently been widely used in a series
+of studies predicting students’ educational performance [54],
+
+520
+
+IEEE TRANSACTIONS ON LEARNING TECHNOLOGIES, VOL. 16, NO. 4, AUGUST 2023
+
+[55]. The SHAP values originated from game theory jargon,
+namely, Shapley values. They are composed of two parts: a
+game and players. “Game” refers to the results of the predictive
+model, while “players” indicate the features in the model [56].
+The Shapley value for a function i out of n total features can be
+calculated as
+ |S|! (n − |S| − 1)!
+= [p (S ∪ {i}) − p (S)]
+φi (p)
+n!
+S⊆\{i}
+
+(11)
+where S is a subset of n, n is the set of all features, p(S ∪ {i})
+is a model trained with the subset features, and p(S) is a model
+trained without the features [56].
+D. Data Analysis
+In data preprocessing, samples with more than 30% missing
+data were first removed. The remaining school-level missing
+data were imputed with information from the same school, and
+the student-level missing data were imputed with the nearestneighbor mean value [44]. After that, the nominal and ordinal
+variables were converted into dummy variables, and the interval variables were normalized through min/max scaling. The
+preprocessed data were then analyzed with Python 3.7.0. The
+dataset with 150 factors was examined by the SVM classifier
+to determine whether the model was able to differentiate these
+three cohorts of students. The SVM-RFE was then performed to
+reorder the 150 factors according to their classification weights.
+Finally, a 10-fold CV was adopted, with nine sections randomly
+acting as the training data and the remaining section being evaluated to yield the optimal model [57], [58]. The Python code used
+in this article were uploaded on Github,3 and the data and descriptions of the samples have been uploaded on IEEE Dataport.4
+
+Fig. 2.
+
+Parameter tuning process for three SVM models.
+
+TABLE I
+PREDICTIVE PERFORMANCE OF THE SIX SVM MODELS
+
+IV. RESULTS
+A. Algorithmic Tuning and Classification Performance of the
+SVM Models
+Before training the SVM models, hyperparameter tuning
+was performed to ensure the efficient model performance. The
+penalty parameter (c) in the linear SVM model is used to
+control the tradeoff between the decision boundary [49]. A large
+c indicates a high penalty, where the SVM model intends to
+minimize the number of misclassified examples, resulting in
+a decision boundary with a small margin. In this article, the
+GridSearchCV function in the Scikit-learn package was applied
+to identify the optimal value for the penalty parameter [59],
+[60]. The hyperparameter tuning process of the three models
+throughout the 10-fold CV is provided in Fig. 2 for ease of
+reference. The ACC was used as the evaluation metric to determine the “best parameter(s)” [58]. The ACC of the model
+increased before the best parameter reached a plateau around it
+and decreased when c exceeded the optimal value. The optimal
+c for the HL model and LA model is 0.1, and for the HA
+3 [Online]. Available: https://github.com/Eve-Peng/Data-and-Code-ForDecoding-Contextual-Factors4 [Online].
+Available: https://ieee-dataport.org/documents/original-andimputed-data-decoding-contextual-factors-differentiating-adolescents%E2%
+80%99-high
+
+Fig. 3.
+
+ROC curves and AUC scores of the SVM models for HL, HA, and LA.
+
+model, it is 0.01, achieving the highest accuracy. The predictive
+modeling of student performance was thus performed with the
+best parameter, showing robust results.
+The predictive performance of the three SVM models is presented in Table I. Specifically, the effectiveness of the ROC curve
+is presented in Fig. 3 along with the AUC straightforwardly. The
+three SVM models composed of 150 factors all exhibit excellent
+performances in the binary classification, with all indicators all
+around 0.80. The high–low (HL) model of the selected features
+shows the highest ACC at 0.957 in classifying the two cohorts
+of students, followed by the high–average (HA) model at 0.846
+and the low–average (LA) model at 0.845. This indicates that the
+three cohorts of students can be classified with high accuracies
+with these features, with the gap between high performers and
+low performers being the largest. Previous articles found that the
+minimum number of factors in the optimal factor set that shows
+robust nonparametric estimates on the statistical relevance of
+data features for the SVM model was generally between 20
+and 30 [44]. In this analysis, we witnessed an upward trend
+of the ACC score with an increase in the number of factors
+
+HU et al.: DECODING CONTEXTUAL FACTORS DIFFERENTIATING ADOLESCENTS’ HIGH, AVERAGE AND LOW
+
+521
+
+TABLE II
+DESCRIPTIVE STATISTICS OF THE KEY FACTORS IN THE THREE MODELS
+
+Fig. 4. Accuracy scores of various sets of variables with 10-fold CV for the
+three pairwise distinctions.
+
+Fig. 5.
+
+SHAP values and influencing directions for features in the HL model.
+
+selected. When the number of features selected reaches 20, the
+performances of the HL model, HA model, and LA model level
+out at 0.940, 0.833, and 0.831, respectively (see Fig. 4)
+
+B. Ranking and Descriptions of the 20 Key Factors for the
+Three Pairwise Distinctions
+The ranking and descriptions of the 20 key factors for the
+HL model, HA model, and LA model are elaborated in Tables II
+and III, respectively. The results show that a variety of contextual
+factors from the student, classroom, and school levels synergistically contribute to the three pairwise distinctions of digital
+readers with high accuracy and efficiency. Some of the factors of importance overlap (e.g., ESCS, JOYREAD, EUDMO,
+SCREADDIFF, and BSMJ), while others indicate noteworthy
+differences, e.g., INTICT was significant only in the LA model,
+and DISCLIMA was only identified as important in the LA
+model. In addition, the different rankings of some variables that
+are commonly identified as influential in the three models also
+need to be given special attention. The main thrust of the discussion delves into the most important features that distinguish high
+performers and low performers in digital reading, comparing the
+HA and LA models for the reading profiles of high-, average-,
+and low-performing students.
+
+C. Direction of Effects for Each Feature in the Models
+The directions of the effects of each feature on students’
+digital reading performance produced by the SHAP methods
+are provided in Figs. 5, 6, and 7. Each dot in the figure is
+the SHAP value of a feature of a case, with the vertical axis
+
+522
+
+IEEE TRANSACTIONS ON LEARNING TECHNOLOGIES, VOL. 16, NO. 4, AUGUST 2023
+
+TABLE III
+RANKING OF THE 20 KEY FACTORS FOR THE THREE PAIRWISE DISTINCTIONS
+
+indicating the feature value, the horizontal axis indicating the
+SHAP value, the red dots representing high feature values, and
+blue dots representing low feature values. For instance, for the
+ESCS, its SHAP value corresponding to the red dot is positive,
+which means that the high feature value of ESCS contributes to
+students’ reading performance from the average of all samples.
+Common features identified as important in the three models show similar influencing directions. The positive effects of
+ESCS, JOYREAD, SCREADCOPM, BSMJ, and AUTICT, and
+the negative impacts of SCREADDIFF, DISCRIM, SOIAICT,
+EUDMO, and DRINS are highlighted. For the student-level
+ICT-related factors, the frequency of taking part in online group
+discussions or forums (ST176Q06IA) is negatively related to
+digital reading performance in the HL and LA model, the frequency of reading emails (ST176Q01IA) is positively related to
+digital reading performance in the HA model, the frequency
+of searching information online to learn about a particular
+topic (ST176Q05IA) is positively related to digital reading
+performance in the LA model, while the frequency of chatting
+online (ST176Q02IA) is limitedly positively related to digital
+reading performance in the LA model. For the classroom-level
+and school-level factors, the length of the reading materials
+(ST154Q01HA) used in class is a significantly positive factor
+that distinguishes the high performers from the low performers,
+and the high performers from the average performers, showing
+grand importance. The different ICT skills taught at school are all
+positively correlated with students’ digital reading performance,
+though their importance varies across pairwise distinctions. For
+instance, teaching how to detect whether information is subjective or biased (ST158Q06HA) is positively related to students’
+digital reading performance only in the LA model.
+
+V. DISCUSSION
+Fig. 6.
+
+Fig. 7.
+
+SHAP values and influencing directions for features in the HA model.
+
+SHAP values and influencing directions for features in the LA model.
+
+A. Response to RQ (1): Key Factors That Synergistically
+Distinguish High Performers From Low Performers in Digital
+Reading
+The current article contributed to the ongoing discussion on
+the contextual factors that influence students’ digital reading
+performances through the utilization of a machine-learning
+algorithm and the analysis of cross-national reading sources.
+The results indicate that a variety of contextual factors
+synergistically shape the digital reading performances of high
+and low performers.
+Ten of the twenty key features are student-level factors, with
+students’ family social, economic, and cultural status (ESCS)
+ranking first, exerting the strongest effects on the classification
+results. This finding reinforced the strong effect of students’
+family economic background on digital performance [6]. It is
+noted that students’ expected occupational statuses (BSMJ) are
+indispensable in fostering high-performing digital readers [61].
+The PISA 2018 results indicate that students who would like
+to work as ICT professionals in the future were more in touch
+with the digital environment and read books or the news more
+often on digital devices than other students [62]. However,
+since the impacts vary with the dimensions of occupational
+
+HU et al.: DECODING CONTEXTUAL FACTORS DIFFERENTIATING ADOLESCENTS’ HIGH, AVERAGE AND LOW
+
+expectations, future article should disentangle the impact of the
+various dimensions of this factor.
+Four of the student-level factors are motivational components
+of reading and ICT. Whether students like reading (JOYREAD)
+was found to be a strong predictor of the performance of
+digital readers, echoing the findings of many previous articles
+[63], [64]. In terms of self-efficacy, perception of competence
+(SCREADCOMP) and difficulty (SCREADDIFF) of reading
+were also found to be significant positive and negative predictors, respectively. Positive attitudes toward reading can help
+improve students’ memorization, elaboration, and control strategies serving as an important mediator between contextual factors
+and students’ digital reading performance, and vice versa [41].
+Regarding ICT-related student-level factors, students’ perceived
+autonomy related to ICT use (AUTICT) is positively related
+to their digital reading performance, while students’ ICT use
+for social interaction (SOIAICT), frequency of taking part in
+online group discussions or forums (ST176Q06IA), and ICT use
+outside of school for school work activities (HOMESCH) were
+found to be negatively associated with their performance. The
+results echo with previous findings about the promoting effects
+of ICT because the autonomy of ICT use is closely and positively
+related to the self-regulatory process during digital reading [29].
+However, ICT use for social interaction and taking part in online
+discussions could be detrimental for students’ digital reading
+performance because these activities may decrease time available for academic purposes [65]. In addition, the large amount of
+time spent on ICT use outside of school for school work activities
+may indicate low efficiency for completing school work, and
+abuse of ICT without the supervision of parents and teachers.
+Regarding classroom-level factors, the length of the reading
+material used in class (ST154Q01HA) is identified as a strong
+predictor. Longer reading materials increase the difficulty of
+reading, thus cultivating students’ abilities to cope with complex
+contents and logic in reading materials [66]. Students’ use of ICT
+at school (USESCH) is a noteworthy negative predictor of their
+HL performance classification, while teachers’ instructional behaviors related to the use of ICT can positively predict students’
+digital reading performance. Teachers showing students how to
+use the short description below the links in the list of results of
+a search (ST158Q05HA) and helping students understand the
+consequences of making information publicly available online
+on social platforms (ST158Q04HA) are found to be important
+positive predictors in this analysis. The results confirm previous
+findings and further highlight the importance of cultivating digital literacy to improve digital reading performance [67]. Contrary to previous findings, teacher-directed instruction (DIRINS)
+is found to be negatively associated with students’ digital reading
+performance. This result does not mean that teacher-directed
+instructions can inhibit students’ digital reading performances.
+In large-scale educational assessments, this derived variable
+cannot fully capture the various qualities, circumstances, and
+forms of instruction, thus having only general impacts. A series
+of researchers have examined the effects of instruction, concluding that factors such as teachers’ pedagogical content beliefs
+[68], teaching strategies [69], and professional development [70]
+affect the quality of instruction. In addition, the current article
+identifies teacher mentoring (SC037Q08TA) as an important
+factor that positively affects students’ digital learning, further
+
+523
+
+emphasizing the importance of the quality and capability of
+teachers in promoting high-performing digital readers.
+B. Response to RQ (2): Digital Reading Profiles of Students of
+Different Achievement Spectra
+The HA model and LA model identified through the SVM
+provide insights into the nuanced differences between students
+of different achievement spectra that were not revealed by the HL
+model. Through comparisons of high and average performers,
+and of low performers and average performers, the specific
+learning features of the average performers are identified.
+On the one hand, compared with high performers,
+average-performing digital readers read emails less frequently
+(ST176Q01IA), which was an interesting finding in our analysis.
+Most previous articles examined email-reading activities along
+with other online social activities, providing mixed findings
+about their impacts on digital reading performance [24], [65].
+Our analysis further highlights the nuanced differences between
+reading emails and other online social activities and its significant role in distinguishing high performers from average performers. Different from other online social activities, receiving
+and sending emails is a more “formal” mode of dialog journaling
+that involves careful dictation, rich content, and sometimes file
+attachments [71]. More importantly, this asynchronous collaborative digital learning environment allows for more in-depth
+consideration and critical reflection about the topic discussed.
+Another noteworthy finding is that compared with average performers, highly skilled readers are strongly associated
+with higher teacher qualifications (PROAT5AM). Teachers with
+higher qualifications generally have more professional knowledge and practices, providing individualized instruction for various students [70]. In addition, the HA model also highlights the
+importance of teachers teaching average-performing students
+to detect whether information online is subjective or biased
+(ST158Q06HA). Previous article has found that perceived credibility of an online article and recall are both strong predictors
+of knowledge gain during digital reading [3], [72]. Considering
+that students can feel overwhelmed by a deluge of messages,
+teachers should assist students in being cautious and prudent in
+judging multiple sources online [73], which could thus further
+improve their digital reading comprehension and engagement.
+On the other hand, the LA model indicates that lowperforming digital readers are characterized by a lack of interest
+in ICT (INTICT) compared with average performers. Previous
+articles show that students with more positive attitudes toward
+computers take part in computer-related activities more frequently and thus develop more advanced computer knowledge
+and skills [17]. Different from print reading, motivational components related to ICT use are thus an important part of promoting low-performing students’ digital reading literacy [74].
+Our results contribute to the ongoing discussion of the role of
+interests affecting low-performing digital readers, which helps
+answer the question of whether digital reading and print reading
+share the same motivational process.
+The use of ICT at school (USESCH) is a feature that boasts
+higher importance ranking in the LA distinction than in the
+other two distinctions. Low-performing students generally use
+more computer devices at school than average performers and
+
+524
+
+IEEE TRANSACTIONS ON LEARNING TECHNOLOGIES, VOL. 16, NO. 4, AUGUST 2023
+
+high performers in digital reading. Specifically, they take part
+in online group discussions or forums (ST176Q06IA) more
+frequently, while they search for information online to learn
+about a particular topic (ST176Q05IA) less frequently, which
+further confirms the findings of previous article [63]. Our analysis also finds that this phenomenon is more common in students
+with low digital reading proficiencies and low work mastery
+(WORKMAST). Due to a lack of self-regulation and basic skills,
+these students are more prone to the excessive use of ICT and
+addiction to online social activities, highlighting the significance
+of the school’s role in the planned application of ICT in digital
+reading education.
+The LA model also indicates that low digital reading performers are more susceptible to truancy (SC061Q01TA) and are more
+likely to be in an out-of-order classroom disciplinary climate
+(DISCLIMA) than average performers. These two factors are
+found to be less effective in the HA model. Informed by the
+general learning theory that students’ learning is influenced by
+their surroundings, an orderly classroom and school environment has been considered an important variable for student
+learning. It is also notable that discriminating school climate
+(DISCRIM) ranks second in the LA model, indicating that lowperforming students may suffer more from discrimination from
+either peers or teachers. Experiences with discrimination and
+prejudice in school environments can worsen students’ academic
+performances [75]. If students perceive that teachers are unfair
+or biased, they may double down on deviant exploits [76]. This
+article identifies the importance of a supportive, disciplined,
+inclusive, and welcoming school and classroom climate, which
+could contribute to better digital reading achievement, especially
+for low-skilled digital readers. Only in schools that are equal and
+classrooms that are strictly managed can students explore their
+potential to the greatest extent.
+C. Response to RQ (3): Providing Tailored Instruction and
+Guidance for Digital Readers in an Innovative way
+Different from conventional statistical methods, the machinelearning algorithms used in this article could help reveal
+the complex associations among variables through the three
+pairwise comparisons between students of different achievement levels. Previous investigations have utilized a series of
+machine-learning algorithms to predict students’ academic performance. Supervised classifiers are widely adopted, and their
+performance has been validated and compared across learning
+contexts and disciplines in studies using PISA database [8].
+Regarding students’ mathematics performance, previous articles have compared logistic regression, Fisher’s discriminant
+analysis, and SVM algorithms, showing that SVM algorithms
+outperform the former two, and the optimal feature set is mainly
+composed of student-level factors [44]. For reading, researchers
+used data from PISA 2015 and compared three machine-learning
+methods for variable selection, concluding that they could produce comparable results and students’ reading performance is
+significantly positively related to their academic anxiety [77].
+Another study used logistic regression, SVM, decision tree, and
+extreme gradient boosting simultaneously to predict high- and
+low-performing readers in PIRLS, showing students’ affective
+variables related to reading, rather than teachers’ instructional
+
+practices, to be the most significant factors [58]. This article confirmed these findings by using SVM to identify more
+student-level affective variables than the school-level factors in
+the HL model and HA model with high efficiency, and innovatively identified the significant teacher-related features in the LA
+model, which has not been determined by previous article. This
+indicated that teacher instruction is essential for low-performing
+students because these students with low self-regulation ability
+and learning capability usually lack autonomy in learning.
+The factors identified in the three machine-learning models
+not only help distinguish high and low digital reading performers
+with high accuracy but also innovatively provide information
+on their specific reading profiles, according to which tailored
+instruction for gradual improvement could be devised, and
+the flexibility of educational offerings should be considered
+to provide broader knowledge base for digital reading literacy
+[78]. The HL distinction of this article leads us to consider
+the importance of the cooperation and coordination of various parties (i.e., students, parents, teachers, and principals) to
+achieve high digital reading proficiency. Students should equip
+themselves with interests in reading and ICT use as well as the
+corresponding skills and should develop strong self-disciplinary
+habits to avoid the overuse of ICT resources. To enhance students’ digital reading competence, it is essential for parents
+and teachers to prioritize information-seeking activities rather
+than recreational activities at both home and school for students, which resonates with the findings of previous articles [8].
+Instructional behaviors for ICT use in the classroom should not
+be dismissed. Educators and instructors should adaptively guide
+students’ ICT use in reading class, with an emphasis on various
+aspects according to the levels of the specific digital readers. The
+instructors should also be fully qualified and prepared to function
+in digital education settings [79]. More importantly, they should
+further reflect upon how ICT resources can facilitate specific
+pedagogical strategies [80]. In reading class, multimodal online
+reading materials with appropriate length should be designed
+and provided, accompanied by effective instructions, tailored
+feedback, and appropriate supervision to provide a productive
+and enjoyable learning environment.
+For students with an average or high level of digital reading
+proficiency, instructors should further foster their autonomy
+in both ICT use and reading. In addition, instructors should
+help them develop morally sound values and outlooks on the
+digital world so that they can have a more accurate positioning
+and grasp of the information contained in reading materials.
+For low-skilled digital readers, however, attention should be
+given to the cultivation of interests in ICT and basic ICT skills.
+Teachers should incorporate ICT resources into teaching and
+mobilize ICT resources at school to help them create a cognitive
+engagement and a sense of affinity to the digital environment,
+psychologically accept digital reading, and become interested
+in it to improve their digital reading self-efficacy. For instance,
+flipped classrooms are found to largely improve low-performing
+students’ learning motivation and learning strategy [81]. In addition, computer-aided learning, which deals with basic knowledge of reading (e.g., phonological and orthographic syllables),
+should be considered for the low-performing readers [82]. Due
+to a lack of self-regulated learning strategies, low-level digital
+readers often abuse social media for recreational purposes at
+
+HU et al.: DECODING CONTEXTUAL FACTORS DIFFERENTIATING ADOLESCENTS’ HIGH, AVERAGE AND LOW
+
+525
+
+school. To fully exploit the potential of ICT-related instruction,
+school principals and teachers should thus try to create a welldisciplined school and classroom climate and supervise the use
+of ICT resources.
+
+of different machine-learning methods may yield different optimal features and show divergent efficiencies, future article
+should compare the performance of these powerful approaches
+in various contexts for a more comprehensive analysis of the
+determinants of students’ digital reading performance.
+
+VI. CONCLUSION AND LIMITATIONS
+
+ACKNOWLEDGMENT
+
+Through the utilization of SVM and the SHAP method, this
+article explored the effects of multilevel factors on students’
+digital reading performances based on the PISA 2018. Compared
+with previous articles in this field, this article not only involves a
+detailed comparison of students of different achievement spectra
+through three dichotomous machine-learning classifications but
+also supplements the results with the SHAP method to increase their interpretability. The invitation of machine-learning
+methods into the field of reading research helps ascertain the
+important determinants from the large-scale dataset with high efficiency. The factors newly found via different machine-learning
+models can shed light on the existing reading education theories
+from a different perspective, and the three pairwise distinctions
+can reveal nuanced differences between students, underlying
+students’ unique reading profiles and help the instructors provide
+tailored pedagogical support. The SHAP method can help to
+quantify feature importance at the observation level for the
+machine learning algorithm and show the dynamic effects of the
+factors. It increases the interpretability of the opaque machinelearning algorithm in a straightforward and intuitive way. Researchers can further use this powerful method to identify the
+optimal threshold for the quantity of a factor, contributing to the
+development of students’ sustainable habits and the optimization
+of system design for a supporting learning environment. It is
+thus an effective tool that should be incorporated within the
+student reading performance prediction framework for a more
+comprehensive and in-depth analysis [55].
+The collective impacts of the optimal feature set composed
+of the 20 most important predictors of the three levels were
+systematically measured. In addition, the article revealed the
+unique rules of the influencing pattern of digital readers of
+different achievement spectra through the development of two
+other models, namely, an HA model and an LA model. This
+article provides important insights into individualized pedagogy
+and instruction, the coordination of ICT resources, and concerns
+about students’ overall and sustainable reading literacy development in the digital era.
+A few limitations in this article can be addressed in future
+investigations. First, the SVM used in this article could examine
+only the collective impacts of the optimal feature set. However,
+the detailed associations between these key factors should be
+analyzed with the help of techniques, such as mediation analysis (e.g., how students’ interests in ICT and ICT self-efficacy
+might mediate the relationship between ICT resources at home
+and school and digital reading performances). Second, as a
+cross-sectional assessment, the PISA cannot measure students’
+changes in reading literacy over a long period of time. Future
+analysis should focus on the collection of longitudinal data
+for an overall investigation of the development of students’
+digital reading literacy. Third, considering that the utilization
+
+The authors would like to acknowledge the support from the
+2022 Joint Projects between Chinese and CEEC Universities:
+International Virtual Center of Sino-Polish Language Education,
+the First Ningbo-Central/Eastern European Educational Project
+“Virtual center of Sino-Polish bilingual online teaching and
+research,” and the Teaching Innovation Programme of NingboTech University “Integration of Polish Language Personnel
+Enrollment, Training and Employment from Perspective of
+Productive-oriented Approach.”
+REFERENCES
+[1] J. Coiro, “Predicting reading comprehension on the internet: Contributions
+of offline reading skills, online reading skills, and prior knowledge,” J. Lit.
+Res., vol. 43, no. 4, pp. 352–392, 2011, doi: 10.1177/1086296X11421979.
+[2] J. Hu and H. Yu, “Impact of extracurricular synchronous and asynchronous
+computer-mediated communication between students and teachers on
+digital reading performance: A multilevel mediation analysis of 53 countries/regions,” Educ. Inf. Technol., vol. 28, no. 2, pp. 1559–1586, 2023,
+doi: 10.1007/s10639-022-11223-0.
+[3] C. Hahnel, F. Goldhammer, J. Naumann, and U. Kröhne, “Effects of linear
+reading, basic computer skills, evaluating online information, and navigation on reading digital text,” Comput. Hum. Behav., vol. 55, pp. 486–500,
+2016, doi: 10.1016/j.chb.2015.09.042.
+[4] D. Destefano and J. A. Lefevre, “Cognitive load in hypertext reading:
+A review,” Comput. Hum. Behav., vol. 23, no. 3, pp. 1616–1641, 2007,
+doi: 10.1016/j.chb.2005.08.012.
+[5] Organization for Economic Co-operation and Development, “PISA 2018
+reading framework,” in PISA 2018 Assessment and Analytical Framework.
+Paris, France: OECD Publishing, 2019, doi: 10.1787/b25efab8-en.
+[6] V. Vazquez-Lopez and E. L. Huerta-Manzanilla, “Factors related with
+underperformance in reading proficiency, the case of the program for international student assessment 2018,” Eur. J. Investigation Health Psychol.
+Educ., vol. 11, no. 3, pp. 813–828, 2021, doi: 10.3390/ejihpe11030059.
+[7] F. Chen, A. Sakyi, and Y. Cui, “Identifying key contextual factors of digital reading literacy through a machine learning approach,”
+J. Educ. Comput. Res., vol. 60, no. 7, pp. 1763–1795, Dec. 2022,
+doi: 10.1177/07356331221083215.
+[8] J. Hu, X. Dong, and Y. Peng, “Discovery of the key contextual factors relevant to the reading performance of elementary school students from 61 countries/regions: Insight from a machine learningbased approach,” Reading Writing, vol. 35, no. 1, pp. 93–127, 2022,
+doi: 10.1007/s11145-021-10176-z.
+[9] Organization for Economic Co-operation and Development, “The construction of proficiency scales and of indices from the student context questionnaire,” in PISA 2018 Results (Volume I): What Students Know and Can
+Do. Paris, France: OECD Publishing, 2019, doi: 10.1787/5f07c754-en.
+[10] B. Y. Cho, H. J. Hwang, and B. G. Jang, “Predicting fourth
+grade digital reading comprehension: A secondary data analysis of
+PIRLS 2016,” Int. J. Educ. Res., vol. 105, 2021, Art. no. 101696,
+doi: 10.1016/j.ijer.2020.101696.
+[11] M. A. Rasmusson, “A multilevel analysis of Swedish and Norwegian
+students’ overall and digital reading performance with a focus on equity
+aspects of education,” Large-Scale Assessments Educ., vol. 4, pp. 1–25,
+2016, doi: 10.1186/s40536-016-0021-7.
+[12] Organization for Economic Co-operation and Development, “Girls’ and
+boys’ performance in PISA,” in PISA 2018 Results (Volume II): Where
+All Students Can Succeed. Paris, France: OECD Publishing, 2020,
+doi: 10.1787/b5fd1b8f-en.
+[13] H. K. Keskin, M. Baştuǧ, and T. Atmaca, “Factors directing students
+to academic digital reading,” Egitim Bilim, vol. 41, pp. 117–129, 2016,
+doi: 10.15390/EB.2016.6655.
+
+526
+
+IEEE TRANSACTIONS ON LEARNING TECHNOLOGIES, VOL. 16, NO. 4, AUGUST 2023
+
+[14] P. Divya and H. K. Mohamed, “Factors influencing digital reading behavior
+of students: A study in universities in Kerala,” Defence Sci. Inf. Documentation Centre J. Library Inf. Technol., vol. 40, no. 5, pp. 313–320, 2020,
+doi: 10.14429/djlit.40.5.15672.
+[15] F. Borgonovi, “Video gaming and gender differences in digital
+and printed reading performance among 15-year-olds students in 26
+countries,” J. Adolescence, vol. 48, pp. 45–61, 2016, doi: 10.1016/
+j.adolescence.2016.01.004.
+[16] Z. Liu and X. Huang, “Gender differences in the online reading
+environment,” J. Documentation, vol. 64, no. 4, pp. 616–626, 2008,
+doi: 10.1108/00220410810884101.
+[17] H. J. Lim and H. K. Jung, “Factors related to digital reading achievement: A
+multi-level analysis using international large-scale data,” Comput. Educ.,
+vol. 133, pp. 82–93, 2019, doi: 10.1016/j.compedu.2019.01.007.
+[18] J. Y. Haw and R. B. King, “Understanding Filipino students’ achievement in PISA: The roles of personal characteristics, proximal processes, and social contexts,” Social Psychol. Educ., to be published,
+doi: 10.1007/s11218-023-09773-3.
+[19] M. Torppa, K. Eklund, S. Sulkunen, P. Niemi, and T. Ahonen, “Why
+do boys and girls perform differently on PISA reading in Finland? The
+effects of reading fluency, achievement behavior, leisure reading and
+homework activity,” J. Res. Reading, vol. 41, no. 1, pp. 122–139, 2018,
+doi: 10.1111/1467-9817.12103.
+[20] T. Cartwright and C. Nancarrow, “A question of gender: Gender classification in international research,” Int. J. Market Res., vol. 64, no. 5,
+pp. 575–593, 2022, doi: 10.1177/14707853221108663.
+[21] J. Coiro and E. Dobler, “Exploring the online reading comprehension
+strategies used by sixth-grade skilled readers to search for and locate information on the Internet,” Reading Res. Quart., vol. 42, no. 2, pp. 214–257,
+2007, doi: 10.1598/rrq.42.2.2.
+[22] S. A. Sullivan and S. Puntambekar, “Learning with digital texts: Exploring
+the impact of prior domain knowledge and reading comprehension ability
+on navigation and learning outcomes,” Comput. Hum. Behav., vol. 50,
+pp. 299–313, 2015, doi: 10.1016/j.chb.2015.04.016.
+[23] S. Scrimin and L. Mason, “Does mood influence text processing and
+comprehension? Evidence from an eye-movement study,” Brit. J. Educ.
+Psychol., vol. 85, no. 3, pp. 387–406, 2015, doi: 10.1111/bjep.12080.
+[24] J. Gil-Flores, J. J. Torres-Gordillo, and V. H. Perera-Rodríguez, “The
+role of online reader experience in explaining students’ performance
+in digital reading,” Comput. Educ., vol. 59, no. 2, pp. 653–660, 2012,
+doi: 10.1016/j.compedu.2012.03.014.
+[25] B. G. Jang and J. H. Ryoo, “Multiple dimensions of adolescents’ reading attitudes and their relationship with reading comprehension,” Reading Writing, vol. 32, no. 7, pp. 1769–1793, 2019, doi: 10.1007/s11145-018-9926-6.
+[26] L. Salmerón, A. García, and E. Vidal-Abarca, “The development of adolescents’ comprehension-based Internet reading activities,” Learn. Individual
+Differ., vol. 61, pp. 31–39, 2018, doi: 10.1016/j.lindif.2017.11.006.
+[27] Organization for Economic Co-operation and Development, “Relationships between digital reading performance and student background, engagement and reading strategies,” in PISA 2009 Results: Students Online:
+Digital Technologies and Performance. Paris, France: OECD Publishing,
+2011, doi: 10.1787/9789264112995-en.
+[28] D. Petko, A. Cantieni, and D. Prasse, “Perceived quality of educational
+technology matters: A secondary analysis of students ICT use, ICT-related
+attitudes, and PISA 2012 test scores,” J. Educ. Comput. Res., vol. 54, no. 8,
+pp. 1070–1091, 2017, doi: 10.1177/0735633116649373.
+[29] H. Yu and J. Hu, “A multilevel regression analysis of computermediated communication in synchronous and asynchronous contexts
+and digital reading achievement in Japanese students. Interactive
+learning environments,” Interact. Learn. Environ., to be published,
+doi: 10.1080/10494820.2022.2066136.
+[30] S. F. Chen, “Modeling the influences of upper-elementary school students’
+digital reading literacy, socioeconomic factors, and self-regulated learning
+strategies,” Res. Sci. Technol. Educ., vol. 35, no. 3, pp. 330–348, 2017,
+doi: 10.1080/02635143.2017.
+[31] J. Y. Wu and Y. C. Peng, “The modality effect on reading literacy: Perspectives from students’ online reading habits, cognitive
+and metacognitive strategies, and web navigation skills across regions,” Interact. Learn. Environ., vol. 25, no. 7, pp. 859–876, 2017,
+doi: 10.1080/10494820.2016.1224251.
+[32] M. Wang, R. Yu, and J. Hu, “The relationship between social mediarelated factors and student collaborative problem-solving achievement:
+An HLM analysis of 37 countries,” Educ. Inf. Technol., to be published,
+doi: 10.1007/s10639-023-11763-z.
+[33] N. Kucirkova, “Toward reciprocity and agency in students’ digital reading,” Reading Teach., vol. 73, no. 6, pp. 825–831, 2020,
+doi: 10.1002/trtr.1893.
+
+[34] Z. Sun, X. M. Yang, and K. K. He, “An extensive reading strategy to
+promote online writing for elementary students in the 1:1 digital classroom,” Comput. Assist. Lang. Learn., vol. 29, no. 2, pp. 398–412, 2016,
+doi: 10.1080/09588221.2014.974860.
+[35] J. T. Guthrie and S. L. Klauda, “Effects of classroom practices on reading
+comprehension, engagement, and motivations for adolescents,” Reading
+Res. Quart., vol. 49, no. 4, pp. 387–416, 2014, doi: 10.1002/rrq.81.
+[36] H. Kesson, “Reading digital texts: Obstacles to using digital resources,” Eng. Teaching-Pract. Critique, vol. 19, pp. 155–168, 2020,
+doi: 10.1108/ETPC-02-2019-0019.
+[37] A. Pasqualotto et al., “Enhancing reading skills through a video game
+mixing action mechanics and cognitive training,” Nature Hum. Behav.,
+vol. 6, no. 4, pp. 545–554, Apr. 2022, doi: 10.1038/s41562-021-01254-x.
+[38] A. Sadik, “Digital storytelling: A meaningful technology-integrated approach for engaged student learning,” Educ. Technol. Res. Develop.,
+vol. 56, no. 4, pp. 487–506, 2008, doi: 10.1007/s11423-008-9091-8.
+[39] O. E. Hatlevik, G. Ottestad, and I. Throndsen, “Predictors of digital competence in 7th grade: A multilevel analysis,” J. Comput. Assist. Learn., vol. 31, no. 3, pp. 220–231, 2015, doi: 10.1111/jcal.
+12065.
+[40] A. Gamazo and F. Martinez-Abad, “An exploration of factors linked to
+academic performance in PISA 2018 through data mining techniques,”
+Front. Psychol., vol. 11, 2020, Art. no. 575167, doi: 10.3389/fpsyg.2020.
+575167.
+[41] B. Ning et al., “The influence of classroom disciplinary climate of
+schools on reading achievement: A cross-country comparative study,”
+Sch. Effectiveness Sch. Improvement, vol. 26, no. 4, pp. 586–611, 2015,
+doi: 10.1080/09243453.2015.1025796.
+[42] Y. Petscher and J. Logan, “Quantile regression in the study of developmental sciences,” Child Develop., vol. 85, no. 3, pp. 861–881, 2014,
+doi: 10.1111/cdev.12190.
+[43] Organization for Economic Co-operation and Development, “Plausible
+values,” in PISA Data Analysis Manual: SPSS, 2nd ed. Paris, France:
+OECD Publishing, 2009, doi: 10.1787/9789264056275-en.
+[44] A. Gorostiaga and J. Rojo-Álvarez, “On the use of conventional and statistical-learning techniques for the analysis of PISA
+results in Spain,” Neurocomputing, vol. 171, pp. 625–637, 2016,
+doi: 10.1016/j.neucom.2015.07.001.
+[45] B. Sortkær et al., “Both sides of the story: Comparing student-level data on
+reading performance from administrative registers to application generated
+data from a reading app,” Eur. Phys. J. Plus Data Sci., vol. 10, no. 1, 2021,
+Art. no. 44, doi: 10.1140/epjds/s13688-021-00300-y.
+[46] J. Sinclair, E. E. Jang, and F. Rudzicz, “Using machine learning to predict
+children’s reading comprehension from linguistic features extracted from
+speech and writing,” J. Educ. Psychol., vol. 113, no. 6, pp. 1088–1106,
+2021, doi: 10.1037/edu0000658.
+[47] F. Alivernini and S. Manganelli, “Country, school and students factors associated with extreme levels of science literacy across 25
+countries,” Int. J. Sci. Educ., vol. 37, no. 12, pp. 1992–2012, 2015,
+doi: 10.1080/09500693.2015.1060648.
+[48] C. Cortes and V. Vapnik, “Support-vector networks,” Mach. Learn., vol. 20,
+no. 3, pp. 273–297, 1995, doi: 10.1023/A:1022627411411.
+[49] R. Alcaraz, A. Martínez-Rodrigo, R. Zangróniz, and J. J. Rieta, “Early
+prediction of students at risk of failing a face-to-face course in power electronic systems,” IEEE Trans. Learn. Technol., vol. 14, no. 5, pp. 590–603,
+Oct. 2021, doi: 10.1109/TLT.2021.3118279.
+[50] H. Sanz, C. Valim, E. Vegas, J. M. Oller, and F. Reverter, “SVM-RFE:
+Selection and visualization of the most relevant features through nonlinear kernels,” Biomed. Central Bioinf., vol. 19, 2018, Art. no. 432,
+doi: 10.1186/s12859-018-2451-4.
+[51] I. Guyon, J. Weston, S. Barnhill, and V. Vapnik, “Gene selection for cancer
+classification using support vector machines,” Mach. Learn., vol. 46,
+no. 1–3, pp. 389–422, 2002, doi: 10.1023/A:1012487302797.
+[52] S. Arlot and A. Celisse, “A survey of cross-validation procedures for model
+selection,” Statist. Surv., vol. 4, pp. 40–79, 2010, doi: 10.1214/09-SS054.
+[53] S. D. A. Bujang et al., “Multiclass prediction model for student grade prediction using machine learning,” IEEE Access,
+vol. 9, pp. 95608–95621, 2021, doi: 10.1109/ACCESS.2021.
+3093563.
+[54] Z. Mingyu, W. Sutong, W. Yanzhang, and W. Dujuan, “An
+interpretable prediction method for university student academic crisis warning,” Complex Intell. Syst., vol. 8, no. 1, pp. 323–336, 2022,
+doi: 10.1007/s40747-021-00383-0.
+[55] H. Sahlaoui, E. A. A. Alaoui, A. Nayyar, S. Agoujil, and M. M. Jaber, “Predicting and interpreting student performance using ensemble models and
+shapley additive explanations,” IEEE Access, vol. 9, pp. 152688–152703,
+2021, doi: 10.1109/ACCESS.2021.3124270.
+
+HU et al.: DECODING CONTEXTUAL FACTORS DIFFERENTIATING ADOLESCENTS’ HIGH, AVERAGE AND LOW
+
+[56] B. I. Smith, C. Chimedza, and J. H. Bührmann, “Individualized help
+for at-risk students using model-agnostic and counterfactual explanations,” Educ. Inf. Technol., vol. 27, no. 2, pp. 1539–1558, 2022,
+doi: 10.1007/s10639-021-10661-6.
+[57] N. Pattanasri, M. Mukunoki, and M. Minoh, “Learning to estimate
+slide comprehension in classrooms with support vector machines,”
+IEEE Trans. Learn. Technol., vol. 5, no. 1, pp. 52–61, Jan.–Mar. 2012,
+doi: 10.1109/TLT.2011.22.
+[58] J. Chen, Y. Zhang, and J. Hu, “Synergistic effects of instruction and
+affect factors on high- and low-ability disparities in elementary students’
+reading literacy,” Reading Writing, vol. 34, no. 1, pp. 99–230, 2021,
+doi: 10.1007/s11145-020-10070-0.
+[59] N. Janardhan and N. Kumaresh, “Improving depression prediction accuracy using fisher score-based feature selection and dynamic ensemble
+selection approach based on acoustic features of speech,” Traitement
+Signal, vol. 39, no. 1, pp. 87–107, 2022, doi: 10.18280/ts.390109.
+[60] H. Ng, A. A. bin Mohd Azha, T. T. V. Yap, and V. T. Goh,
+“A machine learning approach to predictive modelling of student performance,” F1000Research, vol. 10, 2021, Art. no. 1144,
+doi: 10.12688/f1000research.73180.1.
+[61] J. Sikora, “Is it all about early occupational expectations? How
+the gender gap in two science domains reproduces itself at subsequent stages of education: Evidence from longitudinal PISA in Australia,” Int. J. Sci. Educ., vol. 41, no. 16, pp. 1464–5289, 2019,
+doi: 10.1080/09500693.2019.1676933.
+[62] Organization for Economic Co-operation and Development, “Dynamic
+navigation in PISA 2018 reading assessment: Read, explore and interact,”
+in 21st-Century Readers: Developing Literacy Skills in a Digital World.
+Paris, France: OECD Publishing, 2021, doi: 10.1787/a83d84cb-en.
+[63] S. P. McGeown, L. G. Duncan, Y. M. Griffiths, and S. E. Stothard, “Exploring the relationship between adolescent’s reading skills, reading motivation
+and reading habits,” Reading Writing, vol. 28, no. 4, pp. 545–569, 2015,
+doi: 10.1007/s11145-014-9537-9.
+[64] M. Troyer, J. S. Kim, E. Hale, K. A. Wantchekon, and C. Armstrong, “Relations among intrinsic and extrinsic reading motivation, reading amount,
+and comprehension: A conceptual replication,” Reading Writing, vol. 32,
+no. 5, pp. 1197–1218, 2019, doi: 10.1007/s11145-018-9907-9.
+[65] Y. H. Lee and J. Y. Wu, “The indirect effects of online social entertainment
+and information seeking activities on reading literacy,” Comput. Educ.,
+vol. 67, pp. 168–177, 2013, doi: 10.1016/j.compedu.2013.03.001.
+[66] F. M. Locher, S. Becker, I. Schiefer, and M. Pfost, “Mechanisms mediating the relation between reading self-concept and reading comprehension,” Eur. J. Psychol. Educ., vol. 36, no. 1, pp. 1–20, 2021,
+doi: 10.1007/s10212-020-00463-8.
+[67] J. Carlisle, B. Kelcey, D. Berebitsky, and G. Phelps, “Embracing the
+complexity of instruction: A study of the effects of teachers’ instruction
+on students’ reading comprehension,” Sci. Stud. Reading, vol. 15, no. 5,
+pp. 409–439, 2011, doi: 10.1080/10888438.2010.497521.
+[68] L. Behrmann and E. Souvignier, “Pedagogical content beliefs about
+reading instruction and their relation to gains in student achievement,” Eur. J. Psychol. Educ., vol. 28, no. 3, pp. 1023–1044, 2013,
+doi: 10.1007/s10212-012-0152-3.
+[69] R. P. Robledo, R. R. Fidalgo, and D. R. M. Méndez, “Reading comprehension assessment through the analysis of teacher practice and
+teacher-student interaction,” Rev. Educ., vol. 384, pp. 91–113, 2019,
+doi: 110.4438/1988-592X-RE-2019-384-414.
+[70] M. Sailors and L. Price, “Support for the improvement of practices through
+intensive coaching (SIPIC): A model of coaching for improving reading
+instruction and reading achievement,” Teach. Teacher Educ., vol. 45,
+pp. 115–127, 2015, doi: 10.1016/j.tate.2014.09.008.
+[71] H. F. Shang, “Email dialogue journaling: Attitudes and impact on L2
+reading performance,” Educ. Stud., vol. 31, no. 2, pp. 197–212, 2005,
+doi: 10.1080/03055690500095597.
+[72] B. Zhong and A. J. Appelman, “How college students read and write on
+the web: The role of ICT use in processing online information,” Comput.
+Hum. Behav., vol. 38, pp. 201–207, 2014, doi: 10.1016/j.chb.2014.05.037.
+[73] T. Binali, C. C. Tsai, and H. Y. Chang, “University students’ profiles of
+online learning and their relation to online metacognitive regulation and
+internet-specific epistemic justification,” Comput. Educ., vol. 175, 2021,
+Art. no. 104315, doi: 10.1016/j.compedu.2021.104315.
+[74] J. Naumann, “A model of online reading engagement: Linking engagement, navigation, and performance in digital reading,” Comput. Hum.
+Behav., vol. 53, pp. 263–277, 2015, doi: 10.1016/j.chb.2015.06.051.
+[75] S. Stone and M. Han, “Perceived school environments, perceived discrimination, and school performance among children of Mexican immigrants,” Child. Youth Serv. Rev., vol. 27, no. 1, pp. 51–66, 2005,
+doi: 10.1016/j.childyouth.2004.08.011.
+
+527
+
+[76] J. B. Pena-Shaff, B. Bessette-Symons, M. Tate, and J. Fingerhut, “Racial
+and ethnic differences in high school students’ perceptions of school
+climate and disciplinary practices,” Race Ethnicity Educ., vol. 22, no. 2,
+pp. 269–284, 2019, doi: 10.1080/13613324.2018.1468747.
+[77] J. C. Immekus, T. S. Jeong, and J. E. Yoo, “Machine learning procedures for predictor variable selection for schoolwork-related anxiety:
+Evidence from PISA 2015 mathematics, reading, and science assessments,” Large-Scale Assessments Educ., vol. 10, no. 1, pp. 1–21, 2022,
+doi: 10.1186/s40536-022-00150-8.
+[78] M. Wiggberg, J. Gulliksen, Å. Cajander, and A. Pears, “Defining digital
+excellence: Requisite skills and policy implications for digital transformation,” IEEE Access, vol. 10, pp. 52481–52507, 2022, doi: 10.1109/ACCESS.2022.3171924.
+[79] L. Archambault and K. Kennedy, “Teacher preparation for K–12 online
+and blended learning,” in Handbook of Research on K12 Online and
+Blended Learning, 2nd ed., K. Kennedy and R. E. Ferdig, Eds., Pittsburgh,
+PA, USA: Carnegie Mellon Univ. ETC Press, 2018, pp. 225–244.
+[80] M. Heitink, J. Voogt, P. Fisser, L. Verplanken, and J. Van Braak, “Eliciting teachers’ technological pedagogical knowledge,” Australas. J. Educ.
+Technol., vol. 33, no. 3, pp. 96–109, 2017, doi: 10.14742/ajet.3505.
+[81] D. G. de la Iglesia, J. F. Calderón, D. Weyns, M. Milrad, and M. Nussbaum, “A self-adaptive multi-agent system approach for collaborative
+mobile learning,” IEEE Trans. Learn. Technol., vol. 8, no. 2, pp. 158–172,
+Apr./Jun. 2015, doi: 10.1109/TLT.2014.2367493.
+[82] J. Ecalle, N. Kleinsz, and A. Magnan, “Computer-assisted learning in
+young poor readers: The effect of grapho-syllabic training on the development of word reading and reading comprehension,” Comput. Hum. Behav.,
+vol. 29, no. 4, pp. 1368–1376, 2013, doi: 10.1016/j.chb.2013.01.041.
+
+Jie Hu (Member, IEEE) received the M.A. degree
+in educational studies from the University of York,
+Heslington, U.K., in 2005, and the Ph.D. degree in
+science education from the University of Warwick,
+Coventry, U.K., in 2009.
+She is currently a Professor with the ZJU Tang
+Scholar, working with the Department of Linguistics, School of International studies, Zhejiang University, Hangzhou, China. In recent years, she has
+authored/coauthored more than 40 academic papers
+in SCI and SSCI indexed journals, such as the Computers and Education, Computer-Assisted Language Learning, and Interactive
+Learning Environments. She has hosted several national and provincial research
+funding as the Principle Investigator in China. Her research interests include
+digital reading education, large-scale reading assessment, education technology,
+and educational Big Data.
+
+Yi Peng is currently working toward the doctoral
+degree in linguistics and applied linguistics with the
+Department of Linguistics, School of International
+Studies, Zhejiang University.
+Her research interests include technology enhanced language learning, educational data mining,
+learning analytics, and global education governance.
+
+Xiao Chen received the M.E. degree in computer science and technology from the University of Electronic
+Science and Technology of China, Chengdu, China,
+in 2023.
+He is currently working as a Software Development
+Engineer with the Bytedance. His research interests
+include machine learning and deep learning, Big Data
+analytics, complex network, information diffusion,
+and epidemic spreading.
+
+

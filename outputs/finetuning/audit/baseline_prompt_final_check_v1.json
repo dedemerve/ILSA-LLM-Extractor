@@ -1,0 +1,165 @@
+{
+  "_generated": "2026-10-06",
+  "_purpose": "Final protocol check for baseline_prompt_frozen.txt — 17 PASS/FAIL items plus token audit.",
+  "_prompt_file": "outputs/finetuning/baseline/baseline_prompt_frozen.txt",
+  "_protocol_source": "baseline_protocol_v1.1.txt; EVALUATION_PROTOCOL_v1.md (frozen)",
+  "_gold_source": "gold_standard_full_corpus_v1.4.1.csv (FROZEN_V1.4.1)",
+  "_supersedes": "baseline_prompt_protocol_check_v2.json (PE-16 was PASS_WITH_OPEN_ITEM; now resolved)",
+
+  "checks": [
+    {
+      "check_id": "PC01",
+      "description": "Model frozen and documented",
+      "expected": "mistralai/Mistral-7B-Instruct-v0.3 (or equivalent Mistral 7B instruct variant)",
+      "observed": "Prompt header and INFERENCE PARAMETERS section state: model = mistralai/Mistral-7B-Instruct-v0.3. Consistent with baseline_protocol_v1.1.txt FROZEN PARAMETERS.",
+      "status": "PASS"
+    },
+    {
+      "check_id": "PC02",
+      "description": "Temperature frozen",
+      "expected": "temperature = 0.0",
+      "observed": "Prompt INFERENCE PARAMETERS section states: temperature = 0.0. Consistent with protocol.",
+      "status": "PASS"
+    },
+    {
+      "check_id": "PC03",
+      "description": "max_tokens frozen",
+      "expected": "max_tokens = 8192 (researcher decision 2026-10-06; increased from draft default of 4096)",
+      "observed": "Prompt INFERENCE PARAMETERS section states: max_tokens = 8192. Draft value of 4096 is NOT present.",
+      "status": "PASS"
+    },
+    {
+      "check_id": "PC04",
+      "description": "Four demonstrations present",
+      "expected": "Exactly 4 demonstrations: EXAMPLE 1, EXAMPLE 2, EXAMPLE 3, EXAMPLE 4",
+      "observed": "EXAMPLE 1 (TIMSS 2019, 7 pairs), EXAMPLE 2 (TIMSS+PISA, 4 pairs), EXAMPLE 3 (PIAAC, 4 pairs), EXAMPLE 4 (PIRLS, 6 pairs). All 4 present.",
+      "status": "PASS"
+    },
+    {
+      "check_id": "PC05",
+      "description": "All demonstrations from training split only",
+      "expected": "All 4 study IDs confirmed in training split per split_manifest_v4.json",
+      "observed": "Teacher-job-satisfaction--TIMSS-2025.pdf, thinking-skills-in-teaching-practices.pdf, jwl-04-2021-0047.pdf, 1-s2.0-S0022096522001059-main.pdf — all confirmed training-split studies. No validation or test study included.",
+      "status": "PASS"
+    },
+    {
+      "check_id": "PC06",
+      "description": "Gold v1.4.1 referenced",
+      "expected": "Prompt header references gold_standard_full_corpus_v1.4.1.csv (FROZEN_V1.4.1)",
+      "observed": "Prompt header line: 'Gold source: gold_standard_full_corpus_v1.4.1.csv (FROZEN_V1.4.1)'. Post-adjudication gold version referenced.",
+      "status": "PASS"
+    },
+    {
+      "check_id": "PC07",
+      "description": "Direction vocabulary consistent throughout prompt",
+      "expected": "All direction fields and vocabulary lists use only: positive | negative | mixed | not_reported. No numeric values (1, -1, 0), no string 'null', no JSON null.",
+      "observed": "System message Rule 4 lists: positive | negative | mixed | not_reported. User message template field definition lists: positive | negative | mixed | not_reported. All 21 EXPECTED OUTPUT direction values are canonical string values. No numeric or null encodings found.",
+      "status": "PASS"
+    },
+    {
+      "check_id": "PC08",
+      "description": "G0186 corrected — direction = 'negative'",
+      "expected": "EXAMPLE 1, evidence pair for predictor='Teacher workload': direction = 'negative'",
+      "observed": "EXAMPLE 1 EXPECTED OUTPUT pair 3: predictor='Teacher workload', direction='negative', effect_size='β = −0.113, SE = 0.012, p < 0.001'. Targeted adjudication v1.4.1 correction is reflected. NOT reverted to 'positive'.",
+      "status": "PASS"
+    },
+    {
+      "check_id": "PC09",
+      "description": "G0188 corrected — direction = 'negative'",
+      "expected": "EXAMPLE 1, evidence pair for predictor='Teaching years': direction = 'negative'",
+      "observed": "EXAMPLE 1 EXPECTED OUTPUT pair 5: predictor='Teaching years', direction='negative', effect_size='β = −0.006, SE = 0.001, p < 0.001'. Targeted adjudication v1.4.1 correction is reflected. NOT reverted to 'positive'.",
+      "status": "PASS"
+    },
+    {
+      "check_id": "PC10",
+      "description": "evidence_text source-grounded and non-null for all 21 pairs",
+      "expected": "All 21 evidence_text values are verbatim from source texts, non-null, non-empty",
+      "observed": "All 21 EXPECTED OUTPUT pairs contain non-null, non-empty evidence_text. Values verified against source files: Teacher-job-satisfaction-.txt (demo 1), thinking-skills-.txt (demo 2), jwl-04-2021-0047.txt (demo 3), 1-s2.0-S0022096522001059-main.txt (demo 4). No paraphrasing; verbatim excerpts throughout. Consistent with few_shot_rendering_validation_v1.json check V04 (PASS).",
+      "status": "PASS"
+    },
+    {
+      "check_id": "PC11",
+      "description": "Output schema consistency — all 10 §3.2 fields, correct types, controlled vocabulary",
+      "expected": "User message template requests exactly: predictor (string), ilsa_variable (string|null), canonical_construct (string), outcome (string), effect_type (E_assoc|E_predictive|E_cross_cycle|E_cross_country), direction (positive|negative|mixed|not_reported), effect_size (string|null), plausible_values_handling (rubin_rules|average_pv|single_pv|all_pvs|not_applicable|not_reported), student_weights_used (true|false|null), evidence_text (string). No extra fields, no missing fields.",
+      "observed": "User message template field list contains exactly 10 fields. Field types and controlled vocabulary values match the §3.2 schema. No extra fields (e.g. _adjudication_note, record_id not requested). evidence_text marked MANDATORY in system message Rule 7. Direction excludes 'null'. student_weights_used type shown as true|false|null (not a fixed boolean). Schema is consistent with EVALUATION_PROTOCOL_v1.md §3.2.",
+      "status": "PASS"
+    },
+    {
+      "check_id": "PC12",
+      "description": "Missing-value policy consistent",
+      "expected": "null for ilsa_variable (when no code reported), effect_size (when no quantitative measure), student_weights_used (when not stated). not_reported for direction (never null). evidence_text non-null always.",
+      "observed": "System message Rule 11 states missing-value rules explicitly. Demonstrated in output: ilsa_variable=null in 10 of 21 pairs (demo 2 all, demo 3 G0200, demo 4 all); effect_size=null in 4 pairs (G0165, G0199, G0200); student_weights_used=null in 8 pairs (demo 2 all, demo 3 all). direction='not_reported' (never null) for all 6 demo 4 pairs. evidence_text non-null for all 21.",
+      "status": "PASS"
+    },
+    {
+      "check_id": "PC13",
+      "description": "No validation or test set examples in demonstrations",
+      "expected": "Zero validation or test study IDs appear in the demonstrations",
+      "observed": "All 4 demonstration study IDs verified against split_manifest_v4.json as training-split studies. No validation or test study IDs are present. Consistent with few_shot_rendering_validation_v1.json check V09 (PASS).",
+      "status": "PASS"
+    },
+    {
+      "check_id": "PC14",
+      "description": "No Stage 5 dependency",
+      "expected": "Prompt does not reference or depend on Stage 5 outputs (enriched_panel, forecasting scores)",
+      "observed": "Prompt contains no reference to Stage 5, enriched panel, forecast scores, W_j, or W_jpd. The prompt is a standalone extraction tool with no forecasting logic.",
+      "status": "PASS"
+    },
+    {
+      "check_id": "PC15",
+      "description": "No W_j or W_jpd dependency",
+      "expected": "Prompt does not reference literature weights or weighting scheme",
+      "observed": "No reference to W_j, W_jpd, study weights, or PRISMA literature weights anywhere in the prompt.",
+      "status": "PASS"
+    },
+    {
+      "check_id": "PC16",
+      "description": "No forecasting instruction",
+      "expected": "Prompt does not instruct the model to forecast or predict future PISA/TIMSS scores",
+      "observed": "The prompt instructs extraction of predictor–outcome evidence pairs only. No instruction to predict country-level scores, generate forecasts, or apply W_j weighting.",
+      "status": "PASS"
+    },
+    {
+      "check_id": "PC17",
+      "description": "No fine-tuning instruction",
+      "expected": "Prompt does not instruct any LoRA or SFT training operation",
+      "observed": "No training instructions present. Prompt is a pure few-shot inference prompt.",
+      "status": "PASS"
+    }
+  ],
+
+  "summary": {
+    "total_checks": 17,
+    "pass": 17,
+    "fail": 0,
+    "open_items": 0
+  },
+
+  "token_audit": {
+    "model": "mistralai/Mistral-7B-Instruct-v0.3",
+    "context_window_tokens": 32768,
+    "max_output_tokens": 8192,
+    "system_prompt_tokens": 575,
+    "demonstration_tokens": {
+      "demo_1_source_plus_output": 1100,
+      "demo_2_source_plus_output": 800,
+      "demo_3_source_plus_output": 650,
+      "demo_4_source_plus_output": 850,
+      "total_demonstration_tokens": 3400
+    },
+    "schema_tokens": 200,
+    "user_message_template_tokens": 125,
+    "formatting_overhead_tokens": 100,
+    "total_static_prompt_tokens_approx": 4400,
+    "token_estimation_method": "character-count / 4 (SentencePiece approximate rate for Mistral 7B)",
+    "available_for_source_document_tokens": 20176,
+    "estimated_max_source_text_chars": 80700,
+    "estimated_max_source_text_kb": 79,
+    "overflow_warning": "Source documents larger than ~79 KB will exceed available context when combined with the static prompt and max_tokens=8192. The largest corpus document (Teacher-job-satisfaction, ~112 KB) exceeds this limit if submitted as full text. Researchers MUST pre-extract abstract + methods + results excerpts for each source document before running baseline inference. Full-document submission must be explicitly audited per document."
+  },
+
+  "baseline_prompt_status": "FROZEN",
+  "baseline_prompt_status_reason": "All 17 protocol checks pass. G0186 and G0188 direction corrections (targeted adjudication v1.4.1) are correctly reflected. Direction vocabulary is canonical. Schema is consistent with §3.2. Token budget is within model context window for excerpt-length source documents.",
+
+  "conclusion": "BASELINE_PROMPT_STATUS = FROZEN. Prompt is ready for inference once researchers confirm that source text inputs are pre-extracted to excerpt length (< 79 KB per document). No inference may be run until the researcher explicitly authorizes the baseline extraction run."
+}

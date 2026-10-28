@@ -1,0 +1,993 @@
+                                               International Journal of Educational Research 130 (2025) 102537
+
+
+                                                             Contents lists available at ScienceDirect
+
+
+                                  International Journal of Educational Research
+                                                  journal homepage: www.elsevier.com/locate/ijedures
+
+
+
+
+Predictive insights into U.S. students’ mathematics performance
+on PISA 2022 using ensemble tree-based machine learning models
+Li Zhu a,* , Hyesun You b , Minju Hong c, Zhenhan Fang d
+a
+  Mathematics Education, Department of Teaching and Learning, College of Education, The University of Iowa, 240 S Madison St, Iowa City, IA
+52242, United States
+b
+  Science Education, Department of Teaching and Learning, College of Education, The University of Iowa, 240 S Madison St, Iowa City, IA 52242,
+United States
+c
+  Educational Statistics and Research Methods, College of Education and Health Professions, University of Arkansas, 751 W Maple St, Fayetteville,
+AR 72701, United States
+d
+  Statistics, Department of Statistics and Actuarial Science, College of Liberal Arts and Sciences, The University of Iowa, 241 Schaeffer Hall, Iowa
+City, IA 52242, United States
+
+
+
+
+A R T I C L E I N F O                                      A B S T R A C T
+
+Keywords:                                                  Background: In the latest Program for International Student Assessment (PISA) 2022 results, U.S.
+PISA 2022                                                  students earned the lowest math scores in two decades. Educators and stakeholders have
+Mathematics performance                                    endeavored to identify key malleable factors in an attempt to raise scores. Although more re­
+Predictor selection
+                                                           searchers are gradually incorporating machine learning (ML) techniques, most still rely on
+Tree-based ML models
+ALE plots
+                                                           literature reviews by humans to identify important predictors. Here we focus on providing
+                                                           innovative insights into how to use ML models to identify predictors most strongly associated
+                                                           with students’ math performance.
+                                                           Methods and Results: The dataset comprises 4,552 U.S. students in 154 schools from the PISA
+                                                           2022. We used three ensemble tree-based ML models (Random Forest, XGBoost, and LightGBM)
+                                                           to select most influential predictors from 143 derived variables of student and school question­
+                                                           naires. All three models showed high accuracy in predicting students’ math performance, with
+                                                           XGBoost performing best (rMSE = 69.82, training time = 4.14 s) and identifying 10 significant
+                                                           predictors. According to the accumulated local effects (ALEs) plots, three of them have general
+                                                           positive effects, five have roughly negative effects, and two have mixed effects on students’ math
+                                                           performance. When comparing these ML-identified predictors to those identified by literature
+                                                           review, the ML method has significantly improved the accuracy of predictor selection (p-value <
+                                                           0.05) but offered lower interpretability.
+                                                           Conclusions: We conclude that ML predictor selection is an effective alternative to LR for obtaining
+                                                           influential factors affecting student learning outcomes. Among the factors identified, math self-
+                                                           efficacy, ESCS, and math anxiety are strongly correlate to students’ math performance. The re­
+                                                           sults provide valuable insights to implement shifts in instructional practices, targeted
+
+
+
+
+    Abbreviations: PISA, Program for International Student Assessment; ML, Machine learning; DVs, Derived variables; IVs, Individual variables; PVs,
+Plausible values; RF, Random forest; XGBoost, eXtreme gradient boosting; LightGBM, Light gradient-boosting machine.
+  * Corresponding author.
+    E-mail addresses: li-zhu@uiowa.edu (L. Zhu), hyesun-you@uiowa.edu (H. You), minjuh@uark.edu (M. Hong), zhenhan-fang@uiowa.edu
+(Z. Fang).
+
+https://doi.org/10.1016/j.ijer.2025.102537
+Received 10 July 2024; Received in revised form 28 November 2024; Accepted 9 January 2025
+Available online 14 January 2025
+0883-0355/© 2025 Elsevier Ltd. All rights are reserved, including those for text and data mining, AI training, and similar technologies.
+L. Zhu et al.                                                                        International Journal of Educational Research 130 (2025) 102537
+
+
+                                              interventions, curriculum development, and policy decisions, ultimately contributing to
+                                              enhancing the overall quality of U.S. math education.
+
+
+
+
+1. Introduction
+
+    Despite various reforms and initiatives designed to enhance math education in the United States, challenges persist in achieving
+consistent student performance. Based on the Program for International Student Assessment (PISA) 2022 results, the U.S. ranked
+slightly below the Organization for Economic Cooperation and Development (OECD, 2024c) average in mathematics, scoring 465
+compared to the OECD average of 472. Although the U.S. score was not drastically different from the average, it consistently lagged
+behind top-performing countries like Singapore, Hong Kong, and Japan. In the Trends in International Mathematics and Science Study
+(TIMSS) 2019 results, U.S. 4th graders performed well, with average scoring of 535, which is significantly above the TIMSS average of
+500, placing them in the top quarter globally. However, U.S. 8th graders scored 515, still above the average but indicating a relative
+decline in performance compared to younger students. These results suggest that although the U.S. performs relatively well in early
+math education, there is a decline in math achievement as students progress to higher grades. In response to these challenges, edu­
+cators and stakeholders have endeavored to identify key adaptable factors that can overcome them. Scholars have sought to uncover
+and elucidate the factors contributing to variations in students’ mathematics performance by leveraging these vast sources of data.
+Large-scale assessments play a critical role by providing rich data sources and detailed insights into trends and patterns in students’
+math performance.
+    However, most of the papers on international assessment have used traditional statistical methodologies to analyze mathematics
+performance. In recent years, machine learning (ML) methods have emerged as powerful tools for analyzing educational data and
+predicting student outcomes with greater precision. ML models excel at uncovering the complex relationships between predictors and
+responses within large datasets by advanced algorithms. These advantages contribute to more effective decision-making in the field of
+education. Furthermore, although an increasing number of PISA predictive studies have gradually incorporated ML techniques, most
+studies selected potential predictors based on literature reviews (LR) conducted by content experts. The LR method may sometimes be
+influenced by subjective perspectives, potentially overlooking important variables or overestimating those that are less relevant.
+    The purpose of our study is to fill in the gaps identified in the PISA studies that have remained unexplored. Instead of relying on LR
+to select influential predictors, we provide innovative insights into how we can use ML models to identify predictors that are strongly
+associated with students’ math performance. The research aims guiding this study are threefold: First, using ML models, we aim to
+determine which factors are most strongly associated with students’ mathematics performance. Second, we seek to explore how ML-
+derived predictors can be analyzed effectively to provide actionable insights for educators and policymakers. Third, we aim to compare
+the predictors identified through ML with those reported in the existing PISA literature, highlighting the difference between human
+selection with theoretical conceptions and selection by ML techniques. The research questions are as follows:
+
+    1. What are the most influential predictors associated with students’ math performance using ML models?
+    2. How can we interpret students’ math performance using the predictors obtained from the ML model?
+    3. How do the predictors obtained by ML differ from those in the PISA literature?
+
+    To achieve these objectives, we begin by reviewing relevant theoretical framework literature on variables influencing mathematics
+achievement, including student background characteristics, affective variables, learning opportunities, and school-level variables. We
+also examine previous studies that have utilized ML approaches to predict students’ performance in educational settings. Drawing
+upon recent frameworks on student and teacher characteristics impacting math achievement, we integrate insights from existing
+research to inform our analytical framework.
+
+
+
+
+                  Fig. 1. The opportunity–propensity framework (adapted from Byrnes & Miller, 2007; Powers & An, 2023).
+
+                                                                    2
+L. Zhu et al.                                                                         International Journal of Educational Research 130 (2025) 102537
+
+
+2. Theoretical framework and literature review
+
+2.1. Opportunity–propensity framework
+
+    The present study is supported by the opportunity–propensity framework (Byrnes & Miller, 2007; Powers & An, 2023), which is
+designed to show the relationships among different factors affecting student academic learning, particularly in subjects like mathe­
+matics and science (Rubinsten et al., 2018; Wang et al., 2013; Zhu et al., 2018). As shown in Fig. 1, this framework integrates different
+types of predictors of students’ math performance into three categories: antecedent factors, opportunity factors, and propensity factors.
+Antecedent factors are related to aspects of students’ demographic characteristics and family background, such as socioeconomic
+status and home resources (Desoete & Baten, 2022; Lewis & Farkas, 2017). These factors typically occur earlier in students’ mathe­
+matical learning and influence their later performance (Liu et al., 2022; Sackes et al., 2011; Star et al., 2015). Further, they are able to
+affect students’ math performance by causing variations in both opportunity factors and propensity factors (Morgan et al., 2023;
+Ribner et al., 2019).
+    Opportunity factors refer to aspects of learning context that provide students with opportunities that encourage their mathematical
+learning, such as school climate and different math-learning activities (Ceulemans et al., 2017; Desoete & Baten, 2022). Prior studies
+have indicated that students who are in better learning environments with sufficient learning opportunities tend to reach higher
+academic achievement in mathematics (Powers & An, 2023). Additionally, opportunity factors may impact students’ mathematics
+learning through propensity factors (Baten et al., 2023; Ribner et al., 2019). Propensity factors are students’ own willingness and
+ability to learn mathematics (Hallman, 2014; Mercader et al., 2018), such as students’ self-efficacy, motivation, and anxiety. Although
+antecedent factors and opportunity factors are critical for mathematical learning, students also need the propensity to take advantage
+of these factors. Propensity factors may influence students’ mathematics learning through contributing opportunity factors to students’
+mathematical learning (Byrnes & Miller-Cotto, 2016; Powers & An, 2023). Finally, these different factors work in an integrated fashion
+and allow us to understand students’ math performance within this framework.
+
+2.2. Factors associated with students’ mathematics performance
+
+    In the PISA 2022, mathematics performance refers to “the mathematical literacy of a 15-year-old to formulate, employ and
+interpret mathematics in a variety of contexts to describe, predict and explain phenomena, recognizing the role that mathematics plays
+in the world.” (OECD, 2024a). Four types of factors have been broadly considered to demonstrate an understanding of predicting
+students’ math performance: student background (Lee & Borgonovi, 2022; Marks & Pokropek, 2019), affective factors (Pitsia et al.,
+2017; Xiao & Sun, 2021), learning opportunities (Guo & Liao, 2022; Wang et al., 2023), and school-related factors, particularly school
+climate (Ramazan et al., 2023; Teng, 2020). We address these four factors by examining their roles and associations with students’
+math performance.
+
+2.2.1. Student background
+    Researchers have frequently explored student background in previous predictive PISA studies on factors affecting math perfor­
+mance. One of the most common factors they have identified as critical in predicting students’ math performance is economic, social,
+and cultural status (ESCS), which is derived from three variables: highest parental occupational status (HISEI), highest education of
+parents in years (PAREDINT), and home possessions (HOMEPOS) in PISA 2022 (OECD, 2024b). Harju-Luukkainen et al. (2017)
+examined students’ math performance and ESCS background on PISA 2012, and the results indicated that the impact of ESCS on math
+performance was statistically significant for all students. Based on the PISA 2018 Spanish database, Molina-Muñoz et al. (2023)
+showed that student ESCS had a significant effect on students’ academic performance in mathematics. Not only did these recent studies
+reveal that student ESCS could significantly predict math performance, some researchers (e.g., Aksu et al., 2022; Masci et al., 2018)
+found that student ESCS was the most significant factor in predicting math performance in previous PISA cycles.
+    Similar to the student ESCS, PISA spawned a large body of predictive studies examining the relationship between math performance
+and another student background factor: information and communication technologies (ICT) resources at home. With the development
+of technology, specifically artificial intelligence, the role of ICT resources in students’ academic success has garnered increasing
+attention in recent years (Jeong et al., 2024; Lapinid et al., 2022; Zhang & Liu, 2016). Bulut and Cutumisu (2017) and Hu et al. (2018)
+found that student ICT resources at home were significantly predictive of their math performance on the PISA assessment. Geesa et al.
+(2019) investigated how students’ ICT resources at home predicted their math performance in three countries, including the United
+States. Their results indicated that ICT availability at home significantly and positively predicted students’ math performance.
+Additionally, some recent studies suggested that the pandemic further increased the importance of students’ ICT resources at home in
+addition to posing enormous educational-equality challenges (OECD, 2023d).
+
+2.2.2. Student affective factors
+    The affective factors refer to the way in which students relate to their environment, how they perceive it, and how they feel about it
+(Guo et al., 2020; Jack et al., 2014). The affective factors in PISA consist of subject-specific affective factors and general affective
+factors (OECD, 2023d). Among math-specific affective factors, multiple studies have demonstrated that math self-efficacy, students’
+belief in their own ability to succeed in math-related tasks, plays an important role in their math performance (Pitsia et al., 2017; Su
+et al., 2021). Many predictive PISA studies showed math self-efficacy to be a significant predictor of students’ math performance
+(Arikan, 2014; Koyuncu, 2020; Larsen & Jang, 2021). When Zhao and Ding (2019) examined how factors predicted math performance
+
+                                                                     3
+L. Zhu et al.                                                                        International Journal of Educational Research 130 (2025) 102537
+
+
+in the United States and China in PISA 2012, math self-efficacy was the only significant predictor that positively influenced students’
+math performance across the two countries. By contrast, student math anxiety, characterized by negative emotions and fear responses
+in solving math tasks, tended to correlate with lower math achievement (D’Agostino et al., 2022; Özberk et al., 2017). As a critical
+math-specific affective factor, math anxiety showed a significant and negative relationship with students’ math performance in pre­
+vious PISA cycles (Fan et al., 2019; Gabriel et al., 2020; Lau et al., 2022).
+    Other critical aspects of student affective factors are within the general affective domain, such as student occupational expecta­
+tions, feelings about learning at home, and out-of-school experiences (Immekus et al., 2022; Michael & Kyriakides, 2023; OECD,
+2023c). Many researchers have reported that the factor of occupational expectations was a significant predictor of math performance
+and that students with high occupation-status expectations usually achieved better math performance than students with low
+occupation-status expectations (Lee, 2022; Thien, 2016). Furthermore, according to Zhu (2018), the average performance gap in
+mathematics between students in the top quarter of the PISA occupational status and those in the bottom quarter averages 93 points,
+which is more than one-and-a-half mathematical proficiency levels.
+    The affective factor of student feelings about learning at home plays a critical role in students’ math performance (Bertling et al.,
+2020). PISA 2022 results showed nearly half of students stated that they struggled with self-motivation to do schoolwork while
+learning at home during school closures because of the pandemic (OECD, 2023b), which presented enormous challenges to students’
+math performance. Suter (2019) found that the factor associated with students’ out-of-school experiences had an inverse relationship
+with students’ math performance. Gomez-Fernandez and Albert (2020) also identified a significant negative association between the
+time spent on exercising or practicing sports before going to school and students’ math performance.
+
+2.2.3. Learning opportunities
+    Student learning opportunities—whether students have adequate chances to engage in practical learning experiences—are the
+most easily neglected factors, yet they play a critical role in predicting students’ math performance in PISA assessment (Barnard-Brak
+et al., 2018; OECD, 2023d; Yang Hansen & Strietholt, 2018). An increasing number of predictive studies have shown a strong positive
+impact of students’ learning opportunities on their mathematics performance, indicating that more learning opportunities lead to
+better performance in mathematics (Guo & Liao, 2022; Wang et al., 2023). The effects of learning opportunities include the factor of
+students’ familiarity with mathematical concepts, measured by asking students how familiar they are with various mathematical
+concepts (Costa & Chen, 2023; Özberk et al., 2017; Stacey, 2015). It directly influences students’ math performance, with PISA data
+supporting a positive correlation between familiarity with mathematics and academic results (OECD, 2016a). Some studies even
+identified familiarity with mathematics concepts as the most significant predictor of students’ math performance (e.g., Brow, 2019; Yi
+& Na, 2020).
+    Although the literature focuses more on the learning of math concepts in schools, it is equally important to consider the important
+role of family support on self-directed learning opportunities in students’ math performance (Bertling et al., 2020; Liu & Whitford,
+2011). Bransford et al. (2000) noted that the average U.S. student spends over half of their academic year learning at home. Moreover,
+school closures during the pandemic significantly reduced instructional time; therefore, reliance on family support for student
+self-directed learning, such as a supportive learning environment and help with schoolwork, became more crucial (Grewenig et al.,
+2021; Manca & Meluzzi, 2020). All of these studies highlighted the importance of family support in promoting self-directed learning,
+significantly impacting students’ math performance.
+
+2.2.4. School factors
+    School-related factors are considered as critical as student-related factors in predicting students’ math performance (De Bortoli &
+Thomson, 2010; Teng, 2020). According to the OECD (2024b) and Wu (2022), the perception of the school principal regarding factors
+affecting school climate (e.g., student truancy, skipping classes, or bullying other students) could explain a large part of the school
+climate. In the Bove et al. (2016) PISA 2012 study, the student-related factors affecting school climate showed a significant regression
+coefficient with math performance at school level. Altun and Kalkan (2021) and Özberk et al. (2017) also determined that the
+student-related factors affecting school climate were significantly related to students’ math performance in previous PISA cycles.
+Overall, an increasing number of studies acknowledged that a safe and healthy school climate is essential for stimulating students’
+academic performance (Longobardi et al., 2022; Rohatgi & Scherer, 2020; Trinidad, 2020).
+
+2.3. Predictive PISA studies on students’ math performance using ML
+
+    ML is a subfield of artificial intelligence that concentrates on the development of algorithmic models, enabling computers to
+automatically learn from large quantities of data to improve predictive accuracy outcomes (Albreiki et al., 2021; Rastrollo-Guerrero
+et al., 2020; Sekeroglu et al., 2021). Because ML models are able to handle high-dimensional data (King et al., 2024; Martínez-Abad
+et al., 2020) and learn from the data without relying on predefined, specific distribution assumptions (Cardoso Silva Filho et al., 2023;
+Liu et al., 2022), there has been a huge increase in the utilization of ML models for predictive analysis of students’ math performance in
+recent years. Gabriel et al. (2018) used the classification and regression decision trees (CART) in PISA 2012 to examine how student
+background and affective factors relate to math performance. Bayirli et al. (2023) employed different ML models, including random
+forest (RF), logistic regression (LR), and support vector machine (SVM), to predict the math performance of students from 12
+Asia-Pacific countries participating in PISA 2018. Again, in the PISA 2018 Spain database, Gómez-Talal et al. (2024) employed
+different ML models such as extreme gradient boosting (XGBoost), light gradient boosting machine (LightGBM), RF, LR, and SVM to
+identify critical factors predicting students’ math performance.
+
+                                                                    4
+L. Zhu et al.                                                                        International Journal of Educational Research 130 (2025) 102537
+
+
+    It is worth noting that many of these studies using ML models to predict math performance did not use only a single model; they
+often used multiple ML models simultaneously. For example, Güre et al. (2020) utilized both Neural Network and RF for predicting
+Turkish students’ math performance in PISA 2015, and the results revealed that RF made predictions with smaller errors. When Tan
+and Cutumisu (2022) predicted students’ academic performance in three subjects, including mathematics, different ML models’
+predictive results showed that XGBoost slightly outperformed prediction performance. Lee and Lee (2021) identified the important
+predictors of higher math performance that predict East Asian students’ performance; the results showed that LightGBM outperforms
+the other three ML models. These studies indicate that ensemble tree-based ML models such as RF, XGBoost, and LightGBM have been
+widely used and exhibited outstanding results in predictive PISA studies on students’ math performance.
+
+3. Methods
+
+3.1. Data sources
+
+    We analyzed PISA 2022 data (https://www.oecd.org/pisa/data/2022database/), which assessed the mathematical performance of
+15-year-old students in the United States. Following the PISA user guidance, we used the school ID (CNTSCHID) to merge the student
+data file with the school data file. During the merging process, the same school-level predictors were assigned to students within the
+same school. As a result, the dataset comprised 4552 students in 154 schools. Of those, 2312 were male (50.79 %), 2235 were female
+(49.10 %), and five students (0.11 %) did not identify their gender. Most of the students were in 10th grade (N = 3, 378, 74.21 %), and
+the rest were in 8th, 9th,11th, and 12th grades (N = 1174, 25.79 %).
+    The student math performance scores were used as outcome variables for the predictive statistical analysis. In PISA 2022, 10
+plausible values (PV1MATH to PV10MATH) were provided as math performance scores for each student. To provide unbiased esti­
+mates of student proficiency, we followed the user guidance (Kastberg et al., 2021; OECD, 2024c) to include all 10 of these plausible
+values (PVs) as the outcome variables. In terms of predictors, we used the derived variables (DVs) that were constructed through the
+arithmetical transformation of one or more multiple items (OECD, 2024b). PISA uses DVs, which provides an advantage in avoiding the
+issues of collinearity by reducing the overparameterized variability in the values when including multiple predictors measuring the
+same construct (Rutkowski et al., 2010; von Davier et al., 2019). In PISA 2022, 86 variables were derived from the student ques­
+tionnaire and 57 from the school questionnaire. This study used all these DVs from the student and school questionnaires as predictors.
+
+3.2. Data analysis
+
+3.2.1. Data cleaning and missing imputation
+    We performed a series of data preprocessing steps, starting with data cleaning and followed by missing data imputation. In Step 1,
+we removed predictors with >50 % missing values to prevent biased results due to severe missingness. According to the study by
+Barton et al. (2023), eliminating predictors with >50 % missing values is essential to prevent biased outcomes when using ML al­
+gorithms. After the deletion, the dataset had 70 student-level predictors (originally 86 variables) and 47 school-level predictors
+(originally 57 variables). In Step 2, we eliminated the identical variables, which had the exact same values for all students in the
+dataset. Then the dataset had 64 predictors at the student level and 46 predictors at the school level. In Step 3, we eliminated
+redundant predictors from the PISA 2022 database to avoid the collinearity among variables. For example, ESCS was calculated on the
+three DVs (HISEI, PAREDINT, HOMEPOS); thus we retained the ESCS and excluded the three DVs representing the ESCS. The dataset
+then had 48 student-level predictors and 45 school-level predictors. In Step 4, for these remaining variables after data cleaning, we
+imputed the missing values of the predictors by using the RF-based method—missForest imputation. According to Stekhoven and
+Bühlmann (2012), the RF missing-data imputation method showed approximately 50 % more accuracy than other missing-imputation
+methods (e.g., regression based, or pattern alternating Lasso) because of the flexibility of multivariate data distribution or variable
+types. In Step 5, we separated the overall dataset into training (80 % of overall, N = 3644) and test (20 % of overall, N = 908) datasets.
+
+3.2.2. ML model development
+    To address the research questions, we used three ensemble tree-based models, including RF, XGBoost, and LightGBM. RF (Breiman,
+2001) is a robust and versatile ensemble ML model that works by collecting and evaluating the predictions produced by multiple
+decision trees using the bagging method (Bayirli et al., 2023; Sokkhey et al., 2020). By aggregating the prediction results obtained from
+individual trees, the RF reduces prediction variance and improves overall prediction accuracy (Han et al., 2019; Pan & Cutumisu,
+2024). XGBoost (Chen & Guestrin, 2016) is another ensemble technique that has gained popularity for its predictive accuracy and
+computational efficiency (Jeganathan et al., 2022; Tan & Cutumisu, 2022). Unlike RF, XGBoost builds one tree at a time, each tree
+learning from the differences of the previous one (Asselman et al., 2023; Bentéjac et al., 2021). LightGBM (Ke et al., 2017) employs
+gradient-based one-side sampling algorithms with the advantages of high accuracy and small memory usage. It integrates the pre­
+dictions of multiple decision trees to improve the final prediction results (Lee & Lee, 2021; Wang et al., 2022). We conducted the
+analyses using the randomForest, xgboost, and lightgbm packages in R software to train three models (Breiman, 2001; Chen & Guestrin,
+2016; Ke et al., 2017). Five-fold cross validation was used in the training dataset to improve ML model performance. We conducted our
+statistical analysis following PISA user guidance (Kastberg et al., 2021; OECD, 2024c). Each analysis was undertaken 10 times and once
+for each PV, the results were then averaged. For the use of sampling weights, MacNell et al. (2023) pointed out that weighting might be
+less critical to the ML model configuration process compared to traditional regression models. The findings also demonstrated that ML
+models still produced reliable results without incorporating sampling weights in a dataset with complex, multistage, and clustered
+
+                                                                    5
+L. Zhu et al.                                                                                 International Journal of Educational Research 130 (2025) 102537
+
+
+design that use unequal probabilities in the selection process. Building on these, we did not include sampling weights in our analysis.
+    We obtained the RQ1 results through a series of steps. Following the user guidance, the first step was “Compute estimates for each
+plausible value.” We fitted each of three tree-based models for each of the 10 PVs separately with all predictors. The second step is
+“Compute final estimate by averaging all estimates obtained from the first step.” We computed the final importance estimates of each
+predictor by averaging importance scores of each predictor. Next, these estimates were ranked in descending order. Then, we started
+from the most important predictor and employed forward selection to incrementally include additional predictors until satisfying the
+criterion of absolute relative error (ARE; Zhao et al., 2023) that was calculated by
+               ⃒                       ⃒
+               ⃒rMSEreduced − rMSEfull ⃒
+        ARE = ⃒⃒                       ⃒
+                       rMSEfull        ⃒
+
+where rMSE is the root mean squared error between the predicted values and real values, which reflects the predicted accuracy of a
+model; rMSEfull is the rMSE of the model with all predictors; and rMSEreduced is the rMSE of the model including only selected predictors.
+In this study, we set the ARE criterion as 0.1. If ARE is less than 0.1, it indicates the reduced model is close to the full model. In other
+words, the selected predictors are able to explain most of the information from all predictors. For math education, these selected
+predictors contribute most significantly to improving students’ academic performance.
+    In addition to prediction accuracy, we also reported the execution time of three ML models to compare prediction efficiency
+because we hypothesized that if the execution time of one model was less than the execution time of the other two models, that model
+would be more efficient in estimating the parameters of interest. Thus, we identified the best-fitting model based on prediction ac­
+curacy and efficiency.
+    For RQ2, we used the accumulated local effects (ALEs) plots to visualize the relationship between students’ math performance and
+significant predictors selected from the best model in RQ1. The ALE plots (Apley & Zhu, 2020; Tan et al., 2024) show the marginal
+effects of predictors on the outcome variable based on the conditional distributions when splitting the nodes in ML models. They can
+help explain how each predictor affects an outcome variable when controlling for all other predictors.
+    For RQ3, we conducted a literature search based on the key words including “PISA” and “predict” and “mathematics performance”
+(or “mathematics achievement”, “mathematics literacy”) from Google Scholar, Education Source, ERIC (EBSCOhost version) and
+PsycINFO. We included studies whose authors first selected predictors through literature review method and then analyzed the impact
+of these predictors on students’ math performance (e.g., Arikan, 2014; Ding & Zhao, 2019). Regardless of whether their analysis
+approach involved traditional statistical or ML, if a study’s authors employed LR-based method to select predictors, we included the
+study and counted its predictors as LR-identified predictors. We provided the results of predictor count in the supplementary material.
+After confirming the LR-identified predictors, we considered the same number of significant predictors as those identified by the best
+ML model from RQ1, comparing the corresponding rMSE values to reflect the prediction accuracy of LR-identified predictors and
+ML-identified predictors. Specifically, we first calculated rMSE based on the best ML model with LR-identified predictors or
+ML-identified predictors for each PV, which measures the root mean squared error between the predicted value and real value; then
+repeated this calculation for each of the 10 PVs; finally averaged 10 rMSEs to obtain a final rMSE. Additionally, we did a Wilcoxon
+
+
+       Table 1
+       Selected predictors based on three ML models.
+          ML Models                         Selected Predictors                                                                           ARE (%)
+
+          RF                                MATHEFF (Mathematics self-efficacy)                                                           9.62
+                                            ESCS (Index of economic, social and cultural status)
+                                            FAMCON (Familiarity with mathematics concepts)
+                                            BSMJ (Expected occupation status)
+                                            FAMSUPSL (Family support for self-directed learning)
+          XGBoost                           MATHEFF (Mathematics self-efficacy)                                                           9.79
+                                            ESCS (Index of economic, social and cultural status)
+                                            FAMCON (Familiarity with mathematics concepts)
+                                            BSMJ (Expected occupation status)
+                                            FAMSUPSL (Family support for self-directed learning)
+                                            WORKPAY (Working for pay before or after school)
+                                            FEELLAH (Feelings about learning at home)
+                                            EXERPRAC (Exercising or practicing a sport before or after school)
+                                            ANXMAT (Mathematics anxiety)
+                                            ICTRES (ICT resources at home)
+          LightGBM                          MATHEFF (Mathematics self-efficacy)                                                           9.81
+                                            ESCS (Index of economic, social and cultural status)
+                                            BSMJ (Expected occupation status)
+                                            FAMCON (Familiarity with mathematics concepts)
+                                            FAMSUPSL (Family support for self-directed learning)
+                                            WORKPAY (Working for pay before or after school)
+                                            FEELLAH (Feelings about learning at home)
+                                            EXERPRAC (Exercising or practicing a sport before or after school)
+                                            ANXMAT (Mathematics anxiety)
+                                            ICTRES (ICT resources at home)
+
+
+                                                                           6
+L. Zhu et al.                                                                        International Journal of Educational Research 130 (2025) 102537
+
+
+signed-rank test (Woolson, 2007) to examine whether there was a statistical difference between the two predictor selection methods.
+We also discussed the efficiency and interpretability to analyze the advantages and weaknesses of each method in this study.
+
+4. Results
+
+4.1. RQ1. What are the most influential predictors associated with students’ math performance using ML models?
+
+    We examined the significant predictors of students’ math performance in three ML models. Each ML model selected a different
+number of predictors: RF selected five predictors with an ARE value of 9.62 %, XGBoost selected ten predictors with an ARE value of
+9.79 %, and LightGBM selected ten predictors with an ARE value of 9.81 % (see Table 1). These predictors are listed by relative
+ranking, which indicates how more or less important each predictor was in influencing students’ math performance. As the first two
+significant predictors, MATHEFF refers to student self-efficacy to perform various math-related tasks, and ESCS is a complex composite
+index that measures students’ economic, social, and cultural status. Three predictors (FAMCON, BSMJ, and FAMSUPSL) rank among
+the top three to five predictors. FAMCON measures student familiarity with mathematical concepts like exponential function and
+three-dimensional geometry. BSMJ refers to students’ expected occupation status, that is, what kind of job they expect to have when
+they are approximately 30 years old. FAMSUPSL refers to how often students’ families provide specific kinds of learning support such
+as creating a learning schedule. These top five were selected as significant predictors in all three ML models.
+    The other five (WORKPAY, FEELLAH, ICTRES, ANXMAT, EXERPRAC) were selected as significant predictors in XGBoost and
+LightGBM, and all of them follow the same ranking sequences in both ML models. WORKPAY refers to how many days during a typical
+school week students work for pay before going to school or after leaving school. FEELLAH refers to how students felt about learning at
+home, for example, “I enjoyed learning by myself.” EXERPRAC indicates how many days during a typical school week students
+exercised or practiced a sport before or after school, similar to WORKPAY. ANXMAT indicates how anxious students are toward math,
+for example. “I often worry that it will be difficult for me in mathematics classes.” ICTRES refers to students’ access to ICT at home, for
+example., “I own a cell phone with internet access in my home.”
+    In Table 2, we provided prediction accuracy (rMSE) and efficiency (training time) as metrics to compare the performance of three
+ML models in selecting predictors strongly associated with math performance. The full model includes all predictors. The reduced
+model includes only selected predictors — 5 predictors in RF, 10 predictors in XGBoost, and 10 predictors in LightGBM. Based on the
+small differences of rMSE between the full model and reduced model under all three ML models, we identified that all three ML models
+have high accuracy when using the selected predictors instead of all predictors to predict students’ math performance. Comparing the
+rMSE values for each reduced model, XGBoost (rMSE = 66.39) and LightGBM (rMSE = 66.36) had less prediction error than RF (rMSE
+= 69.82). In terms of efficiency in data analysis, XGBoost (training time = 4.14 s) demonstrated shorter execution times than LightGBM
+(training time = 22.93 s.) and RF (training time = 129.27 s.). Thus, by considering both accuracy and efficiency, we identified XGBoost
+as the best model for predicting PISA 2022 U.S. students’ math performance in this study.
+
+
+4.2. RQ2. How can we interpret students’ math performance using the predictors obtained from the ML model?
+
+    To balance the interpretability of ML techniques, we used the ALEs plot to visualize the relationship between students’ math
+performance and significant predictors selected by XGBoost. As shown in Fig. 2, math self-efficacy (MATHEFF) shows a strong positive
+impact on math performance; students with higher math self-efficacy tend to perform better in math tasks. This indicates the
+importance of students’ confidence in their math abilities. A student’s ESCS background also has a positive effect on math perfor­
+mance, which aligns with prior findings that higher socioeconomic backgrounds could provide better resources for students’ math
+learning success. Importantly, the math performance plateaus at the maximum point around a value of 2 and becomes flat, which
+means increasingly smaller benefits of socioeconomic in math learning after achieving a certain level. Similarly, familiarity with
+mathematics concepts (FAMCON) is positively correlated with math performance, particularly within the range of − 2.5 to 2.5. This
+demonstrates that a deeper understanding of math concepts supports better math learning outcomes, especially for most foundational
+math tasks. These significant predictors emphasize the three critical areas where interventions can improve students’ math perfor­
+mance by increasing self-efficacy, socioeconomic background, and understanding of mathematical concepts.
+    There are five predictors (FAMSUPSL, WORKDAY, FEELLAH, ANXMAT, and EXERPRAC) that demonstrate roughly negative effects
+on students’ math performance. Specifically, both family support for self-directed learning (FAMSUPSL) and feelings about learning at
+
+Table 2
+Model comparison based on prediction accuracy and efficiency.
+  ML Models                Metrics                      Full Model               Reduced Model                     Number of Selected Predictors
+
+  RF                       rMSE                         63.69                    69.82                             5
+                           Training Time                1098.72                  129.27
+  XGBoost                  rMSE                         60.47                    66.39                             10
+                           Training Time                8.23                     4.14
+  LightGBM                 rMSE                         60.43                    66.36                             10
+                           Training Time                44.28                    22.93
+
+Note. rMSE = root mean squared error.
+
+                                                                     7
+L. Zhu et al.                                                                                International Journal of Educational Research 130 (2025) 102537
+
+
+
+
+Fig. 2. ALE Plots of Selected Predictors from the XGBoost Model. Note. The y-axis represents the ALE values of students’ math performance; the x-
+axis represents the value of the predictors.
+
+
+home (FEELLAH) show a slight increase in math performance when they are at small values. These indicate that a small amount of
+family support or positive feelings about learning at home can improve math performance. However, the short-term benefits were
+quickly followed by overall declining overall trends. For family support, this suggests that although a small amount of family
+involvement can be beneficial for math learning, too much support might hinder a student’s ability to learn independently. Regarding
+feelings about learning at home, the decline indicates that although a positive home learning environment can initially improve
+achievement, excessive attention or pressure on home learning may ultimately be counterproductive. In terms of ANXMAT, there is a
+slight improvement in math performance that occurs at approximately one-third of the measurement scale. This indicates that
+appropriate anxiety may be helpful for students’ math performance, but higher anxiety has a generally negative effect. The ALE plots
+for working for pay before or after school (WORKPAY) and exercising or practicing a sport before or after school (EXERPRAC) also
+show negative effects on math performance. Students who spend more time working before or after school are likely to struggle in
+math learning. This might be because they have less time and energy available for academic tasks. Similarly, excessive exercising or
+sports practices before or after school might take attention away from academic learning and result in lower math achievement.
+    Additionally, BSMJ represents a skewed S-shaped pattern with an overall upward trend; however, there are declining trends when
+BSMJ is at approximately the one-fourth and three-fourths positions of the measurement scale. This suggests that too high or too low an
+expected occupation status negatively affects students’ math performance. Finally, ICTRES is a symmetrical, hat-shaped pattern in
+which math performance goes up with negative domain and down with positive domain. This demonstrates that moderate ICT re­
+sources at home can be beneficial but overuse will have negative effects on students’ math performance.
+
+
+
+
+Table 3
+Top 10 predictors based on literature review.
+  Rank          Selected Predictors                                    References
+
+  1             MATHEFF (Mathematics self-efficacy)                    #2, #3, #6, #7, #8, #10, #12, #13, #15, #17, #19, #21, #22, #23, #25, #26, #28
+  2             Gender                                                 #1, #2, #3, #4, #5, #9, #11, #12, #14, #15, #18, #19, #20, #22
+  3             ANXMAT (Mathematics anxiety)                           #2, #3, #7, #8, #13, #15, #17, #19, #22; #23, #25, #26, #28
+  4             ESCS (Index of economic, social and cultural status)   #1, #2, #3, #5, #9, #10, #14, #16, #18, #19, #22
+  5             IMMIG (Immigration background)                         #3, #11, #15, #16, #18, #20, #21
+  6             MATHMOT (Motivation)                                   #2, #19, #23, #24, #28, #29
+  7             TEACHSUP (Teacher support)                             #7, #8, #17, #21, #22, #23
+  8             STRATIO (Student–teacher ratio)                        #9, #11, #16, #17, #18, #21
+  9             REPEAT (Grade repetition)                              #15, #16, #17, #18, #20
+  10            BELONG (Sense of belonging)                            #1, #8, #21, #23, #26
+
+Note: The reference lists can be found in the supplementary material.
+
+                                                                           8
+L. Zhu et al.                                                                           International Journal of Educational Research 130 (2025) 102537
+
+
+4.3. RQ3. How do the predictors obtained by ML differ from those in the PISA literature?
+
+    To answer RQ3, we first conducted a literature search where we found a total of 29 studies focused on predictive analysis to explore
+various factors that affect students’ math performance. We found 67 important predictors from PISA 2003 to PISA 2018 in the 29
+studies, as shown in the supplementary material. Because the 10th predictor (mathematics interest) is not able to be matched to the
+same or similar variables in PISA 2022, we skipped it and selected the 11th predictor (sense of belonging) as the new 10th predictor.
+Finally, we listed the top 10 predictors in Table 3. There are three predictors (MATHEFF, ANXMAT, and ESCS) commonly selected by
+ML and the LR
+    Fig. 3 shows the accuracy trends of predictors selected by ML and those selected by LR. The two predictor selection methods start at
+the same rMSE value because MATHEFF is the most important predictor selected by both of them. As the number of predictors in­
+creases, both predictor selection methods show a decreasing trend in rMSE, indicating that the prediction accuracy consistently im­
+proves as more predictors are included. Specifically, we can see the predictors from ML and LR result in different prediction accuracy
+under the same numbers with different types. For example, the top two predictors selected by ML (MATHEFF and ESCS) have an rMSE
+of 78.75, and the top two selected by LR (MATHEFF and Gender) have an rMSE of 83.28. Therefore, the predictors from ML produce
+more accurate results than the predictors from LR. Further, we conducted a Wilcoxon signed-rank test to examine whether there was a
+statistical difference between the two predictor selection methods. The test results showed a p-value of <0.05. From accuracy
+perspective, this indicated that the ML method significantly improved predictor selection in the PISA 2022 U.S. dataset.
+
+5. Discussion
+
+5.1. Implications of the results
+
+    This study provides innovative insights into using ML predictor selection to obtain the factors most strongly associated with stu­
+dents’ mathematics performance. All three ensemble tree-based ML models show high accuracy when using selected predictors instead
+of all predictors to predict math performance. Moreover, there is a significant overlap of predictors under the three ML models, which
+demonstrates the consistency of ML predictor selection results.
+    The study reveals that the ML method provides a significant improvement in predictor selection over the traditional literature
+search of previous studies, especially in large-scale assessment contexts. Compared to literature searches, which incur high costs in
+time and human expertise, ML has contributed to an improvement in efficiency. However, ML processes are like a “black box” because
+of a lack of interpretability (Liu et al., 2022; Puah, 2020). The LR method usually obtains potential important factors based on experts’
+knowledge or established-theory frameworks, which provide high-quality interpretability of predictors. As a data-driven method, ML
+may find complex patterns in the data that may not immediately be found through LR. Aligned with the study of Immekus et al. (2022),
+the application of ML techniques to large-scale assessment data can unlock much potential to advance theory and research. By
+considering accuracy, efficiency, and interpretability, both methods are valuable for helping to identify important key predictors. ML is
+an effective alternative to LR for obtaining the influential factors that impact student math learning outcomes.
+    In this study, the significant predictors identified through ML can be categorized into three types of factors—antecedent, oppor­
+tunity, and propensity—according to the opportunity–propensity framework. For antecedent factors, student ESCS and ICT resources
+
+
+
+
+Fig. 3. Comparison of prediction accuracy between predictors identified through literature review and machine learning model. Note. rMSE = root
+mean squared error.
+
+                                                                      9
+L. Zhu et al.                                                                       International Journal of Educational Research 130 (2025) 102537
+
+
+at home stand out as two influential factors in predicting students’ math performance. As the second ranking predictor, ESCS had a
+significant and positive effect on students’ academic performance in math. Its most important role and positive impact on student
+mathematical learning outcomes is similar to science and reading disciplines in PISA (Vazquez-Lopez & Huerta-Manzanilla, 2021;
+Yetişir & Batı, 2021). Unlike ESCS, the effect of ICT resources at home on student math learning is both positive and negative. Using
+these resources (e.g., laptop, tablet, and smartphone) appropriately will help improve students’ math performance; however, excessive
+use will have a negative impact. In the findings of Gómez-García et al. (2020), a total of 64 % of secondary students affirmed that they
+used ICT at home to study mathematics, but the availability of ICT resources is often negatively associated with their success because of
+inappropriate or excessive use such as frequent phone calls and social media. Some researchers also revealed that ICT resources would
+influence students’ mathematical learning through affecting their perceptions (Courtney et al., 2022; Fan et al., 2022). It is worth
+highlighting that the dual impact of ICT resources emphasizes the need for balance to maximize its positive effects on students’ math
+learning.
+    Within opportunity factors, the positive impact of “familiarity with mathematical concepts” highlights that students who are
+exposed to more mathematical content in their mathematics lessons tend to perform better. Weaker relative performance in a content
+area might signal an imbalance in the mathematical curriculum, which could result in curriculum reform (OECD, 2016b). In addition,
+greater familiarity with mathematics may not be sufficient for solving the most complex mathematics tasks. It is essential for students
+to be exposed to problems that stimulate their reasoning abilities and promote their conceptual understanding, creativity, and
+problem-solving skills. Additionally, the global spread of the pandemic in 2020 disrupted normal teaching and learning activities
+(OECD, 2023d). During school closures, students’ math performances may suffer because too much family support might hinder their
+independent ability for self-directed learning at home. Without proper family involvement, students may face difficulties in staying
+motivated, completing assignments, and understanding mathematical concepts (Toala-Bailón et al., 2022).
+    For propensity factors, student self-efficacy and anxiety are two influential predictors that significantly affect academic perfor­
+mance in mathematics domains. Mathematics self-efficacy played the most positive predictive role in affecting students’ math per­
+formance. Conversely, high math anxiety generally showed a negative trend, with higher anxiety typically linked to lower math
+performance. That said, it is interesting that appropriate anxiety has potential benefits in improving math performance. The study by
+Luttenberger et al. (2018) revealed that appropriate anxiety can contribute to mathematical learning by providing a slight level of
+motivation and focus. In the general domain, the factor of student occupational expectations ranks as the fourth most significant
+predictor positively affecting math performance. This suggests that students with high future career expectations usually perform
+better in math. Moreover, student engagement in school or out-of-school experiences (e.g., exercising and working for pay) is another
+significant factor in their math achievement. Not only for school, the factor of “student feeling about learning at home” is also a
+significant factor in their ability to learn math. Especially because of the pandemic, many students struggled to have positive feelings
+about learning at home during school closures, which significantly and negatively affected their math performance.
+
+5.2. Practical approaches to instruction to improve math performance
+
+    According to the latest data from the PISA 2022, U.S. students performed above the OECD average in science and reading but
+lagged behind in math. The results revealed a statistically significant decline in U.S. students’ math performance since 2018, marking
+the lowest PISA math scores for the country in the past two decades (OECD, 2023c). This downward trend in math performance
+underscores the urgency for educational stakeholders to identify and address the key factors influencing student outcomes. Numerous
+initiatives have been undertaken to enhance math learning among U.S. students, yet ongoing challenges highlight the need for more
+targeted and effective approaches. In this study we examined critical factors influencing math performance. The most significant factor
+among the student-related variables was self-efficacy. Self-efficacy plays a crucial role in influencing students’ motivation, engage­
+ment, and academic success. A substantial body of research has consistently demonstrated the positive correlation between
+self-efficacy in mathematical tasks and overall math performance (Arens et al., 2022). Students with higher self-efficacy in their math
+abilities tend to perform better on assignments and tests than those with lower self-efficacy (Özcan & Kültür, 2021). In fact, numerous
+studies have shown that self-efficacy is a strong predictor of math performance, even after accounting for other factors such as SES and
+grades (e.g., Hiller et al. 2022).
+    Prior knowledge of math concepts could be the essential foundation upon which all new mathematical understanding is constructed
+(Clements & Sarama, 2020). When students develop a robust base in fundamental math principles, they are distinctly better equipped
+to integrate and apply new concepts and knowledge effectively, they accelerate their learning process, and they significantly improve
+their overall academic achievement. Conversely, a lack of adequate prior knowledge can create a barrier to moving forward, resulting
+in frustration and disengagement from math. To address this issue, it is critical to assess and subsequently target gaps in students’
+foundational math knowledge. Early identification of these gaps allows for timely interventions that prevent future learning
+difficulties.
+    This study also highlights the significant impact of career expectations on math performance. Teachers and educators play a crucial
+role in bridging the gap between mathematical skills and their application in future careers, particularly in fields that heavily rely on
+math, such as engineering, finance, technology, and science. By integrating real-world career scenarios into math lessons, teachers can
+enhance the relevance and appeal of the subject, thereby boosting students’ interest and engagement. Such educational strategies not
+only deepen students’ understanding of math but also allow them to develop essential skills like problem-solving, teamwork, and
+project management. Through these methods, teachers and educators can significantly increase students’ motivation related to their
+career aspirations, transforming math education into a more dynamic and goal-oriented experience that aligns with their future
+professional goals.
+
+                                                                   10
+L. Zhu et al.                                                                       International Journal of Educational Research 130 (2025) 102537
+
+
+5.3. Methodological implication
+
+    Our results showed high accuracy and efficacy in predicting students’ math performance, supporting the applicability of the ML
+models. In previous research, predictor selection in large-scale assessments relied heavily on literature searches. By using ML tech­
+niques, researchers are able to leverage the data-driven method to automatically identify the most influential predictors related to
+students’ academic performance. As a data-driven method, ML is good at processing large amounts of data very quickly and identifying
+patterns that may not immediately be found by human experts (Kumar & Sharma, 2022; Sturm et al., 2021). Furthermore, it is critical
+to incorporate ML techniques with interpretability tools, such as ALE plots, to ensure the results are grounded in educational contexts.
+In the future, complementing human expertise with ML techniques will provide more comprehensive understanding of student per­
+formance and support more effective educational interventions.
+    According to Iatrellis et al. (2021), ML methods are based on data-driven approaches, which depend on statistical criteria such as
+rMSE. The ML methods derive the model parameters by iterating the multiple times of estimation process (either sequential steps for
+the XGboost model or parallel steps for the RF model). The iterative model estimation improves prediction accuracy as well. Thus,
+future researchers who will potentially build a prediction model for educational outcomes could consider using the ML methods rather
+than traditional prediction models such as linear or logistic regression models (Asselman et al., 2023; Jeganathan et al., 2022).
+    In addition, we demonstrated that the ML models can be used as a useful tool for the missing data imputation method applying RF
+framework. As suggested by Stekhoven and Bühlmann (2012), because the RF-based missing data imputation is nonparametric, it
+performs better when the data violate the parametric missing data imputation, especially for nonnormal data. From the PISA 2022
+report, the missing data rates for overall variables were approximately 70 %. In the case of severely skewed data distribution, the
+regression-based missing data imputation produces a biased imputed value, which causes errors in statistical analysis results. Hence,
+when using PISA data with any violation of the parametric missing data technique, we could consider using ML-based methods such as
+RF missing data imputation as an alternative.
+
+5.4. Limitations and future study
+
+    In this study, the predictors identified by the LR method were derived from an analysis of 29 studies. Despite our rigorous search
+strategy, which involved the use of specific keywords and a range of databases detailed in the methods section, there remains a
+possibility that we may have inadvertently excluded some relevant papers. This risk of missing eligible studies is an inherent limitation
+of any LR process, and the potential omission of important studies could affect finding the identified predictors and may lead to a less
+robust understanding of the factors influencing the outcomes under investigation. To mitigate this risk, future researchers could
+employ additional strategies such as citation tracking to ensure a more exhaustive collection of pertinent literature.
+    To enhance the generalizability of the results, future researchers could use ML models on cross-national datasets to systematically
+compare predictors of math performance across various countries. By analyzing these diverse datasets, we could identify both uni­
+versal factors that consistently influence math achievement and unique, country-specific factors that vary by region. This methodo­
+logical approach would not only reveal underlying patterns in global math education but also provide insights into specific national
+educational practices. Such findings could support understanding the global trends and regions’ needs in math education.
+
+6. Conclusion
+
+    Large-scale assessments provide valuable data and insights into student performance and the factors that impact learning out­
+comes. A prediction model derived from the data shows trends and disparities in performance related to different factors. With
+advanced ML techniques, our goal is to provide practical, data-driven recommendations for improving educational outcomes. Spe­
+cifically, our research is focused on identifying the most influential predictors of math performance and comparing these ML-identified
+predictors to those traditionally identified. The results provide valuable insights for shifts of instructional practices, targeted in­
+terventions, curriculum development, and policy decisions. This would ultimately contribute to the overall quality of math education
+in the United States.
+
+CRediT authorship contribution statement
+
+    Li Zhu: Writing – review & editing, Writing – original draft, Validation, Software, Methodology, Conceptualization. Hyesun You:
+Writing – review & editing, Writing – original draft, Supervision, Software, Methodology, Conceptualization. Minju Hong: Writing –
+review & editing, Writing – original draft, Validation, Software, Methodology. Zhenhan Fang: Writing – review & editing, Writing –
+original draft, Software, Methodology.
+
+Declaration of competing interest
+
+    The authors declare that they have no competing interests.
+
+Funding
+
+    This study did not receive funding.
+
+                                                                   11
+L. Zhu et al.                                                                                            International Journal of Educational Research 130 (2025) 102537
+
+
+Acknowledgments
+
+    Not applicable.
+
+Supplementary materials
+
+    Supplementary material associated with this article can be found, in the online version, at doi:10.1016/j.ijer.2025.102537.
+
+
+
+
+Data availability
+
+    The datasets used in the current study are available upon reasonable request.
+
+
+
+References
+
+Aksu, N., Aksu, G., & Saracaloglu, S. (2022). Prediction of the factors affecting PISA mathematics literacy of students from different countries by using data mining
+    methods. International Electronic Journal of Elementary Education, 14(5), 613–629. https://doi.org/10.26822/iejee.2022.267
+Albreiki, B., Zaki, N., & Alashwal, H. (2021). A systematic literature review of student performance prediction using machine learning techniques. Education Sciences,
+    11(9), 552. https://doi.org/10.3390/educsci11090552
+Altun, A., & Kalkan, Ö. K. (2021). Cross-national study on students and school factors affecting science literacy. Educational Studies, 47(4), 403–421. https://doi.org/
+    10.1080/03055698.2019.1702511
+Apley, D. W., & Zhu, J. (2020). Visualizing the effects of predictor variables in black box supervised learning models. Journal of the Royal Statistical Society Series B:
+    Statistical Methodology, 82(4), 1059–1086. https://doi.org/10.1111/rssb.12377
+Arens, A. K., Frenzel, A. C., & Goetz, T. (2022). Self-concept and self-efficacy in math: Longitudinal interrelations and reciprocal linkages with achievement. The
+    Journal of Experimental Education, 90(3), 615–633. https://doi.org/10.1080/00220973.2020.1786347
+Arikan, S. (2014). A regression model with a new tool: IDB analyzer for identifying factors predicting mathematics performance using PISA 2012 indices. US–China
+    Education Review, 4(10), 716–727. https://doi.org/10.17265/2161-623X/2014.10A.004
+Asselman, A., Khaldi, M., & Aammou, S. (2023). Enhancing the prediction of student performance based on the machine learning XGBoost algorithm. Interactive
+    Learning Environments, 31(6), 3360–3379. https://doi.org/10.1080/10494820.2021.1928235
+Barnard-Brak, L., Lan, W. Y., & Yang, Z. (2018). Differences in mathematics achievement according to opportunity to learn: A 4pL item response theory examination.
+    Studies in Educational Evaluation, 56, 1–7. https://doi.org/10.1016/j.stueduc.2017.11.002
+Barton, M., Hamza, M., & Guevel, B. (2023). Racial equity in healthcare machine learning: Illustrating bias in models with minimal bias mitigation. Cureus, 15(2),
+    e35037. https://doi.org/10.7759/cureus.35037
+Baten, E., Vlaeminck, F., Mués, M., Valcke, M., Desoete, A., & Warreyn, P. (2023). The impact of school strategies and the home environment on home learning
+    experiences during the COVID-19 pandemic in children with and without developmental disorders. Journal of Autism and Developmental Disorders, 53(4),
+    1642–1672. https://doi.org/10.1007/s10803-021-05383-0
+Bayirli, E. G., Kaygun, A., & Öz, E. (2023). An analysis of PISA 2018 mathematics assessment for Asia-Pacific countries using educational data mining. Mathematics, 11
+    (6), 1318. https://doi.org/10.3390/math11061318
+Bentéjac, C., Csörgo, A., & Martínez-Muñoz, G. (2021). A comparative analysis of gradient boosting algorithms. Artificial Intelligence Review, 54, 1937–1967. https://
+    doi.org/10.1007/s10462-020-09896-5
+Bertling, J., Rojas, N., Alegre, J., & Faherty, K. (2020). A tool to capture learning experiences during COVID-19: The PISA global crises questionnaire module. OECD
+    Education Working Papers, 232. https://doi.org/10.1787/9988df4e-en
+Bove, G., Marella, D., & Vitale, V. (2016). Influences of school climate and teacher’s behavior on student’s competencies in mathematics and the territorial gap
+    between Italian macro-areas in PISA 2012. Journal of Educational, Cultural and Psychological Studies (ECPS Journal), 1(13), 63–96. https://doi.org/10.7358/ecps-
+    2016-013-bove
+Bransford, J.D., Brown, A.L., & Cocking, R.R. (2000). How people learn (Vol. 11). National Academy Press.
+Breiman, L. (2001). Random forests. Machine Learning, 45, 5–32. https://doi.org/10.1023/A:1010933404324
+Brow, M. V. (2019). Significant predictors of mathematical literacy for top-tiered countries/economies, Canada, and the United States on PISA 2012: Case for the
+    sparse regression model. British Journal of Educational Psychology, 89(4), 726–749. https://doi.org/10.1111/bjep.12254
+Bulut, O., & Cutumisu, M. (2017, June 20). When technology does not add up: ICT use negatively predicts mathematics and science achievement for Finnish and
+    Turkish students in PISA 2012 (J. Johnston, Ed.). Proceedings of edmedia, 935–945. Association for the Advancement of Computing in Education (AACE) https://
+    www.learntechlib.org/primary/p/178407/.
+Byrnes, J. P., & Miller, D. C. (2007). The relative importance of predictors of math and science achievement: An opportunity–propensity analysis. Contemporary
+    Educational Psychology, 32(4), 599–629. https://doi.org/10.1016/j.cedpsych.2006.09.002
+Byrnes, J. P., & Miller-Cotto, D. (2016). The growth of mathematics and reading skills in segregated and diverse schools: An opportunity-propensity analysis of a
+    national database. Contemporary Educational Psychology, 46, 34–51. https://doi.org/10.1016/j.cedpsych.2016.04.002
+Cardoso Silva Filho, R. L., Garg, A., Brito, K., Adeodato, P. J. L., & Carnoy, M (2023). Beyond scores: A machine learning approach to comparing educational system
+    effectiveness. PLoS One, 18(10), Article e0289260. https://doi.org/10.1371/journal.pone.0289260
+Ceulemans, A., Baten, E., Loeys, T., Hoppenbrouwers, K., Titeca, D., Rousseau, S., & Desoete, A. (2017). The relative importance of parental numerical opportunities,
+    prerequisite knowledge and parent involvement as predictors for early math achievement in young children. Interdisciplinary Education and Psychology, 1(1).
+    https://doi.org/10.31532/InterdiscipEducPsychol.1.1.006
+Chen, T., & Guestrin, C. (2016, August). Xgboost: A scalable tree boosting system. Proceedings of the 22nd ACM SIGKDD International Conference on Knowledge
+    Discovery and Data Mining, 785–794. https://doi.org/10.1145/2939672.2939785.
+Clements, D.H., & Sarama, J. (2020). Learning and teaching early math: the learning trajectories approach. Routledge. https://doi.org/10.4324/9781003083528.
+Costa, D. R., & Chen, C. W. (2023). Exploring the relationship between process data and contextual variables among Scandinavian students on PISA 2012 mathematics
+    tasks. Large-Scale Assessments in Education, 11(1), 5. https://doi.org/10.1186/s40536-023-00155-x
+Courtney, M., Karakus, M., Ersozlu, Z., & Nurumov, K. (2022). The influence of ICT use and related attitudes on students’ math and science performance: Multilevel
+    analyses of the last decade’s PISA surveys. Large-Scale Assessments in Education, 10(1), 8. https://doi.org/10.1186/s40536-022-00128-6
+D’agostino, A., Schirripa Spagnolo, F., & Salvati, N (2022). Studying the relationship between anxiety and school achievement: Evidence from PISA data. Statistical
+    Methods & Applications, 31(1), 1–20. https://doi.org/10.1007/s10260-021-00563-9
+De Bortoli, L., & Thomson, S. (2010, May). Contextual factors that influence the achievement of Australia’s indigenous students: results from PISA 2000–2006.
+    ACEReSearch. https://research.acer.edu.au/ozpisa/7.
+
+
+                                                                                   12
+L. Zhu et al.                                                                                           International Journal of Educational Research 130 (2025) 102537
+
+Desoete, A., & Baten, E. (2022). Math learning in grade 4 and 5: What can we learn form the opportunity–propensity model? International Electronic Journal of
+     Elementary Education, 14(3), 213–225. https://doi.org/10.26822/iejee.2022.240
+Ding, C., & Zhao, Y. (2019). Using tree-based regression to examine factors related to math ability among 15-year-old students. Psychological Test and Assessment
+     Modeling, 61(4), 453–470.
+Fan, X., Hambleton, R. K., & Zhang, M. (2019). Profiles of mathematics anxiety among 15-year-old students: A cross-cultural study using multi-group latent profile
+     analysis. Frontiers in Psychology, 10, Article 427865. https://doi.org/10.3389/fpsyg.2019.01217
+Fan, L., Luo, J., Xie, S., Zhu, F., & Li, S. (2022). Chinese students’ access, use and perceptions of ICTs in learning mathematics: Findings from an investigation of
+     Shanghai secondary schools. ZDM–Mathematics Education, 54(3), 611–624. https://doi.org/10.1007/s11858-022-01363-5
+Gómez-García, M., Hossein-Mohand, H., Trujillo-Torres, J. M., Hossein-Mohand, H., & Aznar-Díaz, I. (2020). Technological factors that influence the mathematics
+     performance of secondary school students. Mathematics, 8(11), 1935. https://doi.org/10.3390/math8111935
+Gómez-Talal, I., Bote-Curiel, L., & Rojo-Álvarez, J. L. (2024). Understanding the disparities in mathematics performance: An interpretability-based examination.
+     Engineering Applications of Artificial Intelligence, 133, Article 108109. https://doi.org/10.1016/j.engappai.2024.108109
+Güre, Ö. B., Kayri, M., & Erdoğan, F. (2020). Analysis of factors effecting PISA 2015 mathematics literacy via educational data mining. Education and Science, 45(202),
+     393–415. https://doi.org/10.15390/EB.2020.8477
+Gabriel, F., Signolet, J., & Westwell, M. (2018). A machine learning approach to investigating the effects of mathematics dispositions on mathematical literacy.
+     International Journal of Research & Method in Education, 41(3), 306–327. https://doi.org/10.1080/1743727X.2017.1301916
+Gabriel, F., Buckley, S., & Barthakur, A. (2020). The impact of mathematics anxiety on self-regulated learning and mathematical literacy. Australian Journal of
+     Education, 64(3), 227–242. https://doi.org/10.1177/0004944120947881
+Geesa, R. L., Izci, B., Song, H., & Chen, S. (2019). Exploring factors of home resources and attitudes towards mathematics in mathematics achievement in South Korea,
+     Turkey, and the United States. Eurasia Journal of Mathematics, Science and Technology Education, 15(9). https://doi.org/10.29333/ejmste/108487
+Gomez-Fernandez, N., & Albert, J. F. (2020). Physical activity in and out-of-school and academic performance in Spain. Health Education Journal, 79(7), 788–801.
+     https://doi.org/10.1177/0017896920929743
+Grewenig, E., Lergetporer, P., Werner, K., Woessmann, L., & Zierow, L. (2021). COVID-19 and educational inequality: How school closures affect low- and high-
+     achieving students. European Economic Review, 140, Article 103920. https://doi.org/10.1016/j.euroecorev.2021.103920
+Guo, S., & Liao, S. (2022). The role of opportunity to learn on student mathematics anxiety, problem-solving performance, and mathematics performance. Frontiers in
+     Psychology, 13, Article 829032. https://doi.org/10.3389/fpsyg.2022.829032
+Guo, M., Leung, F. K., & Hu, X. (2020). Affective determinants of mathematical problem posing: The case of Chinese Miao students. Educational Studies in Mathematics,
+     105(3), 367–387. https://doi.org/10.1007/s10649-020-09972-1
+Hallman, L.M. (2014). Do inquiry-based science classroom experiences promote science achievement for public high school students? an application of the
+     opportunity-propensity framework. Saint Joseph’s University.
+Han, Z., He, Q., & Von Davier, M (2019). Predictive feature generation and selection using process data from PISA interactive problem-solving items: An application of
+     random forests. Frontiers in Psychology, 10, Article 447759. https://doi.org/10.3389/fpsyg.2019.02461
+Harju-Luukkainen, H., Tarnanen, M., Nissinen, K., & Vettenranta, J. (2017). Economic, social and cultural status (ESCS) and mathematics performance of immigrant
+     students in the Finnish metropolitan area in PISA 2012. Nordic dialogues on children and families, 108–125. Routledge. https://doi.org/10.4324/
+     9781315561981-9.
+Hiller, S. E., Kitsantas, A., Cheema, J. E., & Poulou, M. (2022). Mathematics anxiety and self-efficacy as predictors of mathematics literacy. International Journal of
+     Mathematical Education in Science and Technology, 53(8), 2133–2151. https://doi.org/10.1080/0020739X.2020.1868589
+Hu, X., Leung, F. K., & Teng, Y. (2018). The influence of culture on students’ mathematics achievement across 51 countries. International Journal of Science and
+     Mathematics Education, 16, 7–24. https://doi.org/10.1007/s10763-018-9899-6
+Iatrellis, O., Savvas, I.Κ., Fitsilis, P., & Gerogiannis, V. C. (2021). A two-phase machine learning approach for predicting student outcomes. Education and Information
+     Technologies, 26, 69–88. https://doi.org/10.1007/s10639-020-10260-x
+Immekus, J. C., Jeong, T. S., & Yoo, J. E. (2022). Machine learning procedures for predictor variable selection for schoolwork-related anxiety: Evidence from PISA
+     2015 mathematics, reading, and science assessments. Large-Scale Assessments in Education, 10(1), 30. https://doi.org/10.1186/s40536-022-00150-8
+Jack, B. M., Lin, H. S., & Yore, L. D. (2014). The synergistic effect of affective factors on student learning outcomes. Journal of Research in Science Teaching, 51(8),
+     1084–1101. https://doi.org/10.1002/tea.21153
+Jeganathan, S., Lakshminarayanan, A. R., Ramachandran, N., & Tunze, G. B. (2022). Predicting academic performance of immigrant students using XGBoost regressor.
+     International Journal of Information Technology and Web Engineering (IJITWE), 17(1), 1–19. https://doi.org/10.4018/IJITWE.304052
+Jeong, D. W., Moon, H., Jeong, S. M., & Moon, C. J. (2024). Digital capital accumulation in schools, teachers, and students and academic achievement: Cross-country
+     evidence from the PISA 2018. International Journal of Educational Development, 107, Article 103024. https://doi.org/10.1016/j.ijedudev.2024.103024
+Kastberg, D., Murray, G., Ferraro, D., Arieira, C., Roey, S., Mamedova, S., & Liao, Y. (2021). Technical report and user guide for the 2018 program for international
+     student assessment (PISA) data files and database with U.S.-specific variables. National Center for Education Statistics.
+Ke, G., Meng, Q., Finley, T., Wang, T., Chen, W., Ma, W., & Liu, T. Y. (2017). LightGBM: A highly efficient gradient boosting decision tree. Advances in Neural
+     Information Processing Systems, 30.
+King, R. B., Wang, Y., Fu, L., & Leung, S. O. (2024). Identifying the top predictors of student well-being across cultures using machine learning and conventional
+     statistics. Scientific Reports, 14(1), 8376. https://doi.org/10.1038/s41598-024-55461-3
+Koyuncu, I. (2020). Investigation of mathematics-specific trend variables in PISA studies with neural networks and linear regression. Journal of Curriculum and
+     Teaching, 9(4), 40–54. https://doi.org/10.5430/jct.v9n4p40
+Kumar, P., & Sharma, M. (2022). Data, machine learning, and human domain experts: None is better than their collaboration. International Journal of Human–Computer
+     Interaction,, 38(14), 1307–1320. https://doi.org/10.1080/10447318.2021.2002040
+Lapinid, M.R.C., Cordel, M.O., Teves, J.M.M., Yap, S.A., Chua, U.C., & Bernardo, A.B. (2022). Which filipino students are being left behind in mathematics? testing
+     machine learning models to differentiate lowest-performing filipino students in public and private schools in the 2018 PISA mathematics test. De La Salle
+     University-Angelo King Institute. Retrieved from https://animorepository.dlsu.edu.ph/res_aki/4.
+Larsen, N. E., & Jang, E. E. (2021). Instructional practices, students’ self-efficacy and math achievement: A multi-level factor score path analysis. Canadian Journal of
+     Science, Mathematics and Technology Education, 21(4), 803–823. https://doi.org/10.1007/s42330-021-00181-3
+Lau, N. T., Hawes, Z., Tremblay, P., & Ansari, D. (2022). Disentangling the individual and contextual effects of math anxiety: A global perspective. Proceedings of the
+     National Academy of Sciences, 119(7), Article e2115855119. https://doi.org/10.1073/pnas.2115855119
+Lee, J., & Borgonovi, F. (2022). Relationships between family socioeconomic status and mathematics achievement in OECD and non-OECD countries. Comparative
+     Education Review, 66(2), 199–227. https://doi.org/10.1086/718930
+Lee, H., & Lee, J.W. (2021). Why East Asian students perform better in mathematics than their peers: An investigation using a machine learning approach. Centre for
+     Applied Macroeconomic Analysis. https://doi.org/10.2139/ssrn.3896033.
+Lee, H. (2022). What drives the performance of Chinese urban and rural secondary schools: A machine learning approach using PISA 2018. Cities, 123, Article 103609.
+     https://doi.org/10.1016/j.cities.2022.103609
+Lewis, R. W., & Farkas, G. (2017). Using an opportunity-propensity framework to estimate individual-, classroom-, and school-level predictors of middle school
+     science achievement. Contemporary Educational Psychology, 51, 185–197. https://doi.org/10.1016/j.cedpsych.2017.08.003
+Liu, X., & Whitford, M. (2011). Opportunities-to-learn at home: Profiles of students with and without reaching science proficiency. Journal of Science Education and
+     Technology, 20, 375–387. https://doi.org/10.1007/s10956-010-9259-y
+Liu, H., Chen, X., & Liu, X. (2022). Factors influencing secondary school students’ reading literacy: An analysis based on XGBoost and SHAP methods. Frontiers in
+     Psychology, 13, Article 948612. https://doi.org/10.3389/fpsyg.2022.948612
+
+
+
+
+                                                                                   13
+L. Zhu et al.                                                                                            International Journal of Educational Research 130 (2025) 102537
+
+Longobardi, S., Pagliuca, M. M., & Regoli, A. (2022). School climate and academic performance of Italian students: The role of disciplinary behaviour and parental
+     involvement. Statistical Methods & Applications, 31(5), 1355–1373. https://doi.org/10.1007/s10260-022-00632-7
+Luttenberger, S., Wimmer, S., & Paechter, M. (2018). Spotlight on math anxiety. Psychology Research and Behavior Management, 11, 311–322. https://doi.org/
+     10.2147/PRBM.S141421
+MacNell, N., Feinstein, L., Wilkerson, J., Salo, P. M., Molsberry, S. A., Fessler, M. B., et al. (2023). Implementing machine learning methods with complex survey data:
+     Lessons learned on the impacts of accounting sampling weights in gradient boosting. Plos One, 18(1), Article e0280387. https://doi.org/10.1371/journal.
+     pone.0280387
+Manca, F., & Meluzzi, F. (2020). Strengthening online learning when school are closed: the role of families and teachers in supporting students during the COVID-19
+     crisis. Organisation for Economic Co-operation and Development.
+Marks, G. N., & Pokropek, A. (2019). Family income effects on mathematics achievement: Their relative magnitude and causal pathways. Oxford Review of Education,
+     45(6), 769–785. https://doi.org/10.1080/03054985.2019.1620717
+Martínez-Abad, F., Gamazo, A., & Rodriguez-Conde, M. J. (2020). Educational data mining: Identification of factors associated with school effectiveness in PISA
+     assessment. Studies in Educational Evaluation, 66, Article 100875. https://doi.org/10.1016/j.stueduc.2020.100875
+Masci, C., Johnes, G., & Agasisti, T. (2018). Student and school performance across countries: A machine learning approach. European Journal of Operational Research,
+     269(3), 1072–1085. https://doi.org/10.1016/j.ejor.2018.02.031
+Mercader, J., Miranda, A., Presentación, M. J., Siegenthaler, R., & Rosel, J. F. (2018). Contributions of motivation, early numeracy skills, and executive functioning to
+     mathematical performance. A longitudinal study. Frontiers in Psychology, 8, Article 329211. https://doi.org/10.3389/fpsyg.2017.02375
+Michael, D., & Kyriakides, L. (2023). Mediating effects of motivation and socioeconomic status on reading achievement: A secondary analysis of PISA 2018. Large-
+     Scale Assessments in Education, 11(1), 31. https://doi.org/10.1186/s40536-023-00181-9
+**Molina-Muñoz, D., Contreras-García, J. M., Lara-Porras, A. M., & Rueda-García, M. D. M. (2023). Determinants of the Spanish students’ performance in mathematics
+     in PISA: A multilevel analysis. Educational Research and Evaluation,, 28(4–6), 116–129. https://doi.org/10.1080/13803611.2023.2276194
+Morgan, P. L., Hu, E. H., Farkas, G., Hillemeier, M. M., Oh, Y., & Gloski, C. A. (2023). Racial and ethnic disparities in advanced science and mathematics achievement
+     during elementary school. Gifted Child Quarterly, 67(2), 151–172. https://doi.org/10.1177/00169862221128299
+OECD (2016a), Equations and inequalities: making mathematics accessible to all, PISA, OECD Publishing. https://doi.org/10.1787/9789264258495-en.
+OECD (2016b), “Exposure to Mathematics in School and Performance in PISA”, in Equations and inequalities: making mathematics accessible to all, OECD Publishing.
+     https://doi.org/10.1787/9789264258495-6-en.
+OECD (2023a), PISA 2022 results (Volume II): learning during–and from–disruption, PISA, OECD Publishing. https://doi.org/10.1787/a97db61c-en.
+OECD (2023b), PISA 2022 results: factsheets, OECD Publishing. https://www.oecd.org/publication/pisa-2022-results/country-notes/united-states-a78ba65a/.
+OECD (2023c), PISA 2022 assessment and analytical framework, PISA, OECD Publishing. https://doi.org/10.1787/dfe0bf9c-en.
+OECD (2024a), Mathematics performance (PISA) (indicator), https://doi.org/10.1787/04711c74-en. (accessed on 21 May 2024).
+OECD (2024b), PISA 2022 technical report, pisa, OECD Publishing. https://doi.org/10.1787/01820d6d-en.
+OECD. (2024c). How to prepare and analyse the pisa database. OECD Publishing. https://www.oecd.org/pisa/data/httpoecdorgpisadatabase-instructions.htm.
+Özberk, E. H., Kabasakal, K. A., & Öztürk, N. B. (2017). Investigating the factors affecting Turkish students’ PISA 2012 mathematics achievement using hierarchical
+     linear modeling PISA 2012. Hacettepe University Journal of Education, 32(3), 544–559. https://doi.org/10.16986/HUJE.2017026950
+Özcan, B., & Kültür, Y. Z. (2021). The relationship between sources of mathematics self-efficacy and mathematics test and course achievement in high school seniors.
+     Sage Open, 11(3), Article 21582440211040124. https://doi.org/10.1177/21582440211040124
+Pan, Z., & Cutumisu, M. (2024). Using machine learning to predict UK and Japanese secondary students’ life satisfaction in PISA 2018. British Journal of Educational
+     Psychology, 94(2), 474–498. https://doi.org/10.1111/bjep.12657
+Pitsia, V., Biggart, A., & Karakolidis, A. (2017). The role of students’ self-beliefs, motivation and attitudes in predicting mathematics achievement: A multilevel
+     analysis of the Programme for International Student Assessment data. Learning and Individual Differences, 55, 163–173. https://doi.org/10.1016/j.
+     lindif.2017.03.014
+Powers, K., & An, S. (2023). Math placement of language minority high school students. Journal of Mathematics Education, 16(1), 26–41. https://doi.org/10.26711/
+     007577152790163
+Puah, S. (2020). Predicting students’ academic performance: a comparison between traditional MLR and machine learning methods with PISA 2015. Dissertation,
+     Ludwig-Maximilians-University, Munich,Germany. https://doi.org/10.31234/osf.io/2yshm.
+Ramazan, O., Danielson, R. W., Rougee, A., Ardasheva, Y., & Austin, B. W. (2023). Effects of classroom and school climate on language minority students’ PISA
+     mathematics self-concept and achievement scores. Large-Scale Assessments in Education, 11(1), 11. https://doi.org/10.1186/s40536-023-00156-w
+Rastrollo-Guerrero, J. L., Gómez-Pulido, J. A., & Durán-Domínguez, A. (2020). Analyzing and predicting students’ performance by means of machine learning: A
+     review. Applied Sciences, 10(3), 1042. https://doi.org/10.3390/app10031042
+Ribner, A., Harvey, E., Gervais, R., & Fitzpatrick, C. (2019). Explaining school entry math and reading achievement in Canadian children using the
+     opportunity–propensity framework. Learning and Instruction, 59, 65–75. https://doi.org/10.1016/j.learninstruc.2018.10.003
+Rohatgi, A., & Scherer, R. (2020). Identifying profiles of students’ school climate perceptions using PISA 2015 data. Large-Scale Assessments in Education, 8(1), 4.
+     https://doi.org/10.1186/s40536-020-00083-0
+Rubinsten, O., Marciano, H., Eidlin Levy, H., & Daches Cohen, L. (2018). A framework for studying the heterogeneity of risk factors in math anxiety. Frontiers in
+     Behavioral Neuroscience, 12, 291. https://doi.org/10.3389/fnbeh.2018.00291
+Rutkowski, L., Gonzalez, E., Joncas, M., & Von Davier, M (2010). International large-scale assessment data: Issues in secondary analysis and reporting. Educational
+     researcher,, 39(2), 142–151. https://doi.org/10.3102/0013189X10363170
+Sackes, M., Trundle, K. C., Bell, R. L., & O’ Connell, A. A. (2011). The influence of early science experience in kindergarten on children’s immediate and later science
+     achievement: Evidence from the early childhood longitudinal study. Journal of Research in Science Teaching, 48(2), 217–235. https://doi.org/10.1002/tea.20395
+Sekeroglu, B., Abiyev, R., Ilhan, A., Arslan, M., & Idoko, J. B. (2021). Systematic literature review on machine learning and student performance prediction: Critical
+     gaps and possible remedies. Applied Sciences, 11(22), 10907. https://doi.org/10.3390/app112210907
+Sokkhey, P., Navy, S., Tong, L., & Okazaki, T. (2020). Multi-models of educational data mining for predicting student performance in mathematics: A case study on
+     high schools in Cambodia. IEIE Transactions on Smart Processing and Computing, 9(3), 217–229. https://doi.org/10.5573/IEIESPC.2020.9.3.217
+Stacey, K. (2015). The international assessment of mathematical literacy: PISA 2012 framework and items. In Selected Regular Lectures from the 12th International
+     Congress on Mathematical Education (pp. 771–790). Springer International Publishing. https://doi.org/10.1007/978-3-319-17187-6_43.
+Star, J. R., Newton, K., Pollack, C., Kokka, K., Rittle-Johnson, B., & Durkin, K. (2015). Student, teacher, and instructional characteristics related to students’ gains in
+     flexibility. Contemporary Educational Psychology, 41, 198–208. https://doi.org/10.1016/j.cedpsych.2015.03.001
+Stekhoven, D. J., & Bühlmann, P. (2012). MissForest—Non-parametric missing value imputation for mixed-type data. Bioinformatics, 28(1), 112–118. https://doi.org/
+     10.1093/bioinformatics/btr597
+Sturm, T., Gerlacha, J., Pumplun, L., Mesbah, N., Peters, F., Tauchert, C., Nan, N., & Buxmann, P. (2021). Coordinating Human and Machine Learning for Effective
+     Organizational Learning. MIS Quarterly, 45(3), 1581–1602. https://doi.org/10.25300/MISQ/2021/16543
+Su, A., Wan, S., He, W., & Dong, L. (2021). Effect of intelligence mindsets on math achievement for Chinese primary school students: Math self-efficacy and failure
+     beliefs as mediators. Frontiers in Psychology, 12, Article 640349. https://doi.org/10.3389/fpsyg.2021.640349
+Suter, L. E. (2019). Results of an exploratory analysis of PISA 2015 survey of student participation in outside-school-time programs. IJREE–International Journal for
+     Research on Extended Education,, 7(1), 9–10. https://doi.org/10.3224/ijree.v7i1.04
+Tan, B., & Cutumisu, M. (2022). Employing tree-based algorithms to predict students’ self-efficacy in PISA 2018. Proceedings of the 15th International Conference on
+     Educational Data Mining, 634. https://doi.org/10.5281/zenodo.6852970.
+Tan, L., Chen, F., & Wei, B. (2024). Examining key capitals contributing to students’ science-related career expectations and their relationship patterns: A machine
+     learning approach. Journal of Research in Science Teaching. https://doi.org/10.1002/tea.21939
+
+
+
+                                                                                    14
+L. Zhu et al.                                                                                           International Journal of Educational Research 130 (2025) 102537
+
+Teng, Y. (2020). The relationship between school climate and students’ mathematics achievement gaps in Shanghai China: Evidence from PISA 2012. Asia Pacific
+     Journal of Education, 40(3), 356–372. https://doi.org/10.1080/02188791.2019.1682516
+Thien, L. M. (2016). Malaysian students’ performance in mathematics literacy in PISA from gender and socioeconomic status perspectives. The Asia-Pacific Education
+     Researcher, 25(4), 657–666. https://doi.org/10.1007/s40299-016-0295-0
+Toala-Bailón, R. M., & Ávila-Rosales, F. M. (2022). Family support for the mathematical learning of the students of the middle basic sublevel. International Research
+     Journal of Management, IT and Social Sciences, 9(4), 621–630. https://doi.org/10.21744/irjmis.v9n4.2128
+Trinidad, J. E. (2020). Material resources, school climate, and achievement variations in the Philippines: Insights from PISA 2018. International Journal of Educational
+     Development, 75, Article 102174. https://doi.org/10.1016/j.ijedudev.2020.102174
+Vazquez-Lopez, V., & Huerta-Manzanilla, E. L. (2021). Factors related with underperformance in reading proficiency, the case of the programme for international
+     student assessment 2018. European Journal of Investigation in Health, Psychology and Education, 11(3), 813–828. https://doi.org/10.3390/ejihpe11030059
+von Davier, M., Khorramdel, L., He, Q., Shin, H. J., & Chen, H. (2019). Developments in psychometric population models for technology-based large-scale
+     assessments: An overview of challenges and opportunities. Journal of Educational and Behavioral Statistics, 44(6), 671–705. https://doi.org/10.3102/
+     107699861988178
+Wang, A. H., Shen, F., & Byrnes, J. P. (2013). Does the opportunity–propensity framework predict the early mathematics skills of low-income pre-kindergarten
+     children? Contemporary Educational Psychology, 38(3), 259–270. https://doi.org/10.1016/j.cedpsych.2013.04.004
+Wang, F., Liu, Y., & Leung, S. O. (2022). Disciplinary climate, opportunity to learn, and mathematics achievement: An analysis using doubly latent multilevel
+     structural equation modeling. School Effectiveness and School Improvement, 33(3), 479–496. https://doi.org/10.1080/09243453.2022.2043393
+Wang, F., Wang, Y., Liu, Y., & Leung, S. O. (2023). Investigating the measurement of OTL in PISA 2012 and its relationship with self-efficacy and mathematics
+     achievement: Doubly latent multilevel analyses. Scandinavian Journal of Educational Research, 67(6), 837–852. https://doi.org/10.1080/00313831.2022.2070929
+Woolson, R. F. (2007). Wilcoxon signed-rank test. Wiley Encyclopedia of Clinical Trials, 1–3. https://doi.org/10.1002/9780471462422.eoct979
+Wu, M. J. (2022). What makes a difference in achievement for Black and Hispanic students: Identifying factors of influence inside the lack box of schooling
+     production. NASSP Bulletin, 106(3), 232–263. https://doi.org/10.1177/01926365221122786
+Xiao, F., & Sun, L. (2021). Students’ motivation and affection profiles and their relation to mathematics achievement, persistence, and behaviors. Frontiers in
+     Psychology, 11, Article 533593. https://doi.org/10.3389/fpsyg.2020.533593
+Yang Hansen, K., & Strietholt, R (2018). Does schooling actually perpetuate educational inequality in mathematics performance? A validity question on the measures
+     of opportunity to learn in PISA. ZDM, 50, 643–658. https://doi.org/10.1007/s11858-018-0935-3
+Yetisir, M. I., & Bati, K. (2021). The effect of school and student-related factors on PISA 2015 science performances in Turkey. International Journal of Psychology and
+     Educational Studies, 8(2), 170–186. https://doi.org/10.52380/ijpes.2021.8.2.433
+Yi, H. S., & Na, W. (2020). How are maths-anxious students identified and what are the key predictors of maths anxiety? Insights gained from PISA results for Korean
+     adolescents. Asia Pacific Journal of Education, 40(2), 247–262. https://doi.org/10.1080/02188791.2019.1692782
+Zhang, D., & Liu, L. (2016). How does ICT use influence students’ achievements in math and science over time? Evidence from PISA 2000 to 2012. Eurasia Journal of
+     Mathematics, Science and Technology Education, 12(9), 2431–2449. https://doi.org/10.12973/eurasia.2016.1297a
+Zhao, Y., & Ding, C. (2019). The association between students’ mathematic knowledge and factors related to students, parents, and school: A cross-cultural
+     comparison study. International Journal of Educational Research, 93, 210–217. https://doi.org/10.1016/j.ijer.2018.11.006
+Zhao, Y., Li, J., Liu, K., Zhou, J., & Guo, X. (2023). Relationship modeling and short-term prediction analysis between public attention and teaching research.
+     Engineering Reports, 5(2), e12563. https://doi.org/10.1002/eng2.12563
+Zhu, Y., Kaiser, G., & Cai, J. (2018). Gender equity in mathematical achievement: The case of China. Educational Studies in Mathematics, 99, 245–260. https://doi.org/
+     10.1007/s10649-018-9846-z
+Zhu, Y. (2018). Equity in mathematics education: What did TIMSS and PISA tell us in the last two decades?. In Invited Lectures from the 13th International Congress on
+     Mathematical Education (pp. 769–786). Springer International Publishing. https://doi.org/10.1007/978-3-319-72170-5_43.
+
+
+
+
+                                                                                   15
+
