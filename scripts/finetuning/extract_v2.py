@@ -54,9 +54,6 @@ from chunking import (  # noqa: E402
 )
 from eval_extraction import _shingles, find_source_text, grounding_score, load_gold  # noqa: E402
 
-INVENTORY_CSV = ROOT / "outputs/finetuning/source_recovery/full_source_inventory.csv"
-GOLD_CSV = ROOT / "outputs/finetuning/data/gold_standard_full_corpus_v1.4.1.csv"
-
 
 def load_corpus():
     """Return DataFrame(study_id, title, program, cycle) for 577 text-extracted corpus studies.
@@ -88,6 +85,8 @@ OUT_DIR = ROOT / "outputs/finetuning/v2/predictions"
 TEST_LOCK = ROOT / "outputs/finetuning/v2/test_runs.json"
 FROZEN_PROMPT = ROOT / "outputs/finetuning/baseline/baseline_prompt_frozen.txt"
 SFT_TRAIN = ROOT / "outputs/finetuning/v2/data/sft_train.jsonl"
+INVENTORY_CSV = ROOT / "outputs/finetuning/source_recovery/full_source_inventory.csv"
+GOLD_CSV = ROOT / "outputs/finetuning/data/gold_standard_full_corpus_v1.4.1.csv"
 
 MAX_ITEMS_PER_CHUNK = 8          # train gold maximum per passage is 7
 CHUNK_MAX_TOKENS = 1200
