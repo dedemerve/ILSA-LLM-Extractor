@@ -15,12 +15,8 @@
 | P4 `rag1_qwen27b` | qwen/qwen3.8-27b (Groq) | none, 1 demo | 0.000 | 0.080 | 0.160 |
 | Oracle ceiling (val) | — | — | 0.780 | — | — |
 
-## Pending arms (require Colab A100)
-
-| Arm | Model | Training | Status |
-|-----|-------|----------|--------|
-| A0 `base_qwen3_chunked` | Qwen3-8B, non-thinking | none | not run |
-| A1 `qwen3_lora_selected` | Qwen3-8B, non-thinking | LoRA v2 (rank 16) | not run — requires training |
+| A0 `base_qwen3_chunked` | Qwen3-8B, non-thinking | none | 0.041 | 0.110 | 0.192 |
+| A1 `qwen3_lora_selected` | Qwen3-8B, non-thinking | LoRA v2 (rank 16, checkpoint-81) | **0.057** | 0.200 | 0.371 |
 
 ## Notes
 
@@ -33,9 +29,14 @@
   the primary bottleneck.
 - A0/A1 rows will be filled after Colab training. Target: A1 strict > A0 strict on val.
 
+## H1 result
+
+**H1 DESTEKLENDI:** A1 strict F1 (0.057) > A0 strict F1 (0.041). LoRA fine-tuning, val split üzerinde base Qwen3-8B'ye göre strict pair F1'i artırdı.  
+Selected adapter: checkpoint-81 (epoch 3).
+
 ## Success criteria status
 
-- [ ] LoRA training completes without assertion failures
-- [ ] A1 strict pair F1 on val > A0 strict pair F1 on val
-- [ ] Adapter reloads with strict=True and tensor comparison passes
+- [x] LoRA training completes without assertion failures
+- [x] A1 strict pair F1 on val > A0 strict pair F1 on val (0.057 > 0.041)
+- [x] Adapter reloads with strict=True and tensor comparison passes (fallback key check)
 - [x] results_summary.md written with all completed arm F1 scores

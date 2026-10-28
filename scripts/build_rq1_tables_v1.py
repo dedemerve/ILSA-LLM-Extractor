@@ -45,7 +45,7 @@ def sha256(path: Path) -> str:
     return h.hexdigest()
 
 
-def table(err: pd.DataFrame, prog: str, dom: str, analysis: str, subset: str) -> pd.DataFrame:
+def table(err: pd.DataFrame, prog: str, dom: str, analysis: str, subset: str, b: int = B) -> pd.DataFrame:
     """err: wide frame, KEY columns + one abs-error column per model."""
     models = [c for c in err.columns if c not in KEY]
     E = err[models].to_numpy()
@@ -53,7 +53,7 @@ def table(err: pd.DataFrame, prog: str, dom: str, analysis: str, subset: str) ->
     uniq, inv = np.unique(countries, return_inverse=True)
     tag = hashlib.sha256(f"{prog}|{dom}|{analysis}|{subset}".encode()).hexdigest()
     rng = np.random.default_rng([SEED, int(tag[:8], 16)])
-    counts = rng.multinomial(len(uniq), np.full(len(uniq), 1 / len(uniq)), size=B)
+    counts = rng.multinomial(len(uniq), np.full(len(uniq), 1 / len(uniq)), size=b)
     W = counts[:, inv].astype(float)
     mae_star = (W @ E) / W.sum(axis=1, keepdims=True)          # (B, models)
     ranks = mae_star.argsort(axis=1).argsort(axis=1) + 1
@@ -80,6 +80,7 @@ def table(err: pd.DataFrame, prog: str, dom: str, analysis: str, subset: str) ->
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--out", type=Path, default=DEFAULT_OUT)
+    ap.add_argument("--B", type=int, default=B, help="bootstrap replicates (v1 used 2000)")
     args = ap.parse_args()
     out_dir = args.out if args.out.is_absolute() else ROOT / args.out
     if out_dir.exists():
@@ -104,11 +105,11 @@ def main() -> None:
         hh, tt = keep(h), keep(tf_rows)
         for (prog, dom), g in hh.groupby(["program", "domain"], sort=False):
             wide = g.pivot_table(index=KEY, columns="model", values="abs_err").reset_index()
-            tables.append(table(wide, prog, dom, label, "full_common_set"))
+            tables.append(table(wide, prog, dom, label, "full_common_set", args.B))
             gt = pd.concat([g.merge(tt[KEY], on=KEY), tt[(tt["program"] == prog) & (tt["domain"] == dom)]])
             if len(gt):
                 wide_t = gt.pivot_table(index=KEY, columns="model", values="abs_err").reset_index().dropna()
-                tables.append(table(wide_t, prog, dom, label, "timesfm_subset"))
+                tables.append(table(wide_t, prog, dom, label, "timesfm_subset", args.B))
     res = pd.concat(tables, ignore_index=True)
     c = con[["analysis", "program", "domain", "model", "family", "p_two_sided_holm", "p_tost_holm", "equivalent_90ci"]].copy()
     c["subset"] = np.where(c["family"] == "RQ1", "full_common_set", "timesfm_subset")
@@ -136,7 +137,7 @@ def main() -> None:
 
     # Markdown tables for the thesis appendix (primary analysis)
     lines = ["# RQ1 tables (primary analysis: complete folds, 2025 excluded)", "",
-             "MAE in score points with 95% country-cluster bootstrap CI (B = 2000). Relative MAE = model / Persistence.",
+             f"MAE in score points with 95% country-cluster bootstrap CI (B = {args.B}). Relative MAE = model / Persistence.",
              "Rank interval and P(rank 1) come from joint bootstrap replicates. Significance and equivalence vs",
              "Persistence: Holm-adjusted paired tests from outputs/inference_v1 (worse/better: two-sided p < .05;",
              "equivalent: TOST, margin 1 point). Every model in a table is scored on the same rows.", ""]
@@ -170,7 +171,7 @@ def main() -> None:
                      f"{r.n_sig_better} | {r.n_sig_worse} | {r.n_equivalent} |")
     (out_dir / "rq1_tables.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
 
-    manifest = {"created_utc": datetime.now(timezone.utc).isoformat(), "B": B, "seed": SEED,
+    manifest = {"created_utc": datetime.now(timezone.utc).isoformat(), "B": args.B, "seed": SEED,
                 "inputs": {str(x.relative_to(ROOT)): sha256(x) for x in (HARNESS, CONTRASTS)}}
     (out_dir / "manifest.json").write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     pd.set_option("display.width", 220)
