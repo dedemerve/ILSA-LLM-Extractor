@@ -336,18 +336,44 @@ def run(args: argparse.Namespace) -> Path:
                                 args.min_interval, json.loads(args.extra_body) if args.extra_body else None)
     retriever = DemoRetriever(args.demos) if args.demos else None
 
+    # --checkpoint: append each finished study to a JSONL file so a dropped session can resume.
+    # Later lines win; studies whose calls errored are retried on resume.
+    done: dict[str, dict] = {}
+    if args.checkpoint and args.checkpoint.exists():
+        for line in args.checkpoint.read_text(encoding="utf-8").splitlines():
+            try:
+                p = json.loads(line)
+            except json.JSONDecodeError:
+                continue  # a line cut off by the disconnect
+            done[p["study_id"]] = p
+        done = {sid: p for sid, p in done.items() if p.get("status") != "error"}
+        print(f"resuming from {args.checkpoint}: {len(done)} studies already done")
+
     predictions = []
+
+    def record(pred: dict) -> None:
+        predictions.append(pred)
+        if args.checkpoint:
+            args.checkpoint.parent.mkdir(parents=True, exist_ok=True)
+            with args.checkpoint.open("a", encoding="utf-8") as f:
+                f.write(json.dumps(pred, ensure_ascii=False) + "\n")
+                f.flush()
+                os.fsync(f.fileno())
+
     for n, sid in enumerate(studies, 1):
+        if sid in done:
+            predictions.append(done[sid])
+            continue
         title, program, cycle = study_meta[sid]
         source = find_source_text(sid)
         if source is None:
-            predictions.append({"study_id": sid, "pairs": [], "status": "missing_source"})
+            record({"study_id": sid, "pairs": [], "status": "missing_source"})
             continue
         t0 = time.time()
         if args.mode == "document":
             [(text, finish)] = backend.generate([(frozen_document_messages(program, cycle, sid, source), DOC_MAX_TOKENS, None)])
             pairs, status = parse_output(text)
-            predictions.append({"study_id": sid, "pairs": pairs, "raw_output": text, "finish_reason": finish,
+            record({"study_id": sid, "pairs": pairs, "raw_output": text, "finish_reason": finish,
                                 "status": "truncated" if finish == "length" else status,
                                 "seconds": round(time.time() - t0, 1)})
             print(f"[{n}/{len(studies)}] {sid[:60]}: {len(pairs)} pairs, finish={finish}")
@@ -379,7 +405,7 @@ def run(args: argparse.Namespace) -> Path:
         pairs, stats = merge_study(chunk_results, methods)
         truncated = any(f == "length" for f in finishes) or any(c["status"] == "truncated" for c in chunk_results)
         failed = any(f == "error" for f in finishes + [m_finish])
-        predictions.append({
+        record({
             "study_id": sid, "pairs": pairs, "status": "error" if failed else ("truncated" if truncated else "ok"),
             "methods": methods, "merge_stats": stats, "n_chunks": len(chunks),
             "finish_reasons": {f: finishes.count(f) for f in set(finishes)},
@@ -428,6 +454,8 @@ def main() -> None:
     ap.add_argument("--limit", type=int, default=0, help="first N studies only (smoke test)")
     ap.add_argument("--final-test-run", action="store_true")
     ap.add_argument("--out", type=Path)
+    ap.add_argument("--checkpoint", type=Path,
+                    help="JSONL file (e.g. on Google Drive) written after every study; rerun with it to resume")
     args = ap.parse_args()
     if args.mode == "document" and args.demos:
         ap.error("--demos applies to chunked mode only")
