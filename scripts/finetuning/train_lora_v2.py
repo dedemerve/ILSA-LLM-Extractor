@@ -236,7 +236,7 @@ def main() -> None:
         save_only_model=True, logging_steps=1, report_to="none", seed=args.seed,
         gradient_checkpointing=not args.unsloth,
         gradient_checkpointing_kwargs={"use_reentrant": False},
-        remove_unused_columns=False, group_by_length=False,
+        remove_unused_columns=False,
     )
     torch.cuda.reset_peak_memory_stats()
     trainer = Trainer(model=model, args=targs, train_dataset=train_ex,
