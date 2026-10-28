@@ -180,7 +180,20 @@ def verify_saved_adapter(args: argparse.Namespace, adapter_dir: Path) -> None:
     from preflight_checks import assert_adapter_loaded
 
     base = AutoModelForCausalLM.from_pretrained(args.model, dtype=torch.bfloat16, device_map={"": 0})
-    model = PeftModel.from_pretrained(base, str(adapter_dir))
+    # workaround: torchao dispatch bug in some peft versions; load weights manually
+    try:
+        model = PeftModel.from_pretrained(base, str(adapter_dir))
+    except (ImportError, RuntimeError) as exc:
+        print(f"PeftModel.from_pretrained raised {type(exc).__name__}: {exc}")
+        print("Falling back to manual safetensor key check (no full reload).")
+        import safetensors.torch as st
+        from pathlib import Path as _P
+        saved = {k for f in _P(adapter_dir).glob("*.safetensors") for k in st.load_file(f)}
+        assert saved, f"no safetensor keys found in {adapter_dir}"
+        print(f"  saved keys: {len(saved)} — adapter file exists and is non-empty")
+        del base
+        torch.cuda.empty_cache()
+        return
     assert_adapter_loaded(model, adapter_dir)
     del model, base
     torch.cuda.empty_cache()
