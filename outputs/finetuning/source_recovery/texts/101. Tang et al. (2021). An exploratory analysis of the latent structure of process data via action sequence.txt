@@ -1,0 +1,2211 @@
+British Journal of Mathematical and Statistical Psychology (2021), 74, 1–33
+© 2020 The British Psychological Society
+www.wileyonlinelibrary.com
+An exploratory analysis of the latent structure of
+process data via action sequence autoencoders
+Xueying Tang1*
+, Zhi Wang2, Jingchen Liu2 and Zhiliang Ying2
+1Department of Mathematics, University of Arizona, Tucson, Arizona, USA
+2Department of Statistics, Columbia University, New York, New York, USA
+Computer simulations have become a popular tool for assessing complex skills such as
+problem-solving. Log ﬁles of computer-based items record the human–computer
+interactive processes for each respondent in full. The response processes are very
+diverse, noisy, and of non-standard formats. Few generic methods have been developed
+to exploit the information contained in process data. In this paper we propose a method
+to extract latent variables from process data. The method utilizes a sequence-to-
+sequence autoencoder to compress response processes into standard numerical vectors.
+It does not require prior knowledge of the speciﬁc items and human–computer
+interaction patterns. The proposed method is applied to both simulated and real process
+data to demonstrate that the resulting latent variables extract useful information from the
+response processes.
+1. Introduction
+Problem-solving is one of the key skills for people in a world characterized by rapid
+changes (OECD, 2017). Computer-based items have recently become popular for
+assessing problem-solving skills. In such items, problem-solving scenarios can be
+conveniently simulated through human–computer interfaces and the problem-solving
+processes can be easily recorded for analysis.
+In 2012, several computer-based items were designed and deployed in the Programme
+for the International Assessment of Adult Competencies (PIAAC) to measure adults’
+competency in problem-solving in technology-rich environments (PSTRE). Screenshots1
+of the interface for a released PSTRE item are shown in Figures 1–3. The opening page for
+the item, displayed in Figure 1, consists of two panels. The left-hand panel contains item
+instructions and navigation buttons, while the right-hand panel is the main medium for
+interaction. In this example, the right-hand panel is a web browser showing a job
+searching website. The task is to ﬁnd all job listings that meet the criteria described in the
+instructions. The drop-down menus and radio buttons can be used to narrow down the
+search range. Once the ‘Find Jobs’ button is clicked, jobs that meet the selected criteria are
+listed on the web page as shown in Figure 2. Participants can read the detailed
+information about a listing by clicking ‘More about this position’. Figure 3 is the detailed
+information page for the ﬁrst listing in Figure 2. If a listing is considered to meet all the
+*Correspondence should be addressed to Xueying Tang, Department of Mathematics, University of Arizona, 617
+N. Santa Rita Ave, Tucson, AZ 85721, USA (email: xytang@math.arizona.edu).
+1 Retrieved from https://piaac-logdata.tba-hosting.de/
+DOI:10.1111/bmsp.12203
+1
+
+requirements, it can be saved by clicking the ‘SAVE this listing’ button. When a participant
+works on a problem, the entire response process is recorded in the log ﬁles in addition to
+the ﬁnal response outcome (correct/incorrect). For example, if a participant selected
+‘Photography’ and ‘7 days’ in the two drop-down menus, clicked the ‘Part-time’ radio
+button, then clicked ‘Find Jobs’, read the detailed information for the ﬁrst listing and saved
+it, then a sequence of actions, ‘Start, Dropdown1_Photography, Dropdown2_7, Part-time,
+Find_Jobs, Click_W1, Save, Next’, is recorded in the log ﬁles.2 The entire action sequence
+constitutes a single observation of process data. It tracks all the major actions the
+participants took when they interacted with the browsing environment.
+The process responses contain substantially more comprehensive information from
+respondents than traditional item responses, which are often dichotomous (correct/
+incorrect) or polytomous (partial credits). On the other hand, to what extent this
+information is useful for educational and cognitive assessments and how to systematically
+make full use of such information are largely unknown. One of the difﬁculties in analysing
+process data is to cope with its non-standard format. Each process is a sequence of
+categorical variables (mouse clicks and keystrokes) and its length varies across
+observations. As a result, existing models for traditional item responses such as item
+response theory (IRT) models are not directly applicable to process data. Although some
+Figure 1. Main page of the sample item. [Colour ﬁgure can be viewed at wileyonlinelibrary.com]
+2 This example item is not used in real practice. The coding of the actions and the action sequence described
+above were created for illustration purposes.
+2
+Xueying Tang et al.
+ 20448317, 2021, 1, Downloaded from https://bpspsychub.onlinelibrary.wiley.com/doi/10.1111/bmsp.12203 by Beykent University, Wiley Online Library on [26/11/2025]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+models have been extended to incorporate item response time (Klein Entink, Fox, & van
+der Linden, 2009; S. Wang, Zhang, Douglas, & Culpepper, 2018; Zhan, Jiao, & Liao, 2018),
+similar extensions for response processes are difﬁcult.
+Another challenge for analysing process data comes from the wide diversity of human
+behaviours. Signals from behavioural patterns in response processes are often attenuated
+by a large number of noisy actions. Figure 4 presents the one-step and two-step lagged
+correlation of the response processes from one of the PSTRE items in PIAAC 2012. The
+lagged correlation matrix is analogous to the autocorrelation function of time series
+(Brockwell and Davis, 2016). A positive (negative) element of the one-step lagged
+correlation matrix indicates that the action in the corresponding column tends to (does
+not tend to) appear one step after the action in the corresponding row. The elements in
+the two-step lagged correlation matrix can be interpreted similarly. As most of the
+elements in the two matrices are close to zero, there is no clear correlation between two
+actions appearing consecutively or one step away. Thus if we use models only taking into
+account short-term dependence to analyse process data, for instance, autoregressive or
+moving average models, we will ﬁnd that the response process is largely random noise
+with no structure.
+The rich variety of computer-based items also adds to the difﬁculty in developing
+general methods for process data. The computer interface involved in the PSTRE items in
+PIAAC 2012 includes web browsers, mail clients and spreadsheets. The tasks required in
+these items also vary greatly. In some recent developments of process data analysis such as
+Greiff, Niepel, Scherer, and Martin (2016) and Kroehne and Goldhammer (2018), process
+Figure 2. Web page after clicking ‘Find Jobs’ in Figure 1. [Colour ﬁgure can be viewed at
+wileyonlinelibrary.com]
+Process data analysis with autoencoders
+3
+ 20448317, 2021, 1, Downloaded from https://bpspsychub.onlinelibrary.wiley.com/doi/10.1111/bmsp.12203 by Beykent University, Wiley Online Library on [26/11/2025]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+data are ﬁrst summarized into several variables according to domain knowledge and then
+their relationship with other variables of interest is investigated by conventional statistical
+methods. The design of the summary variables is usually item-speciﬁc and requires a
+thorough understanding of respondents’ cognitive process during human–computer
+Figure 3. Detailed information page for the ﬁrst job listing in Figure 2. [Colour ﬁgure can be
+viewed at wileyonlinelibrary.com]
+−1
+−0.8
+−0.6
+−0.4
+−0.2
+0
+0.2
+0.4
+0.6
+0.8
+1
+Click_SearchBox
+Click_W1
+Click_W2
+Click_W3
+Click_W4
+Click_W5
+End_SearchBox
+Instruction_Help
+Menu_Web_Bookmark
+Menu_Web_Edit
+Menu_Web_File
+Menu_Web_Help
+Next_Cancel
+Popup_Close
+SQ1_Biased
+SQ2_NotCurrent
+SQ3_Useful
+SQ4_NotAuth
+SQ5_Useful
+SQ1_NotAuth
+SQ1_NotCurrent
+SQ1_Useful
+SQ2_Biased
+SQ2_NotAuth
+SQ2_Useful
+SQ3_Biased
+SQ3_NotAuth
+SQ3_NotCurrent
+SQ4_Biased
+SQ4_NotCurrent
+SQ4_Useful
+SQ5_Biased
+SQ5_NotAuth
+SQ5_NotCurrent
+Toolbar_Split_H
+Toolbar_Split_V
+Toolbar_Web_Back
+Toolbar_Web_Bookmark
+Toolbar_Web_Find
+Toolbar_Web_Forward
+Toolbar_Web_Go
+Toolbar_Web_Help
+Toolbar_Web_Home
+Web
+Click_SearchBox
+Click_W1
+Click_W2
+Click_W3
+Click_W4
+Click_W5
+End_SearchBox
+Instruction_Help
+Menu_Web_Bookmark
+Menu_Web_Edit
+Menu_Web_File
+Menu_Web_Help
+Next_Cancel
+Popup_Close
+SQ1_Biased
+SQ2_NotCurrent
+SQ3_Useful
+SQ4_NotAuth
+SQ5_Useful
+SQ1_NotAuth
+SQ1_NotCurrent
+SQ1_Useful
+SQ2_Biased
+SQ2_NotAuth
+SQ2_Useful
+SQ3_Biased
+SQ3_NotAuth
+SQ3_NotCurrent
+SQ4_Biased
+SQ4_NotCurrent
+SQ4_Useful
+SQ5_Biased
+SQ5_NotAuth
+SQ5_NotCurrent
+Toolbar_Split_H
+Toolbar_Split_V
+Toolbar_Web_Back
+Toolbar_Web_Bookmark
+Toolbar_Web_Find
+Toolbar_Web_Forward
+Toolbar_Web_Go
+Toolbar_Web_Help
+Toolbar_Web_Home
+Web
+−1
+−0.8
+−0.6
+−0.4
+−0.2
+0
+0.2
+0.4
+0.6
+0.8
+1
+Click_SearchBox
+Click_W1
+Click_W2
+Click_W3
+Click_W4
+Click_W5
+End_SearchBox
+Instruction_Help
+Menu_Web_Bookmark
+Menu_Web_Edit
+Menu_Web_File
+Menu_Web_Help
+Next_Cancel
+Popup_Close
+SQ1_Biased
+SQ2_NotCurrent
+SQ3_Useful
+SQ4_NotAuth
+SQ5_Useful
+SQ1_NotAuth
+SQ1_NotCurrent
+SQ1_Useful
+SQ2_Biased
+SQ2_NotAuth
+SQ2_Useful
+SQ3_Biased
+SQ3_NotAuth
+SQ3_NotCurrent
+SQ4_Biased
+SQ4_NotCurrent
+SQ4_Useful
+SQ5_Biased
+SQ5_NotAuth
+SQ5_NotCurrent
+Toolbar_Split_H
+Toolbar_Split_V
+Toolbar_Web_Back
+Toolbar_Web_Bookmark
+Toolbar_Web_Find
+Toolbar_Web_Forward
+Toolbar_Web_Go
+Toolbar_Web_Help
+Toolbar_Web_Home
+Web
+Click_SearchBox
+Click_W1
+Click_W2
+Click_W3
+Click_W4
+Click_W5
+End_SearchBox
+Instruction_Help
+Menu_Web_Bookmark
+Menu_Web_Edit
+Menu_Web_File
+Menu_Web_Help
+Next_Cancel
+Popup_Close
+SQ1_Biased
+SQ2_NotCurrent
+SQ3_Useful
+SQ4_NotAuth
+SQ5_Useful
+SQ1_NotAuth
+SQ1_NotCurrent
+SQ1_Useful
+SQ2_Biased
+SQ2_NotAuth
+SQ2_Useful
+SQ3_Biased
+SQ3_NotAuth
+SQ3_NotCurrent
+SQ4_Biased
+SQ4_NotCurrent
+SQ4_Useful
+SQ5_Biased
+SQ5_NotAuth
+SQ5_NotCurrent
+Toolbar_Split_H
+Toolbar_Split_V
+Toolbar_Web_Back
+Toolbar_Web_Bookmark
+Toolbar_Web_Find
+Toolbar_Web_Forward
+Toolbar_Web_Go
+Toolbar_Web_Help
+Toolbar_Web_Home
+Web
+Figure 4. One-step (left) and two-step (right) lagged correlation of the response processes from
+item U06b of PIAAC 2012. [Colour ﬁgure can be viewed at wileyonlinelibrary.com]
+4
+Xueying Tang et al.
+ 20448317, 2021, 1, Downloaded from https://bpspsychub.onlinelibrary.wiley.com/doi/10.1111/bmsp.12203 by Beykent University, Wiley Online Library on [26/11/2025]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+interaction. Thus these approaches are too ‘expensive’ to apply to even a moderate
+number of diverse items such as the PSTRE items in PIAAC 2012. He and von Davier (2016)
+adopted the concept of n-grams from natural language processing to explore the
+association between action sequence patterns and traditional item responses. The
+sequence patterns extracted from their procedure depend on the coding of log ﬁles and
+are often of limited capacity since it only considers consecutive actions.
+In this paper we propose a generic method to extract features from process data. The
+extracted features play a similar role to the latent variables in item response theory (Lord,
+1980; Lord & Novick, 1968). The proposed method does not rely on prior knowledge of
+the items and coding of the log ﬁles. Therefore, it is applicable to a wide range of process
+data with little item-speciﬁc processing effort. In the case study, we applied the proposed
+method to 14 PSTRE items in PIAAC 2012. These items vary widely in many aspects,
+including the content of the problem-solving task and their overall difﬁculty levels.
+The main component of the proposed feature extraction method is an autoencoder
+(Goodfellow, Bengio, & Courville, 2016, Chapter 14). It is a class of artiﬁcial neural
+networks that tries to reproduce the input in its output. Autoencoders are often used for
+dimension reduction (Hinton & Salakhutdinov, 2006) and data denoising (Vincent,
+Larochelle, Bengio, & Manzagol, 2008) in pattern recognition, computer vision, and many
+other machine learning applications (Deng et al., 2010; Li, Luong, & Jurafsky, 2015; Lu,
+Tsao, Matsuda, & Hori, 2013; Youseﬁ-Azar, Varadharajan, Hamey, & Tupakula, 2017).
+They ﬁrst map the input to a low-dimensional vector, from which they then try to
+reconstruct the input. Once a good autoencoder is found for a data set, the low-
+dimensional vector contains comprehensive information of original data and thus can be
+used to summarize the response processes.
+With the proposed method, we extract features from each of the PSTRE items in PIAAC
+2012 and explore the extracted feature space of process data. We show that the extracted
+features from response processes contain more information than the traditional item
+responses. We ﬁnd that the prediction of many variables, including literacy and numeracy
+scores and a variety of background variables, can be considerably improved once the
+process features are incorporated.
+Neural networks have recently been used to analyse educational data. Piech et al.
+(2015) and Wang, Sy, Liu, and Piech (2017) applied recurrent neural networks to
+knowledge tracing and showed that their deep knowledge tracing models can predict
+students’ performance on the next exercise from their exercise trajectories more
+accurately than other traditional methods. Bosch and Paquette (2017) discussed several
+neural network architectures that can be used to analyse interaction log data. They
+extracted features for detecting student boredom through modelling the relations of
+student behaviours in two time intervals. The log ﬁle data used there were aggregated into
+a more regular form. Ding, Yang, Yeung, and Pong (2019) also studied the problem of
+extracting features from students’ learning processes using autoencoders. The learning
+processes considered there have a ﬁxed number of steps and the data in each step were
+preprocessed into ﬁxed-dimension raw features.
+The rest of this paper is organized as follows. In Section 2 we introduce the action
+sequence autoencoder and the feature extraction procedure for process data. The
+proposed procedure is applied to simulated processes in Section 3 to demonstrate how
+extracted features reveal the latent structure in response processes. Section 4 presents a
+case study of process data from PIAAC PSTRE items to show that response processes
+contain more information than traditional responses. Some concluding remarks are made
+in Section 5.
+Process data analysis with autoencoders
+5
+ 20448317, 2021, 1, Downloaded from https://bpspsychub.onlinelibrary.wiley.com/doi/10.1111/bmsp.12203 by Beykent University, Wiley Online Library on [26/11/2025]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+2. Feature extraction by action sequence autoencoder
+We adopt the following setting throughout this paper. Let A ¼ a1; . . .; aN
+f
+g denote the
+set of possible actions for an item, where N is the total number of distinct actions and each
+element in A is a unique action. A response process can be represented as a sequence of
+actions, s = (s1, . . . , sT), where st 2 A for t = 1, . . ., T and T denotes the length of the
+process, that is, the total number of actions that a respondent took to solve the problem.
+An action sequence s can equivalently be represented as a T  N binary matrix S ¼ ðStjÞ
+whose t th row gives the dummy variable representation of the action at time-step t. More
+speciﬁcally, Stj ¼ 1 indicates that the t th action of the sequence is action aj. There is one
+and only one element equal to 1 in each row. All other elements are 0. In the rest of this
+paper, S is used interchangeably with s to refer to an action sequence.
+The length of a response process is likely to vary widely across respondents. As a result,
+the matrix representation of response processes from different respondents will have
+different numbers of rows. For a set of n processes, s1, . . . , sn (equivalently, S1, . . .,Sn), the
+length of si (the number of rows in Si) is denoted by T i, for i = 1, . . ., n. The main
+motivation for developing a feature extraction method for process data is to compress the
+non-standard data with varying dimension into homogeneous dimension vectors to
+facilitate subsequent standard statistical analysis. In the remainder of this section, we
+describe a feature extraction method built on a type of neural network called an
+autoencoder. We start the description with a brief introduction to the structure and the
+working mechanism of a generic autoencoder in Section 2.1. In Section 2.2 we introduce
+recurrent neural networks, a type of neural network that is often used to process
+sequential information in data. In Section 2.3 we put the pieces together to construct an
+autoencoder that is suitable for extracting features from action sequences in process data.
+2.1. Autoencoder
+The main component of our feature extraction method is an autoencoder (Goodfellow
+et al., 2016, Chapter 14). It is a type of artiﬁcial neural network whose output tries to
+reproduce the input. A trivial solution to this task is to link the input and the output
+through an identity function, but this provides little insight into the data. Autoencoders
+employ special structures in the mapping from the input to the output so that non-trivial
+reconstructions are formed to reveal the underlying low-dimensional structure. As
+illustrated in Figure 5, an autoencoder consists of two components, an encoder / and a
+decoder w. The encoder / transforms a complex and high-dimensional input s into a low-
+dimensional vector h. Then the decoder w reconstructs the input from h. Since the low-
+dimensional vector is in a standard and simpler format and contains adequate information
+to restore the original data, autoencoders are often used for dimension reduction and
+feature extraction.
+The encoder and the decoder are often speciﬁed as a family of functions, /g and wn,
+respectively, where g and n are parameters to be estimated by minimizing the discrepancy
+Input
+Output
+Latent 
+Representation
+Figure 5. Structure of an autoencoder.
+6
+Xueying Tang et al.
+ 20448317, 2021, 1, Downloaded from https://bpspsychub.onlinelibrary.wiley.com/doi/10.1111/bmsp.12203 by Beykent University, Wiley Online Library on [26/11/2025]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+between the inputs and the outputs of the autoencoder. To be more speciﬁc, letting
+bsi ¼ wnð/gðsiÞÞ denote the output for input si, i = 1, . . ., n, the parameters g and n are
+estimated by minimizing
+Fðg; nÞ ¼
+X
+n
+i¼1
+Lðsi; bsiÞ;
+ð1Þ
+where L is a loss function measuring the difference between the reconstructed data bsi and
+the original data si. Once estimates bg and bn are obtained, the latent representation or the
+features of an action sequence s can be computed by h ¼ /bgðsÞ.
+To draw an analogy to IRT or other latent variable models, one may consider h, the
+output of the encoder /, to be an estimator of the latent variables based on the responses,
+and the decoder w to be the item response function that speciﬁes the response
+distribution corresponding to a latent vector. For the IRT model, the estimator and the
+item response function are often coherent in the sense that the estimator is determined by
+the item response function. For an autoencoder, both / and w are parameterized and
+estimated based on the data. There is no coherence guarantee between them. This is one
+of the theoretical drawbacks of autoencoders. Nonetheless, we hope that the parametric
+families for / and w are ﬂexible enough so that they can be consistently estimated with
+large samples and thus approximate coherence is automatically achieved.
+Based on the above discussion, a crucial step in the application of autoencoders is to
+specify an encoder and a decoder that are suitable for the data to be compressed. In the
+remainder of this section, we will describe an autoencoder that performs well for
+response processes.
+2.2. Recurrent neural network
+To facilitate the presentation, we ﬁrst provide a brief introduction to recurrent neural
+networks (RNNs), a pivotal component of the encoder and the decoder of the action
+sequence autoencoder.
+RNNs form a class of artiﬁcial neural networks that deal with sequences. Unlike
+traditional artiﬁcial neural networks such as multi-layer feed-forward networks (FFNs;
+Patterson & Gibson, 2017, Chapter 2) that treat an input as a simple vector, RNNs have a
+special structure to utilize the sequential information in the data. As depicted in Figure 6,
+the basic structure of RNNs has three components: inputs, hidden states, and outputs,
+each of which is a multivariate time series. The inputs x1, . . ., xT are K-dimensional
+vectors. The hidden states m1, . . ., mT are also K-dimensional and can be viewed as the
+memory that helps process the input information sequentially. The hidden state evolves as
+the input evolves. Each mt summarizes what has happened up to time t by integrating the
+current information xt with the previous memory mt1, that is, mt is a function of xt and
+mt1,
+mt ¼ f xt; mt1
+ð
+Þ;
+ð2Þ
+for t = 1, . . ., T. The initial hidden state m0 is often set to be the zero vector. To extract from
+memorythe information that is usefulfor subsequent tasks, a K-dimensional output vector
+yt is produced as a function of the hidden state mt at each time-step t,
+Process data analysis with autoencoders
+7
+ 20448317, 2021, 1, Downloaded from https://bpspsychub.onlinelibrary.wiley.com/doi/10.1111/bmsp.12203 by Beykent University, Wiley Online Library on [26/11/2025]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+yt ¼ gðmtÞ:
+ð3Þ
+Both f and g are often speciﬁed as a parametric family of functions with parameters to be
+estimated from data.
+To summarize, an RNN makes use of the current input xt and a summary of previous
+information mt1 to produce updated summary information mt, which in turn produces
+an output yt at each time-step t. An RNN is not a probabilistic model. It does not specify the
+probability distribution of the input xt or the output yt given the hidden state mt. It is
+essentially a deterministic nonlinear function that takes a sequence of vectors and outputs
+another sequence of vectors. Each output vector summarizes the useful information in the
+input vectors up to the current time-step. We will write the function induced by an RNN as
+Rð; cÞ, where c collects the parameters in f and g. Letting X = (x1,. . ., xT)T and Y = (y1,. . .,
+yT)T respectively denote the inputs and the outputs of the RNN, we have Y ¼ RðX; cÞ. We
+use a subscript t on R to denote the output vector at time-step t, that is, yt ¼ RtðX; cÞ.
+RNNs can process sequences of different lengths. Note that the functions f and g in (2)
+and (3) are the same across time-steps. Therefore, the total number of parameters for an
+RNN does not depend on the number of time-steps.
+Various choices of f and g have been proposed to compute the hidden states and
+outputs. Two of the most widely used are the long-short-term-memory (LSTM) unit
+(Hochreiter & Schmidhuber, 1997) and the gate recurrent unit (GRU; Cho et al., 2014).
+These are designed to mitigate the vanishing or exploding gradient problem of a basic
+RNN (Bengio, Simard, & Frasconi, 1994). We will also use the two designs in the RNN
+component of our action sequence autoencoder. Detailed expressions for the LSTM unit
+and GRU are given in Appendix.
+2.3. Action sequence autoencoder
+The action sequence autoencoder used for extracting features from process data takes a
+sequence of actions as the input process and outputs a reconstructed sequence. Figure 7
+illustrates the structure of the action sequence autoencoder. In what follows, we
+elaborate the encoding and the decoding mechanism.
+2.3.1. Encoder
+The encoder of the action sequence autoencoder takes a sequence of actions and outputs
+a K-dimensional vector as a compressed summary of the input action sequence. Working
+Figure 6. Structure of RNNs.
+8
+Xueying Tang et al.
+ 20448317, 2021, 1, Downloaded from https://bpspsychub.onlinelibrary.wiley.com/doi/10.1111/bmsp.12203 by Beykent University, Wiley Online Library on [26/11/2025]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+with actionsequences directlyis often challenging because of the categorical nature of the
+actions. To overcome this obstacle, we associate each action ai in the action pool A with a
+K-dimensional latent vector ei that will be estimated based on the data. These latent
+vectors describe the attributes of actions and will be used to summarize the information
+contained in the sequence. The method of mapping categorical variables to continuous
+latent attributes is often called the embedding method. It is widely used in machine
+learning applications such as neural machine translation and knowledge graph comple-
+tion (Bengio, Ducharme, Vincent, & Jauvin, 2003; Kraft, Jain, & Rush, 2016; Mikolov,
+Sutskever, Chen, Corrado, & Dean, 2013).
+The ﬁrst operation of our encoder is to transform the input sequence s = (s1, . . . , sT)
+into a corresponding sequence of latent vectors (ei1; . . .; eiT ), where it is the index of the
+action in A at time-step t, that is, st ¼ ait for t = 1,. . ., T. With the binary matrix
+representation S of action sequence s, the embedding step of the encoder is simply a
+matrix multiplication X ¼ SE, where E = (e1,. . ., eN)T is an N  K matrix whose i th row is
+the latent vector for action ai and the rows of X = (ei1; . . .; eiT )T form the latent vector
+sequence corresponding to the original action sequence s.
+Given the latent vector sequence, the encoder uses an RNN to summarize the
+information. Since our goal is to compress the entire response process into a single K-
+dimensional vector, only the last output vector of the RNN is kept to serve as a summary of
+information. Therefore, the output of the encoder, that is, the latent representation of the
+input sequence, is h ¼ RTðX; cEÞ.
+To summarize, the encoder of our action sequence autoencoder is
+/g S
+ð Þ ¼ RT SE; cE
+ð
+Þ;
+ð4Þ
+where g represents all the parameters, including the embedding matrix E and the
+parameter vector cE of the encoder RNN. The encoding procedure consists of the
+following three steps.
+1. An observed action sequence is transformed into a sequence of latent vectors by the
+embedding method: X ¼ SE.
+2. The latent vector sequence is processed by the encoder RNN to obtain another
+sequence of vectors R X; cE
+ð
+Þ ¼ ðh1; . . .; hTÞT, where ht ¼ RtðX; cEÞ for t = 1, . . . T.
+Figure 7. Structure of action sequence autoencoders. The bottom row gives the value range of
+each component, where DN1 ¼ fðp1; . . .; pNÞ : PN
+i¼1pi ¼ 1; pi  0; i ¼ 1; . . .; Ng.
+Process data analysis with autoencoders
+9
+ 20448317, 2021, 1, Downloaded from https://bpspsychub.onlinelibrary.wiley.com/doi/10.1111/bmsp.12203 by Beykent University, Wiley Online Library on [26/11/2025]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+3. The last output of the RNN is kept as the latent representation, namely, h ¼ hT.
+Each of the three steps corresponds to an arrow in the encoder part of Figure 7.
+2.3.2. Decoder
+The decoder of the action sequence autoencoder reconstructs an action sequence s, or
+equivalently its binary matrix representation S, from h. First, a different RNN is used to
+expand the latent representation h into a sequence of vectors, each of which contains the
+information on the action at the corresponding time-step. As h is the only information
+available for the reconstruction, the input of the decoder RNN is the same h for each of the
+T time-steps. Written in a matrix form, the input of the decoder RNN is 1ThT, where 1T is a
+T-dimensional vector of ones. After the decoder RNN’s processing, we obtain a sequence
+of K-dimensional vectors Y ¼ ðy1; . . .; yTÞT ¼ R 1ThT; cD
+
+
+. Each yt contains the informa-
+tion for the action taken at time-step t.
+Recall that each row of S is the dummy variable representation of the action at a
+particular time. Each row essentially speciﬁes a degenerate categorical distribution on A,
+with the action that is actually taken having probability 1 and all the other actions having
+probability 0. With this observation, the task of restoring the action at step t becomes one
+of constructing the probability distribution of the action taken at step t from yt. The
+multinomial logit model (MLM) can be used in the decoder to achieve this. To be more
+speciﬁc, the probability of taking action aj at time t is
+bStj ¼
+expðbjþyT
+t bjÞ
+1þPN1
+k¼1 expðbkþyT
+t bkÞ
+if j ¼ 1; . . .; N  1;
+1
+1þPN1
+k¼1 expðbkþyT
+t bkÞ
+if j ¼ N;
+8
+>
+<
+>
+:
+ð5Þ
+where bj and bj are parameters to be estimated from the data. Note that the parameters in
+(5) do not depend on t. That is, the encoder uses the same MLM to compute the probability
+distribution of st from yt for t = 1, . . ., T. As a result, the reconstructed sequence is bS ¼ ðbStjÞ
+and the decoder can be written as
+wnðhÞ ¼ MLMðRð1ThT; cDÞÞ;
+ð6Þ
+where the parameter vector n consists of the parameter vector cD in the decoder RNN and
+bj; bj, j = 1, . . ., N–1.
+If we have an ideal autoencoder that reconstructs the input perfectly, the probability
+distribution speciﬁed by (^St1; . . .; ^StN) will concentrate all its probability mass on the
+action that is actually taken. In practice, such a perfect autoencoder is unlikely to be
+constructed. Usually, every action in the action set A will be assigned a positive
+probability in the reconstructed probability distribution. For a given set of response
+processes, we want to manipulate the parameters in the encoder and the decoder so that
+the reconstructed probability distribution concentrates as much probability mass on the
+actual action as possible.
+To summarize, as depicted in the decoder part of Figure 7, the decoding procedure of
+the action sequence autoencoder consists of the following three steps.
+10
+Xueying Tang et al.
+ 20448317, 2021, 1, Downloaded from https://bpspsychub.onlinelibrary.wiley.com/doi/10.1111/bmsp.12203 by Beykent University, Wiley Online Library on [26/11/2025]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+1. The latent representation h is replicated T times to form the T  K matrix 1ThT.
+2. The decoder RNN takes 1ThT and outputs a sequence of vectors (y1, . . . , yT), each
+element of which contains the information on the action at the corresponding step.
+3. The probability distribution of st is computed according to the MLM from yt at each
+time-step t.
+2.3.3. Loss function
+In order to extract good features for a given set of response processes, we need to
+construct an action sequence autoencoder that reconstructs the response processes as
+well as possible. The discrepancy between an action sequence S and its reconstructed
+version bS can be measured by the loss function
+LðS; bSÞ ¼  1
+T
+X
+T
+t¼1
+X
+N
+j¼1
+StjlogðbStjÞ:
+ð7Þ
+Note that, for a given t, only one of (St1; . . . ; StN) is non-zero. The loss function is
+smaller if the distribution speciﬁed by (^St1; . . . ; ^StN) is more concentrated on the action
+that is actually taken at step t. The best action sequence autoencoder for describing a
+given set of response processes is the one that minimizes the total reconstruction loss
+deﬁned in (1).
+Notice that (7) is in the same form as the log-likelihood function of categorical
+distributions. By using this loss function, we implicitly deﬁne a probabilistic model for the
+response processes. That is, given the latent representation h, st follows a categorical
+distribution on A with probability vector (^St1; . . . ; ^StN). The decoder of the action
+sequence autoencoder speciﬁes the functional form of the probability vector in terms of h
+and n.
+2.4. Procedure
+Based on the above discussion, we extract K features from n response processes S1, . . ., Sn
+through the following procedure.
+Procedure 1 (Feature extraction for process data).
+1. Find a minimizer, ðbg; bnÞ, of the objective function Fðg; nÞ ¼ Pn
+i¼1LðSi; bSiÞ by
+stochastic gradient descent through the following steps.
+a. Initialize the parameters g and n.
+b. Randomly generate i from {1, . . ., n} and update g and n with g  a @LðSi;bSiÞ
+@g
+and
+n  a @LðSi;bSiÞ
+@n
+, respectively, where a is a predetermined small positive number.
+c. Repeat step (b) until convergence.
+2. Calculate ~hi ¼ /bgðSiÞ, for i = 1, . . ., n. Each column of ~H ¼ ð~h1; . . .; ~hnÞT is a raw
+feature of the response processes
+3. Perform principal component analysis on ~H. The principal components are the K
+principal features of the response processes.
+In step 1, the optimization problem is solved by stochastic gradient descent
+(SGD; Robbins & Monro 1951). In step 1(b), a ﬁxed step size a is used to update the
+Process data analysis with autoencoders
+11
+ 20448317, 2021, 1, Downloaded from https://bpspsychub.onlinelibrary.wiley.com/doi/10.1111/bmsp.12203 by Beykent University, Wiley Online Library on [26/11/2025]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+parameters. Data-dependent step sizes such as those proposed in Duchi, Hazan, and
+Singer (2011), Zeiler (2012) and Kingma and Ba (2015) can easily be adapted for the
+optimization problem.
+Neural networks are often overparameterized. To prevent overﬁtting, validation-based
+early stopping (Prechelt, 2012) is often used when estimating parameters of complicated
+neural networks such as our action sequence autoencoder. With this technique, the
+optimization algorithm (in our case, SGD) is not run until convergence. A parameter value
+that is obtained before convergence with good performance on the validation set is used
+as an estimate of the minimizer. To perform early stopping, a data set is split into a training
+set and a validation set. A chosen optimization algorithm is performed only on the training
+set for a number of epochs. An epoch consists of nT iterations, where nT is the size of the
+training set. At the end of each epoch, the objective function is evaluated on the validation
+set. The value of the parameters producing the lowest validation loss is used as an estimate
+of the minimizer. We adopt this technique when constructing the action sequence
+autoencoder. The feature extraction procedure with validation-based early stopping is
+summarized in the following procedure.
+Procedure 2 (Feature extraction with validation-based early stopping).
+1. Find a minimizer, ðbg; bnÞ, of the objective function Fðg; nÞ ¼ Pn
+i¼1LðSi; bSiÞ by
+stochastic gradient descent with validation-based early stopping through the
+following steps.
+a. Randomly split {1, . . . , n} into a training index set XT of size nT and a validation
+index set XV of size nV.
+b. Initialize the parameters g and n and calculate FV1 ¼ P
+i2XV LðSi; bSiÞ.
+c. Randomly permute the indices in XT and denote the result by i1; . . .; inT
+ð
+Þ.
+d. For k = 1, . . ., nT, update g and n with g  a
+@LðSik ;bSikÞ
+@g
+and n  a
+@LðSik ;bSikÞ
+@n
+,
+respectively.
+e. Calculate FV2 ¼ P
+i2XV LðSi; bSiÞ.If FV2 is smaller than FV1, let bg ¼ g and bn ¼ n and
+update FV1 with FV2.
+f. Repeat steps (c), (d), and (e) sufﬁciently many times.
+2. Calculate ~hi ¼ /bgðSiÞ, for i = 1, . . ., n. Each column of ~H ¼ ð~h1; . . .; ~hnÞT is a raw
+feature of the response processes.
+3. Perform principal component analysis on ~H. The principal components are the K
+principal features of the response processes.
+The proposed feature extraction procedure requires the number of features to be
+extracted, K, as an input. In general, if K is too small, the action sequence autoencoder
+will not have enough ﬂexibility to capture the structure of the response processes. On the
+other hand, if K is too big, the extracted features will contain too much redundant
+information, causing overﬁtting and instability in downstream analyses. We adopt the k-
+fold cross-validation procedure (Stone, 1974) to choose a suitable K in the analyses
+presented in Sections 4.4 and 4.5.
+We perform principal component analysis on the raw features in the last step of the
+proposed feature extraction procedure to seek interpretations. No dimension reduction is
+achieved in this step and we keep all K principal components of the K raw features ~h
+obtained in step 2. As we will show in the case study in Section 4, the ﬁrst several principal
+features usually have clear interpretations even if interpretability is not taken into account
+in the feature extraction procedure.
+12
+Xueying Tang et al.
+ 20448317, 2021, 1, Downloaded from https://bpspsychub.onlinelibrary.wiley.com/doi/10.1111/bmsp.12203 by Beykent University, Wiley Online Library on [26/11/2025]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+Since the extracted features have a standard format, they can be easily incorporated
+into (generalized) linear models and many other well-developed statistical procedures. As
+we will show in the sequel, the extracted features contain a substantial amount of
+information about the action sequences. They can be used as surrogates for the action
+sequences to study how response processes are related to the respondents’ latent traits
+and other quantities of interest.
+3. Simulations
+3.1. Experiment settings
+In this section we apply the proposed feature extraction method to simulated response
+processes of an item with 26 possible actions. Each action in the item is denoted by an
+upper-case English letter. In other words, we deﬁne A ¼ A; B; . . .; Z
+f
+g. All the sequences
+used in the study start with A and end with Z, meaning that A and Z represent the start and
+end of an item, respectively.
+In our simulation study, action sequences are generated from Markov chains. That is,
+given the ﬁrst t actions in a response process, s1, . . . , st, the distribution from which stþ1 is
+generated depends only on st. A Markov chain is determined by its probability transition
+matrix P ¼ ðpijÞ1  i;j  N, where pij ¼ Pðstþ1 ¼ ajjst ¼ aiÞ. Because of the special meaning
+of actions A and Z, there should not be transitions from other actions to A and from Z to
+other actions. As a result, the probability transition matrices used in our simulation study
+have the constraints that pi1 ¼ 0 for i = 1, . . ., N, and pNN ¼ 1. To construct a probability
+transition matrix, we only need to specify the elements in its upper right
+ðN  1Þ  ðN  1Þ submatrix. Given a transition matrix P, we start a sequence with A
+and generate all subsequent actions according to P until Z appears.
+Two simulation scenarios are devised in our experiments to impose latent class
+structures in generated response processes. In scenario I, two latent groups are formed by
+generating action sequences from two different Markov chains. Let P1 and P2 denote the
+probability transition matrices of the two chains. A set of n sequences is obtained by
+generating n=2 sequences according to P1 and the remaining n=2 sequences according to
+P2. Both P1 and P2 are randomly generated and then ﬁxed to generate all sets of response
+processes. To generate P1 ¼ ðpð1Þ
+ij Þ1  i;j  N, we ﬁrst construct an ðN  1Þ  ðN  1Þ
+matrix U whose elements are independent samples from a uniform distribution on the
+interval ½10; 10. Then the upper right ðN  1Þ  ðN  1Þ submatrix of P1 is computed
+from U by
+pð1Þ
+iþ1;j ¼
+expðuijÞ
+PN1
+l¼1 expðuilÞ
+; i; j ¼ 1; . . .; N  1:
+ð8Þ
+The transition matrix P2 is obtained similarly.
+In scenario II, half of the n action sequences in a set are generated from P1 as in scenario
+I. The other half are obtained by reversing the actions between A and Z in each of the
+generated sequences. For example, if (A, B, C, Z) is a generated sequence, then the
+corresponding reversed sequence is (A, C, B, Z). The two latent groups formed in this
+scenario are more subtle than those in scenario I, as a sequence and its reversed version
+cannot be distinguished by marginal counts of actions in A.
+We consider three choices of n: 500, 1,000, and 2,000. One hundred sets of action
+sequences are generated for each simulation scenario and each choice of n. Both LSTM
+Process data analysis with autoencoders
+13
+ 20448317, 2021, 1, Downloaded from https://bpspsychub.onlinelibrary.wiley.com/doi/10.1111/bmsp.12203 by Beykent University, Wiley Online Library on [26/11/2025]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+and GRU are considered for the recurrent unit in the autoencoder. For each choice of the
+recurrent unit, the number of features to be extracted is chosen from f10; 20; 30; 40; 50g
+by ﬁve-fold cross-validation. Once K is selected, Procedure 2 is applied to each data set.
+The (Kingma & Ba, 2015) optimizer optimizer is used to train action sequence
+autoencoders with initial step size 103. The training algorithm is run for 50 epochs
+with validation-based early stopping and 10% of the processes are randomly sampled as
+the validation set.
+We investigate the ability of the extracted features to preserve the information in
+action sequences by examining their performance in reconstructing variables derived
+from action sequences. The variables to be reconstructed are indicators of the appearance
+of an action or an action pair in a sequence. Rare actions and action pairs that appear fewer
+than 0:05n times in a data set are not taken into consideration. We model the relationship
+between the indicators and the extracted features through logistic regression. For each
+data set, n sequences are split into training and test sets in the ratio of 4:1. A logistic
+regression model is estimated for each indicator on the training set and its prediction
+performance is evaluated on the test set by the proportion of correct predictions, that is,
+prediction accuracy. The average prediction accuracy over all the indicators considered is
+recorded for each data set and each choice of the recurrent unit.
+To study how well the extracted features reveal the latent group structures in response
+processes, we build a logistic regression model to classify the action sequences according
+to the extracted features. The training and test sets are split similarly as before and the
+prediction accuracy on the test set is recorded for evaluation.
+3.2. Results
+Table 1 reports the results of our simulation study. A few observations can be made from
+Table 1. First, the accuracy for reconstructing the appearance of actions and action pairs
+is high in both simulation scenarios, indicating that the extracted features preserve a
+signiﬁcant amount of information in the original action sequences. The reconstruction
+accuracy is slightly improved as n increases. Including more action sequences can provide
+more information for estimating the autoencoder in step 1 of Procedure 2, thus producing
+better features. A larger sample size can also lead to a better ﬁt of the logistic models that
+relate features to derived variables. Both effects contribute to the improvement of action
+and action pair reconstruction.
+Second, in both simulation scenarios, the extracted features can distinguish the two
+latent groups well. In scenario I the two groups can be separated almost perfectly. Since
+the group difference in scenario II is more subtle, the accuracy in classifying the two
+Table 1. Mean (standard deviation) of prediction accuracy in the simulation study
+Scenario
+n
+Reconstruction accuracy
+Group accuracy
+LSTM
+GRU
+LSTM
+GRU
+I
+500
+0.88 (0.005)
+0.87 (0.006)
+0.99 (0.010)
+1.00 (0.007)
+1,000
+0.90 (0.003)
+0.90 (0.004)
+0.99 (0.005)
+0.99 (0.006)
+2,000
+0.91 (0.002)
+0.91 (0.003)
+0.99 (0.005)
+0.99 (0.005)
+II
+500
+0.88 (0.006)
+0.88 (0.006)
+0.86 (0.033)
+0.87 (0.031)
+1,000
+0.90 (0.004)
+0.91 (0.005)
+0.86 (0.021)
+0.86 (0.021)
+2,000
+0.91 (0.002)
+0.92 (0.003)
+0.87 (0.027)
+0.87 (0.016)
+14
+Xueying Tang et al.
+ 20448317, 2021, 1, Downloaded from https://bpspsychub.onlinelibrary.wiley.com/doi/10.1111/bmsp.12203 by Beykent University, Wiley Online Library on [26/11/2025]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+groups is lower than that in scenario I, but still more than 85% of the sequences can be
+classiﬁed correctly. To further look at how the extracted features reveal the latent
+structure of action sequences, we plot two principal features for one of the data sets with
+2,000 sequences for each scenario in Figure 8. The left-hand panel presents the ﬁrst two
+principal features for scenario I. The group structure is clearly shown and the two groups
+can be roughly separated by a horizontal line at 0. The right-hand panel of Figure 8
+displays the plot of the ﬁrst and fourth principal features for scenario II. Again the two
+groups can be clearly separated.
+Finally, the extracted features for the two choices of the recurrent unit in the action
+sequence autoencoder are comparable in terms of both reconstruction and group
+structure identiﬁcation. A GRU has a simpler structure and fewer parameters than an
+LSTM unit with the same latent dimension. In this sense, the GRU is more efﬁcient for our
+action sequence modelling.
+4. Case study
+4.1. Data
+The process data set used in this study contains 11,464 respondents’ response processes
+for the PSTRE items in PIAAC 2012. There are 14 PSTRE items in total. In our data, 7,620
+respondents answered seven items and 3,645 respondents answered all 14 items.For each
+of the 14 items, there are around 7,500 respondents. For each respondent–item pair, both
+the response process (action sequence) and the ﬁnal response outcome were recorded.
+The original ﬁnal outcomes for some items are polytomous. We simplify them into binary
+outcomes with the fully corrected responses labelled as 1 and all others as 0.
+The 14 PSTRE items in PIAAC 2012 vary in content, task complexity and difﬁculty.
+Some basic descriptive statistics for the items are summarized in Table 2, where n
+denotes the number of respondents, N is the number of possible actions, 
+T stands for the
+average sequence length and Correct % is the percentage of correct responses. There are
+three types of interaction environments: email client, spreadsheet, and web browser.
+Some items such as U01a and U01b have a single environment, while some items such as
+−12
+−10
+−8
+−6
+−4
+−2
+−6
+−4
+−2
+0
+2
+4
+Principal feature 1
+Principal feature 2
+Group 1
+Group 2
+−3.5
+−3.0
+−2.5
+−2.0
+−1.5
+−1.0
+−0.6
+−0.4
+−0.2
+0.0
+0.2
+0.4
+Principal feature 1
+Principal feature 4
+Group 1
+Group 2
+Figure 8. Left: scatterplot of the ﬁrst two principal features for one data set of 2,000 sequences
+generated under scenario I. Right: scatterplot of principal features 1 and 4 for one data set of 2,000
+sequences generated under scenario II. [Colour ﬁgure can be viewed at wileyonlinelibrary.com]
+Process data analysis with autoencoders
+15
+ 20448317, 2021, 1, Downloaded from https://bpspsychub.onlinelibrary.wiley.com/doi/10.1111/bmsp.12203 by Beykent University, Wiley Online Library on [26/11/2025]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+U02 and U23 involve multiple environments. U06a is the simplest item in terms of number
+of possible actions and average response length, but only about a quarter of the
+participants answered it correctly. Items U02 and U04a are the most difﬁcult items, and
+only around 10% of the respondents correctly completed the given tasks. The tasks in
+these two items are relatively complicated: there are a few hundred possible actions and
+more than 40 actions are needed to ﬁnish the task. With the wide item variety, manually
+extracting important features of process data based on experts’ understanding of the
+items is time-consuming, while the proposed automatic method can be easily applied toall
+these items.
+4.2. Features and their interpretations
+We extract features from the response processes for each of the 14 items using the
+proposed procedure. The number of features is chosen from {10, 20, . . ., 100} by ﬁve-fold
+cross-validation. The Adam algorithm is used to optimize the object function in step 1 of
+Procedure 2. The initial step size is set to 104. The algorithm is run for 100 epochs with
+validation-based early stopping, where 10% of the processes are randomly sampled to
+form the validation set for each item.
+Although the proposed method does not utilize the meaning of the actions for feature
+extraction, many of the principal features, especially the ﬁrst several components, often
+have practical meaning. To search for the interpretation of a feature, we ﬁrst sort the
+action sequences according to the value of the feature. Next, we examine the action
+sequences with low and high feature values respectively and then construct a variable that
+distinguishes the high-feature-value and low-feature-value groups. Finally, we quantita-
+tively conﬁrm the interpretation by computing the correlation between the constructed
+variable and the feature. A higher correlation indicates a more conﬁdent interpretation.
+We use the ﬁrst feature of U01a as an example to demonstrate how the procedure works.
+After sorting the action sequences according to the feature value, we ﬁnd that the action
+sequences with the lowest feature values are often very short and that the action
+Table 2. Descriptive statistics for PIAAC PSTRE items
+ID
+Description
+n
+N
+T
+Correct %
+U01a
+Party invitations – can/cannot come
+7,620
+207
+24.8
+54.5
+U01b
+Party invitations – accommodations
+7,670
+249
+52.9
+49.3
+U02
+Meeting rooms
+7,537
+328
+54.1
+12.8
+U03a
+CD tally
+7,613
+280
+13.7
+37.9
+U04a
+Class attendance
+7,617
+986
+44.3
+11.9
+U06a
+Sprained ankle – site evaluation table
+7,622
+47
+10.8
+26.4
+U06b
+Sprained ankle – reliable/trustworthy site
+7,612
+98
+16.0
+52.3
+U07
+Digital photography book purchase
+7,549
+125
+18.6
+46.0
+U11b
+Locate e-mail – ﬁle 3 e-mails
+7,528
+236
+30.9
+20.1
+U16
+Reply all
+7,531
+257
+96.9
+57.0
+U19a
+Club membership – member ID
+7,556
+373
+26.9
+69.4
+U19b
+Club membership – eligibility for club president
+7,558
+458
+21.3
+46.3
+U21
+Tickets
+7,606
+252
+23.4
+38.2
+U23
+Lamp return
+7,540
+303
+28.6
+34.3
+Note. n = number of respondents; N = number of possible actions; T = average sequence length;
+Correct % = percentage of correct responses.
+16
+Xueying Tang et al.
+ 20448317, 2021, 1, Downloaded from https://bpspsychub.onlinelibrary.wiley.com/doi/10.1111/bmsp.12203 by Beykent University, Wiley Online Library on [26/11/2025]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+sequences with the highest feature values are often long. This observation suggests that
+the ﬁrst feature of U01a is related to the length of a response process. Next, we compute
+the logarithm of the sequence length for each process and ﬁnd that its correlation with the
+feature is .90, which conﬁrms our conjecture. Using this procedure, we examined the ﬁrst
+ﬁve principal features of each item. A partial list of the feature interpretations we found is
+given in Table 3.
+The ﬁrst or second principal feature of each item usually corresponds to respondents’
+attentiveness. An inattentive respondent tends to move to the next item without
+meaningful interactions with the computer environment. In contrast, an attentive
+respondent typically tries to understand and to complete the task by exploring the
+environment. Thus attentiveness in the response process may be reﬂected in the length of
+the process. We call the principal feature that has the largest absolute correlation with the
+logarithm of the process length the attentiveness feature. In our case, the attentiveness
+feature is the second principal feature for item U06a and the ﬁrst for all other items. For all
+the items, the absolute correlation between the attentiveness feature and the logarithm of
+sequence length is greater than .85. To make a higher attentiveness feature correspond to
+a more attentive respondent, we modify the attentiveness features by multiplying each of
+them by the sign of their correlation with the logarithm of process length. For a given pair
+of items, we select respondents who responded to both items and calculate the
+correlation between the two modiﬁed attentiveness features. These correlations are all
+positive and range from .30 to .70, implying that the respondents who are inattentive on
+one item tend to be inattentive on the other item.
+The feature space of the respondents with correct responses is usually very different
+from that of the respondents with incorrect responses. As an illustration, the ﬁrst two
+principal features of U01b are plotted in Figure 9 for the two groups of respondents
+separately. Note that we perform principal component analysis before dividing the
+respondents into correct and incorrect groups. Thus the feature spaces presented in the
+two panels can be compared. As the ﬁgure shows, the distributions of the principal
+components are very different for these two groups. The non-oval shape of the clouds
+suggests that the feature space is highly nonlinear. Furthermore, the variance of the
+Table 3. A partial list of feature interpretations by interface type. The last column gives an example
+of the features with the interpretation. The correlation between the feature and the constructed
+variable is included in parentheses
+Interface type
+Interpretation
+Example
+Email client
+Viewing emails and folders
+U01a-2 (.71)
+Moving emails
+U01a-3 (.72)
+Creating new folders
+U01b-2 (.81)
+Spreadsheet
+Using sort
+U03a-2 (.68)
+Using search
+U19a-2 (.72)
+Web browser
+Clicking relevant links
+U06b-2 (.84)
+Clicking irrelevant links
+U23-2 (.77)
+All interfaces
+Sequence length
+Often the ﬁrst feature (.85 to .97)
+Using actions related to the task
+U23-4 (.75)
+Switching working environments
+U04a-2 (.78)
+Selecting answers
+U06b-4 (.65)
+Process data analysis with autoencoders
+17
+ 20448317, 2021, 1, Downloaded from https://bpspsychub.onlinelibrary.wiley.com/doi/10.1111/bmsp.12203 by Beykent University, Wiley Online Library on [26/11/2025]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+incorrect group is much larger than that of the correct group suggesting that the incorrect
+group is much more heterogeneous. The main reason is that there are more ways to solve
+the problem incorrectly than correctly. Item U01b requires the respondents to create a
+new folder and to move some emails to the new folder. Among the incorrect respondents,
+some moved emails but did not create a new folder while some created a new folder but
+did not move the emails correctly. There are also some respondents who did not respond
+seriously: they took fewer than ﬁve actions before moving to the next item. As shown in
+the right-hand panel of Figure 9, respondents with similar behaviours are located close to
+each other in the feature space.
+4.3. Reconstruction of derived variables
+We demonstrate in this subsection that the features extracted from the proposed
+procedure retain a substantial amount of information on the response processes. To be
+more speciﬁc, we show that various variables directly derived from the processes can be
+reconstructed by the extracted features.
+We deﬁne a derived variable as a binary variable indicating whether an action or a
+combination of actions appears in the process. For example, whether the ﬁrst dropdown
+menu is set to ‘Photography’ is a derived variable of the item described in the introduction.
+The binary response outcome is also a derived variable since it is entirely determined by
+the response process. In our data, 93 derived variables, including 14 item response
+outcomes, are considered.
+Similarly to the simulation study, we examine how well the derived variables can be
+reconstructed through a prediction procedure. We use logistic regression to model the
+relation between a derived variable and the principal features of the corresponding item.
+For each derived variable, 80% of the respondents are randomly sampled to form the
+training set and the remaining 20% form the test set. We ﬁt the model on the training set
+and predict the derived variable for each respondent in the test set. Speciﬁcally, the
+derived variable is predicted as 1 if the ﬁtted probability is greater than .5, and 0 otherwise.
+Prediction accuracy on the entire test set is calculated for evaluation.
+As shown in Table 4, for all the derived variables, the prediction accuracy is higher
+than 0.80. For 75 out of 93 variables, the accuracy is higher than .90. Thirty-ﬁve variables
+are predicted nearly perfectly (prediction accuracy greater than :975). These results
+4.2
+4.4
+4.6
+4.8
+5.0
+−2.0
+−1.0
+0.0
+1.0
+Correct
+PC1
+PC2
+0
+1
+2
+3
+4
+5
+−2
+−1
+0
+1
+2
+3
+4
+Incorrect
+PC1
+PC2
+Folder
+Move w/o Folder
+< 5 Actions
+Misc.
+Figure 9. Scatterplots of the ﬁrst two principal features of U01b stratiﬁed by response outcome
+[Colour ﬁgure can be viewed at wileyonlinelibrary.com]
+18
+Xueying Tang et al.
+ 20448317, 2021, 1, Downloaded from https://bpspsychub.onlinelibrary.wiley.com/doi/10.1111/bmsp.12203 by Beykent University, Wiley Online Library on [26/11/2025]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+manifest that the extracted features carry a signiﬁcant amount of information in the action
+sequences. We demonstrate in the remaining subsections that the extracted features are
+useful for assessing respondents’ competency and behaviours.
+4.4. Variable prediction based on a single item
+The item responses (both outcome and process) for an item reﬂect respondents’ latent
+traits, which affect their overall performance in a test. Therefore, each item response
+should have some power to predict the responses on other items and overall competency.
+Process data contain more detailed information on respondents’ behaviours than a single
+binary outcome. We expect that prediction based on the response process is more
+accurate than that solely based on the ﬁnal outcome. In this subsection we assess
+information in the response processes of a single item via the prediction of the binary
+response outcomes of other items as well as numeracy and literacy scores.
+Given the ﬁnal outcome and the response process for an item, say item j, we model
+their relation with the predicted variable by a generalized linear model
+gðlÞ ¼ gT
+j b;
+ð9Þ
+where l is the expectation of the predicted variable, g is the link function, gj is a vector of
+covariates related to item j, which will be speciﬁed later, and b is the coefﬁcient vector. If
+the predicted variable is the binary outcome of item j0, gðlÞ ¼ log l=ð1  lÞ
+ð
+Þ is the logit
+link and l is the probability of answering the item correctly. If the predicted variable is the
+literacy or numeracy score, g is the identity link and (9) becomes linear regression.
+Let zj denote the binary outcome and let hj denote the features extracted from the
+response process of item j. We consider two choices of gj for a given predicted variable,
+gj ¼ ð1; zjÞT and gj ¼ ð1; zj; hT
+j ; zjhT
+j ÞT. The ﬁrst choice only uses the binary outcome for
+prediction. The second uses both the outcome and the response process. We call the
+models with these two choices of covariates the baseline model and the process model,
+respectively. It turns out that the information in the baseline model is very limited,
+especially when the correct rate of item j is close to 0 or 1.
+For a given predicted variable, two thirds of the available respondents are randomly
+sampled to form the training set. The remaining one third are evenly split to form the
+validation and the test set. Both the baseline model and the process model are ﬁtted on the
+training set. We add L2 penalties on the coefﬁcient vector b in the process model to avoid
+overﬁtting. The penalty parameter is chosen by examining the prediction performance of
+the resulting model on the validation set. Speciﬁcally, a process model is ﬁtted for each
+candidate value of the penalty parameter. The one that produces the best prediction
+performance on the validation set is chosen to obtain the ﬁnal process model for
+comparison with the baseline model. The evaluation criterion is prediction accuracy for
+outcome prediction and out-of-sample R2 (OSR2) for score prediction. OSR2 is deﬁned to
+Table 4. Distribution of the out-of-sample prediction accuracy for 93 derived variables
+Accuracy
+(.80, .85]
+(.85, .90]
+(.90 .95]
+(.95, .975]
+(.975, 1.00]
+Counts
+5
+13
+28
+12
+35
+Process data analysis with autoencoders
+19
+ 20448317, 2021, 1, Downloaded from https://bpspsychub.onlinelibrary.wiley.com/doi/10.1111/bmsp.12203 by Beykent University, Wiley Online Library on [26/11/2025]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+be the square of the Pearson correlation between the predicted and true values. A higher
+OSR2 indicates better prediction performance.
+4.4.1. Outcome prediction results
+Figure 10 presents the results of outcome prediction. The plot in the left-hand panel gives
+the improvement in the out-of-sample prediction accuracy of the process model over that
+of the baseline model for all item pairs. The entry in the i th row and the j th column gives
+the result for predicting item j by item i. For many item pairs, adding the features extracted
+from process data improves the prediction. To further examine the improvements, for the
+task of predicting the outcome of item j0 by item j, we calculate the prediction accuracy
+separately for the respondents who answered item j correctly and for those who
+answered incorrectly. The improvements for these two groups are plotted respectively in
+the middle and right-hand panels of Figure 10. The improvement is more signiﬁcant for
+the incorrect group in both the number of item pairs that have improvement and the
+magnitude of the improvement. As mentioned previously, the incorrect response
+processes are more diverse than the correct ones, thus providing more information about
+the respondents. Misunderstanding the item requirements and lack of basic computer
+skills often lead to an incorrect response. Carelessness and inattentiveness are also
+possible causes of incorrect answers. These differences can be reﬂected in the extracted
+features as illustrated in Figure 9. Therefore, including these features in the model helps
+the prediction more for the incorrect group than for the correct group.
+4.4.2. Numeracy and literacy prediction results
+Numeracy and literacy score prediction results are displayed in Figure 11. In the left-hand
+panel, we plot the OSR2 of the process model against that of the baseline model. For both
+literacy and numeracy, regardless of the item used for prediction, the process model
+produces a higher OSR2 than the baseline model. Although the PSTRE items are not
+designed to measure these two competencies, the response processes are helpful for
+predicting the scores. To further examine the results, for each item-score pair, we again
+group the respondents according to their item response outcome and calculate the OSR2
+of the process model for the two groups separately. The OSR2 for the incorrect group is
+plotted against that for the correct group in the right-hand panel of Figure 11. Similar to
+−0.11
+−0.07
+−0.04
+0
+0.03
+0.07
+0.11
+0.14
+0.18
+0.21
+0.25
+U01a
+U01b
+U02
+U03a
+U04a
+U06a
+U06b
+U07
+U11b
+U16
+U19a
+U19b
+U21
+U23
+U01a
+U01b
+U02
+U03a
+U04a
+U06a
+U06b
+U07
+U11b
+U16
+U19a
+U19b
+U21
+U23
+−0.11
+−0.07
+−0.04
+0
+0.03
+0.07
+0.11
+0.14
+0.18
+0.21
+0.25
+U01a
+U01b
+U02
+U03a
+U04a
+U06a
+U06b
+U07
+U11b
+U16
+U19a
+U19b
+U21
+U23
+U01a
+U01b
+U02
+U03a
+U04a
+U06a
+U06b
+U07
+U11b
+U16
+U19a
+U19b
+U21
+U23
+−0.11
+−0.07
+−0.04
+0
+0.03
+0.07
+0.11
+0.14
+0.18
+0.21
+0.25
+U01a
+U01b
+U02
+U03a
+U04a
+U06a
+U06b
+U07
+U11b
+U16
+U19a
+U19b
+U21
+U23
+U01a
+U01b
+U02
+U03a
+U04a
+U06a
+U06b
+U07
+U11b
+U16
+U19a
+U19b
+U21
+U23
+Incorrect
+Figure 10. Difference of the cross-item outcome prediction accuracy for the process model and
+the baseline model. [Colour ﬁgure can be viewed at wileyonlinelibrary.com]
+20
+Xueying Tang et al.
+ 20448317, 2021, 1, Downloaded from https://bpspsychub.onlinelibrary.wiley.com/doi/10.1111/bmsp.12203 by Beykent University, Wiley Online Library on [26/11/2025]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+the outcome prediction, the prediction performance for the incorrect group is usually
+much better than that for the correct group since action sequences corresponding to
+incorrect answers are often more diverse and informative than those corresponding to
+correct answers.
+4.5. Prediction based on multiple items
+In this subsection we examine how the improvement in prediction performance from
+process data aggregates as more items are incorporated in the prediction. The variables of
+interest are age, gender, and literacy and numeracy scores.
+We only consider the 3,645 respondents who responded to all 14 PSTRE items in this
+experiment. The respondents are randomly split into training, validation, and test sets.
+The sizes of the three sets are 2,645, 500, and 500, respectively. The split is ﬁxed for
+estimating and evaluating all models in this experiment.
+We still consider model (9) for prediction. The logit link (i.e. logistic regression) is used
+for gender prediction, and linear regression for other variables. In this experiment, the
+covariate vector g incorporates information from multiple items. Given a predicted
+variable and a set of available items, a baseline model and a process model are considered
+for each variable. For the baseline model, g consists of only the ﬁnal outcomes, while for
+the process model it also includes the ﬁrst 20 principal features for each available item. Let
+Sm ¼ j1; . . .; jm
+f
+g denote the set of the indices for available items. The predictor for the
+baseline
+model
+is
+g ¼ ð1; zj1; . . .; zjmÞT
+and
+that
+of
+the
+process
+model
+is
+g ¼ ð1; zj1; . . .; zjm; hj1; . . .; hjmÞT, where hj 2 R50 is the ﬁrst 50 principal features for item
+j. We start with an empty item set and add one item to the set at a time. That is, for a given
+predicted variable, a sequence of 14 baseline models and 14 process models are ﬁtted. The
+order of items being added to the model is determined by forward Akaike information
+criterion (AIC) selection for the 14 outcomes on the training set. Speciﬁcally, for a given
+m,Sm contains the items whose outcomes are the ﬁrst m variables selectedby forward AIC
+selection among all 14 outcomes. We use prediction accuracy as the evaluation criterion
+for gender prediction and OSR2 for other variables.
+Recently, n-grams, which are contiguous sequences of n actions appearing in a set of
+action sequences, have been used to look for action patterns that are closely related to
+0.1
+0.2
+0.3
+0.4
+0.5
+0.1
+0.2
+0.3
+0.4
+0.5
+Baseline vs. Process
+Baseline OSR2
+Process OSR2
+Literacy
+Numeracy
+0.0
+0.1
+0.2
+0.3
+0.4
+0.0
+0.1
+0.2
+0.3
+0.4
+Correct vs. Incorrect
+Correct OSR2
+Incorrect OSR2
+Literacy
+Numeracy
+Figure 11. Left: OSR2 of the baseline and process model on the test set. Right: OSR2 of the process
+model for the correct and incorrect groups. [Colour ﬁgure can be viewed at wileyonlinelibrary.com]
+Process data analysis with autoencoders
+21
+ 20448317, 2021, 1, Downloaded from https://bpspsychub.onlinelibrary.wiley.com/doi/10.1111/bmsp.12203 by Beykent University, Wiley Online Library on [26/11/2025]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+item responses (He & von Davier, 2016). We extract all unigrams (actions) and bigrams
+(action pairs) that appear in more than 1% of the response processes and screen them by
+the method proposed in (He & von Davier, 2016) for each item. The frequencies of the
+selected n-grams in an action sequence can also be seen as features of response processes.
+To compare the prediction performance of the autoencoder features and n-gram features,
+we repeat the above experiment of predicting literacy and numeracy scores with hj
+replaced by the n-gram features. Other settings are the same as before.
+4.5.1. Numeracy and literacy prediction results
+In Figure 12, the OSR2 for predicting literacy and numeracy scores is plotted against the
+number of available items. For both the process model and the baseline model, the
+prediction of numeracy and literacy improves as responses are available for more items.
+Regardless of the number of available items, the process model outperforms the baseline
+model in both literacy and numeracy score predictions, although the difference becomes
+smaller as the number of available items increases. Notice that the OSR2 of the process
+model based on only two items roughly equals the OSR2 of the baseline model based on
+four items. These results imply that properly incorporating process data in data analysis
+can exploit the information in items more efﬁciently and that the incorporation is
+especially beneﬁcial when a small number of items are available. Figure 12 also shows that
+autoencoder features can achieve higher OSR2 than n-gram features, suggesting that more
+information related to the two scores is contained in the autoencoder features.
+The PSTRE item responses have some power to predict literacy and numeracy. This is
+not surprising as literacy and numeracy are related to the understanding of the PSTRE item
+description and material. In our case study, PSTRE items are more related to literacy than
+numeracy: the OSR2 for literacy score models is usually higher than that for the
+corresponding numeracy score model. The number of items needed in the process model
+to achieve a similar OSR2 to that obtained in the baseline model with all 14 items is ﬁve for
+literacy and eight for numeracy.
+2
+4
+6
+8
+10
+14
+0.4
+0.5
+0.6
+0.7
+Literacy
+Number of items
+OSR2
+Baseline
+n−grams
+Process
+2
+4
+6
+8
+10
+14
+0.3
+0.4
+0.5
+0.6
+Numeracy
+Number of items
+OSR2
+Baseline
+n−grams
+Process
+Figure 12. OSR2 of the baseline and process model with various numbers of items. [Colour ﬁgure
+can be viewed at wileyonlinelibrary.com]
+22
+Xueying Tang et al.
+ 20448317, 2021, 1, Downloaded from https://bpspsychub.onlinelibrary.wiley.com/doi/10.1111/bmsp.12203 by Beykent University, Wiley Online Library on [26/11/2025]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+4.5.2. Background variable prediction results
+Figure 13 presents the results for predicting age and gender. Adding more items to the
+baseline model barely improves the OSR2 for predicting age, while in the process model
+the OSR2 increases as more items are included and it is about twice as high as that of the
+baseline model when all 14 items are included. These results show that respondents at
+different ages behave differently in solving PSTRE items and that response processes can
+reveal the differences signiﬁcantly better than ﬁnal outcomes. A closer examination of the
+action sequences shows that younger respondents are more likely to use drag and drop
+actions to move emails while older respondents tend to move emails by using email menus
+(left-hand panel of Figure 14). Also, older respondents are less likely to use ‘Search’ in
+spreadsheet environments (right-hand panel of Figure 14).
+As for gender, the highest prediction accuracy of the baseline models is .55, which is
+only 0.02 higher than the proportion of female respondents in the test set. The prediction
+accuracy of the process model is almost always higher than that of the corresponding
+baseline model and it can be as high as .63. These observations imply that female and male
+respondents have similar performance in PSTRE items in terms of ﬁnal outcomes, but
+there are some differences in their response processes. In our data, male respondents are
+more likely to use sorting tools in spreadsheet environments, as shown in Table 5. The p-
+value for the v2 test of independence between gender and whether ‘Sort’ is used is less
+than 106 for the three items with spreadsheet environments.
+5. Concluding remarks
+In this paper we have presented a method to extract latent features from response
+processes. The key step of the method is to train an action sequence autoencoder for a set
+of response processes. We showed through a case study of the process data for PSTRE
+items in PIAAC 2012 that the extracted features improve the prediction of response
+outcomes, and literacy and numeracy scores.
+In Sections 4.4 and 4.5 we show that features exacted from action sequences can be
+used for predicting variables of interest. One can also build neural networks to predict a
+response variable directly from an action sequence. Such neural networks are often a
+combination of an RNN and a feed-forward neural network. If variables are predicted in
+this way, we may possibly need to ﬁt separate models for each response variable and each
+2
+4
+6
+8
+10
+14
+0.15
+0.20
+0.25
+0.30
+0.35
+Age
+Number of items
+OSR2
+Baseline
+Process
+2
+4
+6
+8
+10
+14
+0.52
+0.56
+0.60
+0.64
+Gender
+Number of items
+Prediction Accuracy
+Baseline
+Process
+Figure 13. Prediction results for age and gender. [Colour ﬁgure can be viewed at wileyonlineli-
+brary.com]
+Process data analysis with autoencoders
+23
+ 20448317, 2021, 1, Downloaded from https://bpspsychub.onlinelibrary.wiley.com/doi/10.1111/bmsp.12203 by Beykent University, Wiley Online Library on [26/11/2025]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+of the models involves RNNs. Fitting models with RNN components is generally
+computationally expensive because of its recurrent structure. With the feature extraction
+method, we only need to ﬁt a single model (the action sequence autoencoder) that
+involves RNNs, and then ﬁt a (generalized) linear model or a feed-forward neural network
+for each variable of interest. As the results presented in Appendix B.3 show, the two
+approaches are often comparable in terms of prediction performance. In fact, the
+approach without feature extraction could produce much worse results although it seems
+to be a more efﬁcient approach intuitively since a neural network is trained for each
+variable. This is because a large amount of noise is contained in the action sequences.
+Performing dimension reduction prior to supervised learning tasks can improve
+prediction performance, especially in the presence of a large amount of noise. Our
+feature extraction is a dimension reduction procedure that ﬁlters out the noise in action
+sequences. Thus less noise is contained in the feature-based (generalized) linear models
+than in training the neural network with action sequences as input.
+We use ﬁve-fold cross-validation to select an appropriate number of features to extract
+in both simulation and real data analysis. As previously mentioned, training RNN-based
+neural networks is often computationally expensive. Performing m-fold cross-validation
+requires training m models with different inputs, which could be computationally
+intensive. As the additional data analysis in Appendix B.1 shows, overselecting the feature
+dimension is often less harmful in terms of prediction accuracy than underselecting the
+dimension. There could be signiﬁcant information loss if too few features are extracted,
+while if too many features are extracted, appropriate dimension reduction or variable
+selection methods can be used to avoid incorporating too much noise in the subsequent
+0.00
+0.01
+0.02
+0.03
+0.04
+0.05
+0.06
+Age groups
+Moving emails by menu proportion
+<20
+20s
+30s
+40s
+50s
+>=60
+U01a
+U01b
+U11b
+0.05
+0.15
+0.25
+0.35
+Age groups
+Search proportion
+<20
+20s
+30s
+40s
+50s
+>=60
+U03a
+U19a
+U19b
+Figure 14. Left: Proportion of respondents moving emails by menu in different age groups. Right:
+Proportion of respondents using ‘Search’ in different age groups. [Colour ﬁgure can be viewed at
+wileyonlinelibrary.com]
+Table 5. Contingency tables of gender and whether ‘Sort’ is used in U03a, U19a and U19b
+Gender
+U03a
+U19a
+U19b
+Yes
+No
+Yes
+No
+Yes
+No
+Male
+418
+1,238
+365
+1,291
+661
+995
+Female
+359
+1,630
+311
+1,678
+564
+1,425
+24
+Xueying Tang et al.
+ 20448317, 2021, 1, Downloaded from https://bpspsychub.onlinelibrary.wiley.com/doi/10.1111/bmsp.12203 by Beykent University, Wiley Online Library on [26/11/2025]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+analysis. Therefore, if computational resources are limited, we suggest simply choosing a
+reasonably large K for feature extraction without running m-fold cross-validation. Based
+on our experience, K ¼ 100 is often a good choice for response processes as complex as
+PIAAC data.
+Generally speaking, training neural networks such as the action sequence autoen-
+coder requires a large amount of data. In Appendix B.2 we include additional data analysis
+results on the effect of sample size on the extracted features. The results suggest that, in
+our case, at least a few hundred response processes are needed for the extracted features
+to produce reasonable prediction results. We want to point out that there is no simple
+answer to the question that how many samples are necessary to train the action sequence
+autoencoder, as it depends on many factors such as the number of features to be extracted
+and the complexity of the response processes.
+Computer log ﬁles of interactive items often include time-stamps of actions. The time
+elapsed between two consecutive actions may also provide extra information about
+respondents and can be useful in educational and cognitive assessments. The current
+action sequence autoencoder does not make use of this information. Further study on
+incorporating time information in the analysis of process data is a possible future
+direction.
+Acknowledgements
+This work is supported by National Science Foundation grants SES-1826540 and IIS-1633360.
+The authors would like to thank the Educational Testing Service and Qiwei He for providing the
+data, and Hok Kan Ling for cleaning it.
+Conﬂicts of interest
+All authors declare no conﬂict of interest.
+Author contributions
+Xueying Tang (Formal analysis; Methodology; Software; Writing – original draft) Zhi Wang
+(Formal analysis; Investigation; Writing – original draft) Jingchen Liu (Funding acquisition;
+Methodology; Supervision; Writing – review & editing) Zhiliang Ying (Funding acquisi-
+tion; Supervision; Writing – review & editing).
+Data availability statement
+The data that support the ﬁndings of this study are available from the Organisation for
+Economic Co-operation and Development (OECD). Restrictions apply to the availability of
+these data, which were usedunder licence for this study. Data areavailable from http://piaacga
+teway.com/datasets/ with the permission of the OECD.
+References
+Bengio, Y., Ducharme, R., Vincent, P., & Jauvin, C. (2003). A neural probabilistic language model.
+Journal of Machine Learning Research, 3, 1137–1155.
+Process data analysis with autoencoders
+25
+ 20448317, 2021, 1, Downloaded from https://bpspsychub.onlinelibrary.wiley.com/doi/10.1111/bmsp.12203 by Beykent University, Wiley Online Library on [26/11/2025]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+Bengio, Y., Simard, P., & Frasconi, P. (1994). Learning long-term dependencies with gradient
+descent is difﬁcult. IEEE Transactions on Neural Networks, 5(2), 157–166. https://doi.org/10.
+1109/72.279181
+Bosch, N., & Paquette, L. (2017). Unsupervised deep autoencoders for feature extraction with
+educational data. In Deep Learning with Educational Data Workshop at the 10th International
+Conference on Educational Data Mining
+Brockwell, P. J., & Davis, R. A. (2016). Introduction to time series and forecasting. Cham,
+Switzerland: Springer.
+Cho, K., Van Merri€enboer, B., Gulcehre, C., Bahdanau, D., Bougares, F., Schwenk, H., & Bengio, Y.
+(2014). Learning phrase representations using RNN encoder-decoder for statistical machine
+translation. In Proceedings of the 2014 Conference on Empirical Methods in Natural
+Language Processing (pp. 1724-1734). Stroudsburg, PA: Association for Computational
+Linguistics. https://doi.org/10.3115/v1/D14-1179
+Deng, L., Seltzer, M. L., Yu, D., Acero, A., Mohamed, A., & Hinton, G. (2010). Binary coding of speech
+spectrograms using a deep auto-encoder. In Interspeech 2010. Makuhari, Japan: International
+Speech Communication Association. https://doi.org/10.1.1.185.1908
+Ding, M., Yang, K., Yeung, D.-Y., & Pong, T.-C. (2019). Effective feature learning with unsupervised
+learning for improving the predictive models in massive open online courses. In Proceedings of
+the 9th International Conference on Learning Analytics & Knowledge (pp. 135–144). New
+York, NY: ACM. https://doi.org/10.1145/3303772.3303795
+Duchi, J., Hazan, E., & Singer, Y. (2011). Adaptive subgradient methods for online learning and
+stochastic optimization. Journal of Machine Learning Research, 12, 2121–2159.
+Goodfellow, I., Bengio, Y., & Courville, A. (2016). Deep learning. Cambridge, MA: MIT Press.
+Greiff, S., Niepel, C., Scherer, R., & Martin, R. (2016). Understanding students’ performance in a
+computer-based assessment of complex problem solving: An analysis of behavioraldata from
+computer-generated log ﬁles. Computers in Human Behavior, 61, 36–46. https://doi.org/10.
+1016/j.chb.2016.02.095
+He, Q., & von Davier, M. (2016). Analyzing process data from problem-solving items with n-grams:
+Insights from a computer-based large-scale assessment. In Y. Rosen, S. Ferrara & M. Mosharraf
+(Eds.), Handbook of research on technology tools for real-world skill development (pp. 749–
+776). Hershey, PA: Information Science Reference. https://doi.org/10.4018/978-1-4666-9441-
+5.ch029
+Hinton, G. E., & Salakhutdinov, R. R. (2006). Reducing the dimensionality of data with neural
+networks. Science, 313, 504–507. https://doi.org/10.1126/science.1127647
+Hochreiter, S., & Schmidhuber, J. (1997). Long short-term memory. Neural Computation, 9, 1735–
+1780. https://doi.org/10.1162/neco.1997.9.8.1735
+Kingma,D. P., &Ba, J. (2015). Adam:A method for stochastic optimization. InProceedings of the 3rd
+International Conference on Learning Representations.
+Klein Entink, R. H., Fox, J.-P., & van der Linden, W. J. (2009). A multivariate multilevel approach to
+the modeling of accuracy and speed of test takers. Psychometrika, 74(1), 21. https://doi.org/10.
+1007/s11336-008-9075-y
+Kraft, P., Jain, H., & Rush, A. M. (2016). An embedding model for predicting roll-call votes. In
+Proceedings of the 2016 Conference on Empirical Methods in Natural Language Processing
+(pp. 2066–2070). Stroudsburg, PA: Association for Computational Linguistics. https://doi.org/
+10.18653/v1/D16-1221
+Kroehne, U., & Goldhammer, F. (2018). How to conceptualize, represent, and analyze log data from
+technology-based assessments? A generic framework and an application to questionnaire items.
+Behaviormetrika, 45, 527–563. https://doi.org/10.1007/s41237-018-0063-y
+Li, J., Luong, T., & Jurafsky, D. (2015). A hierarchical neural autoencoder for paragraphs and
+documents. In Proceedings of the 53rd Annual Meeting of the Association for Computational
+Linguistics and the 7th International Joint Conference on Natural Language Processing (Vol.
+1, pp. 1106–1115). Stroudsburg, PA: Association for Computational Linguistics.
+26
+Xueying Tang et al.
+ 20448317, 2021, 1, Downloaded from https://bpspsychub.onlinelibrary.wiley.com/doi/10.1111/bmsp.12203 by Beykent University, Wiley Online Library on [26/11/2025]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+Lord, F. M. (1980). Applications of item response theory to practical testing problems. New York,
+NY: Routledge.
+Lord, F. M., & Novick, M. R. (1968). Statistical theories of mental test scores. Reading, MA: Addison-
+Wesley.
+Lu, X., Tsao, Y., Matsuda, S., & Hori, C. (2013). Speech enhancement based on deep denoising
+autoencoder. In Interspeech (pp. 436-440). Red Hook, NY: Curran Associates Inc.
+Mikolov, T., Sutskever, I., Chen, K., Corrado, G. S., & Dean, J. (2013). Distributed representations
+of words and phrases and their compositionality. In C. J. C. Burges, L. Bottou, M. Welling, Z.
+Ghahramani & K. Q. Weinberger (Eds.), Advances in neural information processing systems
+26 (pp. 3111–3119). Red Hook, NY: Curran Associates Inc.
+OECD. (2017). The nature of problem solving: Using research to inspire 21st century learning.
+Paris, France: OECD Publishing.
+Patterson, J., & Gibson, A. (2017). Deep learning: A practitioner’s approach. Sebastopol, CA:
+O’Reilly Media.
+Piech, C., Bassen, J., Huang, J., Ganguli, S., Sahami, M., Guibas, L. J., & Sohl-Dickstein, J. (2015).
+Deep knowledge tracing. In C. Cortes, N. D. Lawrence, D. D. Lee, M. Sugiyama & R. Garnett
+(Eds.), Advances in neural information processing systems 28 (pp. 505–513). Cambridge, MA:
+MIT Press.
+Prechelt, L. (2012). Early stopping but when? In G. Montavon, G. B. Orr, & K.-R. M€uller (Eds.),
+Neural networks: Tricks of the trade (2nd ed., pp. 53–67). Berlin, Germany: Springer. https://
+doi.org/10.1007/3-540-49430-8_3
+Robbins, H., & Monro, S. (1951). A stochastic approximation method. The Annals of Mathematical
+Statistics, 22(3), 400–407. https://doi.org/10.1214/aoms/1177729586
+Stone, M. (1974). Cross-validatory choice and assessment of statistical predictions. Journal of the
+Royal Statistical Society, Series B, 36(2), 111–133. https://doi.org/10.1111/j.2517-6161.1974.
+tb00994.x
+Vincent, P., Larochelle, H., Bengio, Y., & Manzagol, P.-A. (2008). Extracting and composing robust
+features with denoising autoencoders. In Proceedings of the 25th International Conference on
+Machine Learning (pp. 1096-1103). New York, NY: ACM. https://doi.org/10.1145/1390156.
+1390294
+Wang, L., Sy, A., Liu, L., & Piech, C. (2017). Deep knowledge tracing on programming exercises. In
+Proceedings of the fourth (2017) ACM conference on learning @ scale (pp. 201-204). New
+York, NY: ACM. https://doi.org/10.1145/3051457.3053985
+Wang, S., Zhang, S., Douglas, J., & Culpepper, S. (2018). Using response times to assess learning
+progress: A joint model for responses and response times. Measurement: Interdisciplinary
+Research and Perspectives, 16(1), 45–58. https://doi.org/10.1080/15366367.2018.1435105
+Youseﬁ-Azar, M., Varadharajan, V., Hamey, L., & Tupakula, U. (2017). Autoencoderbased feature
+learning for cyber security applications. In 2017 International Joint Conference on Neural
+Networks (pp. 3854-3861). Piscataway, NJ: IEEE. https://doi.org/10.1109/IJCNN.2017.7966342
+Zeiler, M. D. (2012). Adadelta: An adaptive learning rate method, Preprint, arXiv:1212.5701).
+Zhan, P., Jiao, H., & Liao, D. (2018). Cognitive diagnosis modelling incorporating item response
+times. British Journal of Mathematical and Statistical Psychology, 71(2), 262–286. https://doi.
+org/10.1111/bmsp.12114
+Received 3 September 2019; revised version received 30 January 2020
+Process data analysis with autoencoders
+27
+ 20448317, 2021, 1, Downloaded from https://bpspsychub.onlinelibrary.wiley.com/doi/10.1111/bmsp.12203 by Beykent University, Wiley Online Library on [26/11/2025]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+Appendix:
+A. Structures of the LSTM unit and the GRU
+A.1. LSTM unit
+In an LSTM unit, the hidden state mt consists of two components, ct and ht, storing long-
+term and short-term memory, respectively, of the sequence up to the current step. The
+long-term memory ct is often called the cell state of the unit. The LSTM unit computes the
+hidden states and outputs in time-step t as follows:
+zt ¼ r q1 þ W1xt þ U1ht1
+ð
+Þ;
+rt ¼ r q2 þ W2xt þ U2ht1
+ð
+Þ;
+~ct ¼ tanh q3 þ W3xt þ U3ht1
+
+
+;
+ct ¼ ztct1 þ rt~ct;
+vt ¼ r q4 þ W4xt þ U4ht1
+ð
+Þ;
+ht ¼ vttanh ct
+ð Þ;
+yt ¼ ht;
+ð10Þ
+where  denotes elementwise multiplication and qi; Wi; Ui, i ¼ 1; 2; 3; 4, are parameters.
+Both rðxÞ ¼ 1=f1 þ expðxÞg and tanhðxÞ ¼ fexpðxÞ  expðxÞg=fexpðxÞþ expðxÞg
+are elementwise activation functions. The relationship among the components in
+equation (11) is illustrated in Figure A1. Receiving the hidden state from the previous step
+mt1 ¼ ðct1; ht1Þ and the current input xt, the LSTM unit forgets obsolete information in
+the previous long-term memory and combines the remainder (ztct1) with the useful
+information (rt~ct) from the new input and previous short-term memory to form the
+updated long-term memory ct. As zt controls what should be forgotten in the long-term
+memory, it is often called the forget gate. The candidate cell state ~ct summarizes the
+information in the previous short-term memory ht1 and the new input xt. The so-called
+input gate, rt, determines which part of this new information should be added into the
+long-term memory. Once the long-term memory is updated, the LSTM unit selects the
+information that is useful in the short term from the updated long-term memory with the
+help of the output gate vt. The selected information then forms the updated short-term
+memory ht and is used as the output yt of the unit.
+Figure A1. The structure of the LSTM unit.
+28
+Xueying Tang et al.
+ 20448317, 2021, 1, Downloaded from https://bpspsychub.onlinelibrary.wiley.com/doi/10.1111/bmsp.12203 by Beykent University, Wiley Online Library on [26/11/2025]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+A.2. GRU
+Using the notation in Section 2.2, the GRU computes the hidden states and outputs at
+time-step t as follows:
+zt ¼ r q1 þ W1xt þ U1mt1
+ð
+Þ;
+rt ¼ r q2 þ W2xt þ U2mt1
+ð
+Þ;
+~mt ¼ tanh q3 þ W3xt þ U3 rtmt1
+ð
+Þ
+
+
+;
+mt ¼ 1  zt
+ð
+Þmt1 þ zt~mt;
+yt ¼ mt;
+ð11Þ
+where  denotes elementwise multiplication and qi; Wi; Ui, i ¼ 1; 2; 3, are parameters.
+Both rðxÞ ¼ 1=f1 þ expðxÞg and tanhðxÞ ¼ fexpðxÞ  expðxÞg=fexpðxÞþ expðxÞg
+are elementwise activation functions. The structure given in equation (11) is illustrated in
+Figure A2. The procedure of updating the hidden state in the GRU is simpler than that in
+the LSTM unit. In the GRU, a candidate hidden state ~mt is ﬁrst computed by combining the
+information in the input xt and the previous hidden state mt1. Notice that not all the
+information in mt1 is used to construct ~mt1. Only the relevant information selected by
+the reset gate rt is incorporated. The updated hidden state mt is a convex combination of
+the previous hidden state mt1 and the candidate hidden state ~mt. The weight zt is called
+the update gate as it controls how much new information (~mt) should be integrated in mt.
+The output of the GRU is the same as the updated hidden state.
+B. Additional data analysis results
+B.1. Effect of number of extracted features
+In this experiment, we use the action sequences of the 3,645 respondents who answered
+all 14 items in PIAAC 2012 to investigate the effect of the number of extracted features K
+on the performance of the extracted features. Two aspects of the extracted features are
+examined in this experiment: derived variable reconstruction accuracy; and score
+prediction performance.
+We consider several choices of K: 10, 20, 40, 80, 100, 150 and 200. For each choice, we
+extract K features via Procedure 2 for each item. The optimizer, step size, and number of
+epochs used for training the action sequence autoencoders are the same as those
+described in Section 2. The 3,645 respondents are randomly split into training (3,145) and
+test (500) sets for the following analysis.
+Figure A2. The structure of the GRU.
+Process data analysis with autoencoders
+29
+ 20448317, 2021, 1, Downloaded from https://bpspsychub.onlinelibrary.wiley.com/doi/10.1111/bmsp.12203 by Beykent University, Wiley Online Library on [26/11/2025]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+All the derived variables considered in Section 4.3 is used here ro evaluate the
+reconstruction accuracy. For each choice of K and each derived variable, a logistic
+regression model based on the features from the corresponding item is ﬁtted on the
+training set. The prediction accuracy on the test set is recorded as the reconstruction
+accuracy of the derived variable with K features. We calculate the proportion of the 93
+derived variables that can be reconstructed with accuracy above .85, .90 and .95 to
+examine the overall reconstruction accuracy for each choice of K. As the results
+presented in the left-hand panel of Figure A3 show, derived variable reconstruction
+accuracy increases as the number of extracted features increases from 10 to 40. Further
+increases in K do not lead to signiﬁcant change.
+To study the score prediction performance of the features, we use a linear model
+with the ﬁrst 10 principal features and the binary responses from the 14 items as
+covariates to predict respondents’ literacy and numeracy scores for each choice of K.
+The linear models are ﬁtted on the training set and the OSR2 (deﬁned in Section 4.4) on
+the test set is recorded. To reduce the variability of the results, the above analysis is
+performed ten times. A different training--test split is used each time. The sizes of the sets
+are kept the same across the ten splits. The average of the ten OSR2 values for each
+choice of K is reported in the middle and right-hand panels of Figure A3. Similarly to the
+reconstruction results, the score prediction improves as K increases from 10 to 40 and
+then stabilizes. In the two panels, the prediction results based only on the 14 binary
+responses are plotted as the dashed line. Regardless of the choice of K, the model based
+on both features and binary responses outperforms that based solely on the binary
+responses.
+B.2. Effect of sample size
+In this section we study the effect of sample size on the extracted features from the same
+two aspects as in Appendix B.1, namely, derived variable reconstruction and score
+prediction. Our experiment is again performed on the PIAAC 2012 data set containing
+action sequences of 14 items from 3,645 respondents. We ﬁrst randomly sampled 500
+respondents as the common test set for all the analyses described below. Then training
+50
+100
+150
+200
+0.4
+0.6
+0.8
+Reconstruction
+K
+Proportion of variables
+Above 0.85
+Above 0.9
+Above 0.95
+50
+100
+150
+200
+0.69
+0.70
+0.71
+0.72
+Literacy prediction
+K
+OSR2
+OSR2
+50
+100
+150
+200
+0.65
+0.66
+0.67
+0.68
+Numeracy prediction
+K
+Figure A3. Reconstruction (left) and score prediction (middle and right) performance for various
+choices of K. The dashed lines in the middle and right-hand panels represent the results from the
+models based on 14 binary responses. [Colour ﬁgure can be viewed at wileyonlinelibrary.com]
+30
+Xueying Tang et al.
+ 20448317, 2021, 1, Downloaded from https://bpspsychub.onlinelibrary.wiley.com/doi/10.1111/bmsp.12203 by Beykent University, Wiley Online Library on [26/11/2025]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+sets with various sample sizes are created by subsampling the remaining 3,145
+respondents with subsampling proportion p = .1, .2, . . ., .9, 1. Given a training set, the
+corresponding action sequences are used to train the action sequence autoencoder with
+K ¼ 100 for each item. Then 100 features are extracted for the action sequences in the
+training set and those in the test set.
+To study the performance of reconstructing derived variables, we ﬁt a logistic
+regression model on the training set for each derived variable on the 100 extracted
+features of the corresponding item and record the prediction accuracy on the test set. The
+proportion of variables that can be predicted with accuracy above .85, .90, .95 are
+computed to evaluate the overall reconstruction accuracy for each choice of subsampling
+proportion. The results are presented in the left-hand panel of Figure A4. In general, the
+derived variables can be reconstructed better when the sample size gets larger. When the
+subsampling proportion is higher than .5, that is, when more than 1,500 action sequences
+are used for training the action sequence autoencoder, the proportion of variables with
+accuracy above .85 and .90 becomes stabilized while the proportion for accuracy above
+.95 continues increasing.
+To study the score prediction performance of the extracted features, we ﬁt a linear
+model with the extracted features and binary responses from 14 items as covariates to
+predict respondents’ numeracy and literacy score for each choice of subsampling
+proportion. The models are ﬁtted on the training set and their prediction performance is
+evaluated on the common test set. The recorded OSR2, is summarized in the middle and
+right-hand panels of Figure A4. Similarly to the reconstruction performance, the score
+prediction performance improves as the sample size gets larger. The performance
+becomes stabilized when the subsampling proportion is higher than .4. The dashed lines
+in the middle and right-hand panels represent the prediction based solely on the 14 binary
+responses. The linear model that the prediction comes from is ﬁtted on the training set
+with 3,145 respondents. As the two plots suggest, the feature-based models ﬁtted on a few
+hundred observations can outperform response-based models ﬁtted on a few thousand
+observations.
+0.2
+0.4
+0.6
+0.8
+Reconstruction
+Subsampling proportion
+Proportion of variables
+0.1
+0.3
+0.5
+0.7
+0.9 1
+Above 0.85
+Above 0.9
+Above 0.95
+0.665
+0.675
+0.685
+0.695
+Literacy prediction
+Subsampling proportion
+OSR2
+0.1
+0.3
+0.5
+0.7
+0.9 1
+0.63
+0.64
+0.65
+0.66
+0.67
+Numeracy prediction
+Subsampling proportion
+OSR2
+0.1
+0.3
+0.5
+0.7
+0.9 1
+Figure A4. Reconstruction (left) and score prediction (middle and right) performance for various
+choices of subsampling proportion. The dashed lines in the middle and right panels represent the
+prediction results from the response-based model ﬁtted on 3,145 observations. [Colour ﬁgure can be
+viewed at wileyonlinelibrary.com]
+Process data analysis with autoencoders
+31
+ 20448317, 2021, 1, Downloaded from https://bpspsychub.onlinelibrary.wiley.com/doi/10.1111/bmsp.12203 by Beykent University, Wiley Online Library on [26/11/2025]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+B.3. Prediction results from one-step approach
+In Sections 4.4 and 4.5 the variables of interest are essentially predicted from action
+sequences via a two-step approach. In the ﬁrst step, features are extracted from action
+sequences via ﬁtting an action sequence autoencoder. In the second step, linear models or
+generalized linear models are used to predict variables of interest from the extracted
+features. In principle, one can also make predictions directly from action sequences by
+building a neural network for each variable to be predicted. The neural network takes an
+action sequence as input and outputs the response variable. In this section we explore the
+prediction performance of the one-step supervised learning approach and compare it
+with the results obtained from our two-step approach.
+The neural network we use in the one-step approach consists of an embedding layer,
+an RNN, and an FFN. Its architecture is depicted in Figure A5. The embedding and RNN
+layers of this neural network resemble the encoder in the action sequence autoencoder.
+The output vector of the RNN at the last time-step is then fed into the FFN instead of a
+decoder.
+We use both the one-step and two-step approach to predict respondents’ gender, age,
+literacy score and numeracy score from their action sequences in the PIAAC data set. In
+the two-step approach, 100 features are extracted and used for ﬁtting (generalized) linear
+models. In the one-step approach, we set K ¼ 100 and use no FFN hidden layer to mimic
+the settings in the two-step approach. The 3645 respondents who responded to all 14
+items are randomly split into training (2,645), validation (500), and test sets (500). For
+each combination of item and response variable, we ﬁt the one-step neural network
+described above and the generalized linear model in the two-step approach using the
+training and validation set and evaluate the prediction performance of the two approaches
+on the test set. The evaluation criteria are the same as described in the main text. The
+results are presented in Figure A6. For gender, literacy score and numeracy score, the two
+approaches are comparable in terms of prediction performance. However, for age, the
+performance of the two-step approach is signiﬁcantly better than that of the one-step
+approach.
+Value 
+range
+Figure A5. The structure of the neural network used in the one-step prediction approach.
+32
+Xueying Tang et al.
+ 20448317, 2021, 1, Downloaded from https://bpspsychub.onlinelibrary.wiley.com/doi/10.1111/bmsp.12203 by Beykent University, Wiley Online Library on [26/11/2025]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+U01a
+U01b
+U02
+U03a
+U04a
+U06a
+U06b
+U07
+U11b
+U16
+U19a
+U19b
+U21
+U23
+Gender
+Prediction accuracy
+0.0
+0.1
+0.2
+0.3
+0.4
+0.5
+U01a
+U01b
+U02
+U03a
+U04a
+U06a
+U06b
+U07
+U11b
+U16
+U19a
+U19b
+U21
+U23
+Age
+OSR2
+0.00
+0.05
+0.10
+0.15
+U01a
+U01b
+U02
+U03a
+U04a
+U06a
+U06b
+U07
+U11b
+U16
+U19a
+U19b
+U21
+U23
+Literacy
+OSR2
+0.0
+0.1
+0.2
+0.3
+0.4
+0.5
+U01a
+U01b
+U02
+U03a
+U04a
+U06a
+U06b
+U07
+U11b
+U16
+U19a
+U19b
+U21
+U23
+Numeracy
+OSR2
+0.0
+0.1
+0.2
+0.3
+0.4
+Feature + GLM
+RNN + FFN
+Figure A6. Comparison of the prediction performance of the one-step and two-step approaches.
+Process data analysis with autoencoders
+33
+ 20448317, 2021, 1, Downloaded from https://bpspsychub.onlinelibrary.wiley.com/doi/10.1111/bmsp.12203 by Beykent University, Wiley Online Library on [26/11/2025]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License

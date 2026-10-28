@@ -1,0 +1,1369 @@
+Computers and Education: Artificial Intelligence 8 (2025) 100411
+Available online 29 April 2025
+2666-920X/© 2025 The Authors. Published by Elsevier Ltd. This is an open access article under the CC BY-NC license (http://creativecommons.org/licenses/by-
+nc/4.0/).
+Contents lists available at ScienceDirect
+Computers and Education: Artificial Intelligence
+journal homepage: www.sciencedirect.com/journal/computers-and-education-artificial-intelligence
+Assessing reading fluency in elementary grades: A machine learning 
+approach
+Gabriel Candido da Silva a,
+,∗, Rodrigo Lins Rodrigues b, Américo N. Amorim c,d,e, Lieny Jeon f, 
+Emilia X.S. Albuquerque d, Vanessa C. Silva d, Vinícius F. da Silva d, André L.A. Pinheiro d, 
+João P.J.R. Nunes d, Suzana X.M.G. de Souza d, Maxsuel S. Silva d, Igor Mauro d, 
+Alexandre Magno Andrade Maciel a
+a Programa de Pós-Graduação em Engenharia da Computação, Universidade de Pernambuco, Rua Benfica, 455, Recife, 50720-001, PE, Brazil
+b Programa de Pós-Graduação em Ensino das Ciências, Universidade Federal Rural de Pernambuco, Avenida Dom Manoel de Medeiros, s/n, Recife, 52171-900, PE, 
+Brazil
+c Center for Faculty Advancement, New York University, 82 Washington Square E, New York, 10003, NY, United States
+d Escribo Leitura, Escribo - Educação do Seu Jeito, Estrada do Arraial, 2501, Recife, 52051-380, PE, Brazil
+e Inteligência Artificial na Educação e Aprendizado (IAEA), CESAR School, Avenida Cais do Apolo, 77, Recife, 50030-220, PE, Brazil
+f School of Education and Human Development, University of Virginia, 405 Emmet St S, Charlottesville, VA 22904, United States
+A R T I C L E 
+I N F O 
+A B S T R A C T 
+Keywords:
+Reading fluency
+Automatic speech recognition
+Large-scale assessment
+Natural language processing
+This study compares eleven widely used machine learning algorithms to identify the most accurate and 
+comprehensive method for assessing children’s reading fluency. Our fluency framework integrates three key 
+dimensions: accuracy in word decoding, reading speed (words per minute), and prosody, which captures 
+appropriate pausing and intonation during reading. Audio recordings from 2nd and 3rd grade students across 144 
+Brazilian schools were transcribed using the advanced Whisper ASR system, enabling automated extraction of 
+ﬂuency features. The research objective was to determine which algorithm best predicts fluency, considering 
+diverse evaluation setups including binary classification (fluent versus nonfluent), multiclass classification 
+(diﬀerentiated fluency levels), and regression analysis to estimate continuous fluency scores. Among the eleven 
+models evaluated, Logistic Regression achieved the highest overall performance in the classification experiments, 
+demonstrating superior precision and accuracy. Ensemble methods such as Gradient Boosting and Random Forest 
+also yielded robust results, particularly in regression analyses where they eﬀectively captured the variability 
+in expert fluency ratings. Notably, reading speed emerged as the most critical indicator of fluency across 
+all experiments, consistently outweighing contributions from accuracy and prosody. Nevertheless, prosody 
+maintained signiﬁcant importance, especially when fluency was modeled as a continuous variable, emphasizing 
+the value of expressive reading. These findings suggest that while high accuracy in word decoding is fundamental, 
+interventions that enhance reading speed and incorporate prosodic features can oﬀer more nuanced support for 
+reading development. This work provides educators with insights into scalable, automated, and cost-effective 
+approaches to monitoring and improving reading fluency.
+1. Introduction
+Data from the 2022 PISA international assessment demonstrates that 
+students in many countries do not meet the reading standards. One of 
+* Corresponding author.
+E-mail addresses: gabcandidods@gmail.com (G.C. da Silva), rodrigo.linsrodrigues@ufrpe.br (R.L. Rodrigues), ang6011@nyu.edu (A.N. Amorim), 
+ljeon@virginia.edu (L. Jeon), emilia@escribo.com (E.X.S. Albuquerque), vanessa@escribo.com (V.C. Silva), vinicius@escribo.com (V.F. da Silva), 
+andre@escribo.com (A.L.A. Pinheiro), joao@escribo.com (J.P.J.R. Nunes), max@escribo.com (S.X.M.G. de Souza), suzana@escribo.com (M.S. Silva), 
+igor@escribo.com (I. Mauro), alexandre.maciel@upe.br (A.M.A. Maciel).
+the main issues aﬀecting students is the reduced capacity to comprehend 
+text, often related to reading fluency diﬃculties (Silva, 2020). To assess 
+an individual’s oral reading fluency, three components are understood 
+as key elements: accuracy in word decoding, appropriate reading rate 
+https://doi.org/10.1016/j.caeai.2025.100411
+Received 2 January 2025; Received in revised form 26 February 2025; Accepted 20 April 2025 
+
+Computers and Education: Artificial Intelligence 8 (2025) 100411
+2
+G.C. da Silva, R.L. Rodrigues, A.N. Amorim et al. 
+(speed), and proper use of prosody (Hudson et al., 2005; Samuels, 1979). 
+The latter, although it better reflects the reader’s comprehension of the 
+text, is the least emphasized element in fluency assessments (Machado 
+& Freitag, 2019).
+According to do Valle et al. (2022), there are still few approaches 
+to assessing reading fluency, and some additional challenges are high­
+lighted, such as the data collection procedure and interview-based as­
+sessment, which can be uncomfortable for children. Assessing reading 
+speed, accuracy and prosody of each student, several times during the 
+academic year, is a challenging task for teachers. Thus, a cost-effective, 
+automatic and reliable reading fluency assessment would be a valu­
+able tool, especially in classes with a signiﬁcant amount of struggling 
+students. For Carchedi et al. (2021), these assessments require standard­
+ization and automation in order to be conducted on a large scale and 
+provide continuous, consistent, and accessible information to teachers.
+A promising solution to assessing reading fluency is using automatic 
+speech recognition (ASR) technologies. Although the primary goal of 
+ASR systems is to convert audio into text, recent studies have shown 
+that it is possible to build systems for reading fluency assessment us­
+ing this approach (Ribeiro et al., 2019). According to de Assis et al. 
+(2022), automating large-scale reading fluency assessments can reduce 
+costs, execution time, and the impact of human subjectivity in grading 
+activities.
+However, it is important to note that using ASR for oral reading as­
+sessment in children faces several challenges, as children have specific 
+acoustic characteristics that make the evaluation process diﬃcult, since 
+many of these systems are trained with adult speech. Children’s reading 
+also tends to be slower, with possible repetitions and false starts, mak­
+ing the transcription process more challenging. The quality of the audio 
+and background noise, as well as the child’s behavior, can also produce 
+audio with unexpected and unpredictable speech or noise (de Assis et 
+al., 2022).
+Recently, the Whisper model, developed by OpenAI, has emerged 
+as a promising solution to the limitations faced by automatic speech 
+recognition systems. Whisper is a general speech recognition model, 
+trained on a large multilingual dataset collected from the web. Its fea­
+tures include voice activity detection, multilingual transcription with 
+punctuation, and translation into English (Gris et al., 2023).
+Even so, it is essential to consider the limitations and the need for 
+continuous adaptations. Reading fluency assessment depends on the ef­
+fective integration of these tools with existing educational practices, 
+ensuring that they can meet the specific and complex demands of learn­
+ing contexts.
+In this context, this study aims to compare existing machine learning 
+models to identify the best approach to assessing reading fluency based 
+on transcriptions of readings performed by Whisper. This study em­
+ployed audio recordings of children’s readings from 2nd and 3rd grades 
+from 144 public and private schools across all regions of Brazil.
+2. Background works
+According to the systematic review by Bhardwaj et al. (2022), the 
+ﬁeld of voice recognition research in the context of children is still open, 
+as despite an increasing amount of work in this area, it focuses on adult 
+speech.
+An example of an approach using an ASR system with children for 
+reading assessment, in the context of Portuguese speech can be seen in 
+the work of Silva et al. (2019). This study presents a computational ap­
+proach called Talk2Me, which can be understood in three main stages: 
+1) Audio collection; 2) Audio processing; and 3) Result generation. How­
+ever, their approach is limited to assessing the accuracy of word reading, 
+which is classified as correct or incorrect, and does not evaluate read­
+ing speed or prosody, the latter being the dimension that, according to 
+Machado and Freitag (2019), most evidences comprehension of what is 
+being read.
+Another example of work focused solely on the dimension of accu­
+racy in assessing children’s reading is demonstrated in de Assis et al. 
+(2022), which focuses on the process of reading pseudowords. The au­
+thor develops a feature extraction process from texts, creating methods 
+to calculate the Number of Words Read and the Number of Words Read 
+Correctly in a 60-second audio segment.
+New machine learning techniques have signiﬁcantly improved the 
+development of speech recognition models with few labeled data, as 
+demonstrated in the study by Gris et al. (2021). This study uses Wav2vec 
+2.0, a self-supervised pre-trained model based on a modern type of neu­
+ral networks known as Transformers, to validate the development of an 
+ASR system in Portuguese using a dataset with only 1 hour of transcribed 
+speech.
+2.1. Reading fluency assessment
+Automating fluency evaluation through ASR and machine learning 
+oﬀers multiple benefits, including reducing teacher workload by han­
+dling listening and counting tasks. Research supports that such technol­
+ogy alleviates the burden of monitoring reading practice (Ja’afar et al., 
+2021). Automation saves time during assessments and allows for more 
+frequent testing, enabling timely identification of reading diﬃculties 
+and more responsive instruction. Additionally, automated assessments 
+provide consistency and objectivity, ensuring unbiased results. Stud­
+ies indicate that automated ORF assessments can closely match human 
+scoring (Bolaños et al., 2013). Reliable fluency data empowers teachers 
+to make informed instructional decisions, such as grouping students or 
+oﬀering individual feedback. Furthermore, automation can enhance stu­
+dent motivation, as reading with a computer or tablet often feels more 
+engaging and less stressful than traditional one-on-one evaluations.
+In the research by Rodrigues et al. (2023), a process for assessing 
+reading fluency in the context of Portuguese speaking is described. In 
+the described process, the Wav2vec2 ASR model is used, where the audio 
+undergoes a preprocessing stage involving the segmentation of speech 
+segments. After the transcriptions are completed, they are reassembled 
+and then go through a post-processing stage. This stage includes several 
+steps to ensure the quality of the comparison, such as aligning the tran­
+scribed text with the original text and merging and separating words, 
+which occurs due to students’ reading characteristics, such as very slow 
+or rushed readings.
+Considering reading fluency for other languages, the work by Yıldız 
+et al. (2024) evaluated the accuracy of reading assessments of 120 Turk­
+ish 4th-grade students conducted by an automatic speech recognition 
+system compared to human evaluators. The analysis showed that the 
+diﬀerence between the evaluations from the two sources was minimal, 
+with an excellent level of agreement.
+Lin et al. (2019) assessed the reading accuracy of Taiwanese students 
+using a speech recognition e-book system, finding that the system’s ac­
+curacy was comparable to human evaluations, although they did not 
+classify readers as good or poor. Moby.Read is an oral reading fluency 
+assessment system with artificial intelligence, developed in the USA. 
+Bernstein et al. (2020) found correlations of 0.96 for accuracy, 0.92 for 
+comprehension, and 0.88 for expression when comparing the system 
+with human evaluations. Moby.Read is notable for assessing all three 
+components of reading fluency.
+However, despite the progress that these ASR systems have made, 
+Gris et al. (2023) states that the patterns found in the training pro­
+cess of these models make them non-generalizable to other datasets, 
+which necessitates fine-tuning. Fine-tuning uses a smaller set of labeled 
+data to accurately perform the task, and even then, it can still make ba­
+sic errors when evaluated on datasets with diﬀerent characteristics and 
+conditions. Additionally, most of these ASR systems are trained with 
+normalized texts, where punctuation is removed and texts are all in 
+lowercase or uppercase, which once again makes it diﬃcult to evalu­
+ate prosody.
+
+Computers and Education: Artificial Intelligence 8 (2025) 100411
+3
+G.C. da Silva, R.L. Rodrigues, A.N. Amorim et al. 
+2.2. Whisper ASR
+Whisper, OpenAI’s advanced automatic speech recognition (ASR) 
+model, has attracted attention for its near human-level accuracy on adult 
+speech and robustness in noisy environments. However, several studies 
+have noted signiﬁcant limitations when applying Whisper to transcribe 
+children’s speech. For example, because its training data is predomi­
+nantly composed of adult audio, Whisper does not fully capture the 
+unique acoustic and linguistic characteristics of children’s speech—such 
+as higher pitch, evolving articulation, and frequent disfluencies. Attia et 
+al. (2024) report that while Whisper achieves a word error rate (WER) of 
+approximately 13% on children’s speech, fine-tuning with child-specific 
+data can reduce this rate to around 9%. Despite this improvement, the 
+model still struggles with both inter-speaker and intra-speaker variabil­
+ity inherent in child speech.
+Another concern is the model’s handling of disfluencies and reading 
+mistakes common among young readers. Its powerful language decoder 
+may ``auto-correct'' errors—transcribing what the child likely intended 
+to say rather than the exact spoken words—which can mask genuine 
+reading diﬃculties (Johansson, 2024). This issue is compounded in real 
+classroom environments with background noise, where performance can 
+further degrade. In a comparative study, Molenaar et al. (2023) found 
+that although Whisper’s raw transcription accuracy was high, a tra­
+ditional Kaldi-based system augmented with passage-specific language 
+models outperformed it in detecting reading errors. This suggests that 
+without additional mechanisms such as forced alignment or confidence 
+scoring, Whisper’s general transcription strength may inadvertently con­
+ceal errors critical for accurate fluency assessment.
+Additionally, Whisper was originally presented by Radford et al. 
+(2022) and trained on an extensive dataset of over 680,000 hours of la­
+beled audio across more than 90 languages—with approximately 9,000 
+hours in Portuguese—making it a robust option for speech recognition 
+in Portuguese (Gris et al., 2023). Beyond transcription, the model is 
+capable of predicting punctuation automatically due to its training on 
+non-normalized texts. Gris et al. (2023) note signiﬁcant advancements 
+in punctuation prediction in Portuguese compared to previous models; 
+however, research speciﬁcally addressing this capability remains scarce.
+Overall, while Whisper shows promise due to its overall accuracy 
+and noise robustness, its eﬀectiveness in specialized applications-
+such as transcribing children’s speech and predicting punctuation in 
+Portuguese—requires further refinement and targeted investigation. 
+Within this context, there is currently a scenario where applications fo­
+cus on the dimension of accuracy, which, in itself, does not encompass 
+the evaluation of fluency as a whole.
+2.3. Machine learning approaches
+Machine learning (ML) has gained prominence in reading fluency 
+assessment, with researchers employing various classifiers to evaluate 
+oral reading fluency (ORF) and detect reading diﬃculties (Matsuki et 
+al., 2016; Raatikainen et al., 2021). Ensemble methods, such as Ran­
+dom Forest and XGBoost, have demonstrated superior accuracy and 
+generalizability compared to single classifiers, particularly in analyzing 
+children’s reading errors and predicting reading disabilities (Psyridou et 
+al., 2023; Žabkar et al., 2023). While simpler models like Logistic Re­
+gression and Naive Bayes remain valuable due to their interpretability, 
+boosting algorithms tend to excel in complex tasks, including dyslexia 
+detection using eye-tracking or prosodic features (Raatikainen et al., 
+2021; Foldnes et al., 2024).
+The success of ML models depends on high-quality datasets, includ­
+ing standardized assessments like DIBELS and GORT, as well as longi­
+tudinal tracking data from technology-based platforms (Matsuki et al., 
+2016; Psyridou et al., 2023). Multimodal approaches, incorporating eye­
+tracking and audio analysis, provide deeper insights into reading fluency 
+by capturing fixation patterns, pause durations, and prosody metrics 
+(Raatikainen et al., 2021; Žabkar et al., 2023). These features enhance 
+classification accuracy, especially when combined with demographic 
+variables and standardized test scores, allowing models to diﬀerentiate 
+ﬂuent from dysfluent readers more eﬀectively (Matsuki et al., 2016).
+Despite these advancements, ML-based reading assessments face 
+challenges, including data variability, label quality, and scalability is­
+sues (Matsuki et al., 2016). Eye-tracking studies, while informative, 
+are costly and time-intensive, limiting widespread adoption (Žabkar et 
+al., 2023). Additionally, ensuring model interpretability remains criti­
+cal for educational use, as complex deep learning methods often lack 
+transparency compared to tree-based ensembles (Foldnes et al., 2024). 
+Addressing fairness and bias in ML applications also requires diverse 
+training data to ensure equitable outcomes across linguistic and cultural 
+groups (Psyridou et al., 2023).
+Therefore, this work proposes the application of a machine learn­
+ing approach that involves using the Whisper ASR system to transcribe 
+reading audio of texts, rather than just isolated words. This approach in­
+cludes a process for extracting features from these transcriptions capable 
+of capturing variables related to reading speed and prosody, in addi­
+tion to accuracy. It also aims to implement supervised machine learning 
+models to automate the fluency assessment process, not only to classify 
+readings as good/bad but also to evaluate them at diﬀerent levels of 
+ﬂuency.
+3. Materials and methods
+This research was developed based on data collected by Escribo dur­
+ing regular School activities in 144 schools, both public and private, 
+across all regions of Brazil. Students read ``O Lobo e o Veado'' short story. 
+The test was recorded and sent to a database for evaluation of how the 
+intervention influenced the development of the children’s reading skills.
+That said, this study aims to use the recorded reading audios to seek 
+a method for automating the evaluation of fluency through machine 
+learning. Therefore, we will proceed with the explanation of the method 
+used in this research.
+3.1. Steps of the machine learning approach
+The present study presents a machine learning approach that essen­
+tially involves: 1) Transcription of the collected audio using Whisper; 2) 
+Extraction of fluency features from the transcribed texts; and 3) Appli­
+cation of machine learning models to predict fluency.
+During this process, experimental steps that complement the ma­
+chine processes are also performed, such as selecting the audio to be 
+transcribed, developing the fluency score from human evaluations, fil­
+tering the data, and categorizing the target variable. For all stages in­
+volving code production, the Google Colaboratory platform and Python 
+programming language were used.
+3.2. Understanding and preparing the data
+3.2.1. Selection of audio files
+The data selection for the study was carried out in two distinct phases 
+to ensure a representative sample with the necessary quality for further 
+analysis. Initially, 600 audio recordings were randomly selected. This 
+decision was based on the available research time and operational costs, 
+taking into account the duration of each recording.
+3.2.2. Transcription of readings
+With the sample of 600 audio files defined, the transcription process 
+began using the automatic speech recognition system Whisper (Radford 
+et al., 2022). After initial tests, it was identified that a 3-minute reading 
+audio from our sample takes about 2 minutes to transcribe, considering 
+the use of the large-v3 model. For the entire dataset, this process could 
+take 20 hours.
+As an open-source project, various other projects have been built 
+based on Whisper. Among them, one of the tested projects was WhisperX 
+
+Computers and Education: Artificial Intelligence 8 (2025) 100411
+4
+G.C. da Silva, R.L. Rodrigues, A.N. Amorim et al. 
+Table 1
+Description of Extracted Reading Variables.
+Variable 
+Description 
+Accuracy 
+Number of correct words compared to the original text. 
+Speed 
+Number of correct words read per minute. 
+Prosody 
+Number of correct pauses compared to the original text. 
+(Bain et al., 2023), which demonstrated improvements and increased 
+speed in transcriptions compared to the original Whisper. For com­
+parison, the same audio file was transcribed in 10 seconds, making it 
+approximately 12 times faster.
+Using WhisperX and the large-v3 model, the 600 audio files were 
+transcribed and exported in .json format, preserving timestamps for each 
+transcribed segment and each word, along with a score indicating the 
+accuracy of the transcription and timestamping for that word.
+3.2.3. Feature extraction from readings
+With the transcriptions completed, we had a set of text files to pro­
+cess in that stage of generating independent variables for our model. As 
+explained earlier, the fluency assessment had three dimensions: accu­
+racy, speed, and prosody. Therefore, the reading features to be extracted 
+were related to these three dimensions, as described in Table 1.
+As described in Table 1, the Accuracy and Prosody reading variables 
+will be obtained through the comparison of the transcribed text with the 
+original text that the child was asked to read. The Speed variable will 
+be obtained from the timestamps of the first and last words read, after 
+the Accuracy extraction process, considering only the correct words.
+Before starting the variable extraction step in the code, a word equal­
+ization step was performed to ensure that item-by-item comparison is 
+consistently self-regulating and to avoid errors during reading compar­
+isons. The code used for word equalization is publicly available and can 
+be accessed on a GitHub page.1
+Since the comparison process is done item by item, it is notable that 
+this method is quite eﬀective in avoiding comparison errors that may 
+arise from reading mistakes, transcription errors, word repetitions, or 
+even nonsensical speech lost in the middle of the reading. It preserves 
+only the words that match the original text, thus allowing a better ex­
+traction of fluency characteristics.
+After performing the word equalization, the first characteristic to be 
+extracted was Prosody. For this, the transcribed texts and the original 
+text underwent a tokenization process, breaking them into an array of 
+words. Any word that has a comma or period, symbolizing pauses made 
+during reading, was stored in a new array for comparison. The original 
+text has a total of 20 words accompanied by a comma or period, which 
+then represents the maximum possible score in the Prosody variable.
+Once the Prosody scores were extracted, all commas and periods 
+were removed from the texts to avoid interfering with the word-by-word 
+comparison for Accuracy extraction. Again, a new array was created to 
+store only the words identified as accurate, and a counter was used to 
+count them. Since the original text contains 153 words, this is also the 
+maximum score for the Accuracy variable.
+The Speed variable is obtained from the array generated in the Ac­
+curacy process. The time of the last word minus the time of the first 
+word in the array is considered the total reading time, thus avoiding 
+counting time where the student delays starting the reading or where 
+the recording continues even after the text has been completed. How­
+ever, pauses during reading were not considered in this exclusion. The 
+ﬁnal value for the Speed variable is obtained by rounding the following 
+calculation: Speed = Accuracy / (Total Reading Time / 60).
+1 https://gist.github.com/lmeulen/d27e59324c1d7034851590e8b65f7211.
+3.2.4. Development of the target variable
+This stage of the process aims to generate the dependent variable of 
+our model, which we want to predict. For this purpose, the 600 selected 
+audios were also evaluated by a specialist in the field, with the goal of 
+measuring the students’ fluency.
+The specialist evaluated each child’s reading by examining several 
+key aspects of their performance according to the rubrics. They looked 
+at how eﬀectively the reader used expression and varied volume to make 
+the text sound natural, rather than simply reading word by word. Phras­
+ing, whether the child was able to recognize sentence boundaries and 
+modulate intonation appropriately, rather than segmenting the text into 
+unnaturally short phrases, was also rated. Additionally, they assessed 
+the smoothness of the reading, checking for excessive pauses, hesita­
+tions, or repeated attempts at diﬃcult words or phrases. Finally, the 
+rhythm of the reading was evaluated to determine if the child main­
+tained a steady, conversational pace or if the speed was uneven. This 
+holistic approach allowed the raters to identify both the strengths and 
+areas for improvement in each child’s reading performance.
+The evaluator also used tags to mark categories in the audios, such 
+as: presence of other people’s speech, very low audio, very poor reading, 
+many background noises, did not read, etc. A tag is added whenever a 
+problem is identified in at least one segment of the reading.
+Each of the human fluency evaluation categories was included in 
+the table, with scores from 1 to 4, as well as the mentioned tags, with 
+values of 0 for the absence of the tag or 1 for the presence of the tag in 
+the reading.
+For the supervised learning analysis, it is necessary to have a labeled 
+target variable that needs to be predicted. The target variable used for 
+this work is obtained by summing the scores given by the evaluator 
+divided by 1.6, so that the maximum score (16) became 10.
+With the table construction completed, the data understanding and 
+preparation stage is finalized, proceeding to the modeling and evalua­
+tion stage.
+3.3. Modeling and evaluation
+The modeling and evaluation stage of the machine learning ap­
+proach encompasses three experiments: 01) Binary Classification; 02) 
+Multiclass Classification; and 03) Regression. Each of the experiments 
+involves the steps of categorizing the target variable based on the type 
+of supervised learning addressed in each experiment, filtering related 
+to the tags added during the human evaluation process, and applying 
+the models and evaluating the generated metrics. For all three experi­
+ments, the Independent Variables (Accuracy, Speed, and Prosody) were 
+assigned to a variable ``X'' and the Dependent Variable (Fluency) was 
+assigned to a variable ``y''. This is a standard procedure in supervised 
+learning.
+Various algorithms aimed at generating predictive models have been 
+proposed in the literature of machine learning and data science. For our 
+research, we selected eleven of the most common and popular algo­
+rithms used in various applications and areas: Logistic Regression (LR), 
+Random Forest (RF), Extreme Gradient Boosting (XGBoost), Support 
+Vector Machine (SVM), K-nearest neighbors (KNN), Decision Tree (DT), 
+Gradient Boosting (GB), Adaptive Boosting (AdaBoost), Naive Bayes 
+(NB), Light Gradient Boosting Machine (LightGBM), and Categorical 
+Boosting (CatBoost).
+For the proper application of model training, a hyperparameter grid 
+was used employing the Grid Search technique to find the best param­
+eter combination for each of the algorithms used. After training the 
+models, an evaluation of each model’s performance metrics is carried 
+out. The metrics used for this evaluation include the confusion matrix, 
+accuracy, precision, recall, F1-score, and the ROC curve.
+The process then underwent a second round, where all techniques 
+were executed again, this time on a version of the dataset after filter­
+ing out audios tagged with issues. The reasons for exclusion included: 
+muted audio (n = 8), extremely low volume (n = 44), uncomprehensi­
+
+Computers and Education: Artificial Intelligence 8 (2025) 100411
+5
+G.C. da Silva, R.L. Rodrigues, A.N. Amorim et al. 
+ble reading (n = 86), excessive background noise (n = 108), no actual 
+reading (n = 82), and the presence of other people speaking, catego­
+rized into one (n = 38), two (n = 13), three (n = 5), or many people 
+(n = 72). It is worth noting that a single audio file could present multi­
+ple invalidation tags, which explains why the total sum of exclusions is 
+higher than the initial number of analyzed audios. This filtering reduced 
+the dataset from 513 to 327 readings.
+3.3.1. Experiments description
+For the execution of binary classification, the fluency score variable 
+was binarized, where values less than or equal to 7.5 were categorized 
+as 0 (nonfluent, n = 283) and values greater than 7.5 were categorized 
+as 1 (fluent, n = 230). The score of 7.5 was chosen as the cutoff value 
+because it provided the best division between classes. Considering the 
+ﬁltered dataset, class 0 has 152 readings, and class 1 has 175 readings.
+The StratifiedKFold cross-validation technique was chosen for model 
+training, as it maintains the class proportions in each of the generated 
+subsets. The parameters used for cross-validation were: n_splits = 5, 
+shuﬄe = true, and random_state = 42. The hyperparameter optimiza­
+tion process for binary classification was defined based on the AUC (Area 
+Under the Curve) value.
+For multiclass classification, the fluency score variable was catego­
+rized into 3 classes: values less than or equal to 5 were categorized as 0 
+(nonfluent, n = 170), values greater than 5 and less than or equal to 
+7.5 as 1 (partially fluent, n = 113), and values greater than 7.5 as 2 (flu­
+ent, n = 230). Considering the filtered dataset, class 0 has 67 readings, 
+class 1 has 85 readings, and class 2 has 175 readings.
+The process follows the same steps as in Experiment 01, with the 
+division of dependent and independent variables, training using strati­
+ﬁed cross-validation, executing the 11 classification models, using Grid 
+Search to find the best parameter combinations, this time based on ac­
+curacy, and displaying the metrics that will be used for performance 
+analysis of the models in this experiment.
+In the Regression Analysis, no categorization is done on the target 
+variable; it remains a continuous variable with values up to 10. Regard­
+ing the algorithms, the regression versions of the ones from the previous 
+experiments were used, except for Logistic Regression, which needed to 
+be changed to Linear Regression, and Naive Bayes, which was removed 
+from the process since it is only used for classification, totaling 10 re­
+gression algorithms.
+The Grid Search technique is once again used to optimize hyperpa­
+rameters, now using Negative Mean Squared Error as the metric, and 
+ﬁnally, the metrics of Mean Absolute Error (MAE), Mean Squared Error 
+(MSE), and R2, which represents the proportion of variance in the de­
+pendent variable, are generated. From these metrics, the best regression 
+models for the context of this work will be estimated.
+4. Results
+4.1. Experiment 01: binary classification
+For the first experiment in this research, 11 diﬀerent classification 
+algorithms were used. Each algorithm was executed on a version of the 
+complete dataset with 513 labeled audios assessed by the evaluator and 
+another version of the dataset after filtering out audios tagged with is­
+sues, resulting in 327 audios. The results obtained using the complete 
+dataset are displayed in Table 2, ordered by accuracy.
+The Table 2 shows the metrics obtained for all models, with emphasis 
+on the models generated from Logistic Regression and LightGBM, which 
+achieved the highest accuracy rates, reaching a total of 83%. Consider­
+ing the precision metric, SVC stands out with a total of 84%, followed 
+by Logistic Regression with 83%. The LightGBM and AdaBoost models 
+achieved 82% Recall and also obtained the highest F1-Scores, which, 
+along with CatBoost, reached 81%. A ROC Curve graph considering all 
+the models used is shown in Fig. 1.
+Table 2
+Binary Classification Metrics for the Complete Dataset.
+Model 
+Accuracy 
+Precision 
+Recall 
+F1-Score 
+Logistic Regression 
+0.83 
+0.83 
+0.77 
+0.80 
+LightGBM 
+0.83 
+0.80 
+0.82 
+0.81 
+SVC 
+0.82 
+0.84 
+0.75 
+0.79 
+CatBoost 
+0.82 
+0.80 
+0.81 
+0.81 
+Gradient Boosting 
+0.82 
+0.80 
+0.80 
+0.80 
+AdaBoost 
+0.82 
+0.79 
+0.82 
+0.81 
+XGBoost 
+0.82 
+0.79 
+0.81 
+0.80 
+Random Forest 
+0.82 
+0.79 
+0.79 
+0.80 
+Decision Tree 
+0.81 
+0.80 
+0.78 
+0.79 
+KNN 
+0.81 
+0.80 
+0.77 
+0.78 
+Naive Bayes 
+0.80 
+0.73 
+0.87 
+0.79 
+Fig. 1. ROC Curve for binary classification of the complete dataset. 
+Table 3
+Binary classification metrics for the filtered dataset.
+Model 
+Accuracy 
+Precision 
+Recall 
+F1-Score 
+Logistic Regression 
+0.82 
+0.84 
+0.82 
+0.83 
+Gradient Boosting 
+0.82 
+0.84 
+0.82 
+0.83 
+CatBoost 
+0.81 
+0.84 
+0.79 
+0.82 
+AdaBoost 
+0.81 
+0.84 
+0.79 
+0.82 
+KNN 
+0.81 
+0.84 
+0.79 
+0.82 
+Random Forest 
+0.81 
+0.83 
+0.82 
+0.82 
+XGBoost 
+0.81 
+0.83 
+0.81 
+0.82 
+Decision Tree 
+0.81 
+0.83 
+0.81 
+0.82 
+LightGBM 
+0.81 
+0.83 
+0.81 
+0.82 
+SVC 
+0.80 
+0.84 
+0.78 
+0.81 
+Naive Bayes 
+0.77 
+0.77 
+0.81 
+0.79 
+The Area Under the Curve (AUC) metric further highlights Logistic 
+Regression, SVC, and CatBoost as the best models, achieving 0.92. We 
+proceeded to the demonstration of the metrics considering the dataset 
+after the filtering. In Table 3, we have an overview of how the model 
+performance looks for this case.
+We can see in Table 3 that although the overall accuracy of the mod­
+els decreased slightly, the other metrics also showed a slight improve­
+ment, particularly precision. Logistic Regression once again achieves 
+the highest accuracy among the models, this time along with Gradi­
+ent Boosting, both at 82%. Regarding the precision metric, all models 
+achieved a higher rate compared to when applied to the unfiltered 
+dataset, with several reaching 84%, including Logistic Regression, Gra­
+dient Boosting, CatBoost, AdaBoost, KNN, and SVC.
+The Recall metric showed varied performance compared to the met­
+rics from the unfiltered dataset, with some models performing better and 
+others worse, notably Logistic Regression, Gradient Boosting, and Ran­
+
+Computers and Education: Artificial Intelligence 8 (2025) 100411
+6
+G.C. da Silva, R.L. Rodrigues, A.N. Amorim et al. 
+Fig. 2. ROC Curve for binary classification on the filtered dataset. 
+Table 4
+Metrics for 3-class classification and complete dataset.
+Model 
+Accuracy 
+Precision 
+Recall 
+F1-Score 
+Logistic Regression 
+0.75 
+0.73 
+0.75 
+0.73 
+SVC 
+0.74 
+0.73 
+0.74 
+0.73 
+Gradient Boosting 
+0.73 
+0.72 
+0.73 
+0.72 
+CatBoost 
+0.73 
+0.71 
+0.73 
+0.71 
+Random Forest 
+0.73 
+0.70 
+0.73 
+0.71 
+XGBoost 
+0.73 
+0.69 
+0.73 
+0.70 
+LightGBM 
+0.72 
+0.72 
+0.72 
+0.72 
+AdaBoost 
+0.72 
+0.71 
+0.72 
+0.71 
+KNN 
+0.71 
+0.69 
+0.71 
+0.70 
+Naive Bayes 
+0.70 
+0.73 
+0.70 
+0.71 
+Decision Tree 
+0.69 
+0.69 
+0.69 
+0.69 
+dom Forest, which reached 82%. Finally, the F1-Score for the filtered 
+dataset managed to surpass that of the unfiltered dataset, reaching up 
+to 83% with Logistic Regression and Gradient Boosting models. Over­
+all, all models achieved better metrics. Despite the improvements in the 
+metrics shown in the table, the same does not apply when observing the 
+ROC Curve in Fig. 2.
+Despite a slight overall decrease in the AUC metrics for the models, 
+once again, Logistic Regression achieves the highest rate, at 0.90. Next, 
+we move on to the results found in Experiment 2, where multiclass clas­
+sification was used.
+4.2. Experiment 02: multiclass classification
+For the multiclass classification procedure, as in the previous ex­
+periment, the process was executed considering both the complete and 
+ﬁltered datasets. Starting with the complete dataset, Fig. 3 shows the 
+confusion matrices generated by each model.
+Observing the confusion matrices, it is evident that the classifiers 
+struggled with correctly predicting class 1, which includes children scor­
+ing between 5 and 7.5 in fluency. Table 4 lists the accuracy values and 
+the weighted averages of Precision, Recall, and F1-Score metrics for each 
+model.
+Logistic Regression was the model that achieved the highest perfor­
+mance in the 3-class multiclass classification, considering the complete 
+dataset, reaching about 75% accuracy and recall. It also had the high­
+est values for other metrics, such as Precision, where it, along with SVC 
+and Naive Bayes, reached 73%, and F1-Score, where it, along with SVC, 
+also achieved 73%. We now move on to the analysis considering the fil­
+tered dataset, with the confusion matrix in Fig. 4 and the metric values 
+in Table 5.
+Table 5
+Metrics for 3-Class Classification and Filtered Dataset.
+Model 
+Accuracy 
+Precision 
+Recall 
+F1-Score 
+Random Forest 
+0.74 
+0.73 
+0.74 
+0.74 
+CatBoost 
+0.74 
+0.73 
+0.74 
+0.73 
+XGBoost 
+0.73 
+0.73 
+0.73 
+0.73 
+LightGBM 
+0.73 
+0.73 
+0.73 
+0.73 
+Decision Tree 
+0.72 
+0.73 
+0.72 
+0.72 
+SVC 
+0.72 
+0.71 
+0.72 
+0.72 
+Gradient Boosting 
+0.72 
+0.71 
+0.72 
+0.72 
+Logistic Regression 
+0.72 
+0.71 
+0.72 
+0.71 
+KNN 
+0.69 
+0.69 
+0.69 
+0.69 
+AdaBoost 
+0.69 
+0.63 
+0.69 
+0.63 
+Naive Bayes 
+0.66 
+0.68 
+0.66 
+0.67 
+Table 6
+Regression Metrics for the Complete Dataset.
+Model 
+MAE 
+MSE 
+R2
+SVR 
+1.0477 
+2.4268 
+0.7005 
+Random Forest 
+1.0919 
+2.3774 
+0.7066 
+KNN 
+1.0923 
+2.4522 
+0.6974 
+CatBoost 
+1.0931 
+2.3734 
+0.7071 
+LightGBM 
+1.1116 
+2.4511 
+0.6975 
+AdaBoost 
+1.1291 
+2.4560 
+0.6969 
+Decision Tree 
+1.1614 
+2.7008 
+0.6667 
+XGBoost 
+1.2253 
+2.4450 
+0.6983 
+Gradient Boosting 
+1.2384 
+2.4774 
+0.6943 
+Linear Regression 
+1.3760 
+3.1213 
+0.6148 
+Analyzing the confusion matrix graphs of the models, it is noticeable 
+that there was a decrease in performance in predicting class 0, likely due 
+to the reduction in the dataset caused by the filtering.
+This is also reflected in the metrics, which, unlike in the binary clas­
+sification experiment, performed worse in the filtered dataset. This time, 
+Random Forest and CatBoost stood out, achieving 74% accuracy and re­
+call, and along with models such as XGBoost, LightGBM, and Decision 
+Trees, obtained the highest precision rates at 73%. Random Forest also 
+performed best in the F1-Score metric, with 74%.
+4.3. Experiment 03: regression
+Lastly, we have the application of regression analysis as the third 
+experiment carried out in this work, for this analysis the Naive Bayes 
+algorithm was not used. That said, Table 6 shows the results obtained 
+considering the complete dataset, ordered in ascending order by the 
+Mean Absolute Error, abbreviated as MAE.
+The SVR model presented the lowest MAE (1.0477), indicating that, 
+on average, its predictions were the closest to the actual values. Other 
+close models were Random Forest (1.0919), KNN (1.0923), and Cat­
+Boost (1.0931), which also had relatively low MAEs. Regarding MSE, 
+which indicates the eﬀectiveness in minimizing large errors, we see that 
+CatBoost had the lowest value (2.3734), followed by Random Forest 
+(2.3774) and SVR (2.4268). CatBoost also had the highest R2 (0.7071), 
+followed by Random Forest (0.7066) and SVR (0.7005), thus being the 
+models that best explain the variability in the data. Continuing, Table 7
+shows the regression metric results considering the filtered dataset.
+Considering the metrics derived from the filtered dataset, an im­
+provement in MAE is noticeable, with SVR achieving 1.0379, followed 
+by KNN (1.0591) and Random Forest (1.0639). In general, all models 
+performed better in this metric, as well as in MSE, where KNN achieved 
+2.1941, followed by CatBoost (2.1992) and Random Forest (2.2075). Fi­
+nally, we observed a worse performance in the R2 values, where once 
+again, the best value was obtained by the KNN model (0.5939), followed 
+by CatBoost (0.5930) and Random Forest (0.5914).
+
+Computers and Education: Artificial Intelligence 8 (2025) 100411
+7
+G.C. da Silva, R.L. Rodrigues, A.N. Amorim et al. 
+Fig. 3. Confusion matrices for 3 classes and complete dataset. 
+Fig. 4. Confusion Matrices for 3 Classes and Filtered Dataset. 
+
+Computers and Education: Artificial Intelligence 8 (2025) 100411
+8
+G.C. da Silva, R.L. Rodrigues, A.N. Amorim et al. 
+Table 7
+Regression Metrics for the Filtered Dataset.
+Model 
+MAE 
+MSE 
+R2
+SVR 
+1.0379 
+2.2960 
+0.5751 
+KNN 
+1.0591 
+2.1941 
+0.5939 
+Random Forest 
+1.0639 
+2.2075 
+0.5914 
+CatBoost 
+1.0771 
+2.1992 
+0.5930 
+AdaBoost 
+1.0800 
+2.2662 
+0.5806 
+LightGBM 
+1.0802 
+2.2264 
+0.5879 
+Decision Tree 
+1.1219 
+2.3867 
+0.5583 
+Gradient Boosting 
+1.1575 
+2.2490 
+0.5837 
+XGBoost 
+1.1661 
+2.2986 
+0.5746 
+Linear Regression 
+1.3157 
+2.8241 
+0.4773 
+5. Discussion
+5.1. Analysis of the most relevant models
+Considering the first experiment, binary classification, the best over­
+all result was achieved by Logistic Regression and Gradient Boosting 
+with the filtered dataset. Both of these models reached an accuracy of 
+0.82, precision of 0.84, recall of 0.82, and F1-Score of 0.83. Although 
+Logistic Regression and LightGBM for the complete dataset achieved 
+higher accuracy (0.83), we understand that precision is the most impor­
+tant metric for our context.
+The precision metric indicates the proportion of correct positive pre­
+dictions relative to the total number of positive predictions made by the 
+model, which is more relevant in our case as it is important to minimize 
+false positives. Ensuring that the model correctly identifies positive cases 
+(fluent readers) is more important than merely achieving high overall 
+accuracy. This is crucial to avoid misclassifying nonfluent students as 
+ﬂuent, which could lead to diﬃculties in pedagogical interventions and 
+the proper learning process for the child.
+Additionally, although Logistic Regression for the complete dataset 
+has good accuracy and precision values, it achieved only 0.77 in the 
+recall metric. In our context, recall indicates how well the model is able 
+to identify all fluent students. Even though it is possible for the educator 
+to quickly identify if a student is incorrectly classified as nonfluent and 
+the consequences may not be as problematic as the opposite case, it is 
+still important to have balanced recall rates with other metrics. Since 
+this is one of the lowest among the evaluated models, this model was 
+not considered one of the best.
+For the multiclass classification analysis, it is noticeable from the 
+generated confusion matrices that splitting the previous class 0 (in bi­
+nary classification) into two classes worsened the performance of the 
+models. This is likely due to the reduced number of readings in the 
+dataset. For the complete dataset, we have: class 0 with 170 readings, 
+class 1 with 113 readings, and class 2 with 230 readings. In the filtered 
+dataset, these numbers decrease to 67, 85, and 175.
+Nevertheless, we proceeded with the evaluation of the classifiers, 
+and for multiclass classification, the standout model is Logistic Regres­
+sion for the complete dataset with Accuracy = 0.75, Precision = 0.73, 
+Recall = 0.75, and F1-Score = 0.73. Although other models achieved 
+the same precision, it was Logistic Regression that performed best for 
+the other metrics, thus being the best model considering the overall per­
+formance across the 3 classes. We believe the performance of the filtered 
+dataset was likely worse due to the overall reduction in the dataset size, 
+which hampers model training.
+Despite the inherent diﬃculty of classifiers in achieving good perfor­
+mance for multiclass classification, we view this analysis as important 
+and promising. Developing the ability to identify diﬀerent levels of flu­
+ency can be more signiﬁcant than merely classifying as good or poor, 
+thus enabling more individualized pedagogical choices.
+Finally, we applied regression analysis, where both the complete and 
+ﬁltered datasets were considered. In this analysis, 10 diﬀerent regression 
+algorithms were evaluated. The best models identified were CatBoost 
+with MAE = 1.09, MSE = 2.37, and R2 = 0.71, and Random Forest 
+with MAE = 1.09, MSE = 2.38, and R2 = 0.71. Both models exhibited 
+the lowest mean absolute error and the lowest mean squared error, indi­
+cating high precision in their predictions. Additionally, their coeﬃcient 
+of determination (R2) was higher than that of the other models, demon­
+strating that they explain a greater proportion of the variability in the 
+data.
+5.2. Most important fluency characteristics
+We will now discuss the most important characteristics that influ­
+enced the performance of the models in the binary classification, mul­
+ticlass classification, and regression experiments, considering only the 
+models that demonstrated the best performances.
+In the binary classification experiment, the best models found were 
+Logistic Regression and Gradient Boosting, both with similar perfor­
+mance. For the Logistic Regression, we used its coeﬃcients, which indi­
+cate the relative importance of each variable for the model’s decision­
+making: Speed = 0.1017, Prosody = 0.0094, and Accuracy = 0.0006. 
+In the Gradient Boosting model, the values were obtained based on the 
+gain during the tree splits: Speed = 0.8963, Accuracy = 0.0641, and 
+Prosody = 0.0396.
+The analysis of the models reveals that the speed variable is the 
+most influential in predicting reading fluency. In the Logistic Regres­
+sion model, speed had the greatest impact, followed by prosody, which 
+had a signiﬁcantly lower weight, while accuracy was the least relevant 
+variable. Similarly, in Gradient Boosting, speed also stood out, while 
+accuracy and prosody contributed to a lesser extent.
+In the multiclass classification experiment, the model that demon­
+strated the best performance was again Logistic Regression, whose co­
+eﬃcients are: Speed = 0.1250, Prosody = 0.0632, and Accuracy = 
+0.0134. As in the binary experiment, speed was the most influential 
+variable, but prosody played a more signiﬁcant role, while accuracy 
+maintained a lower influence.
+In the regression experiment, the models CatBoost and Random For­
+est were used, which presented very close results in their metrics. The 
+analysis of these models confirms the predominance of the speed vari­
+able in predicting reading fluency. In the Random Forest model, speed 
+was the most influential variable, with a value of 0.884774, while ac­
+curacy and prosody had signiﬁcantly lower importances, with values 
+of 0.058298 and 0.056929, respectively. CatBoost also reinforced this 
+conclusion, highlighting speed with a value of 55.369010, followed by 
+prosody with 23.407274 and accuracy with 21.223717.
+The analysis of the results from the three experiments reveals a clear 
+and consistent pattern: reading speed is the most important variable 
+in predicting fluency, both in classification contexts (binary and multi­
+class) and in regression.
+This alignment between classification and regression results suggests 
+that reading speed is not only an indicator of fluency in categorical con­
+texts but also translates into a quantitative measure in regression, where 
+the fluency score provided by experts can be eﬀectively predicted based 
+on speed. Accuracy, while essential, seems to play a secondary role in 
+determining fluency, indicating that a reader may not be perfectly pre­
+cise but can still maintain a fluent reading.
+Prosody, which reflects aspects such as correct pauses and intona­
+tion, had an increasing influence in the regression models, especially 
+in CatBoost, where the importance was substantial (23.407274). This 
+suggests that, while speed remains the primary factor, the way a stu­
+dent modulates their reading is also relevant and can influence overall 
+ﬂuency more profoundly as the analysis becomes more detailed.
+These findings oﬀer practical insights for educators. Interventions 
+that prioritize increasing reading speed, without neglecting prosody, 
+may have a more signiﬁcant impact on improving fluency. Additionally, 
+a sole focus on accuracy may not be suﬃcient to promote overall flu­
+ency, suggesting that a balance between accuracy, speed, and prosody 
+is fundamental for reading development.
+
+Computers and Education: Artificial Intelligence 8 (2025) 100411
+9
+G.C. da Silva, R.L. Rodrigues, A.N. Amorim et al. 
+In the regression model, each minor fluctuation in students’ read­
+ing expressiveness contributes to a continuous fluency score, allowing 
+prosody to have a greater cumulative impact on the outcome. Unlike 
+classification—which assigns readers to discrete categories—regression 
+can more finely capture nuances like pauses, intonation, and pitch vari­
+ations, translating them into incremental increases or decreases in the 
+ﬂuency score (Miller & Schwanenflugel, 2008). Thus, even if a student’s 
+speed is moderately high, well-placed pauses and expressive intonation 
+can lead to a comparatively higher overall rating. This mechanism high­
+lights that prosody plays a critical supporting role in shaping expert 
+judgments of fluency, especially when those judgments are entered on 
+a spectrum rather than binned into broad categories.
+In contrast, classification imposes threshold-based decisions (e.g., 
+“nonfluent,'' ``partially fluent,'' ``fluent''), often governed by speed due 
+to its strong separation power between proficient and struggling read­
+ers. A child who achieves a certain rate might automatically be labeled 
+“fluent,'' overshadowing their actual expressiveness or lack thereof. 
+This means that students with slightly slower reading rates but strong 
+prosodic skills risk being classified in a lower category, even though they 
+may receive higher continuous fluency scores in a regression framework. 
+Consequently, the rigid cut points in classification can diminish the ob­
+served importance of prosody, whereas in regression, prosodic qualities 
+retain a more direct influence on the final fluency rating.
+5.3. Literature connections
+Our findings reinforce the importance of speed, prosody, and ac­
+curacy as critical components of reading fluency, aligning well with 
+classic and contemporary research on the subject. Early fluency models 
+emphasize that reading fluency constitutes three key pillars—accuracy, 
+rate, and prosody—each contributing distinctly to comprehension (Hud­
+son et al., 2005; Samuels, 1979). However, our results indicate that 
+speed (rate) has the most substantial impact on predicting overall flu­
+ency scores, suggesting a dominant role of reading rate in distinguishing 
+ﬂuent from less fluent readers in the lower elementary grades. This ob­
+servation aligns with research showing that rate typically emerges as the 
+ﬁrst noticeable factor when students transition from laborious decoding 
+to more automatic, fluid reading (Hudson et al., 2005).
+Although accuracy was expected to be a strong contributor to flu­
+ency, a growing body of evidence suggests that once children reach 
+a baseline level of decoding proficiency, further gains in fluency of­
+ten manifest most visibly in reading speed (do Valle et al., 2022; 
+Machado & Freitag, 2019). This may be because minimal decoding er­
+rors (high accuracy) can still coexist with slow reading rates. Moreover, 
+previous large-scale assessments focusing heavily on words-correct-per­
+minute (WCPM) measures, such as the studies by Silva et al. (2019) and 
+Carchedi et al. (2021), also report a strong association between rate and 
+overall fluency scores. Our study extends this perspective by confirming 
+that, in a multivariate machine learning context—where speed, prosody, 
+and accuracy are modeled together—speed dominates the predictive 
+models for fluency, even when prosody and accuracy are explicitly in­
+cluded.
+At the same time, our work underscores the nuanced role of prosody. 
+While earlier research suggests prosody is a qualitative metric often 
+overlooked in large-scale assessments (Machado & Freitag, 2019), we 
+found that prosody’s impact on fluency is more evident when assessed on 
+a continuous scale (regression) rather than in discrete classification con­
+texts. This partially corroborates the view that once students cross a cer­
+tain threshold for decoding and speed, expressive reading (i.e., prosody) 
+emerges as a more critical diﬀerentiator of advanced fluency skills (Hud­
+son et al., 2005; Samuels, 1979). In other words, children who already 
+read quickly can distinguish themselves further by properly segmenting 
+text into phrases, modulating intonation, and pausing appropriately-
+all prosodic elements that signal better text comprehension (Machado & 
+Freitag, 2019). Our findings thus align with prior studies emphasizing 
+that while speed often defines the broad contours of fluency, prosody 
+contributes meaningfully to how well students ultimately comprehend 
+and engage with texts (Ribeiro et al., 2019; de Assis et al., 2022).
+Taken together, this study’s results and prior literature suggest a 
+layered progression in fluency development: early readers must mas­
+ter accuracy and decoding to form a foundation; speed then becomes a 
+pivotal driver of overall fluency perception; and prosody grows in sig­
+niﬁcance as children’s readings become increasingly automatic. Future 
+research could delve into longitudinal data to explore how these vari­
+ables shift in relative importance from first through fifth grades, and 
+how automated assessment tools might integrate additional nuanced 
+acoustic features to capture prosody more precisely.
+6. Conclusion
+6.1. Highlights
+This study set out to compare how established ML models—such as 
+Logistic Regression, Gradient Boosting, and Random Forest—perform 
+in automatically assessing children’s reading fluency across speed, ac­
+curacy, and prosody. By systematically examining the algorithms, we 
+provide insights into which existing methods are most accurate and 
+robust for this educational context. The process involved using audio 
+transcription with automatic speech recognition systems, extracting flu­
+ency features from the transcribed texts, and applying machine learning 
+models for fluency prediction.
+One of the contributions of this work is the demonstration of the 
+use of the ASR tool Whisper, speciﬁcally its modified version WhisperX. 
+This tool was valuable because, in addition to having a Word Error Rate 
+(WER) of 4.1 for Portuguese, making it accurate in transcriptions, it 
+is fast, generates timestamps for each word, and assigns punctuation 
+appropriately based on the reading, which allowed for the proper ex­
+traction of features such as accuracy, speed, and prosody.
+Additionally, the proposed method’s structure, which presents a ma­
+chine learning approach for assessing fluency, rather than just a direct 
+comparison between extracted metrics and human evaluations, is em­
+phasized. This represents another step towards large-scale automation 
+of fluency assessment, providing real-time information to teachers.
+Moreover, the study highlights which algorithms perform best in 
+diﬀerent test cases and their eﬀectiveness, allowing future researchers 
+to test new approaches and algorithms and compare their results with 
+those presented here, thus continuing to advance the field.
+6.2. Limitations and future works
+The main limitation of the study is that the audio recordings were not 
+controlled. Teachers recorded the students reading in the regular school 
+setting, thus external noises (e.g. other children speaking, people walk­
+ing in the hallway, etc) may have interfered with the analysis. Future 
+studies may try to control the recording ensuring that there are no in­
+terruptions or other children speaking while a reading session is taking 
+place, reminding the child to read aloud, training teachers to handle the 
+situation properly to avoid talking during the recording, and ensuring 
+the reading is recorded.
+Increasing the quantity and variety of fluency features extracted from 
+the text could contribute to the training and performance of the models. 
+A process for identifying speakers could also be explored to diﬀerenti­
+ate automatically between moments when the teacher or other children 
+are speaking during the reading, thus allowing for the removal of these 
+sections and avoiding transcription problems. Finally, more varied test­
+ing of machine learning algorithms and even deep learning approaches 
+could be applied to determine if, even with the current conditions of this 
+research, the application of a specific model or approach could improve 
+performance.
+
+Computers and Education: Artificial Intelligence 8 (2025) 100411
+10
+G.C. da Silva, R.L. Rodrigues, A.N. Amorim et al. 
+6.3. Implications for educators
+Our findings indicate that speed (i.e., reading rate) consistently 
+emerges as the strongest predictor of overall fluency, yet accuracy and 
+especially prosody still play crucial supporting roles—particularly when 
+a child’s fluency is evaluated on a continuous scale. Teachers and school 
+administrators aiming to foster holistic reading skills should integrate 
+activities that build automatic word recognition (supporting speed) 
+while also modeling expressive reading through intonation, pauses, and 
+phrasing (reinforcing prosody) to ensure comprehension is not sacri­
+ﬁced.
+Selecting Diﬀerent ML Models in Various Contexts:
+• Binary Classification (Fluent vs. Non-Fluent): Where classrooms 
+need a quick screening tool with minimal false positives, Logis­
+tic Regression or Gradient Boosting can be eﬀective. Logistic Re­
+gression is more interpretable, which helps educators understand 
+which features—speed, accuracy, or prosody—push a student into 
+the ``fluent'' category.
+• Multiclass Classification (Diﬀerentiated Levels of Fluency): For ed­
+ucators who wish to group students at multiple proficiency levels, 
+Random Forest or CatBoost showed robust performance. They can 
+segment readers into ``nonfluent,'' ``partially fluent,'' and ``fluent'' 
+groups, allowing nuanced intervention strategies.
+• Regression (Continuous Fluency Scoring): When scoring and rank­
+ing students on a continuum, Random Forest and CatBoost out­
+performed other models in explaining variance. This approach is 
+particularly beneficial for schools interested in detailed, ongoing 
+progress-monitoring.
+In resource-limited settings where interpretability is paramount and 
+data may be less abundant, a simpler yet transparent model (e.g., Lo­
+gistic Regression) might suﬃce for a broad fluency classification. For 
+schools equipped with robust computing resources and larger datasets, 
+ensemble methods (e.g., Random Forest, CatBoost) can yield more nu­
+anced insights into each student’s reading strengths. Ultimately, the 
+model choice may depend on the school’s hardware constraints, the 
+number of audio samples available, and the level of diagnostic gran­
+ularity desired.
+CRediT authorship contribution statement
+Gabriel Candido da Silva: Writing -- original draft, Writing -- re­
+view & editing. Rodrigo Lins Rodrigues: Methodology, Supervision. 
+Américo N. Amorim: Funding acquisition, Writing -- review & editing. 
+Lieny Jeon: Funding acquisition. Emilia X.S. Albuquerque: Investi­
+gation. Vanessa C. Silva: Investigation. Vinícius F. da Silva: Inves­
+tigation. André L.A. Pinheiro: Investigation. João P.J.R. Nunes: In­
+vestigation. Suzana X.M.G. de Souza: Investigation. Maxsuel S. Silva: 
+Investigation. Igor Mauro: Investigation. Alexandre Magno Andrade 
+Maciel: Supervision.
+Funding
+This research was primarily funded by the Coordenação de Aper­
+feiçoamento de Pessoal de Nível Superior - Brazil (CAPES) - Finance 
+Code 001 and Fundação de Amparo à Ciência e Tecnologia do Es­
+tado de Pernambuco (FACEPE), through the Pesquisador na Empresa 
+de Pernambuco program (PEPE), grant number SIN-0171-1.03/22. The 
+Conselho Nacional de Desenvolvimento Científico e Tecnológico (CNPq) 
+provided a scholarship through the Bolsa de Produtividade em Desen­
+volvimento Tecnológico e Extensão Inovadora program, grant number 
+306191/2021-0. Google Cloud supported this investigation with re­
+search credits. The research team would like to thank the educators, 
+families, and students from Itapecerica da Serra (SP), Frutal (MG), 
+Curvelo (MG), and other cities and schools that participated in the 
+Project. We would also like to thank Agenda Edu and Libro Studio for 
+their communication eﬀorts.
+This research was conducted under the guidance of the United States 
+Federal Policy for the Protection of Human Subjects. To answer the re­
+search questions, this study used secondary data provided by Escribo. 
+The data collection procedures were approved by the secretaries of ed­
+ucation of the participating cities and principals of private schools.
+Declaration of competing interest
+The authors declare the following financial interests/personal rela­
+tionships which may be considered as potential competing interests: 
+Américo N. Amorim and Igor Mauro are shareholders of Escribo -- Ed­
+ucation Your Way, the developer of the application that collected the 
+audio files. In some situations, the study can lead to a financial gain 
+for them. The other researchers have no known conflict of interest to 
+disclose.
+Data availability
+After publication, the data will be added to Escribo Dataverse in: 
+https://dataverse.harvard.edu/dataverse/escribo.
+References
+de Assis, E. C., Ferreira, A. L. V., Silva, C. N., & de Souza, J. F. (2022). Classificação 
+automática de áudios de leituras de pseudopalavras para avaliação em larga escala de 
+ﬂuência da leitura de crianças em fase de alfabetização. In Anais do XXXIII simpósio 
+Brasileiro de informática na educação, SBC (pp. 27--38).
+Attia, A. A., Liu, J., Ai, W., Demszky, D., & Espy-Wilson, C. (2024). Kid-whisper: Towards 
+bridging the performance gap in automatic speech recognition for children vs. adults. 
+In Proceedings of the AAAI/ACM conference on AI, ethics, and society (pp. 74--80).
+Bain, M., Huh, J., Han, T., & Zisserman, A. (2023). Whisperx: Time-accurate speech 
+transcription of long-form audio, https://doi.org/10.48550/arXiv.2303.00747. arXiv:
+2303.00747.
+Bernstein, J., Cheng, J., Balogh, J., & Downey, R. (2020). Artificial intelli­
+gence for scoring oral reading fluency, Application of Artificial Intelligence 
+to Assessment, https://s3-us-west-2.amazonaws.com/www.analyticmeasures.com/
+pdfs/MARCAIScoringORF20180530.pdf.
+Bhardwaj, V., Ben Othman, M. T., Kukreja, V., Belkhier, Y., Bajaj, M., Goud, B. S., Rehman, 
+A. U., Shafiq, M., & Hamam, H. (2022). Automatic speech recognition (asr) systems 
+for children: A systematic literature review. Applied Sciences, 12, 4419. https://doi.
+org/10.3390/app12094419.
+Bolaños, D., Cole, R. A., Ward, W. H., Tindal, G. A., Hasbrouck, J., & Schwanenflugel, 
+P. J. (2013). Human and automated assessment of oral reading fluency. Journal of 
+Educational Psychology, 105, 1142--1151. https://doi.org/10.1037/a0031479.
+Carchedi, L. C., Barrére, E., & de Souza, J. F. (2021). Avalia online: Um sistema para 
+avaliação em larga escala de testes de fluência de leitura. In Anais do XXXII simpósio 
+Brasileiro de informática na educação, SBC (pp. 1--11).
+Foldnes, N., Uppstad, P. H., Grønneberg, S., & Thomson, J. M. (2024). School entry de­
+tection of struggling readers using gameplay data and machine learning. In Frontiers 
+in education, frontiers media SA (p. 1487694).
+Gris, L. R. S., Casanova, E., de Oliveira, F. S., da Silva Soares, A., & Candido-Junior, A. 
+(2021). Desenvolvimento de um modelo de reconhecimento de voz para o português 
+brasileiro com poucos dados utilizando o wav2vec 2.0. In Anais do XV Brazilian e­
+science workshop, SBC (pp. 129--136).
+Gris, L. R. S., Marcacini, R., Candido Junior, A., Casanova, E., Soares, A., & Aluísio, S. M. 
+(2023). Evaluating openai’s whisper asr for punctuation prediction and topic modeling 
+of life histories of the museum of the person, https://doi.org/10.48550/arXiv.2305.
+14580. arXiv:2305.14580.
+Hudson, R. F., Lane, H. B., & Pullen, P. C. (2005). Reading fluency assessment and in­
+struction: What, why, and how? The Reading Teacher, 58, 702--714. https://doi.org/
+10.1598/RT.58.8.1.
+Ja’afar, H., Othman, W. M., Kesevan, H. V., & Budi, M. (2021). Enhancing oral reading 
+ﬂuency (orf) through computer assisted repeated reading (carr). Asian Journal of Uni­
+versity Education, 17, 207--221. https://eric.ed.gov/?id=EJ1291289.
+Johansson, J. (2024). Automatic word decoding assessment using whisper and machine learn­
+ing techniques: An automatic speech recognition method to assess the early reading abilities 
+of young children reading Swedish. Master’s thesis, KTH, School of Electrical Engi­
+neering and Computer Science (EECS). https://kth.diva-portal.org/smash/record.jsf?
+pid=diva2%3A1936526.
+Lin, P. H., Su, Y. N., & Huang, Y. M. (2019). Evaluating reading fluency behavior via read­
+ing rates of elementary school students reading e-books. Computers in Human Behavior, 
+100, 258--265. https://doi.org/10.1016/j.chb.2018.10.004.
+
+Computers and Education: Artificial Intelligence 8 (2025) 100411
+11
+G.C. da Silva, R.L. Rodrigues, A.N. Amorim et al. 
+Machado, A. P. G., & Freitag, R. M. K. (2019). Pistas dos processos de decodificação 
+que levam à compreensão da leitura. Letras de Hoje, 54, 132--145. https://doi.org/
+10.15448/1984-7726.2019.2.32509.
+Matsuki, K., Kuperman, V., & Van Dyke, J. A. (2016). The random forests statistical tech­
+nique: An examination of its value for the study of reading. Scientific Studies of Reading, 
+20, 20--33. https://doi.org/10.1080/10888438.2015.1107073.
+Miller, J., & Schwanenflugel, P. J. (2008). A longitudinal study of the development of 
+reading prosody as a dimension of oral reading fluency in early elementary school 
+children. Reading Research Quarterly, 43, 336--354. https://doi.org/10.1598/RRQ.43.
+4.2.
+Molenaar, B., Tejedor-García, C., Strik, H., & Cucchiarini, C. (2023). Automatic assessment 
+of oral reading accuracy for reading diagnostics. arXiv preprint, arXiv:2306.03444. 
+https://doi.org/10.48550/arXiv.2306.03444.
+Psyridou, M., Tolvanen, A., Patel, P., Khanolainen, D., Lerkkanen, M. K., Poikkeus, A. 
+M., & Torppa, M. (2023). Reading diﬃculties identification: A comparison of neural 
+networks, linear, and mixture models. Scientific Studies of Reading, 27, 39--66. https://
+doi.org/10.1080/10888438.2022.2095281.
+Raatikainen, P., Hautala, J., Loberg, O., Kärkkäinen, T., Leppänen, P., & Nieminen, P. 
+(2021). Detection of developmental dyslexia with machine learning using eye move­
+ment data. Array, 12, Article 100087. https://doi.org/10.1016/j.array.2021.100087.
+Radford, A., Kim, J. W., Xu, T., Brockman, G., McLeavey, C., & Sutskever, I. (2022). Robust 
+speech recognition via large-scale weak supervision, https://doi.org/10.48550/arXiv.
+2212.04356. arXiv:2212.04356.
+Ribeiro, L. D., do Nascimento, M. G., Silva, W. A., Gomes Jr., J., Knop, I. d. O., Barrére, 
+E., & de Souza, J. F. (2019). Projeto e implementação de uma arquitetura baseada em 
+jogos digitais para coleta de áudios e avaliação de fluência na leitura infantil. https://
+www.sbgames.org/sbgames2019/ﬁles/papers/EducacaoShort/198304.pdf.
+Rodrigues, A., Ribeiro, G., Silva, V., Carvalho, W., Ramírez, M., Alves, L., Finger, M., 
+Navas, A. L., & Ribeiro, C. (2023). Ai and reading fluency for Brazilian Portuguese: A 
+preliminary study. https://doi.org/10.2139/ssrn.4429229.
+Samuels, S. J. (1979). The method of repeated readings. The Reading Teacher, 32, 403--408. 
+http://www.jstor.org/stable/20194790.
+Silva, J. d. O. G. (2020). Discussões acerca da avaliação de fluência em leitura. https://
+repositorio.ufsc.br/handle/123456789/218059.
+Silva, W. A., Gomes Jr, J., Knop, I., Barrére, E., & Souza, J. (2019). Talk2me: Uma 
+abordagem computacional para auxiliar na identificação de falhas no processo de al­
+fabetização. In Brazilian symposium on computers in education (SBIE) (p. 723). http://
+milanesa.ime.usp.br/rbie/index.php/sbie/article/view/8800.
+do Valle, E. V. M. P., de Souza, J. F., & de Oliveira Knop, I. (2022). Adequação de jogo 
+sério para avaliação de leitura infantil em um cenário de isolamento social. In Anais 
+do XXXIII simpósio Brasileiro de informática na educação, SBC (pp. 357--367).
+Yıldız, M., Keskin, H. K., Oyucu, S., Hartman, D. K., Temur, M., & Aydoğmuş, M. 
+(2024). Can artificial intelligence identify reading fluency and level? Comparison 
+of human and machine performance. Reading & Writing Quarterly, 1--18. https://
+doi.org/10.1080/10573569.2024.2345593.
+Žabkar, J., Urankar, T., Javornik, K., & Košak Babuder, M. (2023). Identifying reading 
+ﬂuency in pupils with and without dyslexia using a machine learning model on texts 
+assessed with a readability application. CEPS Journal, 13, 233--256. https://doi.org/
+10.26529/cepsj.1367.

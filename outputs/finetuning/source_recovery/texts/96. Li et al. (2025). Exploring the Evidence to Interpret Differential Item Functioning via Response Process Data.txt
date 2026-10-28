@@ -1,0 +1,1432 @@
+Original Research Article
+Educational and Psychological
+Measurement
+2025, Vol. 85(4) 783–813
+ The Author(s) 2024
+Article reuse guidelines:
+sagepub.com/journals-permissions
+DOI: 10.1177/00131644241298975
+journals.sagepub.com/home/epm
+Exploring the Evidence to
+Interpret Differential Item
+Functioning via Response
+Process Data
+Ziying Li1
+, Jinnie Shin1, Huan Kuang2 and A. Corinne
+Huggins-Manley1
+Abstract
+Evaluating differential item functioning (DIF) in assessments plays an important role in
+achieving measurement fairness across different subgroups, such as gender and native
+language. However, relying solely on the item response scores among traditional DIF
+techniques poses challenges for researchers and practitioners in interpreting DIF.
+Recently, response process data, which carry valuable information about examinees’
+response behaviors, offer an opportunity to further interpret DIF items by examining
+differences in response processes. This study aims to investigate the potential of
+response process data features in improving the interpretability of DIF items, with a
+focus on gender DIF using data from the Programme for International Assessment of
+Adult Competencies (PIAAC) 2012 computer-based numeracy assessment. We
+applied random forest and logistic regression with ridge regularization to investigate
+the association between process data features and DIF items, evaluating the impor-
+tant features to interpret DIF. In addition, we evaluated model performance across
+varying percentages of DIF items to reflect practical scenarios with different percen-
+tages of DIF items. The results demonstrate that the combination of timing features
+and action-sequence features is informative to reveal the response process differ-
+ences between groups, thereby enhancing DIF item interpretability. Overall, this
+study introduces a feasible procedure to leverage response process data to under-
+stand and interpret DIF items, shedding light on potential reasons for the low
+1University of Florida, Gainesville, USA
+2Florida State University, Tallahassee, USA
+Corresponding Author:
+Huan Kuang, Florida State University, 3204D Stone Building, 1114 West Call Street, Tallahassee, FL 32306-
+4450, USA.
+Email: hkuang2@fsu.edu
+
+agreement between DIF statistics and expert reviews and revealing potential irrele-
+vant factors to enhance measurement equity.
+Keywords
+DIF, Mantel–Haenszel, response process data, random forest, ridge logistic regression
+Fairness is a foundational element for drawing valid and reliable assessment infer-
+ences (American Educational Research Association [AERA] et al., 2014; Huang
+et al., 2016). According to the Standards (AERA et al., 2014), a core element of fair-
+ness is providing equal opportunities across various facets and stages, including test
+design and administration, for diverse subgroups and individuals in measurement.
+However, many challenges can arise in offering equal opportunities for all examinees
+to demonstrate their standing on the construct being measured, which may compro-
+mise measurement fairness. For large-scale assessments, such as the Programme for
+International Assessment of Adult Competencies (PIAAC) and the Programme for
+International Student Assessment (PISA), test design should consider the diverse
+characteristics of examinees (e.g., gender, race, countries, and languages) to ensure
+fair opportunities to demonstrate their knowledge and skills. In addition, the transi-
+tion of these large-scale assessments from paper-based to computer-based modes
+may introduce irrelevant factors, as this shift may affect subgroups’ response beha-
+viors and score differences.
+Differential item functioning (DIF) occurs when different groups of examinees
+with the same level of ability exhibit different probabilities of correctly answering an
+item, raising fairness concerns among these groups. Researchers commonly evaluate
+DIF to investigate potential sources that contributing to score differences among dif-
+ferent groups in large-scale assessments. Nevertheless, detecting a DIF item does not
+completely indicate the underlying sources of DIF (Shermis et al., 2017). Shermis
+and St. George (1992) provided an example of misinterpretation of a detected DIF
+item. They found that, with respect to the subgroups categorized by cultural back-
+ground, the DIF item favored the reference cultural group over the focal cultural
+group. Their interpretation suggested that the discrepancy arose from the reference
+group’s greater exposure to a game related to the DIF item. Yet, Shermis et al. (2017)
+later argued that this interpretation of the detected DIF item was incorrect, as both
+groups had comparable experiences with the game.
+Some researchers proposed to simultaneously explore multiple demographic vari-
+ables for a better understanding and interpretation of detected DIF items in large-
+scale assessments (e.g., Bauer et al., 2020; Finch & Herna´ndez Finch, 2013; Lin &
+Lin, 2014; Oliveri et al., 2013; Wu & Ercikan, 2006), including a few studies particu-
+larly focused on large-scale computer-based assessments (e.g., Belzak, 2023). They
+evaluated the combination of multiple demographic variables (i.e., gender, age, coun-
+try, and native language) to understand the occurrence of DIF based on the
+784
+Educational and Psychological Measurement 85(4)
+
+correlational relationship between demographic variables and item scores. For exam-
+ple, Belzak (2023) demonstrated that combining three variables—gender, age, and
+native language—provided a more comprehensive interpretation of DIF than using a
+single demographic variable.
+However, previous studies rarely incorporated response behaviors and response
+processes in interpreting DIF items. Analyzing response process differences could be
+promising for DIF interpretation, offering additional insights beyond demographics
+and item responses (Ercikan et al., 2020). Moreover, exploring the relationship
+between response processes and detected DIF items is critical for enhancing interpre-
+tation and assisting test designers in mitigating DIF. For instance, Ercikan et al.
+(2020) found that Chinese and Japanese examinees had longer response times and
+fewer actions than Canadians when responding to constructed-response items in the
+PISA 2015 science assessment. These findings suggested that language DIF items
+were associated with language spelling and input typing procedures, underscoring
+the potential for additional insights through interpreting response process differences.
+Such a comprehensive understanding of DIF items benefits researchers and test
+designers, enabling them to adjust these items efficiently and purposefully.
+Response process data, also termed as process data or log data, refer to the cumu-
+lation of records of examinees’ clicks and keystrokes while they are taking
+computer-based tests, containing numerous pieces of response process information,
+and facilitating studies of differences with respect to response behaviors (He et al.,
+2019; Kuang & Sahin, 2023). Recent research has revealed that response process
+data can provide valuable information, such as (a) evaluating examinees’ proficiency
+level (He et al., 2019) and (b) the correlations of response behaviors to item diffi-
+culty and item discrimination under classical test theory and item response theory
+(Goldhammer et al., 2017; Kuang & Sahin, 2023). In addition, several studies lever-
+aged response process data to compare performance differences across subgroups
+with various background characteristics (e.g., Eichmann et al., 2020; Ercikan et al.,
+2020; He et al., 2019; Leng et al., 2024; Liao et al., 2019). For example, Leng et al.
+(2024) found significant differences in response speed between boys and girls in the
+mathematics assessment, with response speed negatively correlated with mathe-
+matics ability.
+Given the informative response process data, this study aims to evaluate the rela-
+tionship between response process and DIF items to enhance the interpretability of
+DIF items. Different from Ercikan et al.’s (2020) research, which used the total
+response time (RT) and the total number of actions as separate indicators to detect
+DIF items, we propose using multiple features—such as the timing of each action and
+specific action features—to better interpret detected DIF items. In this study, we first
+provide an illustrative example to demonstrate the process of identifying response
+process data features. Subsequently, we detail the implementation of machine learn-
+ing (ML) techniques to analyze the associations between response process data fea-
+tures and items. Specifically, we applied random forest (RF) and logistic regression
+(LR) to select features related to the detected DIF items, offering visualizable
+Li et al.
+785
+
+evidence of underlying explanations for the detected DIF. In addition, we interpret
+the detected DIF items by leveraging insights gained from the associations. Finally,
+we assess whether the percentage of DIF items on the assessment impacts the perfor-
+mance of RF and LR in modeling the associations between detected DIF items and
+process data. We explored this condition because the percentage of DIF items was a
+variable we could vary and study using our empirical data. Doing so provides practi-
+tioners with valuable insights into how robust the performance of the ML methods is
+when applied to datasets containing different percentages of DIF items. The three
+research questions are:
+Research Question 1: Which supervised classifiers demonstrated better per-
+formance in terms of accuracy, area under the receiver operating character-
+istic curve (AUC), precision, recall, and F1 scores in modeling the
+association between process data features and DIF items?
+Research Question 2: Which process data features contribute most to inter-
+preting DIF items?
+Research Question 3: Does the percentage of DIF items relate to the classi-
+fiers’ performances in accuracy, AUC, precision, recall, and F1 scores?
+Mantel–Haenszel Method to Detect DIF
+DIF is a widely used method for identifying test items that may function differently
+across groups of test-takers, bringing attention to potential item-level fairness con-
+cerns (Perrone, 2006). Specifically, DIF methods evaluate whether the probabilities
+of getting an item correct are different between two subgroups (i.e., the reference and
+focal groups), conditioning on examinees’ ability.
+The Mantel–Haenszel (MH; Holland & Thayer, 1988) method is commonly used
+in DIF detection for dichotomously scoring items. It assumes the total test score is
+the proxy for examinees’ ability. The MH DIF method estimates the odds ratios of
+correctly answering an item between two subgroups, conditioning on examinees’
+ability (Equation 1). It hypothesizes ^aMH = 1, indicating no probability differences in
+answering the item correctly between two subgroups, conditioning on ability. The
+x2
+MH statistic with one degree of freedom is used to test the hypothesis.
+^aMH =
+PJ
+j = 1
+n1jFocaln0jRef
+nj
+PJ
+j = 1
+n0jFocaln1jRef
+nj
+ð1Þ
+where j is a purified total test score, excluding scores from the detected DIF items. nj
+is the total number of students who achieve score j, n1jFocal is the number of focal
+group students who correctly answer the item conditioning on score j, and n0jFocal is
+the number of focal group students who incorrectly answer the item conditioning on
+786
+Educational and Psychological Measurement 85(4)
+
+score j. Similarly, n1jRef and n0jRef represent the number of reference group students
+who correctly and incorrectly answer the item conditioning on score j, respectively.
+Research findings indicated that the MH method exhibits stable performance in
+detecting DIF with small type I errors and acceptable power when compared to other
+DIF detection techniques, such as likelihood ratio test (Cohen et al., 1996; Finch,
+2005). This stability is particularly notable in large-scale datasets (Cohen et al., 1996;
+Finch, 2005). Also, the MH method is straightforward as it does not require strict
+assumptions of the item parameter distribution and model fit (Fidalgo et al., 2007).
+When applying the MH to detect DIF items, researchers recommend the iterative
+purification MH method over the two-step purification and no-purification methods
+(e.g., Fidalgo et al., 2000). In the no-purification MH DIF detection, the total test
+score is used to match students in the reference and focal groups under the assump-
+tion that the total test score does not contain DIF items. In the two-step purification
+procedure, the MH method is reapplied using the purified test score that excludes the
+DIF items detected in the first step rather than the total test score (Holland & Thayer,
+1988). Likewise, the iterative purification procedure repeatedly detects DIF using the
+purified test score that excludes DIF items detected at each step until the DIF out-
+come stabilizes (Fidalgo et al., 2000). Fidalgo et al. (2000) found that the iterative
+purification MH method achieved higher power and a lower type I error rate than the
+two-step purification and no-purification methods, especially when the percentage of
+DIF items was large (i.e., 15% and 30%).
+Response Process Data and DIF
+Response process data contain valuable information but are unstructured, where
+lengths of action sequences for each examinee responding to an item vary, posing
+challenges for analysis using traditional statistical methods (Tang et al., 2020).
+Therefore, researchers endeavor to extract features from response process data to
+generate structured data.
+Timing Features and DIF
+Timing features are the commonly identified ones, including the response time for an
+item, the response time of the first response attempt, and the response time for each
+action. Some researchers have used these timing features to explore the associations
+between response time and examinees’ proficiency (e.g., De Boeck & Jeon, 2019;
+Goldhammer & Kroehne, 2014). Ulitzsch et al. (2021) combined response time with
+action subsequences from ‘‘n-gram’’ to identify common response actions within a
+problem-solving item.
+In addition, timing features support the evaluation of item measurement fairness.
+Ercikan et al. (2020) used item response time as a DIF indicator to compare English
+language learners (ELL) with non-ELL groups, conditioning on the total test score or
+conditioning on the response time for the test. They found that ELL examinees took
+Li et al.
+787
+
+longer to respond to an item than non-ELL examinees with the same ability. Ercikan
+et al. (2020) concluded that timing features provided insight into examinees’ test
+engagement and measurement fairness even when traditional DIF methods did not
+detect DIF. Moreover, Molenaar and Feskens (2024) used the multiple indicator mul-
+tiple cause model to evaluate the mediating effect of item response time on the direct
+effect of the grouping variable on DIF items. Their study concluded that the sub-
+group difference in item response time can interpret DIF items.
+Action-Sequence Features and DIF
+Action-sequence features, such as the total number of actions, subsequences, and
+action transitions between latent states, are used to identify behavior differences
+among examinees with different characteristics (e.g., He & von Davier, 2015), pre-
+dict examinees’ responses (Tang et al., 2020), and estimate examinees’ ability and
+performance motivation (Arieli-Attali et al., 2019; Zhang et al., 2023). In addition,
+the number of interactions and the number of exploration steps in responding to
+problem-solving items differ by gender. The positive correlation between these fea-
+tures and examinees’ scores explains the score differences between boys and girls in
+solving complex problems (Eichmann et al., 2020).
+Furthermore, Ercikan et al. (2020) used the total number of actions for an item as
+an indicator to investigate language and cultural DIF items, demonstrating that such
+an action-sequence feature reveals behavior differences between subgroups and thus
+support the interpretation of DIF items.
+Extracting Action-Sequence Features by Social Network Analysis
+Given the valuable information of response process data, researchers have proposed
+different methods to extract action-sequence features, such as hidden Markov model
+(Arieli-Attali et al., 2019), ‘‘n-gram’’ (He & von Davier, 2015), multidimensional
+scaling method (Tang et al., 2020), and the autoencoder algorithm (Tang et al.,
+2021). However, there is no consensus on which approach is most effective for gen-
+erating informative features to analyze the response process data.
+Zhu et al. (2016) proposed to apply social network analysis (SNA) to extract
+action-sequence features. SNA is a research methodology originally developed for
+analyzing the structural relationships within a network. It involves mathematically
+and visually exploring the interactions between nodes, which can be individuals,
+groups, organizations, or other entities (Scott, 2012). Specifically, SNA uses graphi-
+cal models to represent networks, where the nodes represent the entities (e.g., indi-
+viduals, organizations) and the edges represent the relationships or interactions
+between these entities. Through SNA, researchers can identify (a) the most influential
+entities in a network, often termed as ‘‘central nodes’’; (b) subgroups within the net-
+work as ‘‘clusters’’; and (c) patterns or structures in the relationships. In SNA, differ-
+ent performance measures are used to assess different aspects of networks. Network
+788
+Educational and Psychological Measurement 85(4)
+
+density, a measure reflecting the overall connectivity or cohesion within the network,
+indicates how robustly the nodes are connected. A higher network density indicates a
+longer action sequence to answer that item. Noticeably, network density is sensitive
+to the number of actions (termed nodes in SNA) in a given action sequence (Scott,
+2012). To support the network density as a comparative feature across items, it is cru-
+cial to incorporate the number of nodes as an additional action-sequence feature
+(Scott, 2012). In addition, betweenness centrality, a measure based on a node’s role
+as a bridge or broker within the network, quantifies the importance or influence of
+individual nodes (Ghali et al., 2012). A lower betweenness centrality implies that an
+examinee executes each action equally, following a direct-action sequence leading
+straight to the item’s answer without back-and-forth movement. In contrast, a higher
+betweenness centrality indicates that an examinee relies more on the important
+actions when responding to an item.
+Zhu et al. (2016) extracted the network density and centrality from SNA to inves-
+tigate each examinee’s response actions within a problem-solving item. Network den-
+sity reflected the extent of an examinee’s exploration in transitioning from one action
+to another within the problem-solving task. Centrality highlighted the most common
+actions by examinees to solve the problem. Zhu et al. (2016) found that both network
+density and centrality aligned with the scoring rubric for response efficiency and sys-
+tematicity in problem-solving. In addition, these action-sequence features derived
+from SNA revealed differences in response efficiency and systematicity across differ-
+ent groups.
+After that, Shin et al. (2024), which developed an engagement-aware predictive
+model to assess examinees’ problem-solving performance, used SNA as the first layer
+in their model. SNA was applied to extract action-sequence features, including net-
+work density, centrality, and the total number of nodes, to understand the transitions
+in response actions during problem-solving tasks.
+Although SNA has not yet been widely used in extracting response process fea-
+tures, it enhances the analysis of sequential interactions within action sequences
+(Zhu et al., 2016). The main advantages of using SNA are that (a) SNA can visualize
+hidden patterns in the response process, providing insights into each examinee’s
+response behaviors and engagement, (b) existing SNA tools enable direct application,
+and (c) the action-sequence features derived from SNA support item scoring equity
+by elucidating differences in actions across groups (Shin et al., 2024; Zhu et al.,
+2016).
+Interpreting DIF With Response Process Data: Supervised
+ML Classifier Modeling
+Recently, supervised ML classifiers have become increasingly prevalent for both pre-
+dictive tasks and feature selection tasks in large-scale assessments, particularly when
+process data are involved.
+Li et al.
+789
+
+Random Forest
+RF is a nonparametric model commonly applied to classification tasks, developed by
+Breiman (2001), which operates by constructing multiple decision trees (Probst
+et al., 2019). In RF, each tree randomly samples a subset of features for each split
+(Genuer et al., 2008). This strategy of using a subset, rather than the full set of fea-
+tures, enhances the classification accuracy on the test set and mitigates the risk of
+overfitting, thereby improving the model’s generalizability (James et al., 2013). In
+addition, RF has the advantage of effectively handling noisy data (James et al.,
+2013).
+Researchers often choose RF for its ability to select important features, helping to
+identify strong predictors of outcomes (Salles et al., 2020). Feature importance in RF
+indicates the relative contribution of each feature in predicting the outcome within
+the training data. There are two commonly used methods for feature selection. The
+first method is the impurity-based method, which measures feature importance by
+calculating the average decrease in node impurity caused by a specific feature Xm
+during the splits within the RF (Breiman, 2001). The importance of feature Xm is
+determined by summing of impurity reductions it generates across all trees in the for-
+est, as defined in Equation 2. A larger mean decrease in impurity indicates higher
+importance.
+Imp Xm
+ð
+Þ = 1
+NT
+X
+T
+X
+t2T, Xm
+p tð Þ i tð Þ  p tL
+ð Þ
+p tð Þ i tL
+ð Þ  p tR
+ð Þ
+p tð Þ i(tR)
+
+
+ð2Þ
+where Xm is the mth feature. NT is the total number of trees containing the feature
+Xm. p tð Þ is the proportion of samples reaching node t, p tL
+ð Þ and p tR
+ð Þ are correspond-
+ing to the proportion of node t’s left child node tL and right child node tR. i tð Þ is the
+impurity measure function.
+The second method is the permutation-based method, which measures feature
+importance by assessing the impact of each feature on the model’s prediction accu-
+racy (Strobl et al., 2007). This method measures the reduction in the model’s accu-
+racy score Imp Score
+ð
+Þ by comparing the reference model’s accuracy score to the
+average model’s accuracy score when the values of a feature are randomly shuffled,
+as defined in Equation 3. A greater decrease in the model’s accuracy score indicates
+the higher importance of feature Xm.
+Imp Score
+ð
+Þ Xm
+ð
+Þ = Scoreref  1
+K
+X
+K
+k = 1
+Scorek Xm
+ð
+Þ
+ð3Þ
+where Scoreref is the accuracy score of model performance with all features included,
+and it serves as the reference. K is the number of times that the values of feature Xm
+are randomly shuffled, and Scorek Xm
+ð
+Þ is the corresponding accuracy score for the
+model’s performance after each shuffle.
+790
+Educational and Psychological Measurement 85(4)
+
+Logistic Regression
+We included LR for comparison. LR is a parametric model for analyzing categorical
+data (Kleinbaum & Klein, 1994; Equation 4), which is commonly used as a classifier
+in analyzing data from large-scale assessments as it is relatively robust to noisy data
+(James et al., 2013).
+log
+p Y = 1
+ð
+Þ
+1  p Y = 1
+ð
+Þ
+
+
+= b0 + b1X1 + . . . + bmXm,
+ð4Þ
+where p Y = 1
+ð
+Þ is the probability of being labeled as 1, b0 represents the intercept
+term, b1 is the slope coefficient which indicates the association between the average
+change in the log-odds of p Y = 1
+ð
+Þ and feature X1. Similarly, bm indicates the associ-
+ation between the average change in the log-odds of p Y = 1
+ð
+Þ and feature Xm. A
+larger bm refers to a stronger correlation of feature Xm with p Y = 1
+ð
+Þ, controlling for
+other features.
+To solve the convergence issue of high-dimensionality models in this study, we
+included the ridge regularization to LR to drop or reduce the importance of less rele-
+vant terms or features in the model. When l . 0, the estimated coefficients in ridge
+LR tend to shrink toward zero due to the ridge regularization term. When l = 0, no
+regularization is applied to the coefficients, making ridge LR equivalent to standard
+LR. In the following sections, the terms of LR indicate ridge LR. Its loss function f
+was defined in Equation 5 (James et al., 2013).
+f =
+X
+N
+i = 1
+yi  b0 
+X
+m
+j = 1
+bjXij
+ 
+!2
++ l
+X
+m
+j = 1
+b2
+j ,
+l  0
+ð
+Þ,
+ð5Þ
+where l is the penalized parameter, serving to control the penalty impact on the esti-
+mated coefficients. yi is the observed outcome value.
+Empirical Study
+In this section, we present an empirical study to exemplify the exploration of the
+association between response process data features and DIF items, aiming to facili-
+tate a deeper understanding and interpretation of the detected DIF items.
+Data
+The current study used the dataset from the computer-based PIAAC 2012 numeracy
+assessment in the United States, which contained 49 items and 2,746 examinees. Out
+of the 49 items, 31 items were in the open-ended response format, and 18 were in
+the selected response format. We focused on the open-ended response item format in
+this study for two reasons. First, different item formats can affect the examinees’ per-
+formance (Liou & Bulut, 2020; Woodcock et al., 2020). Second, the numbers of
+Li et al.
+791
+
+items for open-ended and the selected response formats were unbalanced, which
+could hinder the comparison of scores across various groups. In addition, to mitigate
+the influence of missing data on DIF item detection, we excluded 22 items with
+response missing rates larger than 55% in the dataset (Robitzsch & Rupp, 2009).
+Furthermore, we selected examinees who fulfilled specific criteria, such as being
+recorded in the process data log file and providing responses to certain background
+questions in the PIAAC U.S. Public Use File 2012. The details of background char-
+acteristics and the reason for considering specific background characteristics are fur-
+ther described in the ‘‘Obtaining Background Variables’’ section. The final dataset
+included nine dichotomous items in the numeracy assessment, and contained 1,675
+examinees, with 55.40% women and 44.60% men.
+To address missing values issues, we used the Multivariate Imputation by
+Chained Equations (MICE) method to replace missingness and structure the com-
+pleted data before detecting DIF items. As recommended by L. M. Collins et al.
+(2001), we conducted MICE with 10 imputations using the ‘‘mice’’ package (van
+Buuren & Groothuis-Oudshoorn, 2011) in R (version 4.2.2). This generated 10
+imputed datasets that were used to detect DIF items.
+Method
+To investigate response process data features that support DIF interpretation, this sec-
+tion introduces the procedure for studying the association between response process
+data features and the detected DIF items. The process consists of three main stages.
+Stage 1 is to obtain the dependent variable for modeling by labeling DIF and DIF-
+free items using the MH technique, as described in the ‘‘Detecting Gender DIF by
+MH’’ section. Stage 2 focuses on extracting the independent variables (i.e., response
+process data features) and accounting for confounders (i.e., background variables), as
+described in the ‘‘Extracting Response Process Data Features’’ and ‘‘Obtaining
+Background Variables’’ sections. Stage 3 involves applying RF and LR to identify
+the important features associated with DIF items, as described in the ‘‘Classifier
+Modeling: Investigating Association and Feature Selection’’ section. The interpreta-
+tion of the identified features is presented in the ‘‘Results’’ section, rather than here.
+In addition, this section introduces an evaluation procedure using varying percen-
+tages of DIF items to examine whether the classifiers’ performance is sensitive to a
+specific percentage of DIF items. The percentage of DIF items is one of the com-
+monly used DIF conditions and is a variable we can vary and study using our empiri-
+cal data.
+Detecting Gender DIF by MH. Gender DIF is one of the common concerns across many
+measurements, specifically in the subject-specific assessment (e.g., Cheema, 2019;
+Cook, 2018). The existence of gender DIF items decreases the comparability of test
+scores between groups, leading to a misinterpretation of examinees’ abilities. For
+instance, Cook (2018) evaluated whether empowering women’s education decreased
+792
+Educational and Psychological Measurement 85(4)
+
+gender differences in numeracy skills by analyzing the PIAAC 2012 numeracy
+assessment. Contrary to other research that empowering women’s education was ben-
+eficial to decrease gender difference, her findings indicated that women’s advance-
+ment in education did not reduce gender differences in numeracy. The unexpected
+conclusions could result from the presence of gender DIF items, which underesti-
+mated women’s ability due to the less comparable test scores. Therefore, we used
+gender DIF in the PIAAC numeracy assessment as an example to show a way of fur-
+ther interpreting DIF items.
+The MH method was applied to detect gender DIF among the nine items in the
+numeracy assessment. We conducted the MH DIF method with iterative purification,
+as it can achieve higher accuracy in DIF detection than the MH method with two-
+step purification or no purification (Fidalgo et al., 2000). The detected DIF item was
+labeled as 1, while the others were marked as 0, indicating that they were DIF-free
+items. This process was executed using the ‘‘difR’’ package (Magis et al., 2010) in R
+(version 4.2.2). We ultimately detected three out of nine items (33%) in the PIAAC
+2012 numeracy assessment as DIF items, after applying the DIF detection procedure
+to each of the 10 imputed datasets and labeling an item as DIF if it was detected in
+more than 5 datasets. For more details about DIF item detection outcomes in each
+imputed dataset, refer to Supplemental Appendix A. This DIF label criterion consid-
+ers the stability and consistency of the detected DIF across the 10 imputed datasets.
+Extracting Response Process Data Features. To obtain valuable information from
+response process data, we extracted 11 features, including timing features, action-
+sequence features, and item response scores, which aligned with prior literature high-
+lighted that they provided information to elucidate individual’s abilities and evaluate
+item fairness (e.g., Ercikan et al., 2020; Zhu et al., 2016). Seven timing features were
+extracted from the response process data, recording the time each examinee spent
+within an item response sequence, which were (a) the RT for an item, (b) the timing
+of the initial action in response to an item (termed ‘‘FIRST_TIMING’’ in the follow-
+ing), (c) the total time length on the BUTTON action within an item, (d) the total time
+length on the DOACTION action within an item, (e) the total time length on the
+NEXT-BUTTON action within an item, (f) the total time length on the NEXT-
+INQUIRY action within an item, and (g) the time length on CALLED ITEM-ENTRY
+LOADING action. These timing features were computed based on the timestamps that
+associated with each action in the response process data file. Three action-sequence
+features were engineered by SNA for each item, which were (a) the betweenness cen-
+trality, (b) network density, and (c) the number of nodes. SNA was conducted with
+the ‘‘NetworkX’’ package (Hagberg et al., 2008) in Python (version 3.9).
+Obtaining Background Variables. To account for potential confounding effects on
+examinees’ response behaviors and scores, we included individual background vari-
+ables as confounders. In the PIAAC 2012 numeracy assessment, item responses cor-
+related with background variables, such as the match between the test language and
+Li et al.
+793
+
+examinees’ native language and their highest level of formal education (Liao et al.,
+2019; Wang et al., 2023). Liao et al. (2019) found that these background variables
+distinguished differences in response behaviors between groups in the PIAAC 2012
+data. Considering these confounders is crucial, as they may bias DIF detection results.
+Given that the MH DIF technique relies on item response scores, we selected these
+background variables based on prior studies (Liao et al., 2019; Wang et al., 2023) and
+incorporated them into the RF and LR modeling procedure. This allowed us to exam-
+ine whether these confounders were strongly correlated with the detected DIF items.
+If the confounders are found to be strongly associated with DIF, they should be
+accounted for in the interpretation of DIF items. The details of the 17 background
+variables are in Supplemental Appendix B.
+Classifier Modeling: Investigating Association and Feature Selection. We hypothesized that
+DIF items are associated with response process data features. This hypothesis is
+grounded in the low agreement on DIF items between content expert reviews and sta-
+tistical DIF outcomes (e.g., Cheng et al., 2020; Ercikan et al., 2004; Shermis et al.,
+2017). Content experts may not consider the subgroup response behavior differences
+that impact examinee response scores, particularly in developing computer-based
+assessments. When features are not important, or their associations with DIF items
+tend to be zero, these features are not correlated with DIF items, and vice versa.
+Furthermore, when timing or action features associated with DIF items are more
+important than response scores, it indicates that these features provide more valuable
+information than response scores alone. These features can then be used to compare
+subgroup response behavior differences, thus enhancing the understanding and inter-
+pretation of DIF.
+We applied RF and LR methods to explore the associations between the extracted
+features and the DIF items using the ‘‘scikit-learn’’ package (Pedregosa et al., 2011)
+in Python (version 3.9). The classification procedure contains two steps. First, the
+data were divided into training and testing sets at a size ratio of 5:5. Specifically, we
+used the stratified sampling method to ensure a consistent ratio of label classes (i.e., 0
+= DIF-free items, 1 = DIF items) in both training and test datasets. Moreover, we used
+the ‘‘SMOTE’’ package (Chawla et al., 2002) in Python to oversample the minority
+class of the outcome labels (i.e., three DIF items vs six DIF-free items) to balance the
+class sizes for the training data.
+Second, we executed 10-fold cross-validation with the training data to locate the
+optimal model. The recommended number of folds for cross-validation is typically
+between 5 and 10 (Couronne´ et al., 2018; Probst et al., 2019). Given no consensus
+on the superior performance of a specific number of folds for modeling data from
+computer-based large-scale assessments, we chose to use 10-fold cross-validation.
+This decision was made because our sample size was sufficiently large, ensuring that
+each fold contained a minimum of 463 observations. Moreover, the optimal model,
+characterized by a set of tuning parameters, was determined based on achieving the
+smallest cross-validation error. For RF modeling, we experimented with two levels
+794
+Educational and Psychological Measurement 85(4)
+
+of tuning for the number of trees: 500 and 600. In addition, we explored two levels
+of the maximum depth of the trees: six, or with no imposed limitations. The LR was
+conducted with the ridge regularization by tuning the penalized parameter in the
+range of 0.01 to 10.
+Investigating the Impact of Various Percentages of DIF Items on Classifiers’ Performance. To
+evaluate the variability in classifier performance and ensure that the classifiers are
+not overly sensitive to a specific DIF percentage, we evaluated whether their perfor-
+mance was influenced by different percentages of DIF items. In practice, the percent-
+age of DIF items can vary across different samples and empirical data.
+We created a range of DIF percentages, from 0.14 to 0.75, by randomly sampling
+different numbers of detected DIF and DIF-free items from the same dataset
+described in the ‘‘Detecting Gender DIF by MH’’ section. This DIF condition design
+follows previous research on traditional MH DIF simulation conditions (Magis & De
+Boeck, 2012). The same classifier modeling procedure described in the ‘‘Classifier
+Modeling: Investigating Association and Feature Selection’’ section was then applied
+to evaluate the performance. For each condition, we conducted 100 iterations, where
+the DIF and DIF-free items were randomly sampled without replacement from the
+dataset. Finally, analysis of variance (ANOVA) was used to assess whether the clas-
+sifiers’ performance metrics related to the percentage of DIF items. The ANOVA
+models were conducted using Python (version 3.9).
+Evaluation Criterion
+The test datasets were used to evaluate the optimal model performance based on five
+evaluation metrics: accuracy, AUC, precision, recall, and F1. Accuracy and the AUC
+are the primary evaluation metrics commonly used in ML studies related to
+computer-based assessment (Gardner & Brooks, 2018). Accuracy refers to the pro-
+portion of correct predictions, which is defined as
+Accuracy = Number of true DIF items + Number of true DIF Free items
+Total number of items
+:
+ð6Þ
+A limitation of accuracy is that it is influenced by the class proportions in the test data
+(Bosch & Paquette, 2018). For example, a model could achieve an accuracy score of
+1 if the model favors predicting a subclass that represents 95% of the test data.
+The AUC is a metric used to assess the overall performance of a classification
+model (Bradley, 1997). It quantifies the effectiveness of the model in distinguishing
+between true DIF items and DIF-free items. Essentially, it evaluates both the model’s
+ability to correctly identify DIF items and the cost of mistakenly classifying DIF-free
+items as DIF. AUC ranges from 0 to 1, where a higher value indicates a better over-
+all predictive performance of the model. However, a notable criticism of AUC, as
+Li et al.
+795
+
+pointed out by Lobo et al. (2008), is that it ignores the goodness-of-fit of the model.
+It is possible for a poorly fit model to still achieve a high AUC score.
+To ensure the models’ performance and avoid the pitfall of relying on a single eva-
+luation metric, it is suggested to include multiple evaluation metrics, such as precision,
+recall, and F1 scores (Bosch & Paquette, 2018). Precision denotes the proportion of
+correctly classifying DIF items that are actually true DIF, as seen in Equation 7.
+Precision =
+True DIF items
+True DIF items + False DIF items :
+ð7Þ
+Recall measures the proportion of true DIF items that are correctly classified, as
+seen in Equation 8. Higher precision and recall values indicate better performance of
+the model in classifying DIF items. Reporting precision and recall helps mitigate the
+potential pitfall of accuracy that results from unbalanced class proportions (Juba &
+Le, 2019).
+Recall =
+True DIF items
+True DIF items + False DIF  free items :
+ð8Þ
+The F1 score provides a balanced measure between precision and recall (Bosch &
+Paquette, 2018), as seen in Equation 9. When comparing the performances of two
+classification models, if one has a higher precision and the other has a higher recall,
+the model with a higher F1 score indicates better performance.
+F1 = 23 Precision3recall
+Precision + recall :
+ð9Þ
+Researchers suggest that achieving scores above 0.60 on these five evaluation
+metrics—accuracy, AUC, precision, recall, and F1 score—indicates acceptable and
+reasonable model performance in classification modeling (Bradley, 1997; Juba & Le,
+2019; Naidu et al., 2023).
+Results
+This section presents the outcomes corresponding to each research question. The
+‘‘Evaluating Classifier Performance’’ section reports the performance of RF and LR
+in modeling the association between process data features and DIF items. The
+‘‘Interpreting DIF With Process Data Features’’ section reports the identified impor-
+tant features and their support in DIF interpretation. The ‘‘The Stability of Classifier
+Modeling Across Different Percentages of DIF Items’’ section reports the stability of
+the classifier models under different percentages of DIF items.
+796
+Educational and Psychological Measurement 85(4)
+
+Evaluating Classifier Performance
+Table 1 shows the comparable performance of RF and LR across all five evaluation
+metrics. The score differences between RF and LR in terms of accuracy and AUC
+were 0.03 and 0.01, respectively. Although RF achieved a higher precision score than
+LR, and LR obtained a higher recall score than RF, the F1 score, which provides a
+balanced measure between precision and recall, shows a difference of 0.02 between
+RF and LR. In other words, the differences between RF and LR in accuracy, AUC,
+and F1 scores tend to be zero. In addition, both RF and LR obtained accuracy, AUC,
+and F1 scores higher than 0.60, which are considered acceptable. Figure 1 presents
+the receiver operating characteristic (ROC) curve plot for visualizing the two classi-
+fiers’ performance in prediction. Overall, the performance of RF and LR was similar
+in optimizing the model to explore the association of DIF with response process data
+features and background variables from the numeracy assessment.
+Interpreting DIF With Process Data Features
+Identifying the Important Features. Figure 2A represents the important feature associ-
+ated with the detected DIF items based on the impurity-based method. According to
+the result from impurity-based method, the top five important features in labeling the
+detected DIF items were (a) betweenness centrality, (b) FIRST_TIMING, (c) the RT,
+(d) the density within one action sequence (from here on referred to as density), and
+(e) the number of nodes.
+Figure 2B represents the important feature associated with the detected DIF items
+based on permutation-based methods. The permutation-based method showed that
+(a) betweenness centrality, (b) RT, (c) FIRST_TIMING, (d) item response scores,
+and (e) density were the top five important features. The agreement between the two
+methods suggested that the four common important features related to the DIF items
+were (a) betweenness centrality, (b) FIRST_TIMING, (c) RT, and (d) density in the
+numeracy assessment. These features were more important than response scores.
+As shown in Figure 3, LR obtained consistent results with RF. The four common
+important features identified by RF ranked among the top six highest estimated coef-
+ficients in LR. Specifically, the density was related to the detected DIF items with
+absolute estimated coefficients higher than one, followed by RT, betweenness
+Table 1. Comparison of Evaluation Metrics Between Two Classifiers’ Performance for
+PIAAC 2012 Numeracy Assessment.
+Classifier
+Accuracy
+AUC
+Precision
+Recall
+F1
+RF
+0.761
+0.860
+0.621
+0.651
+0.636
+LR
+0.731
+0.849
+0.554
+0.817
+0.660
+Difference
+0.030
+0.011
+0.067
+20.166
+20.024
+Note. The negative values in the ‘‘Difference’’ row indicate that RF has a lower score than LR.
+Li et al.
+797
+
+centrality, and FIRST_TIMING (Figure 3). In addition, both RF and LR agreed on
+the confounder effect of examinees’ experience on preparing charts, graphs, or tables
+at work on the detected DIF items, as this confounder was listed among the top 10
+Figure 1. ROC Curve of the Classifiers’ Performance in Numeracy Assessment.
+Figure 2. Top 10 Important Features in Random Forest for PIAAC 2012 Numeracy
+Assessment.
+798
+Educational and Psychological Measurement 85(4)
+
+important features in RF and among the top 10 features with high estimated coeffi-
+cients in the LR model.
+Subgroup Response Differences in DIF Items Based on the Important Features. Figure 4
+visualizes response behavior differences between the subgroups of women and men
+in the important features conditioning on examinees’ abilities, revealing the plausible
+reasons for the DIF items favoring women. When comparing the response behavior
+differences in the DIF items favoring women, we found that although women and
+men were different in their time spent on the first action of responses, women used
+less RT to get the correct answer than men when controlling for the ability. Notably,
+controlling student ability at the levels of purified test scores with 0 and 3, women
+exhibited approximately 0.22 standard deviations (SDs) longer duration in their initial
+response to the DIF item than men, but their RT was approximately 0.10 SDs shorter
+than men. Also, women with high ability, whose purified test scores were 6, had RT
+that was approximately 0.50 SDs lower than men with the same ability to get the cor-
+rect answer. Furthermore, women’s response densities within an action sequence
+were 1 SD higher than men, conditioning on the ability located at the purified test
+score of 6. Meanwhile, compared to men with this ability level, women took more
+back-and-forth actions to explore the correct answer for the DIF item. Consistent
+with the findings of He et al. (2019) and Ulitzsch et al. (2021), who noted that the
+combination of action sequence length and response time reflects response efficiency
+and strategies, our finding showed that the DIF item had different response efficiency
+Figure 3. Features’ Associations With Detected DIF Items by Logistic Regression for
+PIAAC 2012 Numeracy Assessment.
+Li et al.
+799
+
+Figure 4. Important Feature Distributions in the Gender DIF Items for PIAAC 2012 Numeracy Assessment.
+Note. The purified test score refers to student ability based on the MH DIF detection assumption.
+800
+
+and response exploration preference between women and men with high ability.
+Specifically, women with high ability responded with higher efficiency and more
+exploration than men on the same ability. However, these response behavior differ-
+ences were not observed between women and men with low ability.
+The Stability of Classifier Modeling Across Different Percentages of DIF Items
+Tables 2 shows the results of a two-way ANOVA that aimed to examine the associa-
+tion of two independent variables, percentage of DIF items and the type of classifiers,
+with the dependent variable, accuracy scores. The finding of this analysis suggested a
+significant main effect of the type of classifiers, F(1,32) = 5.47, p \ .05, h2 =0.15,
+indicating a significant difference in mean accuracy scores between RF and LR.
+However, no significant main effect was observed for the percentages of DIF items
+with respect to accuracy scores. Figure 5 visualizes these findings. The mean accu-
+racy score from RF (solid line) was slightly higher than LR (dashed line). The ten-
+dency of each line was relatively stable, around 0.86 and 0.82, corresponding to RF
+and LR, regardless of the percentages of DIF items.
+Likewise, Table 3 shows that the mean AUC score difference was statistically sig-
+nificant between RF and LR, F(1,32) = 6.03, p \ .05, h2 =0.16. But the main effect
+of the percentage of DIF items on AUC scores was not statistically significant. Figure
+5 shows that the mean AUC score was around 0.90 in RF (solid line), 0.02 higher
+than LR (dashed line). Both lines were flat across various percentages of DIF items.
+Table 4 shows that the mean precision scores were statistically different between
+RF and LR, F(1,32) = 7.22, p \ .05, h2 =0.18. Such an association depended on the
+percentages of DIF items, F(1,32) = 4.26, p \ .05, h2 =0.12. Figure 5 visualizes the
+interactions between classifiers’ performance and the percentages of DIF items.
+When the percentages of DIF were smaller than 0.60, the precision score from RF
+was initially 0.34 higher than LR. This difference tended to narrow down as the per-
+centage of DIF items increased. When the percentages of DIF items were higher than
+0.60, the performance flipped to the LR having a higher precision score than RF.
+Table 2. Association Between Percentages of DIF Items and Classifiers’ Accuracy Scores:
+ANOVA Results for Numeracy Assessment.
+Predictor
+Sum of squares
+df
+Mean square
+F
+p
+Partial h2
+Classifier
+0.010
+1
+0.010
+5.467
+.026*
+0.146
+DIF percentage
+0.002
+1
+0.002
+0.856
+.362
+0.026
+Classifier: DIF
+0.004
+1
+0.004
+2.060
+.161
+0.060
+Residual
+0.060
+32
+0.002
+Note. The term ‘‘Classifier: DIF’’ indicates the interaction between classifier and the percentage of DIF.
+*p \ .05.
+Li et al.
+801
+
+Figure 5. The Interaction Plots Across Five Evaluation Metrics for the PIAAC 2012 Numeracy Assessment.
+802
+
+Table 5 shows a similar finding as Table 4. The mean recall scores were statisti-
+cally significant between RF and LR, F(1,32) = 44.75, p \ .01, h2 =0.58. Such an
+association depended on the percentages of DIF items, F(1,32) = 45.02, p \ .01, h2
+=0.59. However, the tendency of performance in recall scores was different from pre-
+cision scores, as shown in Figure 5. When the percentages of DIF items were smaller
+than 0.50, the recall score from RF was 0.28 smaller than LR. This difference was
+Table 3. Association Between Percentages of DIF Items and Classifiers’ AUC Scores:
+ANOVA Results for Numeracy Assessment.
+Predictor
+Sum of squares
+df
+Mean square
+F
+p
+Partial h2
+Classifier
+0.002
+1
+0.002
+6.032
+.020*
+0.159
+DIF percentage
+0.001
+1
+0.001
+1.652
+.208
+0.049
+Classifier: DIF
+0.000
+1
+0.000
+0.080
+.779
+0.002
+Residual
+0.012
+32
+0.000
+Note. The term ‘‘Classifier: DIF’’ indicates the interaction between classifier and the percentage of DIF.
+*p \ .05.
+Table 4. Association Between Percentages of DIF Items and Classifiers’ Precision Scores:
+ANOVA Results for Numeracy Assessment.
+Predictor
+Sum of squares
+df
+Mean square
+F
+p
+Partial h2
+Classifier
+0.020
+1
+0.020
+7.218
+.011*
+0.184
+DIF percentage
+0.425
+1
+0.425
+150.276
+\.001***
+0.824
+Classifier: DIF
+0.012
+1
+0.012
+4.262
+.047*
+0.118
+Residual
+0.091
+32
+0.003
+Note. The term ‘‘Classifier: DIF’’ indicates the interaction between classifier and the percentage of DIF.
+*p \ .05. ***p \ .001.
+Table 5. Association Between Percentages of DIF Items and Classifiers’ Recall Scores:
+ANOVA Results for Numeracy Assessment.
+Predictor
+Sum of squares
+df
+Mean square
+F
+p
+Partial h2
+Classifier
+0.098
+1
+0.098
+44.747
+\.001***
+0.583
+DIF percentage
+0.048
+1
+0.048
+21.884
+\.001***
+0.406
+Classifier: DIF
+0.099
+1
+0.099
+45.022
+\.001***
+0.585
+Residual
+0.070
+32
+0.002
+Note. The term ‘‘Classifier: DIF’’ indicates the interaction between classifier and the percentage of DIF.
+***p \ .001.
+Li et al.
+803
+
+narrowed down as the percentages of DIF items increased. When the percentages of
+DIF items were larger than 0.50, RF performed with a higher recall score than LR.
+Table 6 shows no statistically significant difference between RF and LR in F1
+scores. However, the main effect of the percentages of DIF items on F1 scores was
+significant, F(1,32) = 109.50, p \ .01, h2 =0.77. Figure 5 shows that the lines of F1
+scores from RF and LR almost overlap. As the percentage of DIF items increased,
+the F1 score increased in both RF and LR.
+Overall, the results of the current empirical study demonstrated that the RF and
+LR reached the same modeling performance in accuracy, AUC, and F1 scores,
+regardless of different percentages of DIF items in the computer-based numeracy
+assessment. Also, the important features from the agreement of RF and LR modeling
+outcomes pointed out four primary response behavior features relating to DIF items,
+which were the RT, the time length of the initial action in response to an item
+(FIRST_TIMING), the betweenness centrality, and the response sequence length
+over the total number of response nodes (density). These important features showed
+subgroup behavior differences in DIF items, illustrating that detected DIF items were
+related to subgroups’ response strategies, engagement, and efficiency rather than
+solely relating to the content of the items.
+Discussion
+The purpose of this study was to propose a procedure for using response process data
+to enhance the interpretation of DIF items. It is important to note that this method
+examines correlational relationships, aiming to provide insights into why an item is
+detected as exhibiting DIF. We do not claim that response behaviors are the causes of
+DIF, but rather that they offer valuable context for understanding the factors associ-
+ated with DIF detection. This method was illustrated by using data from the PIAAC
+2012 numeracy assessment. We demonstrated the procedure for extracting response
+process data features, including timing features, action-sequence features, response
+scores, and background features. Then, we evaluated the variability of classifier
+Table 6. Association Between Percentages of DIF Items and Classifiers’ F1 Scores: ANOVA
+Results for Numeracy Assessment.
+Predictor
+Sum of squares
+df
+Mean square
+F
+p
+Partial h2
+Classifier
+0.000
+1
+0.000
+0.050
+.825
+0.002
+DIF percentage
+0.252
+1
+0.252
+109.504
+\.001***
+0.774
+Classifier: DIF
+0.002
+1
+0.002
+0.696
+.410
+0.021
+Residual
+0.074
+32
+0.002
+Note. The term ‘‘Classifier: DIF’’ indicates the interaction between classifier and the percentage of DIF.
+***p \ .001.
+804
+Educational and Psychological Measurement 85(4)
+
+performance across different percentages of DIF items when studying the association
+between detected DIF items and response process data features.
+Supervised Classifier Selection: Modeling Association Between Response
+Process Data Features and DIF
+Our results indicated that RF and LR were comparable modeling capabilities in this
+study, even with varying percentages of DIF items. Although prior studies (e.g., Qiao
+& Jiao, 2018) have compared the performance among some ML algorithms (i.e., RF)
+in analyzing response process data, to our knowledge, this study is the first study to
+evaluate algorithms’ performance in modeling multiple response process data fea-
+tures and DIF items for further interpreting DIF. The stable and comparable perfor-
+mance of RF and LR across various percentages of DIF items shows the feasibility of
+using a single classifier when modeling the association between response process data
+features and DIF items. However, we recommend selecting both RF and LR in mod-
+eling as the RF can provide information about the important features while the LR
+describes the magnitudes of association. The agreement on RF and LR outcomes sup-
+ports a more comprehensive understanding of the roles of important features in DIF
+items.
+Moreover, although we eventually reported the performance of RF and LR, we
+also evaluated two other commonly used classifiers, K nearest neighbors (KNN) and
+support vector machine (SVM). However, neither KNN nor SVM outperformed RF
+and LR in terms of the five evaluation metrics. Additional performance details for
+the SVM and KNN models can be found in Supplemental Appendix C. SVM even
+required additional computational time when processing the PIAAC 2012 numeracy
+assessment. Given the poor performance and large computational cost in KNN and
+SVM, we recommend RF and LR in modeling the association between process data
+features and DIF items for further interpretation of DIF.
+Process Data Feature Selection and DIF Interpretation With Important
+Features
+The results demonstrated that the identified important features, which extend beyond
+response scores, provide valuable information in interpreting DIF. Specifically, by
+comparing subgroup behavior differences on DIF items using these identified impor-
+tant features, the empirical data revealed that women with high ability responded to
+gender DIF items more efficiently and with greater exploration than men of the same
+ability level. This finding contributes additional evidence regarding the role of
+response behaviors in DIF items, helping to reduce those misinterpretation of DIF
+due to linking the detected DIF to the item content (e.g., Shermis et al., 2017).
+Moreover, this finding offers a plausible explanation for the less than 50% agree-
+ment on DIF outcomes between content expert reviews and statistical DIF outcomes
+reported in prior studies (e.g., Cheng et al., 2020; Ercikan et al., 2004). For instance,
+Li et al.
+805
+
+in international assessments, language DIF items are detected in statistical analyses,
+whereas the items are not flagged as DIF by content experts. In our empirical study,
+the identified features interpreted the gender DIF items with a consideration of
+response efficiency and exploration preference. Response efficiency and exploration
+preference are not the measured construct in the PIAAC numeracy assessment,
+whereas response efficiency and exploration preference may impact examinees’
+response scores due to time constraints during the assessment. These differences
+reduce the comparability of test scores between subgroups, further underscoring the
+importance of these features in DIF interpretation, especially in the case that response
+factors, such as response efficiency and response exploration, are omitted by test
+designers.
+In addition, the identified important features can help evaluate DIF items that
+manifest within specific ability ranges. For instance, our empirical study suggests
+that gender DIF primarily occurs among high-ability women and men, rather than
+across all ability levels. These findings are consistent with previous research which
+demonstrates that response process data can provide valuable insights for interpreting
+DIF items (e.g., Ercikan et al., 2020; Molenaar & Feskens, 2024). Furthermore, our
+results reveal the specific ability levels at which DIF is most observable, whereas tra-
+ditional DIF techniques typically aggregate ability across all levels in the sample.
+These additional insights offer content experts a more nuanced understanding of the
+factors contributing to statistical DIF outcomes, thereby improving their interpreta-
+tion and evaluation of DIF.
+This study also demonstrates that the combination of timing features and action-
+sequence features is more informative than item response scores in interpreting DIF
+items. Ercikan et al. (2020) suggested selecting the RT and the number of actions as
+separate indicators to understand examinees’ response strategies and thereby evaluate
+examinees’ engagement as evidence of DIF. Our study takes a further step toward
+investigating examinees’ response strategies, engagement, and efficiency by involv-
+ing more timing features and action-sequence features, such as action density and the
+timing of each action. The results showed that the response time, the first timing of
+response, action density, and the important action in one action sequence (between-
+ness centrality) are beneficial to further understand and interpret DIF rather than
+solely relying on one type of feature. This finding is consistent with prior studies,
+which reveal the combination of response time and the number of actions is advanced
+to examine examinees’ disengagement than the feature of response time (e.g., Kuang
+& Sahin, 2023; Sahin & Colvin, 2020; Wise & Gao, 2017). The combination of
+response time, the first timing of response, and action density demonstrate response
+engagement and efficiency, explaining the additional reasons for probability differ-
+ences of getting the item correct between groups in DIF interpretation beyond item
+response scores. Moreover, the important action, which is derived from the action
+with the highest frequency in connecting the other two actions (Scott, 2012), com-
+bines with response time and action density, indicating the response process with
+806
+Educational and Psychological Measurement 85(4)
+
+more or fewer exploration actions, consequently, providing another evidence to inter-
+pret DIF.
+The Impact of Percentages of DIF Items on Studying the Association Between
+Process Data Features and DIF
+Our results indicated that RF and LR performed with stable accuracy and AUC
+scores across various percentages of DIF items in a test. Also, the accuracy, AUC,
+and F1 scores from RF and LR were all higher than 0.7 when the percentage of DIF
+was higher than 0.38. These findings illustrate the promise of applying RF and LR to
+further understand and interpret the detected DIF by response process data, even if
+researchers and practitioners obtain various percentages of DIF items, at least when
+analyzing the PIAAC 2012 numeracy data.
+Limitation and Future Research
+The empirical study identified four response process data features (i.e., response den-
+sities within an action sequence, the RT for an item, the timing of the initial action in
+response to an item, and the important action that connects between actions for
+exploring the answer to an item) to reveal subgroup behavior differences in response
+efficiency and exploration, supporting DIF interpretation. However, these features
+were derived from open-ended items in the PIAAC 2012 numeracy assessment,
+which may not fully generalize to other assessments. We suggest future studies eval-
+uate the use of process data features for DIF interpretation across different assess-
+ment types and incorporate a broader range of response process features to validate
+the wider applicability of our proposed method. It is important to note that student
+response process features can vary depending on the assessment. Inadequate response
+process features for an assessment may result in weak classifier models that fail to
+support accurate DIF interpretation. An example is provided in Supplemental
+Appendix D, which analyzes the PIAAC 2012 literacy assessment with inadequate
+features. The response process features extracted from the selected-response item for-
+mat may not fully capture crucial information about examinees’ literacy proficiencies
+and response strategies. Future studies can explore a broader range of response pro-
+cess features that provide valuable information for understanding DIF items, includ-
+ing the features describing different item formats.
+Another limitation of this study is its omission of item-level features, such as item
+difficulty and item discrimination. Instead, we primarily focused on individual-level
+features, such as response time, item response scores, and individual background
+characteristics. If we incorporated item-level features into the classification proce-
+dure, the item-level features would become the most important ones due to the small
+number of items in the PIAAC 2012 numeracy assessment, consequently obscuring
+information from individual-level features and constraining our ability to interpret
+DIF items. However, item discrimination and item difficulty may help process data
+Li et al.
+807
+
+features to interpret DIF when the number of items in the dataset is large enough.
+Therefore, we recommend that future studies integrate item-level features for a more
+comprehensive analysis of DIF items in assessments. This may involve leveraging
+artificial intelligence (AI) technology, which is increasingly essential for ensuring
+measurement fairness, as highlighted in recent literature (e.g., Huggins-Manley et al.,
+2022).
+Implications and Conclusions
+In summary, this study proposes a method for further interpreting DIF items in
+computer-based large-scale assessments by incorporating response process data.
+Using the PIAAC 2012 numeracy assessment as an illustrative example, we demon-
+strated how to implement this method. By using important response process features
+that are more informative than response scores, we compared subgroup behavior dif-
+ferences on gender DIF items to uncover underlying factors, such as response effi-
+ciency and exploration, enhancing the understanding and interpretation of DIF.
+In practice, if we use response process features to understand DIF in the way this
+study demonstrated, one may be able to combine content expert review with response
+process relationships to DIF to come to a more holistic discussion and evaluation of
+DIF items. Specifically, when test designers and researchers overlook response strate-
+gies (e.g., response efficiency and exploration) and response engagement that may
+impact response scores, the proposed method offers valuable insights into subgroup
+behavior differences in DIF reviews, helping to reduce inconsistencies between con-
+tent expert reviews and statistical DIF results.
+Acknowledgment
+The authors have no acknowledgments to declare.
+Declaration of Conflicting Interests
+The authors declared no potential conflicts of interest with respect to the research, authorship,
+and/or publication of this article.
+Funding
+The authors received no financial support for the research, authorship, and/or publication of
+this article.
+ORCID iD
+Ziying Li
+https://orcid.org/0000-0003-4375-8332
+808
+Educational and Psychological Measurement 85(4)
+
+Data Availability Statement
+This research used public data from the Programme for International Assessment of Adult
+Competencies (PIAAC) 2012 computer-based numeracy assessment. The data are available
+and can be accessed at https://www.oecd.org/en/data/datasets/PIAAC-1st-Cycle-Database.
+html.
+Supplemental Material
+Supplemental material for this article is available online.
+References
+American Educational Research Association, American Psychological Association, &
+National Council on Measurement in Education. (2014). Standards for educational and
+psychological testing.
+Arieli-Attali, M., Ou, L., & Simmering, V. R. (2019). Understanding examinees’ choices in a
+self-adapted test: A hidden Markov modeling of process data. Frontiers in Psychology, 10,
+83. https://doi.org/10.3389/fpsyg.2019.00083
+Bauer, D. J., Belzak, W. C. M., & Cole, V. T. (2020). Simplifying the assessment of
+measurement invariance over multiple background variables: Using regularized moderated
+nonlinear factor analysis to detect differential item functioning. Structural Equation
+Modeling: A Multidisciplinary Journal, 27(1), 43–55. https://doi.org/10.1080/10705511.
+2019.1642754
+Belzak, W. C. M. (2023). The multidimensionality of measurement bias in high-stakes testing:
+Using machine learning to evaluate complex sources of differential item functioning.
+Educational Measurement: Issues and Practice, 42(1), 24–33. https://doi.org/10.1111/
+emip.12486
+Bosch, N., & Paquette, L. (2018). Metrics for discrete student models: Chance levels,
+comparisons, and use cases. Journal of Learning Analytics, 5(2), 86–104. https://doi.org/
+10.18608/jla.2018.52.6
+Bradley, A. P. (1997). The use of the area under the ROC curve in the evaluation of machine
+learning algorithms. Pattern Recognition, 30(7), 1145–1159. https://doi.org/10.1016/S0031-
+3203(96)00142-2
+Breiman, L. (2001). Random forests. Machine Learning, 45(1), 5–32. https://doi.org/10.1023/
+A:1010933404324
+Chawla, N. V., Bowyer, K. W., Hall, L. O., & Kegelmeyer, W. P. (2002). SMOTE: Synthetic
+minority over-sampling technique. Journal of Artificial Intelligence Research, 16, 321–357.
+https://doi.org/10.1613/jair.953
+Cheema, J. R. (2019). Cross-country gender DIF in PISA science literacy items. European
+Journal of Developmental Psychology, 16(2), 152–166. https://doi.org/10.1080/17405629.
+2017.1358607
+Cheng, C. P., Chen, C. C., & Shih, C. L. (2020). An exploratory strategy to identify and define
+sources of differential item functioning. Applied Psychological Measurement, 44(7–8),
+548–560. https://doi.org/10.1177/0146621620931190
+Cohen, A. S., Kim, S. H., & Wollack, J. A. (1996). An investigation of the likelihood ratio test
+for detection of differential item functioning. Applied Psychological Measurement, 20(1),
+15–26.
+Li et al.
+809
+
+Collins, L. M., Schafer, J. L., & Kam, C. (2001). A comparison of inclusive and restrictive
+strategies in modern missing data procedures. Psychological Methods, 6(4), 330–351.
+Cook, R. (2018). Gender differences in adult numeracy skills: What is the role of education?
+Educational
+Research
+and
+Evaluation,
+24(6–7),
+370–393.
+https://doi.org/10.1080/
+13803611.2018.1540992
+Couronne´, R., Probst, P., & Boulesteix, A. L. (2018). Random forest versus logistic regression:
+A large-scale benchmark experiment. BMC Bioinformatics, 19(1), 270. https://doi.org/10.
+1186/s12859-018-2264-5
+De Boeck, P., & Jeon, M. (2019). An overview of models for response times and processes in
+cognitive tests. Frontiers in Psychology, 10, 102.
+Eichmann, B., Greiff, S., Brandhuber, L., & Naumann, J. (2020). Using process data to explain
+group differences in complex problem solving. Journal of Educational Psychology, 112(8),
+1546–1562. https://doi.org/10.1037/edu0000446
+Ercikan, K., Gierl, M. J., McCreith, T., Puhan, G., & Koh, K. (2004). Comparability of
+bilingual versions of assessments: Sources of incomparability of English and French
+versions of Canada’s national achievement tests. Applied Measurement in Education,
+17(3), 301–321.
+Ercikan, K., Guo, H., & He, Q. (2020). Use of response process data to inform group
+comparisons and fairness research. Educational Assessment, 25(3), 179–197. https://doi.
+org/10.1080/10627197.2020.1804353
+Fidalgo, A´ . M., Hashimoto, K., Bartram, D., & Mun˜iz, J. (2007). Empirical Bayes versus
+standard Mantel-Haenszel statistics for detecting differential item functioning under small
+sample conditions. The Journal of Experimental Education, 75(4), 293–314. https://doi.org/
+10.3200/JEXE.75.4.293-316
+Fidalgo, A´ . M., Mellenbergh, G. J., & Mun˜iz, J. (2000). Effects of amount of DIF, test length,
+purification, type on robustness and power of Mantel-Haenszel procedures. Methods of
+Psychological Research, 5(3), 43–53.
+Finch, W. H. (2005). The MIMIC model as a method for detecting DIF: Comparison with
+Mantel-Haenszel, SIBTEST, and the IRT likelihood ratio. Applied Psychological
+Measurement, 29(4), 278–295. https://doi.org/10.1177/0146621605275728
+Finch, W. H., & Herna´ndez Finch, M. E. (2013). Investigation of specific learning disability
+and testing accommodations based differential item functioning using a multilevel
+multidimensional mixture item response theory model. Educational and Psychological
+Measurement, 73(6), 973–993. https://doi.org/10.1177/0013164413494776
+Gardner, J., & Brooks, C. (2018). Student success prediction in MOOCs. User Modeling and
+User-Adapted Interaction, 28(2), 127–203. https://doi.org/10.1007/s11257-018-9203-z
+Genuer, R., Poggi, J. M., & Tuleau, C. (2008). Random Forests: Some methodological insights
+(arXiv:0811.3619). arXiv. https://doi.org/10.48550/arXiv.0811.3619
+Ghali, N., Panda, M., Hassanien, A. E., Abraham, A., & Snasel, V. (2012). Social networks
+analysis: Tools, measures and visualization. In A. Abraham (Ed.), Computational social
+networks: Mining and visualization (pp. 3–23). Springer. https://doi.org/10.1007/978-1-
+4471-4054-2
+Goldhammer, F., & Kroehne, U. (2014). Controlling individuals’ time spent on task in speeded
+performance measures: Experimental time limits, posterior time limits and response time
+modeling. Applied Psychological Measurement, 38, 255–267. https://doi.org/10.1177/
+0146621613517164
+810
+Educational and Psychological Measurement 85(4)
+
+Goldhammer, F., Martens, T., & Lu¨dtke, O. (2017). Conditioning factors of test-taking
+engagement in PIAAC: An exploratory IRT modelling approach considering person and
+item characteristics. Large-Scale Assessments in Education, 5(18), 1–25. https://doi.org/10.
+1186/s40536-017-0051-9
+Hagberg, A. A., Schult, D. A., & Swart, P. J. (2008, June 28). Exploring network structure,
+dynamics, and function using NetworkX [Conference session]. 7th Python in Science
+Conference, Pasadena, CA, United States, pp. 11–15.
+He, Q., Liao, D., & Jiao, H. (2019). Clustering behavioral patterns using process data in
+PIAAC problem-solving items. In B. Veldkamp & C. Sluijter (Eds.), Theoretical and
+practical advances in computer-based educational measurement (pp. 189–212). Springer.
+https://doi.org/10.1007/978-3-030-18480-3_10
+He, Q., & von Davier, M. (2015). Identifying feature sequences from process data in problem-
+solving items with N-grams. In L. van der Ark, D. Bolt, W. C. Wang, J. Douglas & S. M.
+Chow (Eds.), Quantitative psychology research. Springer proceedings in mathematics &
+statistics (Vol. 140, pp. 173–190). Springer. https://doi.org/10.1007/978-3-319-19977-1_13
+Holland, P. W., & Thayer, D. T. (1988). Differential item performance and the Mantel-
+Haenszel procedure. In H. Wainer & H. I. Braun (Eds.), Test validity (pp. 129–145).
+Lawrence Erlbaum. https://doi.org/10.1037/14047-004
+Huang, X., Wilson, M., & Wang, L. (2016). Exploring plausible causes of differential item
+functioning in the PISA science assessment: Language, curriculum or culture. Educational
+Psychology, 36(2), 378–390. https://doi.org/10.1080/01443410.2014.946890
+Huggins-Manley, A. C., Booth, B. M., & D’Mello, S. K. (2022). Toward argument-based
+fairness with an application to AI-enhanced educational assessments. Journal of
+Educational Measurement, 59, 362–388. https://doi.org/10.1111/jedm.12334
+James, G., Witten, D., Hastie, T., & Tibshirani, R. (2013). An introduction to statistical
+learning with applications in R. Springer. https://doi.org/10.1007/978-1-4614-7138-7
+Juba, B., & Le, H. S. (2019). Precision-recall versus accuracy and the role of large data sets.
+Proceedings of the AAAI Conference on Artificial Intelligence, 33(01), Article 01. https://
+doi.org/10.1609/aaai.v33i01.33014039
+Kleinbaum, D. G., & Klein, M. (1994). Logistic regression: A self-learning text. Springer.
+https://doi.org/10.1007/978-1-4419-1742-3
+Kuang, H., & Sahin, F. (2023). Comparison of disengagement levels and the impact of
+disengagement on item parameters between PISA 2015 and PISA 2018 in the United
+States. Large-Scale Assessments in Education, 11(4), 1–31. https://doi.org/10.1186/s40536-
+023-00152-0
+Leng, D., Bezirhan, U., Khorramdel, L., Fishbein, B., & Davier, M. von. (2024). Examining
+gender differences in TIMSS 2019 using a multiple-group hierarchical speed-accuracy-
+revisits model. Educational Measurement: Issues and Practice, 43(3), 64–75. https://doi.
+org/10.1111/emip.12606
+Liao, D., He, Q., & Jiao, H. (2019). Mapping background variables with sequential patterns in
+problem-solving environments: An investigation of United States adults’ employment status
+in PIAAC. Frontiers in Psychology, 10, 646. https://doi.org/10.3389/fpsyg.2019.00646
+Lin, P. Y., & Lin, Y. C. (2014). Examining student factors in sources of setting
+accommodation DIF. Educational and Psychological Measurement, 74(5), 759–794.
+https://doi.org/10.1177/0013164413514053
+Li et al.
+811
+
+Liou, P. Y., & Bulut, O. (2020). The effects of item format and cognitive domain on students’
+science performance in TIMSS 2011. Research in Science Education, 50(1), 99–121.
+https://doi.org/10.1007/s11165-017-9682-7
+Lobo, J. M., Jime´nez-Valverde, A., & Real, R. (2008). AUC: A misleading measure of the
+performance of predictive distribution models. Global Ecology and Biogeography, 17(2),
+145–151. https://doi.org/10.1111/j.1466-8238.2007.00358.x
+Magis, D., Beland, S., Tuerlinckx, F., & De Boeck, P. (2010). A general framework and an R
+package for the detection of dichotomous differential item functioning. Behavior Research
+Methods, 42, 847–862. https://doi.org/10.3758/BRM.42.3.847
+Magis, D., & De Boeck, P. (2012). A robust outlier approach to prevent type I error inflation
+in differential item functioning. Educational and Psychological Measurement, 72(2),
+291–311. https://doi.org/10.1177/0013164411416975
+Molenaar, D., & Feskens, R. (2024). Relating violations of measurement invariance to group
+differences in response times. Psychological Methods. Advance online publication. https://
+doi.org/10.1037/met0000655
+Naidu, G., Zuva, T., & Sibanda, E. M. (2023). A review of evaluation metrics in machine
+learning algorithms. In R. Silhavy & P. Silhavy (Eds.), Artificial intelligence application in
+networks and systems (pp. 15–25). Springer. https://doi.org/10.1007/978-3-031-35314-7_2
+Oliveri, M. E., Ercikan, K., & Zumbo, B. (2013). Analysis of sources of latent class differential
+item functioning in international assessments. International Journal of Testing, 13(3),
+272–293. https://doi.org/10.1080/15305058.2012.738266
+Pedregosa, F., Varoquaux, G., Gramfort, A., Michel, V., Thirion, B., Grisel, O., Blondel, M.,
+Prettenhofer, P., Weiss, R., Dubourg, V., Vanderplas, J., Passos, A., Cournapeau, D.,
+Brucher, M., Perrot, M., & Duchesnay, E. (2011). Scikit-learn: Machine learning in python.
+Journal of Machine Learning Research, 12, 2825–2830.
+Perrone, M. (2006). Differential item functioning and item bias: Critical considerations in test
+fairness. Studies in Applied Linguistics and TESOL, 6(2), Article 2. https://doi.org/10.7916/
+salt.v6i2.1548
+Probst, P., Wright, M. N., & Boulesteix, A. L. (2019). Hyperparameters and tuning strategies
+for random forest. WIREs Data Mining and Knowledge Discovery, 9(3), e1301. https://doi.
+org/10.1002/widm.1301
+Qiao, X., & Jiao, H. (2018). Data mining techniques in analyzing process data: A didactic.
+Frontiers in Psychology, 9, 2231. https://doi.org/10.3389/fpsyg.2018.02231
+Robitzsch, A., & Rupp, A. A. (2009). Impact of missing data on the detection of differential
+item
+functioning: The case
+of Mantel-Haenszel
+and
+logistic
+regression analysis.
+Educational and Psychological Measurement, 69(1), 18–34. https://doi.org/10.1177/
+0013164408318756
+Sahin, F., & Colvin, K. F. (2020). Enhancing response time thresholds with response behaviors
+for detecting disengaged examinees. Large-Scale Assessments in Education, 8(5), 1–24.
+https://doi.org/10.1186/s40536-020-00082-1
+Salles, F., Dos Santos, R., & Keskpaik, S. (2020). When didactics meet data science: Process
+data analysis in large-scale mathematics assessment in France. Large-Scale Assessments in
+Education, 8(1), 7. https://doi.org/10.1186/s40536-020-00085-y
+Scott, J. (2012). What is social network analysis?Bloomsbury Academic. https://doi.org/10.
+5040/9781849668187
+812
+Educational and Psychological Measurement 85(4)
+
+Shermis, M. D., Mao, L., Mulholland, M., & Kieftenbeld, V. (2017). Use of automated scoring
+features to generate hypotheses regarding language-based DIF. International Journal of
+Testing, 17(4), 351–371. https://doi.org/10.1080/15305058.2017.1308949
+Shermis, M. D., & St George, R. (1992). Item bias in mathematics achievement: The
+Progressive Achievement Tests for Mathematics. Psychological Test Bulletin, 5, 98–112.
+Shin, J., Wang, B., Pinto Junior, W. N., & Gierl, M. J. (2024). An engagement-aware
+predictive model to evaluate problem-solving performance from the study of adult skills’
+(PIAAC 2012) process data. Large-Scale Assessments in Education, 12, 6. https://doi.org/
+10.1186/s40536-024-00194-y
+Strobl, C., Boulesteix, A. L., Zeileis, A., & Hothorn, T. (2007). Bias in random forest variable
+importance measures: Illustrations, sources and a solution. BMC Bioinformatics, 8(1), 25.
+https://doi.org/10.1186/1471-2105-8-25
+Tang, X., Wang, Z., He, Q., Liu, J., & Ying, Z. (2020). Latent feature extraction for process
+data via multidimensional scaling. Psychometrika, 85(2), 378–397. https://doi.org/10.1007/
+s11336-020-09708-3
+Tang, X., Wang, Z., Liu, J., & Ying, Z. (2021). An exploratory analysis of the latent structure
+of process data via action sequence autoencoders. British Journal of Mathematical and
+Statistical Psychology, 74(1), 1–33. https://doi.org/10.1111/bmsp.12203
+Ulitzsch, E., He, Q., Ulitzsch, V., Molter, H., Nichterlein, A., Niedermeier, R., & Pohl, S.
+(2021). Combining clickstream analyses and graph-modeled data clustering for identifying
+common response processes. Psychometrika, 86(1), 190–214. https://doi.org/10.1007/
+s11336-020-09743-0
+van Buuren, S., & Groothuis-Oudshoorn, K. (2011). mice: Multivariate imputation by chained
+equations in R. Journal of Statistical Software, 45(3), 1–67. https://www.jstatsoft.org/v45/i03
+Wang, Z., Tang, X., Liu, J., & Ying, Z. (2023). Subtask analysis of process data through a
+predictive model. British Journal of Mathematical and Statistical Psychology, 76(1),
+211–235. https://doi.org/10.1111/bmsp.12290
+Wise, S. L., & Gao, L. (2017). A general approach to measuring test-taking effort on
+computer-based tests. Applied Measurement in Education, 30(4), 343–354. https://doi.org/
+10.1080/08957347.2017.1353992
+Woodcock, S., Howard, S. J., & Ehrich, J. (2020). A within-subject experiment of item format
+effects on early primary students’ language, reading, and numeracy assessment results.
+School Psychology, 35(1), 80–87. https://doi.org/10.1037/spq0000340
+Wu, A. D., & Ercikan, K. (2006). Using multiple-variable matching to identify cultural sources
+of differential item functioning. International Journal of Testing, 6(3), 287–300. https://doi.
+org/10.1207/s15327574ijt0603_5
+Zhang, S., Wang, Z., Qi, J., Liu, J., & Ying, Z. (2023). Accurate assessment via process data.
+Psychometrika, 88(1), 76–97. https://doi.org/10.1007/s11336-022-09880-8
+Zhu, M., Shu, Z., & von Davier, A. A. (2016). Using networks to visualize and analyze process
+data for educational assessment. Journal of Educational Measurement, 53(2), 190–211.
+https://www.jstor.org/stable/43940613
+Li et al.
+813

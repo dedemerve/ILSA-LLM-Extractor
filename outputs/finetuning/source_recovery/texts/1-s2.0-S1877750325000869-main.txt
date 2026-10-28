@@ -1,0 +1,2184 @@
+ 
+Contents lists available at ScienceDirect
+Journal of Computational Science
+journal homepage: www.elsevier.com/locate/jocs
+ 
+Evolution of the computational science community: The dynamics of topics 
+and collaborations in 24 years of ICCS and JoCS publications
+Lijing Luo a
+,∗, Klavdiya Bochenina b, Tesfamariam M. Abuhay c, Nachyn Dorzhu d, 
+George Kampis e, Sergey Kovalchuk d, Valeria Krzhizhanovskaya a, Maciej Paszynski f,
+Clélia de Mulatier a, Jack Dongarra g, Peter M.A. Sloot a
+a University of Amsterdam, Amsterdam, The Netherlands
+b University of Helsinki, Helsinki, Finland
+c University of Illinois at Chicago, Chicago, IL, USA
+d International Conference on Computational Science, Amsterdam, The Netherlands
+e Eötvös Loránd University, Budapest, Hungary
+f AGH University of Krakow, Krakow, Poland
+g University of Tennessee, Knoxville, Tennessee, United States
+A R T I C L E  I N F O
+Keywords:
+Natural language processing
+Computational science
+Topic classification
+Topic modeling
+Network analysis
+Scientometrics
+Author network
+ICCS
+JoCS
+ 
+A B S T R A C T
+We analyze the topic structure of 10,299 publications from the International Conference on Computational 
+Science (ICCS) between 2001 and 2024 as well as the Journal of Computational Science (JoCS) between 2010 
+and 2023, using natural language processing techniques and network analysis. The computational science 
+classification corpus was created into 15 main disciplines and 256 sub-disciplines sourced from Wikipedia. 
+Among the 15 main disciplines, machine learning became the most popular topic after 2019, surpassing 
+parallel & distributed computing, which peaked in the early 2010s. ICCS and JoCS show differences in research 
+popularity in both first and second-level disciplines. Algorithm theory, Mathematical modeling, and network 
+science are the most dominant topics in both ICCS and JoCS. Different disciplines present different trends in 
+ICCS and JoCS. In the past 24 years, machine learning related topics have gained the most attention in both 
+ICCS and JoCS. We also examined and compared the correlation between the trends in ICCS and Google search 
+Trends. The collaboration of disciplinary networks of second-level disciplines exhibits a scale-free characteristic, 
+and the network structures have undergone significant evolution over 24 years. Moreover, different disciplinary 
+communities exhibit different "introverted" and "extroverted" community characteristics within the network. 
+Additionally, we examined the life span of thematic workshops and the evolution of authors’ collaborations 
+inside and after ICCS.
+1. Introduction
+The framework of modern science is intricate. The total number 
+of academic publications reached 3 million in 2020, and it contin-
+ues its exponential growth [1,2]. As previous studies have indicated, 
+the number of newly published papers doubles every 15 years [2]. 
+However, among tens of thousands of scholarly publications, the emer-
+gence of new ideas only follows a linear trend [3]. Therefore, utilizing 
+quantitative methods to measure scientific development trends across 
+disciplines is crucial. In contrast to the past, modern science divi-
+sion presents the character of diversification, multidisciplinary coop-
+eration, and interdisciplinary collaboration. The quantitative analyses 
+offer advantages in studying the complex relationships among massive 
+academic publications.
+∗Corresponding author.
+E-mail address: l.luo@uva.nl (L. Luo).
+Since Tianhe-1 topped the Top500 in 2010, a series of competitions 
+in supercomputer hardware, computing power, algorithms, and other 
+domains have been initiated by major global powers [4]. Simultane-
+ously, emerging technologies such as artificial intelligence (AI), cloud 
+computing, blockchain, and quantum computing have gradually be-
+come focal points of competition among nations. Starting from 2017, 
+it has been widely recognized as the era of artificial intelligence, with 
+both upstream and downstream industries propelled by data analysis 
+techniques like algorithms and modeling entering a phase of rapid 
+development [5]. By 2030, the AI computing power is expected to reach 
+100 ZFLOPS [6]. The Maintaining American Leadership in Artificial 
+Intelligence Update, published in 2019, signifies that research on artifi-
+cial intelligence and computing power has reached a national strategic 
+https://doi.org/10.1016/j.jocs.2025.102609
+Received 4 December 2024; Received in revised form 21 April 2025; Accepted 21 April 2025
+Journal of Computational Science 89 (2025) 102609 
+Available online 10 May 2025 
+1877-7503/© 2025 The Authors. Published by Elsevier B.V. This is an open access article under the CC BY-NC-ND license ( http://creativecommons.org/licenses/by- 
+nc-nd/4.0/ ). 
+
+L. Luo et al.
+level [7]. The attention paid by national governments, industrial sec-
+tors, and academia to different strategic technologies has changed 
+dramatically over the past 20 years. Better allocation of scientific 
+research resources is crucial for improving science development [8]. 
+Understanding the scientific and technological development rules is 
+preliminary to optimizing the allocation of resources and promoting ef-
+ficiency. Under these circumstances, forecasting the next strategic-level 
+advanced technology becomes particularly prominent [9].
+Under this context, studying the development in computer science 
+promotes the understanding of the development patterns of advanced 
+strategic technologies. It also serves as a crucial condition for further 
+exploring the transition from theory to industry, providing reliable 
+foundations for formulating science policies. The traditional qualitative 
+analysis of science development is getting harder to measure the com-
+plexity of modern science networks, thus leading to more quantitative 
+analyses through scientometrics and science-of-science approaches. In 
+this regard, conducting scientometrics research on computer science 
+and computational science offers empirical evidence to facilitate future 
+development.
+Scientometrics serves as an important approach to studying the 
+science of science by providing empirical evidence through multiple 
+quantitative research methods to uncover trends in scientific devel-
+opment. Current scientometrics measures the impact of science and 
+technology on society critically based on citation counts, keywords, 
+and paper counts [10,11]. The traditional keywords-based analysis 
+lacks quantitative measures in computational linguistics, which makes 
+it harder to provide more detailed evidence in depicting the trends, 
+guiding science policy, and the exploration of multi-disciplinary col-
+laboration. The significance of this research is thereby clear: applying 
+quantitative measures to understand the development laws of com-
+putational science; providing evidence for science policy to allocate 
+resources effectively to promote its advancement; and analyzing and 
+predicting the trend of computational science development.
+In the field of computer and computational science, the continuous 
+growth and digitization of academic publications provide vast amounts 
+of data for scientometric research. The International Conference on 
+Computation Science (ICCS)1 and the Journal on Computational Sci-
+ence (JoCS)2 offer an extensive corpus for scientometric studies in 
+the field of computational science. ICCS and JoCS serve as two pres-
+tigious academic platforms for researchers, scientists, and engineers 
+to explore computational topics spanning mathematics and computer 
+science. Computational science is inherently interdisciplinary, offering 
+advanced computational techniques to address problems, identify new 
+issues, and shape future directions in physics, biology, chemistry, social 
+sciences, and other fields. Additionally, computational science inves-
+tigates how to enhance computing power and develop higher-quality 
+algorithms based on the nature of computation.
+In this study, we employ natural language processing techniques 
+and complex networks to model and analyze the content of academic 
+publications in ICCS and JoCS. Based on the premise that a document 
+consists of various topics corresponding to specific disciplines, each 
+topic is characterized by distinct professional terminologies. We utilize 
+topic modeling techniques and similarity comparison to discover, ana-
+lyze, and quantify these topics. With a standardized corpus categorized 
+by discipline, we calculate a popularity score for each discipline, which 
+we apply to investigate emerging and declining research disciplines 
+based on their popularity and apply time-series analysis to examine and 
+predict future trends. Furthermore, we conduct an annual analysis to 
+explore the changes in the distribution of research popularity and the 
+evolution of the interdisciplinary network over 24 years for ICCS and 
+14 years for JoCS. We conduct this research to answer the following 
+questions: How does the popularity trend in computational science 
+change? How can we model and investigate the interdisciplinary nature 
+1 https://www.iccs-meeting.org.
+2 https://www.sciencedirect.com/journal/journal-of-computational-
+science.
+of computational science using network analysis? How has the structure 
+of the ICCS author collaboration and thematic workshop changed?
+This paper is divided into seven sections: Section 2 summarizes 
+related work; Section 3 describes data collection, pre-processing, and 
+methodologies; Section 4 demonstrates the trends of ICCS & JoCS 
+topics; Section 5 analyzes the topology and the dynamic analysis of 
+networks; Section 6 introduces uniqueness of ICCS by comparing with 
+the Google Trends and analyze the keywords; Section 7 presents life 
+span of thematic workshop & author network and finally the conclusion 
+& discussion are presented in Section 8.
+2. Related work
+2.1. Topic modeling methods
+Among the most commonly used methods for topic modeling, La-
+tent Dirichlet Allocation (LDA) and Non-Negative Matrix Factorization 
+(NMF) are widely employed to decompose documents into specific top-
+ics with distinct keywords. Initially applied to machine learning by Blei 
+et al. [12], LDA is widely used as an unsupervised generative probabilis-
+tic model for topic modeling that explicitly represents a document by 
+collecting discrete tokens. LDA breaks documents into multiple topics, 
+where words are generated with maximum likelihood to represent each 
+topic [12–14]. NMF is also regarded as a common matrix decomposi-
+tion method in multiple application fields [15]. In natural language 
+processing applications, Greene et al. proposed NMF as a method 
+based on matrix factorization to model topics in documents [16]. 
+However, previous studies have highlighted certain drawbacks of NMF. 
+Wang et al. demonstrated that NMF-based topic modeling requires 
+high computational complexity and computing power for optimization 
+purposes [17]. Pan et al. also indicated that the non-uniqueness of NMF 
+can result in multiple different factorizations for a given input, leading 
+to unstable topic and keyword combinations [18]. The ambiguity and 
+context-dependent keywords within each topic make interpretation 
+more challenging for highly professional topics for both topic modeling 
+methods [19]. Additionally, feature selection and non-uniqueness of 
+tokens can cause variations in results, resulting in mislabeling and 
+blurred boundaries between topics.
+2.2. TF-IDF & cosine similarity
+The cosine similarity of term frequency-inversed document fre-
+quency (TF-IDF) vectors has been employed as a method to measure 
+text similarity, in line with the distributional hypothesis in natural lan-
+guage processing, which posits that similar words tend to co-occur [20]. 
+Gunawan et al. demonstrated the applicability of cosine similarity for 
+categorizing papers based on text keywords, proposing a methodol-
+ogy for classifying research disciplines by analyzing a series of key-
+words [21]. It implies that cosine similarity could be utilized when 
+labeling technical terminologies or texts with a standardized corpus 
+with a unique document-term matrix.
+Wang et al. identified limitations in the traditional ‘‘Bag of Words’’ 
+(BoW) representation and introduced an approach using Wikipedia to 
+compute content-based similarity between documents [22]. This tech-
+nique enables the classification of papers on unknown topics through 
+high-similarity references. Furthermore, Wang et al.’s findings revealed 
+that the directed acyclic graph Wikipedia links forms containing mul-
+tiple classification schemes within each entry [22]. Under this context, 
+the standardized classification with hierarchical tree structures could 
+be considered to avoid the drawback of unstable decomposition raised 
+by classical topic modeling. Classifying unknown publications by a 
+stable and unique combination of similarity classification labels could 
+mitigate the instability and explainability of unsupervised learning. 
+Nastase et al. meanwhile, proposed creating a large-scale multilingual 
+concept network from Wikipedia’s knowledge base [23]. It implies that 
+the methodology of applying concepts in science could be used to create 
+an interdisciplinary network.
+Journal of Computational Science 89 (2025) 102609 
+2 
+
+L. Luo et al.
+2.3. Previous research on ICCS
+Among previous topic modeling of ICCS, Abuhay et al. employed 
+the NMF-based topic modeling method and categorized topics into 
+13 high-level topics [13,14]. The authors highlighted that modeling, 
+HPC, and e-science were among the most prevalent subjects before 
+2017. Additionally, Abuhay et al. also proposed comprehensive analy-
+ses for both static and dynamic networks of topics in ICCS topics [14]. 
+However, the drawback identified in previous research pointed out 
+that NMF and LDA-based topic modeling rely on probabilities. It leads 
+to unstable and non-unique topics and keyword decomposition. At 
+the same time, manually labeled keyword shows potential ambiguity, 
+context-dependency, and subjectivity issues [19]. Context-dependency 
+results in keywords presenting completely different meanings within 
+varying contexts, thus necessitating researchers with a high level of 
+comprehensive knowledge and time cost in labeling.
+Luo et al. on the other hand, introduced a method of utilizing 
+the TF-IDF matrix to classify papers by comparing cosine similarity 
+between paper vectors and classification corpus vectors [24]. The 
+study revealed that parallel and distributed computing reached its peak 
+in 2012, while machine learning and AI-related topics have become 
+increasingly popular since 2019. Furthermore, the authors analyzed 
+the collaborations across higher-level disciplines. However, the authors 
+also emphasized that a more precise and comprehensive classification 
+library of disciplines with a broader publication corpus can yield results 
+that are closer to the actual situation [14,24].
+On the other side, the ICCS preface also reported that the thematic 
+tracks and workshops have changed a lot over time [25–28]. As an 
+important component of a conference, the workshop of the conference 
+has a crucial impact on the topic structure. The life span of work-
+shops and thematic tracks would influence the topical structure of the 
+conference. In the two previous studies on ICCS, the authors did not 
+consider the topic changes caused by the change of the conference 
+board’s adjustment in workshops based on the conference’s long-term 
+and short-term development strategic planning [14,24].
+2.4. Computational science classification
+In the field of computer science classification, the Association for 
+Computing Machinery (ACM) proposes two main categories [29,30]. 
+The ACM computer science curricula classify computer science into 17 
+bodies of knowledge and numerous sub-disciplines [30]. Computational 
+science is not regarded as a separate category compared with previous 
+editions. Due to its nature as an educational guide for computer science, 
+excessively detailed classification results in an imbalance of topics.
+In contrast, the ACM Computing Classification System divides com-
+puter science into 14 disciplines [29]. The advantages of this system are 
+its inclusion of computer hardware and applied computing categories, 
+as well as providing a more balanced and reasonable classification 
+of lower-level disciplines that align closely with real research fields. 
+However, algorithms and computing methods remain over-detailed 
+in classification, while other disciplines are vaguely classified. Nei-
+ther classification category adequately covers interdisciplinary appli-
+cations and interdisciplinary modeling extensively enough. Britannica 
+and Stanford Encyclopedia of Philosophy defined and briefly describe 
+the classifications of scientific modeling [31,32]. The Oak Ridge Na-
+tional Laboratory divides computational science applications into eight 
+fields based on their scenarios [33].
+2.5. Network analysis
+Barabasi & Albert first proposed the concept of the scale-free net-
+work [34]. They pointed out that new vertices attached are more 
+likely to connect with already well-connected nodes. The authors also 
+pointed out a characteristic of scale-free networks in the research: 
+the self-organization, and a few nodes have more connections than 
+other nodes, the degree distribution follows a power-law distribution. 
+Broido et al. rephrased the definition of scale-free networks into four 
+levels from weakest to strongest [35]. The author pointed out that 
+only a few networks could be recognized as strong scale-free networks. 
+Karunakaran et al. analyzed the information spreading in a complex 
+network for developing more efficient methods from the perspective of 
+graph theory [36].
+Watts & Strogatz introduced the concept of local clustering coef-
+ficient in measuring the ‘‘small world’’ networks [37]. The clustering 
+coefficient describes the degree nodes in a network tend to cluster 
+together by calculating the number of actual connections and the 
+number of potential connections between neighbors. Based on previ-
+ous research, Kemper introduced the global clustering coefficient to 
+evaluate the whole network [38]. Li et al. performed calculations on 
+some large-scale networks in reality and made comparisons on the scale 
+of clustering coefficient [39]. A high clustering coefficient indicates 
+a stronger community structure in the network, as well as densely 
+connected sub-graphs or groups, are formed between nodes.
+The properties of the edges are also worthy of attention. Kang et al. 
+applied a method of changing intra-community and inter-community 
+edges to improve community detection [40]. Malekzadeh & Long 
+used these concepts to measure community similarity in complex 
+networks [41]. It implies that these two parameters show different 
+properties of communities. Since interdisciplinary networks are real-
+world networks with manually classified disciplines, Luo et al. intro-
+duced these two concepts into pre-determined communities to explore 
+the characteristics of the discipline [24]. Okamura divided all academic 
+publications into eight disciplines and studied the communication be-
+tween them [42]. It provided evidence that the degree of affinity varied 
+between different pairs of disciplines. At the same time, Okamura 
+pointed out that the Landscape is highly dependent on the classification 
+scheme of the research fields.
+2.6. Collaboration network evolution & sustainability science
+In addition to theoretical research on network science, there are 
+many studies on network science in scientific collaboration, researcher 
+collaboration networks, and sustainability science. As Barabasi points 
+out, the evolution of the social network of scientific collaborations 
+follows some specific rules [43]. The authors point out an important 
+conclusion: the author collaboration network is scale-free, and the 
+network evolution follows the preferential attachment rule. Based on 
+the truth that the internal linking process is dominant, existing authors 
+prefer to work with authors they already ‘‘know’’ rather than new 
+authors.
+There is also some other significant collaborative network-related 
+research in the scientific community. Based on the rule that if two scien-
+tists are considered connected if they have co-authored the same paper, 
+Newman created explicit networks of the science community [44]. 
+The author found that authors wrote 4 papers in a five-year period, 
+and each paper had 3 authors on average. The author network fits a 
+power-law form with an exponential cutoff and which also satisfies 
+the definition of a ‘‘small worlds’’ network. Bella et al. also found that 
+the co-authorship network has the properties of a scale-free network 
+when studying the Italian Institute of Technology author collaboration 
+network [45]. This evidence also suggests that the networks formed 
+by collaboration between researchers have the properties of scale-free 
+networks.
+At the same time, the scientific community’s attention to sustain-
+ability science and the interdisciplinary application of science has 
+also further promoted the research of scientometrics. Hajkowicz et al. 
+conducted a quantitative analysis of the application of AI in various 
+fields with over 130 million documents in 333 research fields. The 
+authors point out the rapid growth of AI applications across different 
+fields [46]. Kalhor et al. also investigated the interconnections within 
+computer science fields and subfields to evaluate the interdisciplinarity 
+and multidisciplinary. The result indicates that computing method-
+ologies and privacy are the two most interdisciplinary topics [47]. 
+Other researchers have also studied the interdisciplinary applications 
+of computer science. All studies point to the highly interdisciplinary 
+nature of computer science [47–49].
+Journal of Computational Science 89 (2025) 102609 
+3 
+
+L. Luo et al.
+Table 1
+The basic statistics of publications in ICCS and JoCS.
+ Name
+ICCS
+JoCS 
+ Total number of papers
+7985
+2314 
+ Average number per year
+336
+178 
+ Maximum number of pages
+19
+37
+ 
+ Average number of pages
+11.44
+10.16 
+ Minimum number of pages
+1
+2
+ 
+ After pre-processed number
+7861
+1817 
+2.7. Important external events
+Just as Wang illustrated, ‘‘The progress of science is not a heroic 
+view of history, but the accumulation of results of countless
+researchers’’ [2]. Past research on the science history and science policy 
+pointed out that the development process of science is affected by a se-
+ries of factors such as social events, policies, and external conditions [2,
+50,51]. Computational science has both theoretical and applied aspects, 
+which makes this field more influential on external changes, especially 
+engineering advancement and policy, than academic journals with 
+more theoretical attributes. In 2007, Nvidia published the Compute 
+Unified Device Architecture (CUDA),3 which allows the software to 
+utilize graphics processing units (GPUs) to accelerate general-purpose 
+processing. The ‘‘Titan’’, created by the Oak Ridge National Laboratory, 
+achieved the title of first GPGPU supercomputer and topped the top500 
+in 2012, which pushed computational science to a new era [52]. 
+Vaswani et al. first introduced the Transformer architecture for deep 
+learning with a brand new attention mechanism, which reformed the 
+shape of deep learning [53]. The National Strategic Overview For 
+Quantum Information Science, published by the National Science & 
+Technology Council of the United States of America and the Na-
+tional Quantum Initiative Act in 2018, had a profound impact on the 
+development of quantum communications and computing [54,55].
+3. Data collection, preprocessing & modeling methods
+In this study, the data is divided into two corpora: the ICCS corpus 
+and the classification corpus. We collected all the papers published 
+in the ICCS proceedings by Springer Lecture Notes in Computer Sci-
+ence (LNCS) (2001–2009 & 2018–2024), as well as Elsevier Procedia 
+Computer Science (2010–2017). For the JoCS, we directly obtained 
+the journal papers from the ScienceDirect Journal of Computational 
+Science, all issues (2010–2023). The links to published volumes can 
+be found in the conference webpage4 and the official journal website.5
+The ICCS corpus encompasses 7985 papers over the twenty-four 
+years, an average of 333 papers each year, with an average length of 
+eleven pages each. The JoCS corpus contains a total of 2314 papers 
+with a time span of fourteen years, averaging around 178 papers per 
+year and ten pages each (see Table 1). We processed both corpora as 
+follows: eliminating corrupted files due to coding issues, and excluding 
+editorial information, updates regarding journal editorial boards, and 
+workshop information. After this process was completed, there remain 
+7861 papers in the ICCS corpus and 1817 papers in the JoCS corpus 
+(see Table 1).
+As for the creation of the text classification library, we mainly refer 
+to four sources: the 2023 computer science curricula, the Comput-
+ing Classification System provided by the Association for Computing 
+Machinery (ACM), the outline of computer science by Curlie, and 
+the Wikipedia category entry ‘‘Computer Science’’. We also consulted 
+the ACM 2013 computer science curricula, the Oak Ridge National 
+3 https://developer.nvidia.com/about-cuda.
+4 https://www.iccs-meeting.org/iccs2024/previous-iccs/.
+5 https://www.sciencedirect.com/journal/journal-of-computational-
+science/issues.
+Table 2
+The structure of the classification library (N: The number of second-level disciplines).
+ First-level disciplines
+N 
+ Algorithm & Data structures
+8 
+ Applied computing (Interdisciplinary)
+41 
+ Artificial intelligence
+11 
+ Computer graphics
+13 
+ Computer hardware, system, engineering
+16 
+ Computer network & Security
+21 
+ Human–computer interaction
+6 
+ Information system & Data science
+16 
+ Machine learning
+15 
+ Mathematics of computing
+20 
+ Modeling & simulation
+36 
+ Parallel, distributed computing
+10 
+ Programming languages and compilers
+14 
+ Software engineering
+14 
+ Theory of computation
+15 
+Laboratory ‘‘Science Areas’’, and Wikipedia’s template of computational 
+science and Wikipedia’s template of ‘‘scientific computing’’ to create 
+two new categories called ‘‘applied computing (interdisciplinary)’’ and 
+‘‘modeling & simulation’’. These categories were created to examine the 
+interdisciplinary applications of computer science and the application 
+of computational modeling and simulation in various aspects.
+Based on the classification library, the English Wikipedia API was 
+utilized to extract the textual content from the Wikipedia corpora, 
+with minor adjustments in duplicated research fields. This extraction 
+excluded appendices, references, links, and other irrelevant information 
+to create the second-level discipline standard classification corpus. With 
+the above procedure, we expanded the computer science & compu-
+tational science standard classification library into fifteen first-level 
+disciplines with two hundred thirteen second-level disciplines (see 
+Table 2) with the previous library as a basis.
+We then apply the following pre-processes to both text contents:
+(1) We removed the HTML tags and the unrelated content from 
+the classification corpus from the standardized classification corpus 
+for each second-level discipline and made matching annotations for 
+first-level and second-level subjects
+(2) In the ICCS and JoCS corpora, all documents are standardized 
+into text format. Only the main content of the papers (from abstract to 
+conclusion & discussion) is retained. Before the textual preprocessing, 
+we apply the position-of-speech (POS) in Spacy6 to chunk and extract 
+the professional terminology as well as the abbreviations for further 
+analysis.
+(3) Then, English stop words, punctuation marks, figures, and num-
+bers that do not contain topical information are eliminated. Newline 
+characters, stop characters, and other text symbols that may alter 
+token information are also deleted or replaced. Additionally, interfering 
+elements such as place names, personal names, organizations, etc., 
+which could disrupt the classification process, are extracted to create 
+the author networks and excluded from the corpora.
+(4) We utilize lemmatisation to standardize the various forms of 
+words used by authors for grammatical purposes (such as tense, sin-
+gular, and plural) while preserving the inherent information contained 
+within each word.
+After pre-processing the documents, we apply the term frequency 
+inverse document frequency (TF-IDF) vectorizer to transform the clas-
+sification corpus and the academic publication corpus for each year 
+into document-term matrices. Eq. (1) presents the calculation of TF-
+IDF. ∑
+𝑘𝑛𝑘,𝑗 presents the total number of tokens in document 𝑗, 𝑛𝑖,𝑗 is 
+the frequency of token 𝑖 in document 𝑗, |𝐷| equals the total number of 
+documents for the corresponding year and 𝑗 stands for the number of 
+6 https://spacy.io/.
+Journal of Computational Science 89 (2025) 102609 
+4 
+
+L. Luo et al.
+documents in the whole corpus which contains the token (if 𝑗= 0, the 
+occurrence of this token is set to 1). 
+tf-idf = tf * idf =
+𝑛𝑖,𝑗
+∑
+𝑘𝑛𝑘,𝑗
+∗𝑙𝑔
+|𝐷|
+|𝑗∶𝑡𝑖∈𝑑𝑗|
+(1)
+After obtaining the document-term matrices, we then calculate the 
+cosine similarity between each academic publication vector and each 
+second-level discipline vector (see Eq. (2)). 
+cos(𝜃) =
+𝐴⋅𝐵
+‖𝐴‖‖𝐵‖ =
+∑𝑛
+𝑖=1 𝐴𝑖∗𝐵𝑖
+√∑𝑛
+𝑖=1(𝐴𝑖)2 ∗
+√∑𝑛
+𝑖=1(𝐵𝑖)2
+,
+(2)
+𝐴𝑖 stands for the TF-IDF vector for academic publication 𝑖, and 𝐵𝑖
+represents the TF-IDF vector for the second-level discipline i. From the 
+mathematical properties of the cosine function, the range of similarity 
+is 𝑐𝑜𝑠(𝜃) ∈(−1, 1). Due to the non-negativity of TF-IDF vectors, the 
+𝜃∈[0, 𝜋
+2 ] with which the similarity 𝑐𝑜𝑠(𝜃) ∈[0, 1]. We consider this 
+cosine similarity the similarity score between academic publication 𝑖
+and discipline 𝑖. Each academic paper can be regarded as a synthesis 
+of multiple standardized disciplines with different weights.
+We then determine the optimal number of relevant disciplines for 
+each paper by comparing linear similarities with past research. We 
+examine the number of topics covered in a paper by selecting the 
+parameter with the highest linear correlation with past research to 
+determine the number of disciplines covered in this paper. After deter-
+mining the number of disciplines that a paper covers, we set the scores 
+for all the irrelevant disciplines to 0 (see Eq. (3)). Here, 𝑠𝑜𝑟𝑡𝑒𝑑(𝑥𝑁) is 
+the 𝑁th popularity score ranked from largest to smallest. 
+similarity =
+{
+0,
+𝑖𝑓𝑥< sorted(𝑥𝑁),
+𝑐𝑜𝑠(𝜃),
+𝑖𝑓𝑥≥sorted(𝑥𝑁).
+(3)
+We sum up all the similarity scores belonging to the same second-
+level discipline for each document to get the popularity score of the 
+discipline. Since journals and conferences receive different numbers of 
+papers each year, we calculate the standardized popularity score by 
+dividing the total number of papers for each year and multiplying by 
+100 to prevent the influence caused by fluctuations in the number of 
+papers (see Eq. (4)). In the equation, 𝑠𝑖𝑚𝑖𝑙𝑎𝑟𝑖𝑡𝑦𝑖,𝑗 represents the cosine 
+similarity between paper 𝑖 and disciplines 𝑗, 𝑛 is the total number of 
+documents for the corresponding year. 
+Standardized Popularity Score𝑗=
+∑𝑛
+𝑖=1 similarity𝑖,𝑗
+𝑛
+∗100
+(4)
+4. The trends of ICCS & JoCS topics
+4.1. The trends in ICCS
+Initially, we present the trends in ICCS. By calculating the co-
+sine similarity between tf-idf vectors from the ICCS corpus and the 
+standardized classification corpus, we obtained the rank of the topic 
+similarity score for each paper. First, we conducted five preliminary 
+experiments with different numbers of topics, 𝑁= 10, 20, 30, 40, 
+and 50, respectively. The exclusive classification between disciplines 
+prevents the shortcomings of numerous topics with high similarity. On 
+the other hand, many chosen disciplines will lead to issues of irrelevant 
+topic inclusion. Based on the experiment results, we decided to adopt 
+𝑁= 20 as it represents a significant number of strongly relevant 
+disciplines and set the rest of the similarity score to 0. The results 
+revealed a high degree of linear correlation with the research from 
+2017 between the two methods (see Table 3) [13,14].
+We then calculate the popularity score of topics for each year by 
+aggregating the similarity scores across all first-level disciplines and 
+standardizing them to average popularity scores per 100 papers each 
+year for comparability. After smoothing the data to observe the long-
+term trend by calculating the rolling mean using a window size of 
+Table 3
+Comparison of topics per ICCS paper discovered by the new method with those found in 
+the previous study [14]. Pearson correlation coefficient shows the similarity of topics 
+for different numbers of topics per paper N. Statistical significance of similarity is 
+indicated by stars: p-values ∗𝑝< 0.1, ∗∗𝑝< 0.05, ∗∗∗𝑝< 0.01.
+ Old & new disciplines
+N = 10
+N = 20
+N = 30
+N = 40
+N = 50 
+ Machine learning
+0.82∗∗∗
+0.70∗∗∗
+0.59∗∗
+0.52∗∗
+0.42
+ 
+ Visualization
+0.48
+0.53∗∗
+0.49∗∗
+0.47
+0.47
+ 
+ Network & Security
+0.92∗∗∗
+0.92∗∗∗
+0.91∗∗∗
+0.90∗∗∗
+0.90∗∗∗ 
+ HPC
+0.90∗∗∗
+0.90∗∗∗
+0.89∗∗∗
+0.88∗∗∗
+0.88∗∗∗ 
+ Modeling
+0.54∗∗
+0.54∗∗
+0.54∗∗
+0.53∗∗
+0.53∗∗ 
+ Programming
+0.59∗∗
+0.56∗∗
+0.48
+0.44
+0.40
+ 
+2, fifteen first-level disciplines display different trends over the past 
+24 years (see Fig. 1). Simultaneously, we presented the proportion 
+distribution among these fifteen first-level disciplines to reflect the 
+importance of the topic of each year (see Fig. 2).
+We look into some key time points to study the change of the first-
+level discipline (See Figs. 1 & 2). Combining the two sets of figures, we 
+can draw the following results:
+First, machine learning was not the most popular topic in ICCS 
+before 2016. It was only after 2017 that topics related to machine 
+learning began exhibiting a strong growth trajectory. Between 2016 
+and 2023, the research popularity nearly doubled, and it surpassed 
+modeling and simulation to emerge as the most prominent subject in 
+ICCS. Fig. 2 illustrates an escalating proportion of machine learning 
+across the entire corpus, encompassing a substantial share of total 
+topics at approximately 20.8% by 2024. It is noteworthy that the accel-
+eration of machine learning research aligns closely with the invention 
+of transformer architecture in 2017 [53]. The attention mechanism in 
+deep neural networks quickly pushed machine learning-related topics 
+in computational science to the highest point.
+Parallel & distributed computing experienced significant changes 
+over the past 24 years. It presented a fluctuating and decreasing trend 
+between 2001 and 2007, followed by a rapid growth after 2008 that 
+culminated in the peak in 2012 and 2013 at approximately 13.4%. 
+During 2012 and 2014, it remained the most sought-after topic. How-
+ever, its research popularity gradually trended downwards after 2015, 
+accounting for only 3.6% of the total research popularity in 2024. At 
+the same time, computer hardware-related topics also experienced a 
+summit in the early 2010s. Combined with the real situation, supercom-
+puters experienced one of the fastest developments during this period. 
+The intense competition in supercomputers between the United States, 
+China, and Japan pushed the research interest of computer hardware 
+and parallel computing to the summit of the computational science 
+research community in the early 2010s.
+Within the 24-year time frame, algorithms & data structures, mod-
+eling and simulation, and mathematics remain popular among all the 
+ICCS papers. It illustrates that the three disciplines cover more than 
+30% of the total proportion of the research focus (see Fig. 2). The 
+essential contribution of these three disciplines toward computer and 
+computational science theoretical research is significant. It implies that 
+these three fields are both the theoretical focus and the application 
+foundations of computational science research.
+Among other theoretical disciplines, the Human–computer inter-
+action and programming language & compiler remain at a low level 
+of popularity without significant fluctuations. It indicates that these 
+two topics are not the focal points of ICCS. At the same time, the 
+trend of the Theory of computation reminds us that computational 
+theory was not an important topic of discussion at ICCS before 2019, 
+but it has grown rapidly since 2019. Combined with the result of 
+the second-level discipline (See Fig. 3), as well as the truth that a 
+large number of quantum computing-related workshops were set up in 
+2019 [25]. Theoretical research related to quantum computing is the 
+most important driving force for this growth.
+Journal of Computational Science 89 (2025) 102609 
+5 
+
+L. Luo et al.
+Fig. 1. The trend of the first-level disciplines in ICCS.
+Fig. 2. The proportion of first-level discipline in ICCS.
+Table 4
+Top 20 ranked second-level disciplines for 24 years average and in 2024 (ICCS).
+ Top 20 for 24 years average
+Average rank
+Top 20 in 2024
+Rank 
+ Algorithm
+2.21
+Machine learning
+1.00 
+ Mathematical model
+3.71
+Deep learning
+2.00 
+ Network science
+7.04
+Mathematical model
+3.00 
+ Machine learning
+7.33
+Supervised learning
+4.00 
+ Computer simulation
+8.63
+Algorithm
+5.00 
+ Numerical analysis
+9.58
+Network science
+6.00 
+ Mathematical optimization
+10.50
+Unsupervised learning
+7.00 
+ Algorithm theory
+12.00
+Verification & validation
+8.00 
+ Distributed computing
+13.17
+Mathematical optimization
+9.00 
+ Computational fluid dynamics
+13.33
+Algorithm theory
+10.00 
+ Genetic algorithm
+13.41
+Statistics
+11.00 
+ Parallel computing
+13.45
+Computer simulation
+12.00 
+ Algorithmic efficiency
+13.91
+Numerical analysis
+13.00 
+ Data & information visualization
+19.67
+Economic model
+14.00 
+ Algorithm analysis
+21.38
+Atmospheric model
+15.00 
+ Computer network
+21.75
+Computational fluid dynamics
+16.00 
+ Atmospheric model
+22.33
+Cross-validation
+17.00 
+ Computational electromagnetics
+24.17
+Educational technology
+18.00 
+ Model verification & validation
+25,63
+Genetic algorithm
+19.00 
+ Geographic information system
+28.79
+Quantum computing
+20.00 
+Finally, we again notice that Network & Security experienced an 
+upsurge between 2003 and 2008 while reaching its peak in 2007 at 
+approximately 11.4%. This finding aligns with the results of the 2017 
+and 2024 studies, which show the same sudden increase [13,14,24]. 
+Different from the previous research, after detailing the lower discipline 
+within the Network & Security and distinguishing it from complex 
+network-related topics, we found that previous research underesti-
+mated the impact of Network & Security-related topics between 2003 
+and 2008. As the extracted professional terminology indicated, TCP, 
+p2p, and IPv6 contributed most to the growth of interest in network and 
+security. The early commercial application of these techniques caused 
+the concentration of academia.
+We then look deeper into the evolution of the second-level disci-
+plines. We first look into the average rank of the second-level dis-
+ciplines for the entire 24 years and the rank in 2024 alone (see 
+Table 4). Throughout the 24 years, algorithms, mathematical modeling, 
+network science, machine learning theory, and computer simulation 
+have emerged as consistently the most popular research topics. Subse-
+Journal of Computational Science 89 (2025) 102609 
+6 
+
+L. Luo et al.
+Fig. 3. The top 10 most rising second-level disciplines in ICCS.
+Fig. 4. The top 10 most falling second-level disciplines in ICCS.
+quently, we explore the most prevalent secondary disciplines in 2024 
+to see the latest research interest (see Table 4). Notably, machine 
+learning and artificial intelligence-related disciplines dominate five 
+positions in the top twenty. Machine learning theory, deep learning, 
+and mathematical modeling present as the top three most discussed 
+topics. This finding is consistent with our earlier result from first-level 
+discipline trends: Machine learning and artificial intelligence-related 
+topics are now the spotlight of computational science, and it is still 
+progressively gaining popularity (See Fig. 3). Furthermore, researchers 
+prefer supervised learning as the approach than unsupervised learning 
+in ICCS.
+At the same time, the remarkable presence of algorithms and mod-
+eling aligns with our intuitive judgment that the ICCS focused on 
+algorithms and modeling. In 2024, we observe that most of the ap-
+plications of mathematical modeling research are in economics (social 
+science), atmospheric, and computational fluid dynamics (physics). We 
+also notice that the ICCS devoted a lot of space to topics related to 
+computer education. At the same time, the research related to quantum 
+computing theory and application has become one of the top 20 most 
+popular topics at ICCS for the first time is also a noteworthy event. 
+However, we still need more time and evidence to prove whether 
+quantum computing research is on the eve of an explosion.
+We then analyze the trends of the second-level disciplines. Based 
+on the changes in popularity scores, we rank and present the most 
+increased and decreased second-level disciplines (see Figs. 3 & 4). Fig. 3 
+shows that machine learning theory and applications-related topics are 
+the most important driving forces in computational science research. 
+Deep learning is one of the most important contributors to the rapid 
+growth of machine learning methodology. In training methodologies, 
+supervised learning is more popular than unsupervised learning. In 
+terms of quantum-related topics, quantum computing has undergone 
+rapid development since 2019. It ranked as the eighth most increased 
+topic in 2024. Concerning scientific computing & simulation, verifica-
+tion and validation keep fluctuating and increasing with several peaks. 
+It attracted the highest concentration in the modeling and simulation 
+community in 2024. Additionally, Anomaly detection exhibits a strong 
+increase after 2018, and it is now the concerned topic within the 
+computer network & security category and data science.
+We then look into Fig. 4 to explore the most decreased disciplines. 
+The second-level disciplines associated with parallel computing and 
+distributed computing have witnessed a significant decrease in pop-
+ularity. It is noteworthy that these three disciplines were once the 
+most popular and crucial topics in computational science between 2010 
+and 2015. However, after 2016, this group of research topics experi-
+enced a significant downturn. Furthermore, we observe a diminishing 
+presence of embedded systems (Computer hardware) and operating 
+systems (Software engineering), which have declined by 80.92% and 
+79.38%, respectively. It was not until 2016 that computer hardware 
+and software engineering had gradually diminished in ICCS. Addition-
+ally, although topics in computational fluid dynamics and algorithmic 
+efficiency have lost more than 30% of their weight, they are still of 
+great importance in ICCS.
+4.2. The trends in JoCS
+We then present the evolution of topical structure in JoCS (see Figs. 
+5 & 6). Although JoCS and the latter half of ICCS exhibit similar trends 
+across most disciplines, there are still noteworthy distinctions. Firstly, 
+the gap between the application of computational science and modeling 
+& simulation in JoCS is narrower compared to ICCS. Additionally, 
+modeling & simulation (18.3%) remains the predominant topic in the 
+journal as of 2023, surpassing machine learning (18.1%), which is 
+different from ICCS (See Fig. 6). Secondly, after 2018, we observe a 
+strong increasing trend in the mathematical foundation of computing 
+in JoCS. It has been trending up very quickly in the past 5 years 
+and accounts mathematics of computing accounts for 16.8% in 2023, 
+indicating a significantly higher proportion than that in ICCS. Notably, 
+network & security experienced a minor peak during the period from 
+2016 to 2018 with its highest point being reached in 2017 at a rate of 
+8.5%, diverging from ICCS trends (See Figs. 1 & 5). Lastly, the theory 
+of computation demonstrates an upward trend after 2019 within ICCS, 
+Fig. 5. The trend of the first-level disciplines in JoCS.
+Journal of Computational Science 89 (2025) 102609 
+7 
+
+L. Luo et al.
+Fig. 6. The proportion of first-level disciplines in JoCS.
+Table 5
+Top 20 ranked second-level disciplines for 14 years average and in 2023 (JoCS).
+ Top 20 in 14 years
+Average rank
+Top 20 in 2023
+Rank 
+ Algorithm
+2.79
+Network science
+1.00 
+ Mathematical model
+3.64
+Machine learning
+2.00 
+ Network science
+5.36
+Algorithm
+3.00 
+ Computational fluid dynamics
+5.71
+Mathematical model
+4.00 
+ Mathematical optimization
+6.57
+Mathematical optimization
+5.00 
+ Computer simulation
+7.14
+Numerical analysis
+6.00 
+ Machine learning
+7.86
+Deep learning
+7.00 
+ Numerical analysis
+8.21
+Genetic algorithm
+8.00 
+ Genetic algorithm
+8.21
+Computational fluid dynamics
+9.00 
+ Algorithm theory
+10.50
+Algorithm theory
+10.00 
+ Distributed computing
+13.43
+Computational electromagnetics
+11.00 
+ Computational electromagnetics
+14.86
+Supervised learning
+12.00 
+ Algorithmic efficiency
+15.71
+Hydrological model
+13.00 
+ Parallel computing
+16.14
+Computer simulation
+14.00 
+ Computer network
+22.43
+Reinforcement learning
+15.00 
+ Atmospheric model
+25.14
+Unsupervised learning
+16.00 
+ Model verification and validation
+25.79
+Control theory
+17.00 
+ Algorithm analysis
+26.43
+Atmospheric model
+18.00 
+ Hydrological model
+26.50
+Statistics
+19.00 
+ Deep learning
+26.64
+Markov decision process
+20.00 
+while this phenomenon is absent within JoCS data analysis results. The 
+popularity proportion regarding research on computing theory stands 
+at a higher level for the conference (5.2%) compared to JoCS (3.2%) 
+in 2023 (see Figs. 2 & 6).
+We then examine the disciplinary ranking of JoCS (see Table 5). 
+Similar to the ICCS, algorithms, mathematical models, and network sci-
+ence have been three dominant topics in JoCS over the past 14 years. In 
+contrast to ICCS, the findings reveal a distinct depiction of second-level 
+discipline structure in computational science applications in physics. 
+Computational fluid dynamics and electromagnetic are more preva-
+lent in the journal than in the conference. Additionally, hydrological 
+modeling is ranked higher in the journal than in the conference. Also, 
+quantum computing-related research does not appear to have as much 
+influence on JoCS as ICCS.
+Although the rank of machine learning theory and AI-related topics 
+increased, they present less dominance in JoCS. The rank of machine 
+learning-related topics is much lower than algorithm and mathematical 
+modeling-related topics. Furthermore, Markov decision processes and 
+reinforcement learning are two very popular methods in 2024. This sug-
+gests that reinforcement learning and Markov decision process in JoCS 
+are becoming new growth drivers for machine learning. Another point 
+worthy of attention is the concentration on control theory in JoCS, 
+which is not presented in ICCS. It shows that applying mathematical 
+models to describe and analyze systems is a group of hot topics in JoCS 
+than in ICCS.
+After conducting a ranking of second-level disciplines, we proceed 
+to examine the most increased and decreased second-level disciplines 
+Fig. 7. The top 10 most rising second-level disciplines in JoCS.
+in terms of their significance. To identify the most rising and falling 
+second-level disciplines, we again consider 2010 as the baseline to 
+compare the changes in popularity scores with 2023. JoCS exhibits 
+a significantly different trend compared with ICCS. Figs. 7 & 8 illus-
+trate the most prominent upward and downward shifts in second-level 
+disciplines within JoCS.
+Within the realm of emerging second-level disciplines, machine 
+learning-related topics have experienced a similar surge in research 
+popularity over the past 13 years. Notably, deep learning has emerged 
+as the fastest-growing discipline since 2015. In contrast to ICCS, novel 
+topics have been observed in JoCS. The hydrological model witnessed 
+Journal of Computational Science 89 (2025) 102609 
+8 
+
+L. Luo et al.
+Fig. 8. The top 10 most falling second-level disciplines in JoCS.
+a sudden increase after 2019 and reached a high level after 2021. 
+Additionally, genetic algorithms have played a pivotal role as an in-
+creasingly influential algorithm throughout the past 13 years. As we 
+stated before, the popularity of differential equations gained attention 
+after 2022.
+We then examine the prominent declining topics in JoCS. In contrast 
+to ICCS, parallel computing and distributed computing have remained 
+top subjects until 2021. Apart from the diminishing interest in par-
+allel and distributed computing disciplines, some intriguing findings 
+differ from ICCS. Graph theory garnered a certain level of attention 
+among researchers prior to 2012 but rapidly waned after 2013. The 
+agent-based model (ABM) experienced several fluctuations, reaching 
+its peak in 2017 and hitting a low point in 2019. It regained research 
+popularity, becoming a popular topic in 2020 before declining, and 
+once again fell after 2021. Computational chemistry gained significant 
+traction within academia between 2016 and 2017. The application of 
+computational science methods to social science gained favor among 
+academia between 2016 and 2018.
+The overall results present a similar phenomenon in both ICCS 
+and JoCS: Machine learning-related topics in theory and applications 
+have both achieved great success over the past 5 years. There are still 
+some differences between the conference and the journal. As previously 
+presented, the influence of machine learning theory on the journal is 
+less than that in the conference. The theory and application of network 
+science are of higher importance than machine learning among the 
+journal publications. Modeling and simulations are widely applied to 
+physical and engineering fields such as fluid dynamics, electromag-
+netic, hydrological, and atmospheric models in JoCS than in ICCS. Both 
+sets of publications regard mathematical foundations as a valuable asset 
+where numerical analysis, mathematical modeling, and statistics are 
+the most discussed topics.
+5. The dynamic analysis of networks
+We then proceed to investigate the interdisciplinary relationship 
+within computational science. To construct the interdisciplinary net-
+work of ICCS, we utilize methodologies akin to previous studies of 
+co-occurrence: if two disciplines are covered by the same paper, it 
+signifies there is a correlation between them [13,24]. To standardize 
+the weight, we normalize the weights of all other topics based on 
+the weight of the topic with the highest relevance. Subsequently, we 
+assign weights to edges by aggregating the similarity scores for each 
+pair of disciplines. Simultaneously, we conduct several experiments by 
+pruning edges and selecting the weight threshold at 0.5, where all 
+edges with a normalized weight of less than 0.5 will be pruned, to 
+construct the twenty-four undirected interdisciplinary networks over 
+twenty-four years. In these networks, each node represents the specific 
+second-level discipline, edges signify co-existence among disciplines in 
+the group of academic papers, and edge weights indicate the strength 
+of the co-occurrence [24].
+After analyzing the structure of the networks of collaborations in 
+ICCS over 10 years, we observed that the distribution of the degree 𝑘 of 
+the nodes exhibits the characteristics of a ‘‘strong scale-free network’’, 
+according to the classification [35] for scale-free networks. To do so, we 
+examine the distribution of the degree of the networks and compare the 
+goodness-of-fit of the power-law distribution (𝐹(𝑘) = 𝐶𝑘−𝛼) with the 
+lognormal, the exponential, and the truncated power-law distributions. 
+The result shows no significant preference for the lognormal and expo-
+nential distributions over the power-law distribution (see Table C.1). 
+Comparing the power-law and the truncated power-law distributions, 
+we found that more than 50% of the graphs have a 𝑝-value 𝑝>
+0.1, which means that the power-law distribution cannot be rejected 
+compared to the truncated power-law for these networks. At the same 
+time, the power-law region contains more than 20% of the nodes (the 
+number of nodes in the tail is larger than 50 nodes), and more than 
+50% of the exponents verify that 3 > 𝛼> 2 (see Table 6). For example, 
+Fig. 9 shows the degree distribution for 2024, and the fit of the upper 
+tail of the complementary cumulative distribution, appearing to be a 
+straight line on a log–log scale.
+The average clustering coefficient and the total number of edges 
+over the past five years retained approximately 0.5 and 3000 (see Table 
+6). It implies that there are obvious local cluster structures in ICCS topic 
+networks. The topics in the conference formed some local community 
+structures, which were more efficient for interactions between different 
+disciplines. Since most of the exponent 𝛼 falls between two and three, 
+it indicates a strong, heavy-tailed nature of the disciplinary network 
+(see Fig. 9 bottom). Most of the disciplines in the network have very 
+little collaboration with other fields, while only a few disciplines have 
+a large chance to be highly active in the whole network. It further 
+implies that discoveries, concepts, and methodologies in the topics that 
+have higher degrees will spread faster than other fields in practical 
+interdisciplinary networks. New methods and discoveries in unpopular 
+topics spread slowly and less comprehensively. From the perspective of 
+the researchers, they prefer to do research on popular fields or apply 
+hot topics in their own field in the whole research community.
+The structure of the network is also undergoing significant changes. 
+Throughout the timeline, there have been several switches in the hubs 
+and essential edges within the network. Fig. 10 shows standardized 
+average intra-community and inter-community edges of each first-level 
+discipline each year, by regarding the manually divided first-level 
+disciplines as network communities. Each community presents differ-
+ent ‘‘Introverted’’ and ‘‘extroverted’’ characteristics (See Table 7 & 
+Fig. 11). The introverted property with a more significant number of 
+intra-community edges exhibited by modeling & simulation, computer 
+network & security, and mathematics of computing indicates their 
+likelihood to form a stable internal research community (See cluster 
+4 in Fig. 11). Conversely, the extroverted communities with a more 
+significant number of inter-community edges observed in disciplines 
+such as parallel & distributed computing and information systems 
+& data science suggest their preference for external interaction (See 
+cluster 2 in Fig. 11).
+At the same time, we observe that algorithms & data structures, as 
+well as machine learning, show both introverted and extroverted char-
+acteristics, which implies the truth that both the theoretical algorithms 
+and machine learning methods are progressing, and their exploration 
+of broader application in other fields are advancing over the past few 
+years (See cluster 1 & 3 in Fig. 11). This observation aligns with the 
+practical situation where introverted disciplines are more theoretical 
+research or highly professional fields tend to form communities with 
+barriers and interacting with other communities through a few interme-
+diaries [24]. On the other hand, extroverted disciplines mostly operate 
+in the general application layer of computational science. They need to 
+collaborate with other research topics to maximize their value. From 
+the perspective of the workflow of knowledge, the process from theory 
+to industry requires the application of existing theories in applied 
+science. Therefore, a hub is required to serve as an intermediary to 
+connect both sides of a topic.
+Journal of Computational Science 89 (2025) 102609 
+9 
+
+L. Luo et al.
+Table 6
+Characteristics of the networks of collaborations in ICCS publications across years: the total number of edges of the network, clustering coefficient, fitted exponent 𝛼 of a power-law 
+distribution, Kolmogorov–Smirnov (KS) statistic of the fitted power-law distribution, and the R and 𝑝-value between the fitted power-law and a fitted truncated power-law. 
+ Year
+2015
+2016
+2017
+2018
+2019
+2020
+2021
+2022
+2023
+2024 
+ Total number edges
+3151
+2158
+2571
+2376
+2722
+2883
+2935
+2130
+2803
+1733 
+ Clustering coefficient
+0.5
+0.44
+0.47
+0.46
+0.51
+0.53
+0.51
+0.45
+0.52
+0.46 
+ Exponent 𝛼
+2.77
+2.68
+2.2
+2.31
+3.12
+2.68
+2.92
+1.94
+2.93
+2.56 
+ KS statistic
+0.077
+0.097
+0.077
+0.117
+0.084
+0.072
+0.088
+0.079
+0.045
+0.076 
+ p-value
+0.093
+0.055
+0.008
+0.004
+0.289
+0.232
+0.466
+0.002
+0.724
+0.414 
+ R
+−1.41
+−1.843
+−3.479
+−4.113
+−0.562
+−0.714
+−0.266
+−4.917
+−0.062
+−0.334 
+Fig. 9. Top: Degree distribution of the network of collaborations for ICCS 2024. 
+Bottom: Complementary cumulative distribution function (CCDF) of the node degrees 
+for the same network in log–log scale, with fit of the tail, which has an exponent of 
+𝛼= 2.56.
+Lastly, we visualize the collaboration between each community 
+from higher and lower disciplines with co-occurrence heat maps.
+Table 8 shows the encoding between the community name and the 
+coordinate axes. Fig. 12 shows the collaboration heat map in ICCS 
+2024. We observe that there have been multiple transformations in 
+the collaboration between communities. Fig. A.1 respectively shows 
+the heat map of 2005, 2011, 2015, and 2021. Between 2006 and 
+2011, parallel computing, an essential hub in the disciplinary network, 
+gradually shifted its collaboration focus from computer networks to 
+computer hardware. It is consistently related to the early development 
+of CUDA and GPGPU. With the broader application of GPGPU in 
+parallel computing, the research focus of high-performance computing 
+gradually shifted from distributed computing to parallel computing.
+After the collaboration among information systems, software en-
+gineering, and computer networks reached its peak in 2011, their 
+mutual research interests gradually fell and shifted to machine learning, 
+Table 7
+The average number of external and internal edges of each community over the 24 
+years.
+ The name of the community
+External
+Internal 
+ Computer hardware, system, engineering
+16.99
+1.17
+ 
+ Computer network & Security
+14.30
+1.91
+ 
+ Software engineering
+18.34
+1.67
+ 
+ Programming language & compiler
+13.75
+1.59
+ 
+ Theory of computation
+11.32
+0.53
+ 
+ Algorithm & Data structures
+49.03
+2.63
+ 
+ Mathematics of computing
+27.29
+2.46
+ 
+ Information system (Database)
+23.21
+1.56
+ 
+ Human–computer interaction
+14.47
+0.56
+ 
+ Parallel, distributed computing
+35.52
+2.21
+ 
+ Machine learning
+30.41
+2.90
+ 
+ Artificial Intelligence
+21.38
+0.83
+ 
+ Computer graphics
+20.69
+1.55
+ 
+ Applied computing (Interdisciplinary)
+12.67
+1.20
+ 
+ Modeling & simulation
+17.60
+2.69
+ 
+HPC, and algorithms (see Fig. A.1). This also reminds us that in the 
+early 2010s, the database technology research community was keen 
+on providing software services and web data services, but it gradually 
+switched to support big data (cloud computing) in the late 2010s. In the 
+late 2010s, as machine learning rose with no suspense, database-related 
+research gradually turned to machine learning. Similarly, from 2016 
+to 2021, the foundations of modeling and simulation have also been 
+shaken. The connections of modeling and simulation transitioned from 
+algorithm-based approaches to machine learning-based approaches (see 
+Fig. A.1 bottom left & bottom right). It implies that a great techno-
+logical revolution happened in the late 2010s in modeling methods. 
+At the same time, we observed a strong inner interaction within the 
+programming language & compiler community before 2011, while it 
+gradually withdrew from the ICCS stage afterwards.
+Even though machine learning has already become the most im-
+portant conjunction of other fields and has deeply penetrated nearly 
+all the theories and applications in computational science (see Fig. 
+12). Three other hubs have always served as conjunction hubs for 
+the entire twenty-four-year life span. The performance of algorithms, 
+modeling & simulation, and mathematical foundations indicate that all 
+four emerging fields are highly relevant to these three key hubs in 
+the entire ICCS discipline network. Despite the tremendous changes 
+in other fields, algorithms, modeling & simulation, and mathematical 
+theory are the three irreplaceable pillars in computational science. They 
+have consistently served as the three foundations in computational 
+science research.
+6. Uniqueness of ICCS
+Regarding the undergoing significant transformations over 24 years, 
+the entire duration in ICCS can be broadly categorized into four distinct 
+periods, as previous results suggested: The era of network and security, 
+parallel and distributed computing, big data, and machine learning. In 
+this context, we employ our findings and the most frequently extracted 
+keywords. The keywords mainly come from three parts: the keywords 
+Journal of Computational Science 89 (2025) 102609 
+10 
+
+L. Luo et al.
+Fig. 10. Top: The average number of edges that a node in a given first-level discipline shares with the other disciplines (external edges). Bottom: The average number of edges 
+that a node in a given first-level discipline has within that discipline (internal edges).
+Fig. 11. Average number of internal and external edges for each first-level discipline for 24 years in ICCS.
+given by the author, abbreviations of professional terms, and the ter-
+minologies extracted from the abstract by applying the part-of-speech 
+(POS) tagging. A word cloud is generated by the extracted keywords 
+with WordClouds.com7 (See B.1). We also compared relevant Google 
+Trends8 search popularity and research popularity trends (see Table 9) 
+to analyze these four periods.
+7 https://www.wordclouds.com/.
+8 https://trends.google.com/trends/.
+Before 2007, network and communication-related subjects were 
+highly popular in both society and academia. The predominant key-
+words and terminologies mentioned in ICCS extracted during this pe-
+riod include web service, mobile device, wireless sensor network, grid 
+computing, p2p system, etc. This era witnessed not only an acceleration 
+in the speed of social information dissemination due to advancements 
+in network technology, but also a rapid stimulation of interest and 
+techniques pertaining to distributed computing. These developments 
+laid the groundwork for subsequent advancements in cloud computing 
+technology.
+Journal of Computational Science 89 (2025) 102609 
+11 
+
+L. Luo et al.
+Fig. 12. Research community collaboration heatmap in ICCS 2024. Color indicates the 
+intensity of cooperation between the two disciplines denoted by letters A to O (see 
+Table 8).
+Table 8
+Encoding of the community axis in the heat maps (refer to Figs. 12 & A.1).
+ The coordinate axes
+The name of the community
+ 
+ A
+Computer hardware, system, engineering 
+ B
+Computer network & Security
+ 
+ C
+Software engineering
+ 
+ D
+Programming language & compiler
+ 
+ E
+Theory of computation
+ 
+ F
+Algorithm & Data structures
+ 
+ G
+Modeling & simulation
+ 
+ H
+Mathematics of computing
+ 
+ I
+Information system (Database)
+ 
+ J
+Human–computer interaction
+ 
+ K
+Parallel, distributed computing
+ 
+ L
+Machine learning
+ 
+ M
+Artificial Intelligence
+ 
+ N
+Computer graphics
+ 
+ O
+Applied Computing (Interdisciplinary)
+ 
+Simultaneously, it is worth noting that while IPv6 gained significant 
+attention from the public during this time frame, as previous research 
+has indicated [14,24], it was not the only driver behind the rapid 
+growth observed in network and security. The research interest in p2p, 
+TCP, etc. also played an important role in promoting the research in 
+network and security between 2004 and 2007.
+The summit of parallel and distributed computing between 2010 
+and 2014 took the top position from computer networks research. 
+The keywords and terminologies with the highest frequency utilized 
+in ICCS during this time include GPU, parallel computing, HPC, cloud 
+computing, supercomputer, etc. As distributed computing entered a 
+relative trough around 2008 and the fall of computer network-related 
+topics, GPGPUs are the core driving force for the rapid development 
+of this round of parallel computing-related research in ICCS. Addition-
+ally, significant societal events unfolded within the realm of parallel 
+computing during this time frame. Nvidia’s release of CUDA in 2008 
+triggered a cascade effect in high-performance computing. In 2012, 
+‘‘Titan’’, a supercomputer which achieved the milestone of being the 
+first GPU architecture with a performance of over 10 petaFLOPS [52]. 
+Simultaneously, international competitions among countries further 
+propelled research in supercomputers [4]. Notably, there was an un-
+precedented two-order-of-magnitude improvement in the performance 
+of the fastest supercomputers between 2009 and 2016 (Jaguar: 1.759 
+PFLOPS - Sunway TaihuLight: 93.01 PFLOPS) [52].
+The third period, spanning from 2015 to 2018, is referred to as 
+the era of big data. Although ICCS is not a data science conference, 
+the impact of big data on ICCS is obvious. The predominant keywords 
+and terminologies during this period include big data, data analysis, 
+data mining, statistical analysis, etc. Throughout this period, there 
+was a noticeable surge in research interest in information systems and 
+databases. Various sectors, including society, academia, and industry, 
+were all significantly influenced by technologies such as big data and 
+data mining [56]. Moreover, the advancement of big data has also 
+played a pivotal role in fostering the progress of other disciplines. As 
+defined by IBM, ‘‘machine learning focuses on utilizing data and algo-
+rithms to enable AI to mimic human learning processes while gradually 
+enhancing its accuracy’’ [57]. It demonstrated that data serves as an 
+indispensable component for machine learning. In conjunction with 
+previous findings, the interaction between data science and machine 
+learning algorithms has stimulated advancements in machine learning 
+techniques.
+Lastly, the period between 2018 and 2024 is characterized as the 
+era of machine learning. The predominant keywords and terminologies 
+during this period include machine learning, deep learning, natural lan-
+guage processing, neural networks, etc. During this time, we witnessed 
+a substantial surge in academic publications related to machine learn-
+ing across both theoretical research and practical applications. Just as 
+the transformer architecture boosted deep learning after 2017 [53], 
+machine learning and AI have already emerged as the leading research 
+focus within computational science. Furthermore, machine learning has 
+profoundly influenced various disciplines by establishing a framework 
+for contemporary computational science research through collabora-
+tions with algorithms, mathematical foundations, and modeling tech-
+niques. At the same time, we noticed the activation of the modeling 
+community and its rapid increase in interaction with the machine 
+learning community. Combining with the result that the widely applied 
+machine learning in modeling in ICCS, we have enough evidence 
+to believe that the increase in popularity in machine learning re-
+search has led to an increasing research interest in modeling and 
+simulation-related disciplines.
+We then discuss the linear correlation between Google Trends and 
+ICCS topic trends. Table 9 presents the Pearson correlation test of 
+some representatives between the two trends. From the Pearson linear 
+correlation comparison test, we found that different disciplines show 
+different degrees of collinearity. Although most trends present a high 
+degree of linearity, it is worth mentioning that parallel computing, 
+algorithms, numerical analysis, ABM, and mathematical modeling show 
+no linear correlation with public search preferences. These disciplines 
+show one common characteristic: They are all disciplines with strong 
+theoretical attributes. The public’s insensitivity to theory-driven re-
+search stems from the fact that non-scientific researchers find it hard to 
+directly understand highly specialized theoretical research. Therefore, 
+public search preference is not sensitive to these changes in academia, 
+resulting in poor linear correlation. In contrast, application fields with 
+strong social attributes, such as infectious disease models, climate 
+models, and network security, etc. are more sensitive. It makes them 
+more likely to show higher similar trends compared with the public 
+interest. In the same way, disciplines with a strong industrial nature, 
+such as GPGPU, operating systems, and blockchain, also present a very 
+strong linear correlation. It indicates that the concerns of academia, 
+industries, and society tend to show similar interest in these topics with 
+their advancements.
+7. Life span of thematic workshop & author network
+7.1. Life span of thematic workshop
+Academic research interests are highly correlated with the concerns 
+of both academia and industry, while they are also interacting with 
+Journal of Computational Science 89 (2025) 102609 
+12 
+
+L. Luo et al.
+Table 9
+The Pearson correlation test between ICCS trend and Google Trends.
+ Disciplines in ICCS
+Google trends keywords
+h
+Pearson correlation 
+coefficient
+p
+ 
+ Machine learning
+Machine learning
+True
+0.958
+0.000 
+ Quantum computing
+Quantum computing
+True
+0.611
+0.004 
+ GPGPU
+GPGPU
+True
+0.458
+0.042 
+ TCP
+TCP
+True
+0.811
+0.000 
+ Cryptography
+Cryptography
+True
+0.672
+0.001 
+ Parallel computing
+Parallel computing
+False
+0.067
+0.800 
+ Network security
+Network Security
+True
+0.488
+0.029 
+ Operating system
+Operating system
+True
+0.567
+0.009 
+ Blockchain
+Blockchain
+True
+0.731
+0.000 
+ Algorithm
+Algorithm
+False
+−0.409
+0.073 
+ Numerical analysis
+Numerical analysis
+False
+−0.188
+0.426 
+ Modeling of infectious disease
+Modeling disease
+True
+0.444
+0.049 
+ Climate model
+Modeling climate change
+True
+0.573
+0.008 
+ Agent-based modeling
+Agent-based model
+False
+−0.102
+0.667 
+ Mathematical model
+Mathematical model
+False
+−0.532
+0.016 
+Fig. 13. Number of workshops and tracks in ICCS (2005–2024).
+each other. We thereby analyze the life span of the workshop over 
+twenty years to examine the evolution of thematic workshops and 
+tracks in ICCS. Since 2005, the workshops and tracks in ICCS have 
+presented different characteristics. The average number of workshops 
+or tracks in ICCS each year is 21.35. The total number of workshops 
+held in ICCS is 438, and the workshop series in ICCS is 140. The average 
+life expectancy of a workshop series is 3.13 years. Fig. 13 shows the 
+change in the number of workshops and tracks for the past twenty 
+years. The number of workshops experienced great fluctuation over the 
+past twenty years, with three utmost summits occurring in 2007, 2015, 
+and 2021. The high fluidity of the conference workshops indicates that 
+the research communities are highly active.
+We then look deeper into the details of the life expectancy of 
+thematic workshops. Table B.1 shows the top ten workshops with the 
+longest life expectancy. Throughout the twenty years, the International 
+Workshop on Teaching Computational Science (WTCS) has presented 
+the longest existing workshop, with 18 sessions being held until 2024 
+since 2007. The second ‘‘longevity’’ workshop is the Biomedical and 
+Bioinformatics Challenges to Computer Science, which was held over 
+17 sessions from 2008 until 2024. The third longest workshop in ICCS 
+is Computational Optimization, Modeling and Simulation, which has 
+held 15 sessions since its inception in 2010.
+From the distribution of the life expectancy of thematic workshops, 
+Fig. 14 shows the distribution of the workshop life expectancy between 
+2005 and 2024. The result indicates that the life span of workshops 
+follows a long-tail distribution. Only a very small number of workshop 
+series could be held for more than 5 years, and over 50% of the total 
+workshop series last less than 2 years. It implies that most of the 
+academic research cooperation among a group of scholars is less than 
+5 years.
+Fig. 14. Distribution of workshop life expectancy (2005–2024).
+7.2. Author network
+Within the study, we were trying to identify ICCS’s role as a living 
+community and a forum for building new collaborations. We used Ope-
+nAlex9 to collect metadata for all publications by the authors published 
+in ICCS proceedings (16 178 authors, 321 848 papers).
+For identification of emergent collaboration events, we performed 
+a search of author pairs, where authors both have publications at some 
+ICCS separately (without prior joint publications, so we consider that 
+they met at ICCS). We then selected pairs that published joint papers 
+after the meeting in any source (including ICCS). The total number of 
+pairs in the selected set was 3623 pairs of authors.
+Fig. 15 shows the number of such pairs that appeared at ICCS and 
+the number of joint publications that appeared in any source by the 
+authors who met at this conference. It could be seen that there were 
+several years with a significantly higher collaboration impact (2004, 
+2007, 2015). The number of pairs over the past four years (2020 and 
+later) is lower, partly because there was not enough time yet to publish 
+joint results. The appearance of the first joint publication is an average 
+delay of 4.8 years. It is worth noticing that the number of thematic 
+workshops and author pairs that appeared in ICCS both peaked in 2007 
+and 2015. Combined with previous results, they present a similar trend 
+of increase and decrease. It becomes strong evidence that the thematic 
+9 https://openalex.org/.
+Journal of Computational Science 89 (2025) 102609 
+13 
+
+L. Luo et al.
+Fig. 15. Emerged collaboration at ICCS by year of initial meeting: number of new 
+pairs appeared and number of consequent joint publications.
+Fig. 16. Average number of publications after the meeting year per new pair of 
+authors.
+tracks and workshops in ICCS are a platform that promotes both current 
+and further academic collaboration. The increase or decrease of author 
+pairs is also closely related to the organization and dissolution of 
+thematic workshops.
+Fig. 16 shows the average number of publications per new pair 
+after the year in which this pair appeared. An average number of post-
+meeting publications per pair is 6.83. And the number of papers is close 
+to this number in most years. Combining with the result in Fig. 15, 
+the number of pairs is highly correlated with the number of papers 
+after the meeting year. The correlation coefficient is 0.908, which 
+is a significantly higher number of papers per pair appearing at the 
+beginning of the conference history. There is strong evidence that ICCS 
+enhanced the academic collaboration between computational science 
+researchers. Also, we observe that later years present characteristics of 
+high variation of publications per pair but low absolute numbers. It is 
+also a natural consequence of the low number of pairs and publications 
+detected so far.
+Finally, we investigate the connectivity of the author pairs obtained 
+after our search. We observe that the existing nodes attract new mem-
+bers from the same institution and other organizations. In our dataset, 
+65.6% of the authors (1687 authors) belong to this giant connected 
+component shown in Fig. C.1.10 We observe the researchers who act 
+as the main contributors and founders of the conference as mostly 
+connected nodes (Jack Dongarra, Peter Sloot, Marian Bubak, Dieter 
+Kranzlmuller, and Ilkay Altintas are represented by the top 5 connected 
+nodes in the graph).
+8. Discussion and conclusions
+Within the time span of 24 years, ICCS has witnessed four main 
+periods: the era of network and security, parallel and distributed com-
+puting, big data, and finally, machine learning. These four disciplines 
+have successively gained the most popularity in 2006, 2012, 2016, 
+and 2024 (see Fig. 1). Among them, Modeling & simulation, Algorithm 
+& data structures, mathematics on computing, and applied computing 
+have consistently remained highly popular throughout these 24 years 
+10 Interactive version of the network is available at: https://iterater.github.
+io/demos/iccs_network/.
+with a combined proportion exceeding 30% of total popularity in both 
+ICCS and JoCS (see Figs. 2 & 6). As for ICCS 2024 specifically, the ma-
+chine learning-related topic emerges as the most popular topic within 
+ICCS. While in JoCS, except for machine learning, other disciplines gen-
+erally follow different trends (see Fig. 5). Mathematics foundation and 
+modeling & simulation gained a different level of research popularity. 
+Despite the rapid growth of machine learning related topics, Modeling 
+& Simulation still maintains its dominance in JoCS (see Fig. 6).
+From a second-level disciplinary perspective over the past two 
+decades, the top three researched areas are algorithm theory, mathe-
+matical modeling, and network science for both ICCS and JoCS (see 
+Tables 4 & 5). In contrast, in terms of current research popularity 
+in 2024, the top three ranked topics are machine learning theory, 
+deep learning, and mathematical modeling in ICCS (see Table 4). The 
+top three ranked second-level disciplines in JoCS are network science, 
+machine learning theory, and algorithm theory (see Table 5).
+From the perspective of magnitude change, machine learning the-
+ory, deep learning, and supervised learning stand out as three dis-
+ciplines that have experienced substantial growth in popularity (see 
+Fig. 3), while parallel computing, distributed computing, and operating 
+systems have seen the most decline over the past twenty-four years (see 
+Fig. 4) in ICCS. While in JoCS, the top three emerging second-level 
+disciplines over the past 14 years are the same as those of ICCS (Deep 
+learning, supervised learning, and machine learning theory). However, 
+the top three declining disciplines consist of parallel computing, dis-
+tributed computing, and computational sociology in JoCS (see Figs. 7 
+& 8).
+The topology of the interdisciplinary network shows an average 
+clustering coefficient of 0.5, with a community structure characterized 
+by relatively tight connections within each community (see Table 
+6). We also found strong evidence to identify the interdisciplinary 
+networks in computational science as a scale-free network. A small 
+number of nodes possess high-weighted degrees, while most points 
+share fewer edges. Some disciplines serve as hubs in the network and 
+act as intermediaries for other fields. The framework formed by core 
+disciplines plays a crucial role in maintaining stability. Specifically, 
+modeling and simulation, algorithms, and mathematics served as three 
+core areas within these networks (see Fig. 12). Since the core topics of 
+the interdisciplinary network in computational science are not affected, 
+the network structure will not change significantly. This result further 
+implies the interdisciplinary network exhibits fault tolerance: changes 
+to nodes with lower weighted degrees will not lead to collapse so long 
+as important disciplines remain unaffected.
+Different communities exhibit varying levels of introversion and 
+extroversion within their respective communities (see Fig. 11 & Table 
+7). Programming languages and compilers, computer network & secu-
+rity are considered strong introverted disciplines, whereas algorithms, 
+parallel & distributed computing, and information systems play a more 
+extroverted role. Mathematics in computing, along with machine learn-
+ing, possesses both introverted and extroverted characteristics. From 
+the practical situation, disciplines that are highly professional or have 
+difficulty directly collaborating with other fields in introverted com-
+munities tend to show certain barriers to collaborating with other 
+communities. On the other hand, disciplines related to computational 
+methods & algorithms, practical applicability, and data science tend 
+to be more extroverted, where they are more likely to co-exist with 
+other theories or methods. The machine learning community not only 
+presents strong internal collaboration, but is also active with many 
+other communities (see Table 7 & Fig. 11). Collaboration in machine 
+learning has experienced a remarkable increase both internally and 
+externally in the late 2010s. It implies that both inner theory and 
+external applications are progressing in machine learning during this 
+period.
+From the dynamic perspective, the heat maps show that the inter-
+disciplinary network experienced intricate changes. The parallel com-
+puting community successively interacts with computer networks & 
+Journal of Computational Science 89 (2025) 102609 
+14 
+
+L. Luo et al.
+Fig. A.1. The disciplinary heatmap - Top left: 2005, top right: 2011, bottom left: 2015, bottom right: 2021. Encoding for disciplines A: computer hardware, system, engineering, B: 
+Computer network & Security, C: Software engineering, D: Programming language & compiler, E: Theory of computation, F: Algorithm & Data structures, G: Modeling & simulation, 
+H: Mathematics of computing, I: Information system (Database), J: Human–computer interaction, K: Parallel, distributed computing, L: Machine learning, M: Artificial Intelligence, 
+N: Computer graphics, O: Applied Computing (Interdisciplinary). See Table 8 for the Encoding of communities in the heat maps.
+security, and computer hardware. Information systems first actively 
+collaborate with software engineering and then switch to machine 
+learning. Finally, the activation of machine learning and its strong 
+collaboration with modeling & simulation in the early 2020s resulted 
+in the decline of algorithm-driven modeling approaches. It implies a 
+strong interest in machine learning applications in modeling. These 
+results provide strong evidence that collaboration across disciplines 
+changes over time.
+In comparing ICCS trends with Google Trends, we found different 
+linear correlations between disciplines. Disciplines with strong theo-
+retical attributes exhibit weak linear correlation with public search 
+interests. On the other hand, in disciplines with strong social or ap-
+plication attributes, the trends of both academia and society tend to be 
+consistent. It indicates that public search preferences are less sensitive 
+to the change in theoretical research, while they are more sensitive to 
+applicable parts of computational science.
+The life span of thematic workshops and tracks shows that the 
+average life expectancy is 3.1 years, and most of the workshop series 
+exist for less than 5 years. More than half of the workshop series has 
+existed for less than 2 years. A lot of workshops are combined or 
+eliminated after ICCS 2007. The three longest workshops in ICCS con-
+cern ‘‘the education technology in computational science’’, ‘‘biomedical 
+and bioinformatics’’, and ‘‘computational optimization, modeling and 
+simulation’’.
+We also found that the peak of author collaboration pairs appeared 
+simultaneously with the number of workshops (2007, 2015), and they 
+are highly similar in time series. The number of pairs decreased in 
+the past five years, and the average first joint publication delay is 
+4.8 years. The average number of papers per pair is approximately 6.83. 
+The connectivity of the author pairs presents two patterns. First, the 
+highly connected community tends to attract members from the same 
+institution and new connections to the conference. Second, the large 
+connected component covers most of the researchers: 65.6% of the total 
+authors (1687 authors) belong to this large community.
+On the other hand, there are still certain areas for future research 
+or potential drawbacks in this field that warrant further exploration. 
+Despite the esteemed reputation of ICCS and JoCS as conferences 
+and journals in computational science, their coverage remains limited. 
+This limitation may introduce bias into our assessment of the overall 
+trend. Given the vast and intricate disciplinary network of computer 
+science, it is imperative to incorporate a broader range of journals and 
+conference papers as part of our corpus for studying the comprehensive 
+development of computer science.
+Journal of Computational Science 89 (2025) 102609 
+15 
+
+L. Luo et al.
+Considering the classification corpus, although we referenced three 
+classification libraries, there are still certain research topics that have 
+been omitted. At the same time, the distribution of topics is also 
+unbalanced in specific fields. This limitation may lead to a biased 
+weighting in the classification process. Additionally, the results are 
+influenced by the Wikipedia editor’s language habits and background in 
+the field. It caused the limitation that the classification corpus created 
+by Wikipedia is not completely balanced. Future research could explore 
+applying a broader academic publication corpus with an advanced pre-
+trained LLM with the ability to reason and inference to prompt or 
+fine-tune a more accurate, comprehensive classifier.
+Modern science is characterized by its complexity. Computational 
+science research is influenced by various external factors such as social 
+events, policies, and technological advancements in other fields. To 
+provide a more holistic understanding of scientific development, future 
+researchers could consider incorporating a broader model encompass-
+ing additional fields and considering external influences to depict a 
+more comprehensive picture.
+CRediT authorship contribution statement
+Lijing Luo: Writing – original draft, Visualization, Methodology, 
+Formal analysis, Data curation, Conceptualization. Klavdiya Bochen-
+ina: Writing – review & editing, Visualization, Methodology, Writing 
+– original draft. Tesfamariam M. Abuhay: Writing – review & edit-
+ing, Resources, Conceptualization. Nachyn Dorzhu: Writing – original 
+draft, Visualization, Resources, Methodology. George Kampis: Writing 
+– review & editing. Sergey Kovalchuk: Writing – review & editing, 
+Supervision, Resources, Methodology, Data curation, Conceptualiza-
+tion. Valeria Krzhizhanovskaya: Writing – review & editing, Supervi-
+sion, Resources, Methodology, Funding acquisition, Conceptualization. 
+Maciej Paszynski: Writing – review & editing. Clélia de Mulatier: 
+Writing – review & editing, Supervision, Methodology, Writing – orig-
+inal draft. Jack Dongarra: Writing – review & editing, Writing – 
+original draft. Peter M.A. Sloot: Writing – review & editing, Resources, 
+Supervision.
+Declaration of competing interest
+The authors declare that they have no known competing finan-
+cial interests or personal relationships that could have appeared to 
+influence the work reported in this paper.
+Appendix A. The disciplinary heatmaps
+See Fig. A.1.
+Appendix B. Workshop with longest life span & most frequent 
+abstract keywords
+See Fig. B.1 and Table B.1.
+Fig. B.1. Most frequently appeared abstract keywords (ICCS 2003–2024), created by 
+WordClouds.com (threshold value = 4).
+Table B.1
+The life span top 10 thematic workshops and tracks.
+ The name of the workshops/tracks
+Life expectancy
+Existing period 
+ Workshop on Teaching Computational Science
+18
+2007–2024
+ 
+ Workshop on Biomedical and Bioinformatics Challenges to 
+Computer Science
+17
+2008–2024
+ 
+ Computational Optimization, Modeling and Simulation
+15
+2010–2024
+ 
+ Tools for Program Development and Analysis in 
+Computational Science
+15
+2005–2019
+ 
+ Workshop on Computational Finance and Business 
+Intelligence
+14
+2006–2019
+ 
+ Advances in High-Performance Computational Earth Sciences: 
+Applications and Frameworks
+14
+2011–2024
+ 
+ Solving Problems with Uncertainties
+12
+2013–2024
+ 
+ Computational Chemistry and Its Applications
+12
+2006–2017
+ 
+ Simulations of Flow and Transport: Modeling, Algorithms, 
+and Computation – SOFTMAC
+11
+2013–2024
+ 
+ Agent-Based Computing, Adaptive Algorithms and Bio 
+Computing
+11
+2010–2020
+ 
+Table C.1
+Kolmogorov–Smirnov test (KS) statistics measuring the goodness of fit of the power-law distribution, comparison using likelihood ratio (R) and 𝑝-value of the fitted power-law 
+distribution with respectively the exponential (row 2 and 3) and the log-normal distributions (row 4 and 5). 
+ Parameters
+2015
+2016
+2017
+2018
+2019
+2020
+2021
+2022
+2023
+2024 
+ KS statistics
+0.077
+0.097
+0.077
+0.117
+0.084
+0.072
+0.088
+0.079
+0.045
+0.076 
+ R-exponential
+−0.35
+−1.437
+6.001
+−2.413
+0.708
+1.922
+1.718
+9.964
+4.45
+4.836 
+ p-exponential
+0.883
+0.514
+0.308
+0.535
+0.716
+0.421
+0.398
+0.247
+0.129
+0.12 
+ R-lognormal
+−0.921
+−1.418
+−2.532
+−3.116
+−0.399
+−0.396
+−0.119
+−4.155
+−0.002
+−0.138 
+ p-lognormal
+0.38
+0.285
+0.14
+0.13
+0.526
+0.505
+0.723
+0.072
+0.962
+0.688 
+Journal of Computational Science 89 (2025) 102609 
+16 
+
+L. Luo et al.
+Fig. C.1. Giant connected component with core contributors in ICCS (1687 authors). Interactive version of the network is available at: https://iterater.github.io/demos/iccs_network/.
+Appendix C. Disciplinary network and author network
+See Fig. C.1 and Table C.1. 
+Data availability
+Data will be made available on request.
+References
+[1] National Science Foundation, Publications output: U.S. trends and in-
+ternational comparisons, 2021, URL https://ncses.nsf.gov/pubs/nsb20214/
+publication-output-by-country-region-or-economy-and-scientific-field.
+[2] Dashun Wang, Albert-László Barabási, The Science of Science, Cambridge 
+University Press, 2021, http://dx.doi.org/10.1017/9781108610834.
+[3] Santo Fortunato, Carl T. Bergstrom, Katy Börner, James A. Evans, Dirk Hel-
+bing, Staša Milojević, Alexander M. Petersen, Filippo Radicchi, Roberta Sinatra, 
+Brian Uzzi, Alessandro Vespignani, Ludo Waltman, Dashun Wang, Albert László 
+Barabási, Science of science, (ISSN: 10959203) 2018.
+[4] Dennis Normile, Three Chinese teams join race to build the world’s fastest su-
+percomputer, 2018, URL https://www.science.org/content/article/three-chinese-
+teams-join-race-build-world-s-fastest-supercomputer.
+[5] Sandhya Venkatachalam, 2017 is the year of artificial intelligence. Here’s 
+why, 2017, URL https://www.weforum.org/agenda/2017/05/2017-is-the-year-
+of-artificial-intelligence-here-s-why/.
+[6] Huawei, Computing 2030, 2020, URL https://www-file.huawei.com/-/media/
+corp2020/pdf/giv/industry-reports/computing_2030_en.pdf.
+[7] Executive Office of the President, Maintaining American leadership in artificial 
+intelligence, 2019, URL https://www.federalregister.gov/documents/2019/02/
+14/2019-02544/maintaining-american-leadership-in-artificial-intelligence.
+[8] Johan Bollen, David Crandall, Damion Junk, Ying Ding, Katy Börner, From 
+funding agencies to scientific agency, EMBO Rep. 15 (2) (2014) 131–133, http://
+dx.doi.org/10.1002/embr.201338068, URL https://www.embopress.org/doi/abs/
+10.1002/embr.201338068.
+[9] Yuan Zhou, Fang Dong, Yufei Liu, Zhaofu Li, JunFei Du, Li Zhang, Forecasting 
+emerging technologies using data augmentation and deep learning, Sciento-
+metrics (ISSN: 1588-2861) 123 (2020) http://dx.doi.org/10.1007/s11192-020-
+03351-6.
+[10] Khushboo Singhal, Sumit Kumar Banshal, Ashraf Uddin, Vivek Kumar Singh, A 
+scientometric analysis of computer science research in India, in: 2015 Eighth 
+International Conference on Contemporary Computing, IC3, 2015, pp. 177–182, 
+http://dx.doi.org/10.1109/IC3.2015.7346675.
+[11] Erman Coskun, Guzin Ozdagoglu, Muhammet Damar, Busra Alma Çallı, 
+Scientometrics-based study of computer science and information systems research 
+community macro level profiles, 2019, pp. 180–188, http://dx.doi.org/10.33965/
+is2019_201905L023.
+[12] David M. Blei, Andrew Y. Ng, Michael I. Jordan, Latent dirichlet allocation, J. 
+Mach. Learn. Res. (ISSN: 1532-4435) 3 (null) (2003) 993–1022.
+[13] Tesfamariam M. Abuhay, Sergey V. Kovalchuk, Klavdiya O. Bochenina, George 
+Kampis, Valeria V. Krzhizhanovskaya, Michael H. Lees, Analysis of computational 
+science papers from ICCS 2001–2016 using topic modeling and graph theory, 
+in: Procedia Computer Science, Vol. 108, Elsevier B.V., 2017, pp. 7–17, http:
+//dx.doi.org/10.1016/j.procs.2017.05.183.
+Journal of Computational Science 89 (2025) 102609 
+17 
+
+L. Luo et al.
+[14] Tesfamariam M Abuhay, Sergey V Kovalchuk, Klavdiya Bochenina, Gali-Ketema 
+Mbogo, Alexander A Visheratin, George Kampis, Valeria V Krzhizhanovskaya, 
+Michael H Lees, Analysis of publication activity of computational science society 
+in 2001–2017 using topic modelling and graph theory, J. Comput. Sci. 26 (2018) 
+193–204, http://dx.doi.org/10.1016/j.procs.2017.
+[15] Daniel Lee, Hyunjune Seung, Algorithms for non-negative matrix factorization, 
+Adv. Neural Inf. Process. Syst. 13 (2001).
+[16] Derek Greene, James P. Cross, Exploring the political agenda of the European 
+parliament using a dynamic topic modeling approach, 2016, URL http://arxiv.
+org/abs/1607.03055.
+[17] Jianyu Wang, Xiao Lei Zhang, Deep NMF topic modeling, Neurocomputing (ISSN: 
+18728286) 515 (2023) 157–173, http://dx.doi.org/10.1016/j.neucom.2022.10.
+002.
+[18] W. Pan, F. Doshi-Velez, A characterization of the non-uniqueness of nonnegative 
+matrix factorizations, 2016, URL http://arxiv.org/abs/1604.00653.
+[19] Naif Radi Aljohani, Comparing manually added research labels and automati-
+cally extracted research keywords to identify specialist researchers in learning 
+analytics: A case study using google scholar researcher profiles, Appl. Sci. 
+(ISSN: 2076-3417) 13 (12) (2023) http://dx.doi.org/10.3390/app13127172, URL 
+https://www.mdpi.com/2076-3417/13/12/7172.
+[20] Zellig S. Harris, Distributional structure, Word (ISSN: 0043-7956) 10 (1954) 
+146–162, http://dx.doi.org/10.1080/00437956.1954.11659520.
+[21] D. Gunawan, C.A. Sembiring, M.A. Budiman, The implementation of cosine 
+similarity to calculate text relevance between two documents, in: Journal of 
+Physics: Conference Series, Vol. 978, Institute of Physics Publishing, 2018, 
+http://dx.doi.org/10.1088/1742-6596/978/1/012120.
+[22] Pu Wang, Jian Hu, Hua Jun Zeng, Zheng Chen, Using Wikipedia knowledge 
+to improve text classification, Knowl. Inf. Syst. (ISSN: 02193116) 19 (2009) 
+265–281, http://dx.doi.org/10.1007/s10115-008-0152-4.
+[23] Vivi Nastase, Michael Strube, Transforming Wikipedia into a large scale mul-
+tilingual concept network, Artificial Intelligence (ISSN: 00043702) 194 (2013) 
+62–85, http://dx.doi.org/10.1016/j.artint.2012.06.008.
+[24] Lijing Luo, Sergey Kovalchuk, Valeria Krzhizhanovskaya, Maciej Paszynski, Clélia 
+de Mulatier, Jack Dongarra, Peter M.A. Sloot, Trends in computational science: 
+Natural language processing and network analysis of 23 years of ICCS publi-
+cations, in: Leonardo Franco, Clélia de Mulatier, Maciej Paszynski, Valeria V. 
+Krzhizhanovskaya, Jack J. Dongarra, Peter M.A. Sloot (Eds.), Computational Sci-
+ence – ICCS 2024, Springer Nature Switzerland, Cham, ISBN: 978-3-031-63751-3, 
+2024, pp. 19–33.
+[25] Sergey V. Kovalchuk, Valeria V. Krzhizhanovskaya, Peter M.A. Sloot, 20 years of 
+computational science, J. Comput. Sci. (ISSN: 1877-7503) 46 (2020) 101187, 
+http://dx.doi.org/10.1016/j.jocs.2020.101187, URL https://www.sciencedirect.
+com/science/article/pii/S1877750320304889, 20 years of computational science.
+[26] Sergey V. Kovalchuk, Valeria V. Krzhizhanovskaya, Maciej Paszyński, Dieter 
+Kranzlmüller, Jack Dongarra, Peter M.A. Sloot, Computational science for a 
+better future, J. Comput. Sci. (ISSN: 1877-7503) 62 (2022) 101745, http:
+//dx.doi.org/10.1016/j.jocs.2022.101745, URL https://www.sciencedirect.com/
+science/article/pii/S1877750322001351.
+[27] Sergey V. Kovalchuk, Clélia de Mulatier, Derek Groen, Maciej Paszyński, 
+Valeria V. Krzhizhanovskaya, Jack Dongarra, Peter M.A. Sloot, The compu-
+tational planet, J. Comput. Sci. (ISSN: 1877-7503) 72 (2023) 102102, http:
+//dx.doi.org/10.1016/j.jocs.2023.102102, URL https://www.sciencedirect.com/
+science/article/pii/S187775032300162X.
+[28] Sergey V. Kovalchuk, Clélia de Mulatier, Valeria V. Krzhizhanovskaya, Jiří 
+Mikyška, Maciej Paszyński, Jack Dongarra, Peter M.A. Sloot, Computation at the 
+cutting edge of science, J. Comput. Sci. (ISSN: 1877-7503) (2024) 102379, http:
+//dx.doi.org/10.1016/j.jocs.2024.102379, URL https://www.sciencedirect.com/
+science/article/pii/S1877750324001728.
+[29] Association for Computing Machinery, ACM computing classification system, 
+2024, URL https://dl.acm.org/ccs.
+[30] Association for Computing Machinery, et al., Computer science curricula 2023, 
+2023, URL https://csed.acm.org/wp-content/uploads/2023/03/Version-Beta-v2.
+pdf.
+[31] Roman Frigg, Stephan Hartmann, Models in science, in: Edward N. Zalta, Uri 
+Nodelman (Eds.), The Stanford Encyclopedia of Philosophy, Fall 2024 ed., 
+Metaphysics Research Lab, Stanford University, 2024.
+[32] Kara Rogers, Scientific modeling, 2023, URL https://www.britannica.com/
+science/scientific-modeling.
+[33] Oak Ridge National Laboratory, Oak ridge national laboratory, 2024, URL https:
+//www.ornl.gov/.
+[34] Albert-László Barabási, Réka Albert, Emergence of scaling in random networks, 
+Sci. 286 (5439) (1999) 509–512, http://dx.doi.org/10.1126/science.286.5439.
+509, URL https://www.science.org/doi/abs/10.1126/science.286.5439.509.
+[35] Anna D. Broido, Aaron Clauset, Scale-free networks are rare, Nat. Commun. 
+(ISSN: 20411723) 10 (2019) http://dx.doi.org/10.1038/s41467-019-08746-5.
+[36] Reji Kumar Karunakaran, Shibu Manuel, Edamana Narayanan Satheesh, Spread-
+ing Information in Complex Networks: An Overview and Some Modified Methods, 
+InTech, 2018, http://dx.doi.org/10.5772/intechopen.69204.
+[37] Duncan J. Watts, Steven H. Strogatz, Collective dynamics of ‘small-world’ net-
+works, Nat. 393 (1998) 440–442, URL https://api.semanticscholar.org/CorpusID:
+3034643.
+[38] A. Kemper, Valuation of network effects in software markets: A complex networks 
+approach, Contributions to Management Science, Physica-Verlag HD, ISBN: 
+9783790823677, 2009, URL https://books.google.nl/books?id=isdza0IiXbUC.
+[39] Yusheng Li, Yilun Shang, Yiting Yang, Clustering coefficients of large networks, 
+Inform. Sci. (ISSN: 0020-0255) 382–383 (2017) 350–358, http://dx.doi.org/10.
+1016/j.ins.2016.12.027, URL https://www.sciencedirect.com/science/article/pii/
+S0020025516320527.
+[40] Yoonsuk Kang, Jun-Seok Lee, Won-Yong Shin, Sang-Wook Kim, Community 
+reinforcement: An effective and efficient preprocessing method for accu-
+rate community detection, Knowl.-Based Syst. (ISSN: 0950-7051) 237 (2022) 
+107741, http://dx.doi.org/10.1016/j.knosys.2021.107741, URL https://www.
+sciencedirect.com/science/article/pii/S0950705121009758.
+[41] Milad Malekzadeh, Jed A. Long, A network community structure similarity index 
+for weighted networks, PLoS One (ISSN: 19326203) 18 (2023) http://dx.doi.org/
+10.1371/journal.pone.0292018.
+[42] Keisuke Okamura, Interdisciplinarity revisited: evidence for research impact and 
+dynamism, Palgrave Commun. (ISSN: 20551045) 5 (2019) http://dx.doi.org/10.
+1057/s41599-019-0352-4.
+[43] A.L Barabási, H Jeong, Z Néda, E Ravasz, A Schubert, T Vicsek, Evolution of 
+the social network of scientific collaborations, Phys. A (ISSN: 0378-4371) 311 
+(3) (2002) 590–614, http://dx.doi.org/10.1016/S0378-4371(02)00736-7, URL 
+https://www.sciencedirect.com/science/article/pii/S0378437102007367.
+[44] M.E.J. Newman, The structure of scientific collaboration networks, Proc. Natl. 
+Acad. Sci. 98 (2) (2001) 404–409, http://dx.doi.org/10.1073/pnas.98.2.404, URL 
+https://www.pnas.org/doi/abs/10.1073/pnas.98.2.404.
+[45] E. di Bella, L. Gandullia, S. Preti, Analysis of scientific collaboration network 
+of Italian institute of technology., Scientometrics 126 (2021) 8517–8539, http:
+//dx.doi.org/10.1007/s11192-021-04120-9.
+[46] Stefan Hajkowicz, Conrad Sanderson, Sarvnaz Karimi, Alexandra Bratanova, 
+Claire Naughtin, Artificial intelligence adoption in the physical sciences, nat-
+ural sciences, life sciences, social sciences and the arts and humanities: A 
+bibliometric analysis of research publications from 1960–2021, Technol. Soc. 
+(ISSN: 0160-791X) 74 (2023) 102260, http://dx.doi.org/10.1016/j.techsoc.2023.
+102260.
+[47] Ghazal Kalhor, Behnam Bahrak, Analysis of research trends in computer science: 
+A network approach, 2023, URL https://arxiv.org/abs/2311.09348.
+[48] Rima Hazra, Mayank Singh, Pawan Goyal, Bibhas Adhikari, Animesh Mukherjee, 
+Modeling interdisciplinary interactions among physics, mathematics & computer 
+science, 2023, URL https://arxiv.org/abs/2309.10811.
+[49] Tanmoy Chakraborty, Role of interdisciplinarity in computer sciences: Quan-
+tification, impact and life trajectory, 2017, URL https://arxiv.org/abs/1710.
+06158.
+[50] Naoko Kishi, How does policy focus influence scientific research? Sci. Public 
+Policy (ISSN: 0302-3427) 47 (1) (2019) 114–124, http://dx.doi.org/10.1093/
+scipol/scz051.
+[51] Tiberiu Iancu, Valentina Constanta Tudor, Eduard Alexandru Dumitru, 
+Cristina Maria Sterie, Marius Mihai Micu, Dragos Smedescu, Liviu Marcuta, Elena 
+Tonea, Paula Stoicea, Catalin Vintu, Andy Felix Jitareanu, Luiza Carmen Cos-
+tuleanu, A scientometric analysis of climate change adaptation studies, Sustain. 
+(ISSN: 2071-1050) 14 (19) (2022) http://dx.doi.org/10.3390/su141912945, URL 
+https://www.mdpi.com/2071-1050/14/19/12945.
+[52] top500, Highlights - June 2013, 2013, URL https://www.top500.org/lists/
+top500/2013/06/highlights/.
+[53] Ashish Vaswani, Noam Shazeer, Niki Parmar, Jakob Uszkoreit, Llion Jones, 
+Aidan N Gomez, Ł ukasz Kaiser, Illia Polosukhin, Attention is all you need, in: 
+I. Guyon, U. Von Luxburg, S. Bengio, H. Wallach, R. Fergus, S. Vishwanathan, 
+R. Garnett (Eds.), Advances in Neural Information Processing Systems, Vol. 30, 
+Curran Associates, Inc., 2017, URL https://proceedings.neurips.cc/paper_files/
+paper/2017/file/3f5ee243547dee91fbd053c1c4a845aa-Paper.pdf.
+[54] National Science & Technology Council, About the national science and 
+technology council, 2018, URL http://www.whitehouse.gov/ostp/nstc.
+[55] Martin Gilesarchive, President trump has signed a $1.2 billion law 
+to boost US quantum tech, MIT Technol. Rev. (2018) URL https:
+//www.technologyreview.com/2018/12/22/138149/president-trump-has-signed-
+a-12-billon-law-to-boost-us-quantum-tech/ (Accessed 28 July 2024).
+[56] William Yu Chung Wang, Yichuan Wang, Analytics in the era of big data: 
+The digital transformations and value creation in industrial marketing, Ind. 
+Mark. Manag. (ISSN: 0019-8501) 86 (2020) 12–15, http://dx.doi.org/10.1016/
+j.indmarman.2020.01.005, URL https://www.sciencedirect.com/science/article/
+pii/S0019850120300298.
+[57] IBM, What is machine learning (ML)? 2024, URL https://www.ibm.com/topics/
+machine-learning.
+Journal of Computational Science 89 (2025) 102609 
+18 

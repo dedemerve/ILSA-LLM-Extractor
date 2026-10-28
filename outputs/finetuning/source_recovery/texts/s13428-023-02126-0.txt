@@ -1,0 +1,2261 @@
+Vol:.(1234567890)
+Behavior Research Methods (2024) 56:1916–1935
+https://doi.org/10.3758/s13428-023-02126-0
+1 3
+Using machine learning to improve Q‑matrix validation
+Haijiang Qin1 · Lei Guo1,2
+Accepted: 7 April 2023 / Published online: 25 May 2023 
+© The Psychonomic Society, Inc. 2023
+Abstract
+The Q-matrix, which specifies the relationship between items and attributes, is a crucial component of cognitive diagnostic 
+models (CDMs). A precisely specified Q-matrix allows for valid cognitive diagnostic assessments. In practice, a Q-matrix 
+is usually developed by domain experts, and noted as being subjective and potentially containing misspecifications which 
+can decrease the classification accuracy of examinees. To overcome this, some promising validation methods have been 
+proposed, such as the general discrimination index (GDI) method and the Hull method. In this article, we propose four new 
+methods for Q-matrix validation based on random forest and feed-forward neural network techniques. Proportion of vari-
+ance accounted for (PVAF) and coefficient of determination (i.e., the McFadden pseudo-R2) are used as input features for 
+developing the machine learning models. Two simulation studies are carried out to examine the feasibility of the proposed 
+methods. Finally, a sub-dataset of the PISA 2000 reading assessment is analyzed as illustration.
+Keywords  Cognitive diagnosis · Q-matrix validation · Machine learning · G-DINA · Classification
+Introduction
+Cognitive diagnostic models (CDMs) are multidimensional 
+psychometric models used to classify examinees into dif-
+ferent attribute profiles according to their mastery or lack 
+thereof in various skills through cognitive diagnostic assess-
+ments. These skills are commonly latent variables, also 
+known as attributes. Each CDM requires a Q-matrix (Tat-
+suoka, 1983) that shows the relationships between items and 
+attributes. In a cognitive diagnostic test with J items, each 
+item has a q-vector (qj) of length K which corresponds to K 
+attributes. Each q-entry (i.e., qjk) of qj will typically equal 1 
+or 0, indicating whether attribute k is measured by item j. All 
+of these qjs come together to form a Q-matrix.
+The importance of the Q-matrix is self-evident, as it is 
+the basis of CDM analyses. At present, the construction of 
+a Q-matrix typically relies on the experience of the domain 
+experts. The process of constructing the Q-matrix should 
+have a theoretical foundation beforehand, which means that 
+experts need to have professional experience while also thor-
+oughly reviewing the literature to analyze examinees’ reports 
+and rigorously discuss details when something is uncertain. 
+However, these practices are often subjective in nature, and 
+it is difficult to claim that a Q-matrix constructed using these 
+approaches will be accurately specified. In fact, a Q-matrix 
+is likely to contain a certain number of misspecifications in 
+practical tests (Chiu, 2013; Li & Suen, 2013; Rupp & Tem-
+plin, 2008), which can negatively affect the estimation of 
+model parameters and classification accuracy of examinees 
+(Gao et al., 2017; Im & Corter, 2011), potentially even caus-
+ing model misfits (de la Torre, 2008). For this reason, a num-
+ber of methods have been developed in recent years in hopes 
+of being able to develop a more reliably accurate Q-matrix.
+Some studies have explored methods to estimate a 
+Q-matrix based on examinees’ direct responses without 
+requiring an expert-constructed original Q-matrix. For 
+instance, Chen et al. (2018) and Chung (2019) tried to esti-
+mate a Q-matrix in a Bayesian framework. They found that 
+the Markov chain Monte Carlo (MCMC) algorithm could 
+efficiently estimate the Q-matrix, but that it would be signifi-
+cantly negatively affected by a decrease in sample size and 
+increase in number of attributes. Furthermore, the MCMC 
+algorithm was found to be too time-consuming, generally 
+ *	 Lei Guo 
+	
+happygl1229@swu.edu.cn
+	
+Haijiang Qin 
+	
+haijiang133@outlook.com
+1	
+Faculty of Psychology, Southwest University, Chongqing, China
+2	
+Southwest University Branch, Collaborative Innovation 
+Center of Assessment toward Basic Education Quality, 
+Chongqing, China
+
+1917
+Behavior Research Methods (2024) 56:1916–1935	
+1 3
+taking more than 12 hours for a run of MCMC in the simu-
+lation (Chung, 2019). Outside of estimating the Q-matrix 
+based on responses only, it has become more common to 
+use empirical Q-matrix validation methods to improve 
+Q-matrix validation, with a variety of methods proposed 
+in recent years (de la Torre, 2008; Chiu, 2013; de la Torre 
+& Chiu, 2016; Wang et al., 2018; Yu & Cheng., 2019; Ma 
+& de la Torre, 2020; Nájera, Sorrel, et al., 2021b). De la 
+Torre (2008) proposed an empirical method to validate the 
+Q-matrix, called the δ method. The value of δj is defined as 
+1 − sj − gj, in which sj and gj are both parameters of item j in 
+the “deterministic inputs, noisy ‘and’ gate” (DINA; Haertel, 
+1989) model. Wang et al. (2018) proposed a joint estimate 
+method based on expectation–maximization (EM), using a 
+maximum likelihood estimation or a marginal maximum like-
+lihood estimation to estimate the best q-vector of each item. 
+Yu and Cheng (2019) validated a Q-matrix by minimizing 
+the residual-based statistic, which can also capture model 
+misfit in cognitive diagnostic assessment. Chiu (2013) devel-
+oped a nonparametric method by minimizing the residual 
+sum of squares computed from the observed and expected 
+responses of examinees. However, these methods are devel-
+oped based on the reduced CDMs, particularly the DINA 
+model. Because these reduced CDMs all vary in terms of the 
+different assumptions involved and their complexity between 
+attributes, prior to beginning any new analysis, the most 
+appropriate model must be determined (Henson et al., 2009).
+To incorporate the aspects of the most widely used reduced 
+CDMs, three popular general or saturated CDMs have been 
+proposed: the general diagnostic model (GDM; von Davier, 
+2005), the log-linear CDM (LCDM; Henson et al., 2009), and 
+the generalized DINA (G-DINA; de la Torre, 2011) model. 
+Many choose to use these general models from the start, as 
+they are considered the more efficient choice, particularly 
+when it can be difficult to determine the most appropriate 
+model (Ma et al., 2016). Several Q-matrix validation methods 
+have been proposed for the saturated model, some of which 
+have been demonstrated to work effectively, such as the gen-
+eral discrimination index (GDI) method (de la Torre & Chiu, 
+2016), the Wald method (Ma & de la Torre, 2020), and the 
+Hull method (Nájera, Sorrel, et al., 2021b). The GDI method 
+modifies q-entries in the Q-matrix according to whether the 
+value of the proportion of variance accounted for (PVAF) 
+reaches the predetermined cutoff points. The Wald method 
+determines whether every q-entry in the Q-matrix is statisti-
+cally necessary by conducting a series of Wald tests. The Hull 
+method works by balancing fit and parsimony, and maximin-
+ing the st index, which can be computed using the number of 
+model parameters and the value of the PVAFs. These three 
+methods have certain limitations compared to the general 
+model. The GDI and Wald methods share a restriction in that 
+they both require cutoff points that may be difficult to deter-
+mine; thus, cutoff points for both are usually fixed at 0.95 
+(de la Torre & Chiu, 2016; Ma & de la Torre, 2020; Nájera 
+et al., 2019; Nájera, Sorrel, et al., 2021b), making it difficult to 
+consider changes that the performance of the method suffers 
+as a function of various data conditions. In contrast, the Hull 
+method addresses these issues and can obtain a more accurate 
+Q-matrix, although the full q-vector (represented as qj1∶K ) may 
+be rarely selected. Item j with qj1∶K, with all q-entries equal 
+to 1, means that all K attributes are measured by item j. This 
+method removes all q-vectors that are not part of the convex 
+Hull, and the full q-vector is only selected if the origin and 
+the full q-vector remain (Nájera, Sorrel, et al., 2021b). This 
+means, then, that the full q-vector is not selected as long as a 
+convex Hull plot including three q-vectors exists.
+In addition to the abovementioned methods that rely on a 
+fit index (e.g., PVAF), one other method has recently been 
+developed for general CDMs, based on multiple logistic 
+regression (MLR-B; Tu et al., 2022). The MLR-B method 
+establishes multiple logistic regression with the attributes 
+likely to be measured by item j as independent variables, 
+and examinees’ responses to the item measured as depend-
+ent variables, which yields ­2K − 1 regression formulas. After 
+removing all formulas that contain any nonsignificant regres-
+sion coefficient, the one with the lowest Akaike information 
+criterion (AIC) is selected. The q-vector corresponding to 
+that formula is then the suggested q-vector.
+Reviewing these methods of Q-matrix validation for the 
+saturated model, we noticed that they all pointed to the same 
+goal of searching for the most appropriate qj using all pos-
+sible q-vectors, but every method followed different rules. 
+For instance, the GDI method considers the cutoff point of 
+the PVAF value as the most appropriate qj. The Wald method 
+holds that either all measured q-entries are necessary, or a 
+PVAF larger than 0.95 is the most appropriate qj. Meanwhile, 
+the Hull method considers the qj with the best balance of fit 
+and parsimony as the most appropriate. The goal of all these 
+methods is similar to the recognition or classification task in 
+machine learning (ML), which aims to find the most appropri-
+ate solution out of all possible answers. As such, the validation 
+of a Q-matrix could be considered an ML classification task.
+In recent years, ML has become widely used across vari-
+ous fields due to its outstanding problem-solving ability. ML 
+algorithms learn the rules from data and provide solutions 
+to low-efficiency problems, such as in educational testing 
+(Gierl et al., 2012; Liu et al., 2009; Zhai et al., 2022). These 
+algorithms have also been trialed in cognitive diagnostic 
+assessment. For example, Chiu et al. (2009) used K-means 
+cluster analysis and hierarchical agglomerative cluster anal-
+ysis to cluster examinees with the same attribute profiles, 
+which did not require specifying an item response model. 
+Xue and Bradshaw (2020) trained three types of artificial 
+neural networks to classify examinees, and some of these 
+networks performed better than commonly used CDMs, 
+including the DINA, reparameterized unified model (RUM), 
+
+1918
+	
+Behavior Research Methods (2024) 56:1916–1935
+1 3
+and G-DINA models. Zhao and Huang (2019) attempted to 
+identify cognitive attributes using deep learning classifica-
+tion techniques, and their trained bidirectional long short-
+term memory model achieved classification accuracy of over 
+80%. It is reasonable to assume, then, that ML could be a 
+useful tool in terms of validating Q-matrices, one which 
+could potentially have fewer limitations and accomplish the 
+task better than the existing methods. Therefore, it seems 
+beneficial to explore ML-based methods for Q-matrix 
+validation.
+In consideration of all this, then, this article focuses on 
+two main points: (a) proposing new methods to validate the 
+Q-matrix based on ML, and (b) comparing the performance 
+and effectiveness of these new methods with the existing 
+Q-matrix validation methods.
+The remainder of this article is organized as follows. 
+Section 2 presents a brief review of the G-DINA model. 
+The prevailing methods of Q-matrix validation and several 
+popular ML algorithms are presented in Sections 3 and 4. 
+We then demonstrate the process of training classification 
+models used to validate the Q-matrix, and evaluate these 
+models in Section 5. Next, a summary of two simulation 
+studies implemented to examine the performance of the new 
+methods compared to that of the GDI and Hull methods is 
+covered in Section 6. In Section 7, a real data analysis is 
+presented to illustrate the effectiveness in reality. Finally, a 
+discussion of the results and their implications is provided 
+in Section 8.
+Overview of the G‑DINA model
+The G-DINA is a general model that subsumes most of the 
+reduced CDMs (de la Torre, 2011). Considering a J-item test 
+in a cognitive diagnostic assessment that measured a total of 
+K attributes, K∗
+j = ∑K
+k=1 qjk denotes the number of required 
+attributes for item j, and 휶∗
+lj represents the lth (l = 1, …, 2K∗
+j ) 
+reduced attribute profile among the 2K∗
+j possible reduced 
+attribute profiles. The reduced attribute profile refers specifi-
+cally to the required attributes as measured only by item j. 
+For a dichotomous response case, the canonical form of the 
+dichotomous G-DINA model can be formulated as 
+follows:
+where Pj
+(
+휶∗
+lj
+)
+ is the probability of a reduced attribute profile 
+( 휶∗
+lj ) correctly responding to item j, δj0 denotes the intercept 
+for item j, δjk is the main effect due to αlk, 훿jkk′ is the interact 
+effect due to αlk and 훼lk′ , and 훿j
+(
+12…K∗
+j
+) is the interaction effect 
+due to αl1…훼lK∗
+j.
+Existing methods of Q‑matrix validation
+The GDI method
+The GDI method (de la Torre & Chiu, 2016) was the first 
+proposed as a generalized method for empirical Q-matrix 
+validation as based on the G-DINA model, and is also the 
+basis of subsequent methods such as the Wald and Hull 
+methods. The intrinsic essence of the GDI index (as denoted 
+by 휁2
+j  ) is the weighted variance of all 2K∗
+j attribute profiles’ 
+probabilities of correctly responding to item j, which can be 
+computed as
+where 휔
+(
+휶∗
+lj
+)
+ is the posterior probability of examinees in 
+attribute profile 휶∗
+lj , and Pj is the weighted average of all 
+attribute profiles’ Pj
+(
+휶∗
+lj
+)
+ , as computed by Pj = ∑2
+K∗
+j
+l=1 휔
+
+휶∗
+lj
+
+Pj
+
+휶∗
+lj
+
+.
+The results showed that, theoretically, 휁2
+j is larger 
+when qj is either specified correctly or over-specified, 
+unlike when qj is under-specified, and that when qj is 
+over-specified, 휁2
+j is larger than but close to the value of 
+qj when specified correctly. The value of 휁2
+j continues to 
+increase slightly as the number of over-specified attrib-
+utes increases, until qj becomes qj1∶K . Thus, 휁2
+j ∕휁2
+jmax is 
+computed to indicate the proportion of variance 
+accounted for by qj, called the PVAF. When the PVAF 
+reached a cutoff point—named the EPS, usually fixed at 
+0.95—qj was considered to be specified correctly.
+In view of the disadvantages of the EPS, Nájera et al. 
+(2019) tried to empirically determine the most suitable EPS 
+according to different data conditions. They used a multiple 
+linear regression to find a predictive formula for estimating an 
+optimal EPS value as a function of sample size, test length, and 
+item quality. Although their reported formula could predict the 
+EPS and, to a certain extent, improved the performance of the 
+GDI method, the usefulness of such predictions might remain 
+limited to the specific simulation conditions under which they 
+(2)
+휁2
+j =
+∑2
+K∗
+j
+l=1 휔
+(
+휶∗
+lj
+)[
+Pj
+(
+휶∗
+lj
+)
+−Pj
+]2
+Pj
+(
+휶∗
+lj
+)
+= 𝛿j0 +
+∑K∗
+j
+k=1 𝛿jk𝛼lk +
+∑K∗
+j
+k>k
+∑K∗
+j −1
+k=1 𝛿jkk𝛼lk𝛼lk + ⋯+ 𝛿j
+(
+12…K∗
+j
+) ∏K∗
+j
+k=1 𝛼lk
+(1)
+
+1919
+Behavior Research Methods (2024) 56:1916–1935	
+1 3
+were generated (Nájera, Abad, & Sorrel, 2021a; Nájera, Sor-
+rel, et al., 2021b).
+The Hull method
+Our deconstruction of the GDI method shows that it attempts 
+to validate the Q-matrix by searching for a qj with a larger 
+PVAF but fewer q-entries. That was to say, the GDI method 
+validates the Q-matrix by balancing fit and parsimony. Nájera, 
+Abad, and Sorrel (2021a); Nájera, Sorrel, et al. (2021b) also 
+noticed this issue and proposed that the Hull method is more 
+effective and efficient at improving Q-matrix validation. The 
+Hull method was initially used to retain factors in the explora-
+tory factor analysis framework (Lorenzo-Seva et al., 2011). 
+The method uses the st index to compare various alternate 
+models, and the model with the largest st index value is chosen 
+as the output. The st index is computed as follows:
+where fk is the fit index of the model with k factors; npk is 
+the number of model parameters, and the meaning of the 
+remaining symbols is similar to fk and npk. In terms of 
+CDMs, factor refers to attributes, and the number of model 
+parameters is exactly equal to that used in the G-DINA 
+model (e.g., an item with K∗
+j q-entries has 2K∗
+j model param-
+eters). fk can refer to multiple types of fit indies, such as the 
+PVAF or the McFadden pseudo-R2 (denoted as R2 in this 
+article for convenience; McFadden, 1974), both of which 
+were used in the research of Nájera, Abad, and Sorrel 
+(2021a); Nájera, Sorrel, et al. (2021b). R2 is a determination 
+coefficient usually used in logistic regression models to dem-
+onstrate effect size. In cognitive diagnostic assessment, it 
+could be computed as follows Nájera, Abad, & Sorrel, 
+2021a; Nájera, Sorrel, et al., 2021b:
+where log(Ljm) is the log-likelihood of the model, and 
+log(Lj0) is the log-likelihood of the null model. If there were 
+N examinees taking a test comprising J items, then log(Ljm) 
+would be computed as
+where 휔
+(
+휶∗
+lj|Xi
+)
+ is the posterior probability of examinee i 
+with attribute profile 휶∗
+lj when their response vector is Xi, and 
+Xij is examinee i’s response to item j. Let Xj be the average 
+probability of correctly responding to item j across all N 
+examinees; then log(Lj0) could be computed as
+(3)
+st =
+(fk −fk−1
+)∕(npk −npk−1
+)
+(fk+1 −fk
+)∕(npk+1 −npk
+)
+(4)
+R2
+j = 1 −
+log (Ljm
+)
+log (Lj0
+)
+(5)
+log
+(
+Ljm
+)
+=
+∑N
+i=1 log
+∑2
+K∗
+j
+l=1 휔
+(
+휶∗
+lj|Xi
+)
+Pj
+(
+휶∗
+lj
+)Xij[
+1 −Pj
+(
+휶∗
+lj
+)]
+(
+1−Xij
+)
+Notably, fk + 1 and f0 are not immediately available in the 
+context of CDMs, meaning that neither qj with only one 
+measured attribute (i.e., K∗
+j = 1 ) nor qj1∶K can be selected 
+when using the Hull method. To address these issues, 
+Nájera, Abad, and Sorrel (2021a); Nájera, Sorrel, et al. 
+(2021b) fixed f0 as 0, allowing the Hull method to select qj 
+with only one measured attribute. Furthermore, they 
+attempted to keep a convex Hull plot by removing all q-vec-
+tors whose index remained below the line segment connect-
+ing any other two q-vectors, allowing the Hull method to 
+select full q-vectors only when the original q-vector and full 
+q-vector remain.
+Machine learning
+ML is the study and development of approaches for con-
+structing and improving problem-solving systems (or 
+machine learning models—MLMs) that perform tasks 
+associated with artificial intelligence (AI; Nilsson, 1998; 
+Dietterich, 2003). Such tasks involved classification, pre-
+diction, regression, and so on. In this paper we focused on 
+classification, as Q-matrix validation could be considered a 
+classification task. The goal of classification was to learn the 
+form of a function C = f(x) by analyzing sample datasets con-
+taining a number of (xj, Cj), and each of these satisfying the 
+condition Cj = f(xj). In the ML field, the process of learning 
+the function is also called “training.” xj is an N-dimensional 
+vector (i.e., xj1, xj2, …, xjn, …, xjN) in that each dimension 
+is real-valued according to the features of object j. Cj is the 
+class which object j belongs to. In the context of Q-matrix 
+validation, Cj can be considered one of all the possible 
+q-vectors of item j.
+Two effective ML methods that can be generalized to 
+Q-matrix validation are introduced below.
+Random forest
+Random forest (RF) is an ensemble learning algorithm 
+which combines ntree decision trees. Each of these trees, 
+whose nodes are split using a random selection of features 
+(Breiman, 2001; Goretzko & Bühner, 2020), is built by boot-
+strap samples drawn from the sample dataset. The resulting 
+trees are generated by averaging the results of ntree trees to 
+avoid over-fitting, rather than depending on a single tree. 
+These trees can differ from one another, as only mtry of all 
+features are selected at random to build a tree. This makes 
+the final outcome more robust with respect to noise. In gen-
+eral, mtry takes the value of p/3 (generally used for regression 
+(6)
+log
+(
+Lj0
+) =
+∑N
+i=1 log Xj
+Xij(
+1 −Xj
+)(1−Xij)
+
+1920
+	
+Behavior Research Methods (2024) 56:1916–1935
+1 3
+tasks) or √p (generally used for classification tasks), in 
+which p denotes the number of all features.
+Figure 1 shows a sample structure of a decision tree. A 
+decision tree is a virtual non-parametric supervised learn-
+ing algorithm. It is organized hierarchically and has a root 
+node, branches, internal nodes, and leaf nodes. The tree usu-
+ally starts with a root node and ends in leaf node. A simple 
+example is provided below to demonstrate how a decision 
+tree implements a classification task. Imagine that someone 
+is determining whether a car is theirs. They may follow the 
+steps as shown in Fig. 2 to draw their conclusion. Random 
+forest combines ntree trees and outputs the average or mode 
+results of these trees.
+Feed‑forward neural networks
+In fact, there are different topologies of artificial neural net-
+works that can be categorized as feed-forward and recurrent 
+neural networks. In particular, multilayer feed-forward neu-
+ral networks (FNNs) are broadly considered to be “universal 
+approximators” (Khaldi et al., 2018; Kurt et al., 1989). Due 
+to its versatility, the architecture of the FNN is very popu-
+lar. FNNs are composed of individual, interconnected nodes 
+which receive input from one or more sources that could be 
+either other nodes or data. Some individual nodes comprise 
+a layer, and each layer of the FNN contains connections 
+to the next layer, except the output layer (Heaton, 2015). 
+These connections extend forward only, with no possibility 
+for backward movement. Figure 3 shows an example of an 
+FNN consisting of three layers (i.e., an input layer, a sin-
+gle hidden layer, and an output layer). There are two, three, 
+and two nodes in the input layer, hidden layer, and output 
+layer, respectively. Data x1 ({x11, x12}) is input into each 
+node in the input layer, and the final results are output from 
+the output layer. The equation fxi, wi
+ = 휑∑
+n
+xin ⋅wi
+ , 
+in which the variables xin and wi represent the inputs and 
+weights of the node, shows that each weight is multiplied 
+by its corresponding input. Variable i corresponds to the 
+number of weights and inputs. Each node performs a 
+computation of the equation ( fxi, wi
+ = 휑∑
+n
+xin ⋅wi
+ ), 
+outputting the value to the next layer of nodes. The function 
+φ(·) denotes the activation function that is required by the 
+FNN. In the output layer, each node contains a posterior 
+probability that item j belongs to class c. The node with 
+the largest posterior probability is the one that is ultimately 
+chosen for the purposes of this article.
+Creating machine learning models 
+for Q‑matrix validation
+Our next step was to train MLMs for Q-matrix validation. 
+The training required empirical data (or sample datasets) to 
+learn the function C = f(x). Because of that, both RFs and 
+FNNs were supervised learning algorithms, which require 
+a labeled dataset. However, this is unavailable in real data 
+for cognitive diagnostic assessment. Therefore, we gener-
+ated several simulated sample datasets to train the MLMs. 
+This practice is consistent with that of Goretzko and Bühner 
+(2020), who generated simulated datasets to train MLMs to 
+predict the true number of factors in exploratory factor anal-
+ysis. Features extracted from our generated sample dataset 
+were then fed into the models, and evaluation metrics were 
+developed to measure the quality of the MLMs.
+Sample dataset generation
+Overall, the number of attributes in most of the current cog-
+nitive diagnostic studies is less than 10, usually between 
+Root node 
+Leaf node 
+Leaf node 
+Leaf node 
+Internal node 
+Fig. 1   Schematic structure of a decision tree
+Do they have a car? 
+Not their car 
+Their car 
+Is the license plate number correct? 
+No 
+Yes 
+N
+Ye
+Not their car 
+Fig. 2   An example of a decision tree
+Input layer 
+Hidden layer 
+Output layer 
+Data 
+Fig. 3   FNN with a single hidden layer
+
+1921
+Behavior Research Methods (2024) 56:1916–1935	
+1 3
+three and eight. Therefore, for our MLMs to meet the needs 
+of most cognitive diagnostic studies, we choose three, five, 
+and seven attributes to represent the small, moderate, and 
+large number of attributes for training MLMs, respectively. 
+For each attribute condition, 500 datasets were simulated, 
+of which 70% were used for training and the remaining 30% 
+were used for testing. Note that a K-dimensional identity 
+matrix was included in each Q-matrix when generating 
+response data, to guarantee a positive impact on examinees’ 
+classification accuracy and stability (Fang et al., 2019; Xu, 
+2017). The remaining items in the Q-matrix were drawn 
+randomly from ­2K − 1 possible q-vectors. Table 1 shows an 
+example of a Q-matrix with three attributes and six items.
+The number of items included in the Q-matrix is deter-
+mined by the ratio of the items to attributes (denoted as 
+JK; Nájera, Abad, & Sorrel, 2021a; Nájera, Sorrel, et al., 
+2021b). For instance, a Q-matrix with K = 3 and JK = 4 con-
+tains 3 × 4 = 12 items in total. The value of JK is drawn from 
+a uniform distribution, i.e., JK~U(4, 8). With regard to the 
+quality of the items, Pj(1) denotes the probability of success-
+ful response of examinees in the group that has mastered all 
+measured attributes, while Pj(0) denotes the probability of 
+successful response of the examinees in the group who have 
+not mastered any of the measured attributes (de la Torre & 
+Chiu, 2016; Nájera, Abad, & Sorrel, 2021a; Nájera, Sorrel, 
+et al., 2021b). With that in mind, for each item, 1 − Pj(1) 
+and Pj(0) were generated uniformly between 0 and 0.4 (i.e., 
+Pj(0) & [1 − Pj(1)]~U(0, 0.4).
+Examinees’ attribute profiles were generated following 
+the multivariate normal model (Chiu, 2013; Chiu et al., 
+2009), which is a realistic distribution model that presumes 
+that attribute profiles have unequal probabilities of occur-
+rence. The distribution model allowed for the correlations of 
+attributes. Attribute profiles were drawn from a multivariate 
+normal distribution, MVN(0K, Σ), in which the covariances’ 
+matrix Σ had the following structure:
+All ρs in the matrix Σ were fixed at 0.5 to represent mod-
+erate correlations. The ability of examinee i was denoted by 
+θi = {θi1, θi2…, θiK}, in which every element is drawn from 
+a standard normal distribution. The examinee’s attribute 
+profile αi = {αi1, αi2…, αiK} can be computed individually 
+as follows:
+The number of examinees (N) was drawn from uni-
+form distribution, i.e., N~U(400,   800). Subsequently, the 
+G-DINA model was adopted to generate response data.
+Feature engineering and model training
+Features were extracted such that they should contain the 
+information as to which class the q-vectors of the items 
+could be classified into. According to existing methods of 
+Q-matrix validation (de la Torre & Chiu, 2016; Ma & de la 
+Torre, 2020; Nájera, Abad, & Sorrel, 2021a; Nájera, Sorrel, 
+et al., 2021b), both the PVAFs and McFadden pseudo-R2s 
+were treated as components for constructing the methods. 
+To avoid complex and superfluous input that could inflate 
+the required dataset sample size (Ralston et al., 2003; Shai 
+& Shai, 2014), only one of either the PVAFs or R2s were 
+inputted when training the MLMs.
+When training MLMs, especially when working with the 
+neural network, the data must be normalized (Duda & Hart, 
+1973; Heaton, 2015; Nilsson, 1998; Ralston et al., 2003). 
+The purpose of this is to avoid convergence difficulties 
+⎛
+⎜
+⎜⎝
+1 ⋯휌
+⋮⋱⋮
+휌⋯1
+⎞
+⎟
+⎟⎠
+(7)
+𝛼ik =
+{
+1,
+if 𝜃ik > 𝜑−1(
+k
+1+K
+)
+0, otherwise
+Table 1   Example of Q-matrix for a sample dataset and all possible qjs 
+The matrix on the left, consisting of ­23 − 1 qjs, shows all possible q-vectors that may be contained by the Q-matrix on the right. The first three 
+q-vectors combine to create a three-dimensional identity matrix which is represented in bold in the first three rows of the Q-matrix. The final 
+three rows of the Q-matrix are drawn randomly from the left matrix
+Possible qj
+Items
+Q-matrix
+1
+0
+0
+1
+1
+0
+0
+0
+1
+0
+2
+0
+1
+0
+0
+0
+1
+3
+0
+0
+1
+1
+1
+0
+4
+1
+1
+0
+1
+0
+1
+5
+0
+1
+1
+0
+1
+1
+6
+0
+0
+1
+1
+1
+1
+
+1922
+	
+Behavior Research Methods (2024) 56:1916–1935
+1 3
+due to large differences between features. Researchers will 
+commonly normalize the input data to a value somewhere 
+between 0 and 1. However, the values of both PVAF and R2 
+are naturally between 0 and 1, meaning that the PVAF and 
+R2 values do not need to be normalized. Table 2 shows an 
+example of the input structure extracted from the sample 
+dataset generated in Section 5.1.
+The “randomForest” package (Fortran original by Brei-
+man and Cutler, R port by Liaw et al., 2018) was used to 
+train the random forests. ntree was set to 500 and ntry was set 
+to √p. The “nnet” package (Ripley & Venables, 2022) was 
+then utilized to train the FNNs. These FNNs are the three-
+layer neural networks containing a single hidden layer, and 
+the softmax function was used for activation, as it is appro-
+priate for multiple classification tasks. According to the 
+universal approximation theorem (Hornik, Stinchcombe & 
+White, 1989), an FNN with just one hidden layer is capable 
+of approximating any Borel measurable function. The size 
+of the nodes in the hidden layer were set to 2
+3m + n , in which 
+m denotes the size of the inputs ­(2K − 1), and n denotes the 
+size of the outputs ­(2K − 1), following the recommendations 
+of Heaton (2005).
+Finally, 12 different MLMs were trained using two ML 
+algorithms (i.e., RF or FNN), two kinds of features (i.e., 
+PVAF or R2), and three sample datasets (70% of each dataset 
+serving as training datasets, and the remaining 30% as test 
+datasets).
+Evaluation of the MLMs
+The evaluation metrics of the MLMs were based largely on 
+the confusion matrix. Table 3 presents the results of a three-
+classification task in the form of a confusion matrix.
+Accuracy is one of the typical metrics used to assess 
+MLMs, describing the ratio of the objects that have been 
+correctly classified to all objects. For the example shown in 
+Table 3, this can be computed as accuracy = a+b+c
+m+n+o . Preci-
+sion is the mean of the ratios of items that are classified 
+correctly across all items classified into the same class; for 
+the example shown in Table 3, this can be computed as 
+precision =
+(
+a
+m + b
+n + c
+o
+)
+3
+ . Recall is the mean of the ratios of 
+items that are classified correctly across all items that share 
+the same true class; for the example shown in Table 3, this 
+can be computed as recall =
+(
+a
+j + b
+k + c
+l
+)
+3
+ in the given example. The 
+F1-score is the harmonic mean of precision and recall (Shai 
+& Shai, 2014), computed as F1 −score =
+2
+1
+precision +
+1
+recall
+ . The 
+kappa statistic is generally used to check consistency, and 
+can also be used as an indicator to measure classification 
+accuracy (Sasikala et al., 2017). It can be computed as 
+kappa = P0−Pe
+1−Pe  , in which P0 = accuracy and Pe = ∑
+i
+rowi⋅colj
+휔2
+ . 
+rowi and colj denote the sum of the ith row and the sum of 
+the jth column of the confusion matrix; thus, for Table 3, 
+Pe = j⋅m+k⋅n+l⋅o
+p2
+ . The value of all abovementioned metrics, 
+with the exception of the kappa statistic, are between 0 and 
+1. The kappa value is between −1 and 1, which describes the 
+models’ classification consistency. The larger the value of 
+the metrics, the better the model. The test datasets were used 
+to evaluate each of the 12 MLMs, and the results are pre-
+sented in Fig. 4.
+Figure 4 shows the performance of MLMs trained by the 
+different number of attributes based on the training datasets. 
+The values for all five metrics were similar, and the values of 
+all metrics decreased as the number of attributes increased. 
+The rapid increase in the complexity of the classification 
+task led to a decrease in the evaluation metric values across 
+all MLMs as the K increased. Note that the number of pos-
+sible q-vectors grew exponentially with the increase of K. 
+For instance, MLMs needed to handle a seven-classification 
+Table 2   Example of input structure
+PVAFjl denotes the PVAF value of item j when the lth possible qj is given. Cj denotes the class of item j. There were ­23 − 1 PVAFs, as PVAF can 
+be computed under each possible q-vector
+Item
+Features
+Cj
+PVAF1
+PVAF2
+PVAF3
+PVAF4
+PVAF5
+PVAF6
+PVAF7
+1
+0.997
+0.776
+0.776
+0.998
+0.997
+0.794
+1
+1,0,0
+2
+0.859
+0.982
+0.836
+0.989
+0.865
+0.984
+1
+0,1,0
+…
+…
+…
+…
+j
+PVAFj1
+PVAFj2
+PVAFj3
+PVAFj4
+PVAFj5
+PVAFj6
+PVAFj7
+qj
+…
+…
+…
+…
+Table 3   Confusion matrix for a three-classification task
+Results of classification
+In total
+C1
+C2
+C3
+True classes
+C1
+a
+g
+h
+j
+C2
+d
+b
+i
+k
+C3
+e
+f
+c
+l
+In total
+m
+n
+o
+p
+
+1923
+Behavior Research Methods (2024) 56:1916–1935	
+1 3
+task when K = 3, while they needed to handle a 127-clas-
+sification task when K = 7.
+All values of the four MLMs were similar when K = 3. How-
+ever, the differences between these values grew large when K 
+= 5. For example, the values for RF-P (i.e., accuracy = 0.708, 
+precision = 0.689, recall = 0.659, F1-score = 0.674, kappa = 
+0.696) and FNN-R (i.e., accuracy = 0.688, precision = 0.656, 
+recall = 0.652, F1-score = 0.654, kappa = 0.676) were slightly 
+lower than those for RF-R (i.e., accuracy = 0.728, precision = 
+0.713, recall = 0.680, F1-score = 0.696, kappa = 0.717) and 
+FNN-P (i.e., accuracy = 0.729, precision = 0.708, recall = 
+0.693, F1-score = 0.701, kappa = 0.718). Furthermore, when 
+K = 7, RF-R had slightly higher values in terms across all met-
+rics except for recall, which meant that the MLMs trained by the 
+random forest algorithm using R2 performed slightly better than 
+other models. Specifically, accuracy for RF-R (i.e., 0.607) was 
+higher than for RF-P, FNN-P, and FNN-R (i.e., 0.553, 0.552, 
+0.591, respectively).
+These results demonstrate the models’ ability to classify 
+the test datasets, and support the possibility of using ML 
+methods in Q-matrix validation in practice. However, the 
+results only reveal the in-sample performance of the MLMs, 
+and they might perform quite differently when used in wider, 
+more realistic conditions. Therefore, we tested them using two 
+simulation studies as well as a real data analysis to further 
+examine the performance of the MLMs.
+Simulation studies
+Two simulation studies comprising a variety of data condi-
+tions were conducted. In Study I, we tested the performance 
+of the MLMs that we had already trained in the previous 
+section of this research using specific cases of training con-
+ditions. Study II, meanwhile, used data conditions that were 
+quite different in order to explore the robustness and feasibil-
+ity of the MLMs when the conditions were different from 
+their original training conditions. The factors considered in 
+these two studies are summarized in Table 4.
+Fig. 4   Results of the evaluation metrics for all MLMs. RF-P = random forest models trained with PVAF; RF-R = random forest models trained 
+with R2; FNN-P = feed-forward neural network models trained with PVAF; FNN-R = feed-forward neural network models trained with R2
+Table 4   Summary of factors in simulation studies
+Factors
+Simulation Study I
+Simulation Study II
+Number of attributes (K)
+3; 5; 7
+Item quality (IQ)
+0.8; 0.6; 0.4
+Rate of Q-matrix misspecification (QM)
+0%; 10%; 20%
+Attribute distribution (AD)
+Uniform; Higher-order; Multivar-
+iate-normal
+Q-matrix validation method
+GDI, Hull, MLMs
+Number of examinees (N)
+500; 700
+200; 1000; 1500
+Ratio of number of items to attributes (JK)
+5; 7
+3; 10
+
+1924
+	
+Behavior Research Methods (2024) 56:1916–1935
+1 3
+Simulation Study I
+Method
+(1)	 Design
+A mixed factorial design was employed, using the follow-
+ing variables: number of attributes (K), item quality (IQ), 
+rate of Q-matrix misspecification (QM), attribute distribu-
+tion (AD), number of examinees (N), and ratio of number of 
+items to attributes (JK). The GDI method, the Hull method, 
+and the four validation methods based on MLMs were con-
+ducted using the original Q-matrix.
+The number of measured attributes in each Q-matrix was 
+fixed at three, five, or seven. The Q-matrices simulated in 
+this stage were comparable to those generated when devel-
+oping the sample datasets. Attribute distribution was set as 
+uniform, multivariate-normal, or higher-order (Chiu, 2013). 
+A uniform distribution means that the occurrence probabili-
+ties of all attribute profiles are equal. The multivariate-normal 
+distribution was the same as the distribution used to gener-
+ate the sample datasets in Section 5. Meanwhile, high-order 
+distribution is another widely used distribution (Chiu, 2013; 
+de la Torre & Chiu, 2016; de la Torre & Douglas, 2004; Ma 
+& de la Torre, 2020; Nájera, Sorrel, et al., 2021b). In a high-
+order distribution, the probability of mastering attribute k for 
+examinee i is defined as
+where P(αik = 1| θi, λ0k, λ1k) denotes the conditional prob-
+ability of examinee i mastering attribute k ; λ1k denotes the 
+discrimination parameter of attribute k; λ0k denotes the dif-
+ficulty parameter of attribute k; θi denotes the general uni-
+dimensional latent ability of examinee i. In this study, we 
+used the same high-order distribution as Nájera, Sorrel, et al. 
+(2021b), with the θi parameters drawn from a standard nor-
+mal distribution, the λ1k parameters drawn from a uniform 
+distribution (i.e., U(1, 2)), and the λ0k parameters given equi-
+distant values between −1.5 and 1.5.
+Test length will generally affect the performance of 
+Q-matrix validation methods, and tests measuring a higher 
+number of attributes might require a longer test length to 
+guarantee the effectiveness of the methods (Nájera et al., 
+2019). In this study, JK was set as 5 or 7. Item quality 
+(computed as ∑J
+j=1
+Pj(1)−Pj(0)
+J
+ ) was set as 0.8, 0.6, or 0.4 for 
+high, medium, or low IQ, respectively, which was the same 
+as used by Nájera, Sorrel, et al. (2021b). In such a setup, 
+[1 − Pj(1)] & Pj(0)~U(0, 0.2), [1 − Pj(1)] & Pj(0)~U(0.1, 0.3), 
+and [1 − Pj(1)] & Pj(0)~U(0.2, 0.4) exist when IQ is 0.8, 0.6, 
+and 0.4. The rate of Q-matrix misspecification was set to 0%, 
+(8)
+P(훼ik = 1|휃i, 휆0k, 휆1k
+) =
+exp (휆1k휃i + 휆0k
+)
+1 + exp (휆1k휃i + 휆0k
+)
+10%, or 20%. The number of examinees was set at either 500 
+or 700. In total, there were 3 × 2 × 3 × 3 × 2 × 3 = 324 data 
+conditions. For each of these conditions, 500 repetitive data-
+sets were generated to run the simulations.
+(2)	 Evaluation criteria
+Four dependent variables were used to examine the per-
+formance of the validation methods. The first and main 
+dependent variable was the Q-matrix recovery rate (QRR), 
+which provides information on overall performance, and is 
+defined as
+where qjk denotes the true kth attribute of item j, ̂qjk denotes 
+the suggested kth attribute of item j, and I(·) is the indica-
+tor function. This evaluation criterion is used in most simi-
+lar studies. The second dependent variable was the vector 
+recovery ratio (VRR). This variable shows the ability of the 
+validation method to recover q-vectors, and is determined by
+where qj denotes the true q-vector of item j, and ̂qj denotes 
+the suggested q-vector of item j. Furthermore, the under-
+specification rate (USR) and over-specification rate (OSR) 
+are defined as
+and
+USR and OSR show the validation method’s ten-
+dency to under-specify or over-specify the Q-matrix, with 
+QRR + USR + OSR = 1.
+Results
+The average and standard deviations (SD) of QRRs, VRRs, 
+USRs, and OSRs values were determined for each data con-
+dition. To investigate the effects of the different methods 
+on Q-matrix validation, an analysis of variance (ANOVA) 
+was conducted using average QRRs as dependent variables 
+( F(5, 1938) = 148.03, p < .001, 𝜂2
+p = .276 ); results of the 
+Bonferroni test are shown in Table 5. The Bonferroni test 
+indicated that the average QRRs of the GDI method were 
+significantly lower than those of the other five methods, 
+(9)
+QRR =
+∑J
+j=1
+∑K
+k=1 Iqjk =̂ qjk
+
+J × K
+(10)
+VRR =
+∑J
+j=1 Iqj =̂ qj
+
+J × K
+(11)
+USR =
+∑J
+j=1
+∑K
+k=1 Iqjk >̂ qjk
+
+J × K
+(12)
+OSR =
+∑J
+j=1
+∑K
+k=1 Iqjk <̂ qjk
+
+J × K
+
+1925
+Behavior Research Methods (2024) 56:1916–1935	
+1 3
+with p < .001, and the minimum difference in QRR aver-
+ages between the GDI and the other five methods being 
+0.14. There was no significant difference noted between the 
+average QRRs of the four MLMs, however; only the QRR 
+averages of the RF-P method were significantly higher than 
+those of the Hull method, with p = .04 and the difference in 
+QRR averages being 0.022.
+As the results for all three attribute distributions were 
+very similar, to save space, we have displayed only the 
+results of the Q-matrix validations using the higher-order 
+distributions going forward in this article. However, detailed 
+results for the other conditions are available in the Supple-
+mental Material (https://​osf.​io/​4n3tj/).
+Figure 5 shows the QRR line charts for each method 
+using the higher-order attribute distribution. When K = 3, 
+the average QRR values for all four MLMs were notably 
+higher (i.e., 0.927, 0.924, 0.923, and 0.920 for the RF-P, 
+RF-R, FNN-P and FNN-R methods, respectively) than those 
+for the GDI method (0.914) and the Hull method (0.891). 
+Of all the validation methods, the QRR averages of the Hull 
+method were the lowest. When K = 3, the QRR averages of 
+the other five methods (i.e., RF-P, FR-R, FNN-P, FNN-R, 
+and GDI methods) were 4%, 3.7%, 3.6%, 3.2%, and 2.6% 
+higher, respectively, than those for the Hull method. As for 
+the four MLM-based validation methods, their performance 
+was all very similar.
+Figure 5 also shows the influence of item quality, QM, 
+and N on the QRR values when K = 3. First, the results show 
+that the lower the item quality, the lower the QRR values. 
+For example, all six validation methods (i.e., RF-P, FR-R, 
+FNN-P, FNN-R, GDI, and Hull) performed well, with aver-
+age QRR values of 0.957, 0.956, 0.958, 0.958, 0.950, and 
+0.915, respectively, when item quality was high. However, 
+the equivalent QRR values decreased to 0.887, 0.884, 0.878, 
+Table 5   Results of the Bonferroni test for the six validation methods in Study I
+Data represent the differences in average QRRs with p values in parentheses. RF-P = the RF-P method; RF-R = the RF-R method; FNN-P = the 
+FNN-P method; FNN-R = the FNN-R method; GDI = the GDI method; Hull = the Hull method
+RF-P
+RF-R
+FNN-P
+FNN-R
+GDI
+Hull
+RF-P
+-
+.002 (1.00)
+.011 (1.00)
+.011 (1.00)
+.162 (.00)
+.022 (.04)
+RF-R
+−.002 (1.00)
+-
+.009 (1.00)
+.009 (1.00)
+.160 (.00)
+.020 (.08)
+FNN-P
+−.011 (1.00)
+−.009 (1.00)
+-
+.000 (1.00)
+.151 (.00)
+.011 (1.00)
+FNN-R
+−.011 (1.00)
+−.009 (1.00)
+.000 (1.00)
+-
+.151 (.00)
+.011 (1.00)
+GDI
+−.162 (.00)
+−.160 (.00)
+−.151 (.00)
+−.151 (.00)
+-
+−.140 (.00)
+Hull
+−.022 (0.04)
+−.020 (.08)
+−.011 (1.00)
+−.011 (1.00)
+.140 (.00)
+-
+K=3 
+K=5
+K=7
+Fig. 5   QRR results of each method when AD = higher-order. The 
+horizontal axis of the line chart represents the data condition. For 
+instance, “3-0.8-0-500-5” denotes the condition where K, IQ, QM, 
+N, and JK were set to 3, 0.8, 0, 500, and 5, respectively. RF-P = 
+the RF-P method; RF-R = the RF-R method; FNN-P = the FNN-P 
+method; FNN-R = the FNN-R method; GDI = the GDI method; Hull 
+= the Hull method
+
+1926
+	
+Behavior Research Methods (2024) 56:1916–1935
+1 3
+0.875, 0.865, and 0.863, respectively, when item quality was 
+low. Second, QM also had a large impact on the results, with 
+QRRs decreasing as QM increased. Specifically, the QRR 
+averages of all six validation methods were 8.74%, 9.28 %, 
+9.60%, 11.08%, 10.18%, and 7.24% higher, respectively, 
+when QM = 0 than when QM = 0.2. Third, compared to the 
+influence of item quality and QM, the influence of N was 
+only slight, with QRR averages of the six methods being 
+0.96%, 0.99%, 1.11%, 0.95%, 1.48%, and 0.77% higher, 
+respectively, when N = 700 than when N = 500. The slight 
+variation between the two values (i.e., 500 and 700) could 
+be responsible for these low variations.
+When the number of attributes was increased from 3 to 5 
+and 7, the performance and influence of item quality, QM, 
+and N on QRRs were basically the same as when K = 3, so 
+they are not repeated in order to save space. As the number 
+of attributes increased, however, the QRRs of all valida-
+tion methods, particularly of the GDI methods, declined. 
+When K = 3, the QRR averages of each of the six meth-
+ods were 4.07%, 3.81%, 5.29%, 5.12%, 21.65%, and 2.57% 
+higher, respectively, than when K = 5; when K = 7, they 
+were 2.88%, 3.22%, 2.79%, 4.04%, 40.4%, and 3.57% higher, 
+respectively, than when K = 5.
+Meanwhile, previous findings have indicated that the 
+larger the JK, the higher the QRR (Nájera et al., 2019). How-
+ever, our results showed that the impact of JK was not con-
+sistent. This could be because the Q-matrix was simulated in 
+different ways in the current study. Nájera et al. (2019) used 
+a fixed Q-matrix that contained two K-dimensional identity 
+matrices, and each item measured only three or fewer attrib-
+utes. In the current study, however, the simulated Q-matrix 
+contained one K-dimensional identity matrix, and the other 
+q-vectors were drawn from all possible q-vectors, leading to 
+an increase in the complexity of the Q-matrix, which in turn 
+would have affected the QRRs.
+Figure 6 shows the average VRRs, USRs, and OSRs for 
+each of the six validation methods when using the higher-
+order attribute distribution. The VRR differences were 
+consistent with those of the QRRs, and the impacts of the 
+various factors (i.e., IQ, QM, N, and JK) on the method 
+performance were also the same as discussed previously, 
+so again, we do not repeat them. With regard to the USRs 
+and OSRs, the Hull method tended to under-specify the 
+Q-matrix. This is indicated by the fact that the USRs were 
+the largest, averaging 0.110, while the methods reported 
+average USR results of 0.058, 0.057, 0.054, 0.053, and 
+0.021 for the RF-P, RF-R, FNN-P, FNN-R and GDI meth-
+ods, respectively. Meanwhile, the GDI method tended to 
+over-specify the Q-matrix, as it resulted in the largest OSRs, 
+averaging 0.245, while the equivalent OSRs of the other 
+methods were 0.049, 0.049, 0.063, 0.065, and 0.024 for the 
+RF-P, RF-R, FNN-P, FNN-R and Hull methods, respec-
+tively. Compared to the GDI and Hull methods, the four 
+new validation methods performed better for Q-matrix vali-
+dation in terms of balancing under- and over-specification, 
+also referred to as “balance fit and parsimony” by Nájera, 
+Sorrel, et al. (2021b).
+Simulation Study II
+Design
+Similar to Study I, Study II considered six factors: K, IQ, 
+AD, QM, N, and JK. The first four factors—K, IQ, AD, and 
+QM—were set the same as in Study I. The attribute distribu-
+tion and the item quality in Study I had been set in a wide 
+enough range. For a cognitive diagnostic assessment, the 
+three types of attribute distributions (i.e., uniform, higher-
+order, and multivariate-normal) are commonly used in most 
+studies. Item quality represents the amount of error fluc-
+tuation in the data, which can affect validation method per-
+formance. However, the three types of item quality used in 
+Study I covered the greatest range of variability (de la Torre 
+& Chiu, 2016; Ma & de la Torre, 2020; Nájera et al., 2019; 
+Nájera, Sorrel, et al., 2021b; Yu & Cheng, 2019). K and QM 
+conditions as used in Study I were capable of indicating how 
+validation method performance would change as the number 
+of measured attributes or rate of Q-matrix misspecifications 
+was increased.
+The N and JK in cognitive diagnostic assessments are 
+flexible, however, and can vary greatly. Therefore, we 
+selected wider ranges for both N and JK for Study II. We 
+set N as 200, 1000, and 1500 for small, moderate, and large 
+examinee samples, respectively, and set JK as 3 and 10 to 
+represent situations with short or long test lengths, respec-
+tively. Meanwhile, the Q-matrices used in Study II were dif-
+ferent from those used for training the MLMs, comparable 
+to those employed by Nájera, Sorrel, et al. (2021b). Each 
+Q-matrix contained at least two identical matrices, with each 
+item measuring 1, 2, or 3 attributes. The rate of items meas-
+uring 1, 2, and 3 attributes was 50%, 25%, and 25%, respec-
+tively. The reason for this choice was that the Q-matrices in 
+many empirical studies have been very simple (according to 
+a review of empirical applications by Sessoms & Henson, 
+2018), with most items (i.e., 91.8%) measuring only 1, 2, or 
+3 attributes (Nájera, Abad, & Sorrel, 2021a).
+Finally, the dependent variables used in Study II were the 
+same as those used in Study I.
+Results
+The average and SD of the QRRs, VRRs, USRs, and OSRs 
+were determined for each condition, as in Study I. Similarly, 
+ANOVAs were conducted using QRRs as the dependent 
+variable ( F(5, 2910) = 161.83, p < .001, 𝜂2
+p = .218 ), with the 
+results of the Bonferroni test shown in Table 6. According to 
+
+1927
+Behavior Research Methods (2024) 56:1916–1935	
+1 3
+our results, the QRR averages of the GDI method were sig-
+nificantly lower than those of the other five methods tested 
+in Study II, with p < .001 and the minimum difference of 
+QRR averages between the GDI and the other five methods 
+being 0.148. There were no significant differences between 
+the QRR averages of each of the four MLMs. Although the 
+QRR averages of the Hull method were slightly higher than 
+those of the FNN-P and FNN-R methods, there were no 
+K=3
+K=5
+K=7
+Fig. 6   VRR, USR, and OSR results of each method when AD = 
+higher-order. The horizontal axis of the line chart represents the data 
+condition. For instance, “3-0.8-0-500-5” denotes the condition where 
+K, IQ, QM, N, and JK were set to 3, 0.8, 0, 500, and 5, respectively. 
+RF-P = the RF-P method; RF-R = the RF-R method; FNN-P = 
+the FNN-P method; FNN-R = the FNN-R method; GDI = the GDI 
+method; Hull = the Hull method.
+Table 6   Results of the Bonferroni test on the six validation methods in Study II
+Data represent the differences in average QRRs with p values in parentheses. RF-P = the RF-P method; RF-R = the RF-R method; FNN-P = the 
+FNN-P method; FNN-R = the FNN-R method; GDI = the GDI method; Hull = the Hull method
+RF-P
+RF-R
+FNN-P
+FNN-R
+GDI
+Hull
+RF-P
+-
+.002 (1.00)
+.015 (.498)
+.017 (.248)
+.163 (.00)
+.007 (1.00)
+RF-R
+−.002 (1.00)
+-
+.013 (.99)
+.015 (.53)
+.161 (.00)
+.005 (1.00)
+FNN-P
+−.015 (.498)
+−.013 (.99)
+-
+.002 (1.00)
+.148 (.00)
+−.008 (1.00)
+FNN-R
+−.017 (.248)
+−.015 (.53)
+.002 (1.00)
+-
+.148 (.00)
+−.009 (1.00)
+GDI
+−.163 (.00)
+−.161 (.00)
+−.148 (.00)
+−.148 (.00)
+-
+−.156 (.00)
+Hull
+−.007 (1.00)
+−.005 (1.00)
+.008 (1.00)
+.009 (1.00)
+.156 (.00)
+-
+
+1928
+	
+Behavior Research Methods (2024) 56:1916–1935
+1 3
+significant differences between them. Notably, the RF-P 
+method resulted in the highest QRR averages.
+Figures 7 and 8 show the results of the six validation 
+methods in the higher-order distribution condition. Results 
+of the other attribute distribution conditions were similar; 
+detailed results for all conditions are available in the Sup-
+plemental Material (https://​osf.​io/​4n3tj/).
+Figure 7 shows the average QRR values and SD for each 
+validation method tested in Study II. The performance of 
+the various methods was similar to that in Study I. The four 
+new methods continued to perform better than the Hull and 
+GDI methods, with QRR averages of 0.918, 0.915, 0.917, 
+and 0.915 for the RF-P, RF-R, FNN-P and FNN-R methods, 
+respectively, when K = 3, while the QRR average for the 
+Hull method was lowest (0.871). Meanwhile, when K = 5, 
+the average QRR values for the GDI method (0.785) were 
+the lowest. The average QRR values of the other five vali-
+dation methods were similar, but differed from one another 
+slightly depending on item quality condition. When the item 
+quality was high, the average QRR values of the four new 
+methods (i.e., the RF-P, RF-R, FNN-P, and FNN-R meth-
+ods) were 0.97%, 0.85%, 0.72%, and 0.55% higher, respec-
+tively, than those of the Hull method. When item quality was 
+low, the average QRR values of the four new methods were 
+3.66%, 3.81%, 5.59%, and 5.89% lower, respectively, than 
+those of the Hull method. This demonstrates that the new 
+MLMs performed well when item quality was high, while 
+the Hull method performed best when item quality was low. 
+Finally, the GDI method performed the worst when K = 7. 
+The average QRR values of the four new methods (0.909, 
+0.907, 0.873, and 0.870, respectively) were lower than those 
+of the Hull method (0.919) when item quality was low; how-
+ever, the average QRR values of the four new methods were 
+0.33%, 0.24%, −3.34%, and −3.67% higher, respectively, 
+than those of the Hull method when the item quality was 
+high. Similarly, difference in QRR values between the four 
+new methods and the Hull method were 0.53%, 0.71%, 
+4.96%, and 5.60%, respectively, when item quality was mod-
+erate, and 2.49%, 2.91%, 6.88%, and 7.33%, respectively, 
+when item quality was low. There was almost no difference 
+in QRR values across the RF-P, RF-R, and Hull methods.
+As in Study I, number of attributes, item quality, and 
+QM all had similar impacts on the results of each validation 
+method tested in Study II. Therefore, to save space, we do 
+not discuss these results further. As for N and JK, these were 
+set out of the training conditions described in Section 5, to 
+explore the robustness of the four new MLM-based methods. 
+As in Study I, the larger the sample size, the higher the aver-
+age QRR values. Compared to when N = 200, the average 
+QRR values of each of the four MLMs were 9.06%, 9.07%, 
+9.36%, and 9.46% higher for the RF-P, RF-R, FNN-P, and 
+FNN-R methods, respectively, when N = 1000, and 9.68%, 
+9.60%, 10.22%, and 10.23% higher, respectively, when 
+N = 1500. Study I noted only a small effect of N on each 
+K=3 
+K=5 
+K=7 
+Fig. 7   QRR results of the methods when AD = higher-order in Study 
+II. The horizontal axis of the line chart represents the data condition. 
+For instance, “3-0.8-0-200-3” denotes the condition where K, IQ, 
+QM, N, and JK were set to 3, 0.8, 0, 200, and 3, respectively. RF-P 
+= the RF-P method; RF-R = the RF-R method; FNN-P = the FNN-P 
+method; FNN-R = the FNN-R method; GDI = the GDI method; Hull 
+= the Hull method
+
+1929
+Behavior Research Methods (2024) 56:1916–1935	
+1 3
+validation method, which we speculated could be caused by 
+the small differences in sample sizes (i.e., 500 or 700). Study 
+II supported this speculation, with the impact of sample size 
+on QRRs becoming greater as a larger sample size range 
+was set (i.e., 200, 1000, or 1500). Also similar to Study I, no 
+consistent impact of JK was found.
+Figure 8 shows the average VRR, USR, and OSR values 
+for each validation method tested in Study II. The average 
+VRR values of the five methods (i.e., the RF-P, RF-R, FNN-
+P, FNN-R, and GDI methods) were 3.58%, 3.57%, −2.08%, 
+−2.93%, and −28.47% higher, respectively, than that of the 
+Hull method. The average USRs and OSR values indicate, 
+again, that the Hull method tended to under-specify while 
+the GDI method tended to over-specify the Q-matrix.
+Real data analysis
+The real data were from a sub-dataset of the PISA 2000 
+for German students, which included 20 items taken from 
+Booklets 8 and 9 of the reading assessment (OECD, 2006) 
+obtained from the CDM R package (Robitzsch et al., 
+2020). The dataset consists of non-missing dichotomized 
+responses of 1095 students. Chen and Chen (2015) speci-
+fied a Q-matrix for these items, which was also adopted as 
+the original Q-matrix for the current study (as displayed 
+in Table 7). The PISA 2000 reading assessment measures 
+five attributes: (A1) identifying explicit information, (A2) 
+generalizing main idea, (A3) interpretation and explana-
+tion, (A4) getting inference, and (A5) evaluation and com-
+ment. (Details of these attributes can be found in Chen & 
+Chen, 2015).
+The original Q-matrix has an average agreement rate 
+of 85.8% according to English language experts (Chen & 
+Chen, 2015), which means that there were still a certain 
+number of disagreements regarding the original Q-matrix. 
+For the current study, the same six Q-matrix validation 
+methods that had been verified in both simulation studies 
+were once again adopted to validate the original Q-matrix 
+as identified by Chen and Chen (2015), using the G-DINA 
+model. As shown in Table  7, 9 (Hull), 11 (GDI), 20 
+K=3
+K=5
+K=7
+Fig. 8   VRR, USR, and OSR results for each method when AD = 
+higher-order in Study II. The horizontal axis of the line chart repre-
+sents the data condition. For instance, “3-0.8-0-200-3” denotes the 
+condition where K, IQ, QM, N, and JK were set to 3, 0.8, 0, 200, and 
+3, respectively. RF-P = the RF-P method; RF-R = the RF-R method; 
+FNN-P = the FNN-P method; FNN-R = the FNN-R method; GDI = 
+the GDI method; Hull = the Hull method
+
+1930
+	
+Behavior Research Methods (2024) 56:1916–1935
+1 3
+(RF-P), 14 (RF-R), 32 (FNN-P), and 37 (FNN-R) modifi-
+cations were suggested for the original Q-matrix q-entries.
+The consistencies among the Q-matrices are shown in 
+Table 8. According to these results, the consistency values 
+between the MLMs trained by RF (i.e., RF-P and RF-R) 
+and FNN (i.e., FNN-P and FNN-R) were lower than those 
+between the MLMs trained by RF (i.e., RF-P and RF-R) 
+and the Hull method. This indicates that different ML algo-
+rithms led to different results, and it would be valuable to 
+further explore using other algorithms to train MLMs in 
+future research.
+Using item 14 (ID: R110Q06) as an example, as pre-
+sented in Fig. 9, the item asks about the relationship between 
+the “first part” and “second part”, and the correct answer 
+is option D. The original q-vector of item 14 was [01100], 
+and the q-vectors suggested by the Hull, GDI, RF-P, RF-R, 
+FNN-P, and FNN-R methods were [10100], [11100], 
+[10001], [11100], [11111], and [10100], respectively. All six 
+methods modified the A1 attribute of the original Q-matrix 
+from 0 to 1, which indicates that the A1 attribute is required 
+in correctly responding to the item, and that the attribute 
+in the original Q-matrix may in fact be mis-specified. The 
+requirement of the item suggests that examinees may need to 
+identify the complete sentence “near the end of the article”. 
+Therefore, attribute A1, which was defined as “Locating 
+and recognizing the explicitly stated information in the text 
+Table 7   Q-matrix for PISA 2000 reading assessment data
+Q-entry modifications suggested by: + = Hull method, ^ = GDI method, * = RF-P, italics = RF-R, bold = FNN-P, underlined = FNN-R
+No.
+Item ID
+A1
+A2
+A3
+A4
+A5
+1
+R040Q02
+1
+0
+1
+0+
+0
+2
+R040Q03A
+1
+0
+1
+1
+0
+3
+R040Q03B
+0
+0
+0^
+1
+1^
+4
+R040Q04
+0
+1
+1
+1
+0
+5
+R040Q06
+1
+0
+1
+0
+0*
+6
+R077Q02
+1
+1*+^
+0^
+0
+0
+7
+R077Q04
+1
+1
+1
+0
+0
+8
+R077Q06
+0*
+1
+0
+0
+1
+9
+R088Q01
+0*+
+1
+1
+0+
+0
+10
+R088Q07
+0
+1
+0*
+0
+1
+11
+R110Q01
+1
+1
+0^
+0*
+1*^
+12
+R110Q04
+1
+0*+
+1*
+0
+0
+13
+R110Q05
+1
+0
+0^
+0
+0
+14
+R110Q06
+0*+^
+1*+
+1*
+0
+0*
+15
+R216Q01
+0
+1
+0
+0
+0
+16
+R216Q02
+1
+0
+0*^
+0
+1^
+17
+R216Q03T
+0
+1
+1*+
+0
+0*+
+18
+R216Q04
+0
+1
+1
+0*+
+0
+19
+R216Q06
+0
+1
+0
+1*+^
+0
+20
+R236Q01
+1
+0
+1*
+0
+0*
+Table 8   Consistency among the different methods
+Consistency was computed by 
+∑J
+j=1
+∑K
+k=1 I(q1jk=q2jk)
+J×K
+ , in which q1jk and q2jk came from different Q-matrices. Original = the original Q-matrix; RF-P, 
+RF-R, FNN-P, FNN-R, GDI, and Hull represent the Q-matrices suggested by the RF-P, RF-R, FNN-P, FNN-R, GDI, and Hull methods
+Original
+RF-P
+RF-R
+FNN-P
+FNN-R
+Hull
+GDI
+Original
+1
+RF-P
+0.80
+1
+RF-R
+0.86
+0.82
+1
+FNN-P
+0.68
+0.70
+0.70
+1
+FNN-R
+0.63
+0.63
+0.65
+0.69
+1
+Hull
+0.91
+0.85
+0.83
+0.67
+0.64
+1
+GDI
+0.89
+0.79
+0.85
+0.63
+0.66
+0.84
+1
+
+1931
+Behavior Research Methods (2024) 56:1916–1935	
+1 3
+to solve item problems”, should be specified. Other entries 
+of item 14’s q-vector were modified differently by differ-
+ent validation methods. For example, the A2 attribute was 
+modified from 1 to 0 by only the Hull, RF-P, and FNN-R 
+methods. The A2 attribute, “Generalizing Main Idea”, was 
+defined as “Forming a global understanding of a paragraph 
+and the whole text” by Chen and Chen (2015). However, 
+item 14 asks only about the relationship between the two 
+given sentences, and a “global understanding of a paragraph 
+and the whole text” is not necessary. Therefore, the modi-
+fication of the A2 attribute was understandable and accept-
+able. Furthermore, to understand the relationship between 
+the two sentences in item 14, one may need to “[judge] the 
+forms of writing and author’s opinions”, an aspect of the A5 
+attribute; both the RF-P and FNN-P methods proposed that 
+this attribute should be measured.
+Table 9 shows the relative and absolute model–data fit 
+statistics for the original Q-matrix and suggested Q-matrices. 
+The deviance, AIC (Akaike, 1998), Bayesian information 
+criterion (BIC; Schwarz, 1978), ­M2 statistic (Liu et al., 
+2016), root mean square error of approximation ­(RMSEA2; 
+Liu et al., 2016), and standardized root mean squared resid-
+ual (SRMSR; Ravand & Robitzsch, 2018) were computed. 
+It should be noted that the ­M2 and the ­RMSEA2 statistics 
+could not be computed with the Q-matrix suggested by the 
+FNN-P and FNN-R methods, as the number of degrees of 
+freedom was too low.
+Looking at the ­M2 statistic, only the Q-matrix suggested 
+by the RF-P method fit the data adequately (p = .428 > .05). 
+As for the ­RMSEA2 statistic, the RF-P method fit the data 
+best, with the smallest ­RMSEA2 value (0.004). With regard 
+to the SRSMR statistic, all the suggested Q-matrices were 
+acceptable. Maydeu-Olivares (2013) suggested that mod-
+els with SRMSR values below 0.05 have a substantively 
+negligible amount of misfit. However, to effectively further 
+compare the results of the various suggested Q-matrices, we 
+Fig. 9   Item 14 (ID: R110Q06) of the PISA 2000 reading assessment
+Table 9   Relative and absolute fit statistics for different suggested Q-matrices
+Q-matrix
+Number of 
+parameters
+Relative fit
+Absolute fit
+Deviance
+AIC
+BIC
+M2 test
+RMSEA2
+SRSMR
+M2
+df
+P
+Original
+92
+23,890.77
+24,136.77
+24,751.59
+158.868
+87
+.000
+0.027
+0.040
+Hull
+112
+23,786.41
+24,072.41
+24,787.20
+96.405
+67
+.011
+0.020
+0.036
+GDI
+96
+23,786.33
+24,040.33
+24,675.14
+151.977
+83
+.000
+0.028
+0.035
+RF-P
+112
+23,735.33
+24,021.33
+24,736.11
+68.451
+67
+.428
+0.004
+0.034
+RF-R
+114
+23,734.70
+24,024.70
+24,749.48
+87.504
+65
+.033
+0.018
+0.034
+FNN-P
+260
+23,285.29
+23,867.29
+25,321.85
+-
+-
+-
+-
+0.022
+FNN-R
+260
+23,435.12
+24,017.12
+25,471.69
+-
+-
+-
+-
+0.026
+
+1932
+	
+Behavior Research Methods (2024) 56:1916–1935
+1 3
+considered the Q-matrix with the smallest SRSMR as hav-
+ing the best fit, and the Q-matrix suggested by the FNN-P 
+method performed the best.
+In terms of the relative fit statistics, the matrices sug-
+gested by the GDI method (deviance = 23,786.33, AIC = 
+24,040.33, BIC = 24,675.14), the RF-P method (deviance 
+= 23,735.33, AIC = 24,021.33, BIC = 24,736.11), and the 
+RF-R method (deviance = 23,734.70, AIC = 24,024.70, 
+BIC = 24,749.48) all had a better model fit than the original 
+Q-matrix (deviance = 23,890.77, AIC = 24,136.77, BIC = 
+24,751.59). Although the matrices suggested by the Hull, 
+FNN-P, and FNN-R methods all had smaller deviance and 
+AIC values, their BIC values (24,787.20, 25,321.85, and 
+25,471.69, respectively) were larger than that of the original 
+Q-matrix (24,751.59).
+The fit results indicate that the RF-P method performed 
+better in terms of both absolute and relative model–data fit 
+statistics, as shown in Table 9. However, the real data analy-
+sis was not able to ensure that the suggested Q-matrix was 
+definitely correct in practice. It is important to reiterate that 
+in order to arrive at a theoretically and empirically reason-
+able Q-matrix, the RF-P method should be utilized with the 
+goal of supplying auxiliary information to assist domain 
+experts rather than to take the place of experts in determin-
+ing the association between attributes and items.
+Discussion
+When conducting cognitive diagnostic assessments, the 
+Q-matrix is key to developing CDMs to achieve accurate 
+attribute profile classifications. Due to subjective judgment, 
+however, the Q-matrix as developed by domain experts can 
+be mis-specified, which can lead to significant negative 
+impacts on the classification of examinees, item parameter 
+estimates, and model–data fit (Chiu, 2013; de la Torre, 2008; 
+Gao et al., 2017; Im & Corter, 2011; Li & Suen, 2013; Rupp 
+& Templin, 2008). Researchers have already proposed vari-
+ous validation methods to improve Q-matrix accuracy; how-
+ever, most of these methods are only applicable in reduced 
+models, and existing generalized methods (such as the GDI 
+and the Hull methods) have certain limitations. Taking a 
+new perspective, then, this paper proposed using MLMs to 
+validate the Q-matrix.
+The GDI method requires setting a cutoff point to either 
+a fixed value or by means of limited predictive formulas 
+(Nájera, Abad, & Sorrel, 2021a; Nájera et al., 2019; Nájera, 
+Sorrel, et al., 2021b), causing a lack of robustness. Further, 
+existing research (as well as our current findings) show that 
+the performance of the GDI method deteriorates substan-
+tially with the variation of different data conditions (Ma & 
+de la Torre, 2020;Nájera, Abad, & Sorrel, 2021a ; Nájera, 
+Sorrel, et al., 2021b). This may be because the cutoff point 
+becomes inappropriate when the data conditions change. 
+Considering USR and OSR values, as presented in Figs. 6 
+and 8, the USRs decreased as the OSRs increased rapidly 
+when K and QM increased and item quality and N decreased. 
+Our findings of abnormally large OSRs (e.g., OSRs for the 
+GDI method were all over 0.4 when K = 7 in the simula-
+tion Study I) indicate that the Q-matrix is over-specified. 
+To improve the effectiveness of the GDI validation method, 
+the cutoff point should be lower when the number of attrib-
+utes and the QM increase and item quality and sample size 
+decrease. However, the cutoff point is fixed at 0.95 in most 
+existing studies, including in this paper. Additionally, the 
+predictive formula as proposed by Nájera et al. (2019) may 
+in fact be limited to the specific simulation conditions under 
+which it was generated (Nájera, Abad, & Sorrel, 2021a; 
+Nájera, Sorrel, et al., 2021b).
+Although the Hull method addressed the problems caused 
+by the cutoff point and did perform well in the two simula-
+tion studies, it ultimately appeared to be too strict in its 
+restriction of number of attributes, as it resulted in the largest 
+USR results across all validation methods tested in both 
+Study I and Study II. This could be due to the difficulty of 
+adding an additional “1” into q-vectors when a certain num-
+ber of attributes had already been specified. The core for-
+mula of the Hull method, namely st = (fk−fk−1)∕(npk−npk−1)
+(fk+1−fk)∕(npk+1−npk), 
+results in the selection of the largest st, whose value is deter-
+mined by both the variation in the number of model param-
+eters and the variation in PVAF values. However, the num-
+ber of model parameters (i.e., 2K∗ ) increases exponentially, 
+while this is not the case of with PVAFs, which are always 
+between 0 and 1. In other words, as the number of model 
+parameters increases, the number of model parameters 
+grows faster and faster, while the PVAF values grow more 
+slowly as it approaches 1, making st values decrease and 
+resulting in a convex Hull plot. This is why the Hull method 
+usually under-specifies the Q-matrix. Note that the USRs of 
+the Hull method were notably higher when K = 3 than when 
+K = 5 or 7 in Study II (see Fig. 8.). This could be because 
+the Hull method rarely suggests a fully specified q-vector. 
+To verify this possibility in Study II, we recorded the num-
+ber of fully specified q-vectors suggested by the Hull method 
+when K = 3 (details in Supplemental Material: https://​osf.​
+io/​4n3tj/), and found that less than 5% of the items were 
+suggested as fully specified q-vectors, while roughly 25% of 
+the items were fully specified in the simulated data in total. 
+Theoretically, the Hull method was more likely to suggest a 
+fully specified q-vector when K = 3, because only the q-vec-
+tor containing two attributes needs to be removed from the 
+Hull plot in this case. However, the ratio of the Hull method 
+suggesting items as fully specified q-vectors remained low.
+We did not take into account the MLR-B method in the 
+studies. This is because the MLR-B method differs from the 
+
+1933
+Behavior Research Methods (2024) 56:1916–1935	
+1 3
+six methods that were included in our studies, as it does not 
+require any fit index, such as the PVAF, for example. The 
+MLR-B can be seen as an application of ML in Q-matrix 
+validation, due to its use of multiple logistic regression; 
+however, it differs from the MLMs proposed in the cur-
+rent article in that the MLR-B method performs regression 
+tasks, while the MLMs in this article perform classification 
+tasks. In addition, the MLM methods can directly classify 
+the q-vectors of items into one of ­2K − 1 possible q-vectors, 
+whereas the MLR-B method requires the comparison of the 
+­2K − 1 regression formulas for each item.
+Compared to the GDI and Hull methods, the MLMs pro-
+posed in this paper all demonstrated superior performance in 
+Q-matrix validation, according to the QRR, VRR, USR, and 
+OSR values obtained in both simulated and real-data analy-
+sis. The MLMs effectively avoided the issue of determining 
+an appropriate cutoff point, and their QRRs and VRRs were 
+higher than those of the GDI and Hull methods in most of 
+the tested data conditions. Two ANOVAs with Bonferroni 
+tests were conducted in each of the two simulation studies. 
+Study I analysis results showed that the differences between 
+each of the four MLMs were not statistically significant, 
+while only the QRRs obtained using the RF-P method were 
+significantly higher than those of the Hull method. Study 
+II analysis results showed that there were no statistically 
+significant differences between each of the four MLMs and 
+the Hull method. Synthesizing the results of the two simu-
+lation studies, the MLM-based methods showed clear evi-
+dence of their robustness and feasibility. Overall, the results 
+showed that the performance of the four proposed MLMs 
+(i.e., RF-P, RF-R, FNN-P, and FNN-R) was similar in both 
+of the simulation studies, and the average QRR values of the 
+RF-P method were the highest in both studies. Furthermore, 
+the real-data analysis results as presented in Section 7 prove 
+that the Q-matrix suggested by the RF-P method had the 
+best model–data fit of all the validation methods, suggest-
+ing that this method should be recommended for primary 
+use in practice.
+It is worth noting, however, that despite the promis-
+ing results of the proposed MLMs, there are nonetheless 
+some limitations in the current study that deserve further 
+research. First, as with other studies of this type (de la Torre 
+& Chiu, 2016; Ma & de la Torre, 2020; Nájera, Abad, & 
+Sorrel, 2021a; Nájera, Sorrel, et al., 2021b), the present 
+study assumed that the number of attributes of the origi-
+nal Q-matrix is fixed or known. However, there is advance 
+study to explore the number of attributes in CDMs at present 
+(Nájera, Abad, & Sorrel, 2021a). That is to say, we need to 
+explore how to validate a Q-matrix when the true number 
+of attributes measured by the Q-matrix may not be imme-
+diately clear. Second, based on the features inputted during 
+training, the MLMs trained in this paper can only validate a 
+Q-matrix with the specified number of attributes. For exam-
+ple, the MLMs trained with the features that are extracted 
+from the Q-matrix with three attributes cannot validate the 
+Q-matrix with other numbers of attributes. Although new 
+specific MLMs which are capable of validating a Q-matrix 
+measuring other numbers of attributes can be conveniently 
+trained using the R code we uploaded in OSF (https://​osf.​
+io/​4n3tj/), this restriction cannot be ignored in practice. It 
+is also worth exploring new procedures to train MLMs that 
+may be able to validate Q-matrices with different numbers 
+of attributes, so that MLMs only need to be trained once. 
+Third, while various machine learning algorithms exist, only 
+the random forest and feed-forward neural networks were 
+used in this paper. Applying other machine learning meth-
+ods such as support vector machine or gradient boosting for 
+Q-matrix validation should be addressed in future studies, as 
+other algorithms may perform differently. Finally, the PVAF 
+and the R2 were used as MLM input features in the current 
+study. However, other indicators or statistics, such as Yu 
+and Cheng's residual-based statistic (2019), should also be 
+discussed in future research.
+Funding  This research was supported by the National Natural Science 
+Foundation of China (31900793), the Fundamental Research Funds for 
+the Central Universities (SWU2109222), and the Innovation Research 
+2035 Pilot Plan of Southwest University (SWUPilotPlan006).
+References
+Akaike, H. (1998). Information theory and an extension of the 
+maximum likelihood principle. Selected Papers of Hirotugu 
+Akaike, 199–213. https://​doi.​org/​10.​1007/​978-1-​4612-​1694-
+0_​15
+Breiman, L. (2001). Random forests. Machine Learning, 45, 5–32. 
+https://​doi.​org/​10.​1023/A:​10109​33404​324
+Chen, H., & Chen, J. (2015). Exploring reading comprehension skill 
+relationships through the G-DINA model. Educational Psychology, 
+36, 1049–1064. https://​doi.​org/​10.​1080/​01443​410.​2015.​10767​64
+Chen, Y., Culpepper, S. A., Chen, Y., & Douglas, J. (2018). Bayesian 
+estimation of the DINA Q matrix. Psychometrika, 83, 89–108. 
+https://​doi.​org/​10.​1007/​s11336-​017-​9579-4
+Chiu, C.-Y. (2013). Statistical refinement of the Q-matrix in cogni-
+tive diagnosis. Applied Psychological Measurement, 37, 598–
+618. https://​doi.​org/​10.​1177/​01466​21613​488436
+Chiu, C.-Y., Douglas, J., & Li, X. (2009). Cluster analysis for cog-
+nitive diagnosis: Theory and applications. Psychometrika, 74, 
+633–665. https://​doi.​org/​10.​1007/​S11336-​009-​9125-0
+Chung, M. T. (2019). A Gibbs sampling algorithm that estimates 
+the Q-matrix for the DINA model. Journal of Mathematical 
+Psychology, 93, 102275. https://​doi.​org/​10.​1016/j.​jmp.​2019.​
+07.​002
+de la Torre, J. (2008). An empirically based method of Q-matrix 
+validation for the DINA model: Development and applications. 
+Journal of Educational Measurement, 45, 343–362. https://​doi.​
+org/​10.​1111/j.​1745-​3984.​2008.​00069.x
+
+1934
+	
+Behavior Research Methods (2024) 56:1916–1935
+1 3
+de la Torre, J. (2011). Erratum to: The Generalized DINA Model 
+Framework. Psychometrika, 76, 179–199. https://​doi.​org/​10.​
+1007/​s11336-​011-​9214-8
+de la Torre, J., & Chiu, C.-Y. (2016). A general method of empirical 
+Q-matrix validation. Psychometrika, 81, 528–529. https://​doi.​
+org/​10.​1007/​s11336-​015-​9467-8
+de la Torre, J., & Douglas, J. A. (2004). Higher-order latent trait 
+models for cognitive diagnosis. Psychometrika, 69, 333–353. 
+https://​doi.​org/​10.​1007/​BF022​95640
+Dietterich T. 2003. Machine learning. Encyclopedia of Computer Sci-
+ence. John Wiley and Sons Ltd., GBR, 1056–1059. https://​doi.​org/​
+10.​5555/​10741​00.​10745​63.
+Duda, R. O., & Hart, P. E. (1973). Pattern classification and scene 
+analysis. Wiley.
+Fang, G., Liu, J., & Ying, Z. (2019). On the Identifiability of Diagnos-
+tic Classification Models. Psychometrika, 84, 19–40. https://​doi.​
+org/​10.​1007/​s11336-​018-​09658-x
+Gao, M., Miller, M. D., & Liu, R. (2017). The impact of Q-matrix 
+misspecification and model misuse on classification accuracy in 
+the generalized DINA model. Journal of Measurement and Evalu-
+ation in Education and Psychology, 8, 391–403. https://​doi.​org/​
+10.​21031/​epod.​332712
+Gierl, M. J., Lai, H., & Turner, S. R. (2012). Using automatic item gen-
+eration to create multiple-choice test items. Medical Education, 
+46, 757–765. https://​doi.​org/​10.​1111/j.​1365-​2923.​2012.​04289.x
+Goretzko, D., & Bühner, M. (2020). One model to rule them all? Using 
+machine learning algorithms to determine the number of factors in 
+exploratory factor analysis. Psychological Methods, 6, 776–786. 
+https://​doi.​org/​10.​1037/​met00​00262​。
+Haertel, E. H. (1989). Using restricted latent class models to map 
+the skill structure of achievement items. Journal of Educational 
+Measurement, 26, 301–321. https://​doi.​org/​10.​1111/j.​1745-​3984.​
+1989.​tb003​36.x
+Heaton, J. (2005). Introduction to Neural Networks with Java. Heaton 
+Research, Inc.
+Heaton, J. (2015). Artificial Intelligence for Humans, Volume 3: Deep 
+Learning and Neural Networks. Heaton Research, Inc.
+Henson, R. A., Templin, J. L., & Willse, J. T. (2009). Defining a family 
+of cognitive diagnosis models using log-linear models with latent 
+variables. Psychometrika, 74, 191–210. https://​doi.​org/​10.​1007/​
+S11336-​008-​9089-5
+Hornik, K., Stinchcombe, M., & White, H. (1989). Multilayer feed-
+forward networks are universal approximators. Neural Networks, 
+2(5), 359–366. https://​doi.​org/​10.​1016/​0893-​6080(89)​90020-8
+Im, S., & Corter, J. E. (2011). Statistical consequences of attribute mis-
+specification in the rule space method. Educational and Psycho-
+logical Measurement, 71, 712–731. https://​doi.​org/​10.​1177/​00131​
+64410​384855
+Khaldi, R., Chiheb, R., & Afia, A.E. (2018). Feedforward and Recur-
+rent Neural Networks for Time Series Forecasting: Compara-
+tive Study. In: Proceedings of the International Conference on 
+Learning and Optimization Algorithms: Theory and Applications 
+(LOPAL '18). Association for Computing Machinery, New York, 
+NY, USA, Article 18, 1–6. https://​doi.​org/​10.​1145/​32309​05.​32309​
+46.
+Kurt, H., Maxwell, S., & Halbert, W. (1989). Multilayer Feedforward Net-
+works are Universal Approximators. Neural Networks, 2, 359–366. 
+https://​doi.​org/​10.​1016/​0893-​6080(89)​90020-8
+Li, H., & Suen, H. K. (2013). Constructing and validating a Q-matrix 
+for cognitive diagnosis analyses of a reading test. Educational 
+Assessment, 18, 1–25. https://​doi.​org/​10.​1080/​10627​197.​2013.​
+761522
+Liaw A., Wiener M., Breiman L., Cutler A. (2018). Breiman and Cut-
+ler's Random Forests for Classification and Regression. R package 
+version 4.6-14.
+Liu, Y., Yang, C., & Ma, W. (2009). Automatic pronunciation scoring 
+for Mandarin proficiency test based on speech recognition. In: 
+2009 International Symposium on Intelligent Ubiquitous Com-
+puting and Education IEEE, 168-171. https://​doi.​org/​10.​1109/​
+IUCE.​2009.​31.
+Liu, Y., Tian, W., & Xin, T. (2016). An application of M2 statistic to 
+evaluate the ft of cognitive diagnostic models. Journal of Edu-
+cational and Behavioral Statistics, 41, 3–26. https://​doi.​org/​10.​
+3102/​10769​98615​621293
+Lorenzo-Seva, U., Timmerman, M. E., & Kiers, H. A. (2011). The 
+Hull method for selecting the number of common factors. Mul-
+tivariate Behavioral Research, 46, 340–364. https://​doi.​org/​10.​
+1080/​00273​171.​2011.​564527
+Ma, W., & de la Torre, J. (2020). An empirical Q-matrix valida-
+tion method for the sequential generalized DINA model. Brit-
+ish Journal of Mathematical and Statistical Psychology, 73, 
+142–163. https://​doi.​org/​10.​1111/​bmsp.​12156
+Ma, W., Iaconangelo, C., & de la Torre, J. (2016). Model similarity, 
+model selection, and attribute classification. Applied Psycho-
+logical Measurement, 40, 200–217. https://​doi.​org/​10.​1177/​
+01466​21615​621717
+Maydeu-Olivares, A. (2013). Goodness-of-fit assessment of item 
+response theory models. Measurement. Interdisciplinary 
+Research and Perspectives, 11, 71–101. https://​doi.​org/​10.​1080/​
+15366​367.​2013.​831680
+McFadden, D. (1974). Conditional logit analysis of qualitative choice 
+behavior. In P. Zarembka (Ed.), Frontiers in economics (pp. 
+105–142). Academic Press.
+Nájera, P., Sorrel, M. A., & Abad, F. J. (2019). Reconsidering cutoff 
+points in the general method of ´ empirical Q-matrix validation. 
+Educational and Psychological Measurement, 79, 727–753. 
+https://​doi.​org/​10.​1177/​00131​64418​822700
+Nájera, P., Abad, F. J., & Sorrel, M. A. (2021a). Determining the num-
+ber of attributes in cognitive diagnosis modeling. Frontiers in Psy-
+chology, 12, 614470. https://​doi.​org/​10.​3389/​fpsyg.​2021.​614470
+Nájera, P., Sorrel, M. A., de la Torre, J., & Abad, F. J. (2021b). Bal-
+ancing fit and parsimony to improve Q-matrix validation. British 
+Journal of Mathematical and Statistical Psychology, 74, 110–130. 
+https://​doi.​org/​10.​1111/​bmsp.​12228
+Nilsson, N. J. (1998). Introduction to Machine Learning. Stanford 
+University.
+OECD. (2006). PISA released items: Reading. http://​www.​oecd.​org/​
+pisa/​38709​396.​pdf.
+Ralston, A., Reilly, E. D., & Hemmendinger, D. (2003). Encyclopedia 
+of Computer Science. John Wiley and Sons Ltd..
+Ravand, H., & Robitzsch, A. (2018). Cognitive diagnostic model of 
+best choice: a study of reading comprehension. Educational Psy-
+chology, 38, 1255–1277. https://​doi.​org/​10.​1080/​01443​410.​2018.​
+14895​24
+Ripley, B. & Venables, W. (2022). Feed-Forward Neural Networks 
+and Multinomial Log-Linear Models. R package version 7.3-17.
+Robitzsch, A., Kiefer, T, George, A., & Uenlue, A. (2020). Cognitive 
+Diagnosis Modeling. R package version 7.5-15.
+Rupp, A., & Templin, J. (2008). The effects of Q-matrix misspecifi-
+cation on parameter estimates and classification accuracy in the 
+DINA model. Educational and Psychological Measurement, 68, 
+78–96. https://​doi.​org/​10.​1177/​00131​64407​301545
+Sasikala, B., Biju, V.G., & Prashanth, C.M. (2017). Kappa and accu-
+racy evaluations of machine learning classifiers. In: 2017 2nd 
+IEEE International Conference on Recent Trends in Electronics, 
+Information & Communication Technology (RTEICT), 20-23.
+Schwarz, G. (1978). Estimating the dimension of a model. The Annals 
+of Statistics, 6, 461–464. https://​doi.​org/​10.​1214/​aos/​11763​44136
+Sessoms, J., & Henson, R. A. (2018). Applications of diagnostic clas-
+sification models: A literature review and critical commentary. 
+
+1935
+Behavior Research Methods (2024) 56:1916–1935	
+1 3
+Measurement: Interdisciplinary Research and Perspectives, 16(1), 
+1–17. https://​doi.​org/​10.​1080/​15366​367.​2018.​14351​04
+Shai, S. S., & Shai, B. D. (2014). Understanding Machine Learning: 
+From Theory to Algorithms. Cambridge University Press.
+Tatsuoka, K. K. (1983). Rule space: An approach for dealing with mis-
+conception based on item response theory. Journal of Educational 
+Measurement, 20, 345–354. https://​doi.​org/​10.​1111/j.​1745-​3984.​
+1983.​tb002​12.x
+Tu, D., Chiu, J., Ma, W., Wang, D., Cai, Y., & Ouyang, X. (2022). 
+A multiple logistic regression-based (MLR-B) Q-matrix vali-
+dation method for cognitive diagnosis models: A confirmatory 
+approach. Behavior Research Methods, 1–13. https://​doi.​org/​10.​
+3758/​s13428-​022-​01880-x
+von Davier, M. (2005). A general diagnostic model applied to language 
+testing data. ETS Research Report RR-05-16.
+Wang, W. Y., Song, L. H., Ding, S. L., Meng, Y. R., Cao, C. X., & 
+Jie, Y. J. (2018). An EM-based method for Q-matrix validation. 
+Applied Psychological Measurement, 42, 446–459. https://​doi.​org/​
+10.​1177/​01466​21617​752991
+Xu, G. (2017). Identifiability of restricted latent class models with binary 
+responses. The Annals of Statistics, 45, 675–707. https://​doi.​org/​10.​
+1214/​16-​aos14​64
+Xue, K., & Bradshaw, L. P. (2020). A semi-supervised learning-based 
+diagnostic classification method using artificial neural networks. 
+Frontiers in Psychology. https://​doi.​org/​10.​3389/​fpsyg.​2020.​
+618336
+Yu, X., & Cheng, Y. (2019). Data-driven Q-matrix validation using a 
+residual-based statistic in cognitive diagnosis assessment. British 
+Journal of Mathematical and Statistical Psychology, 73, 145–179. 
+https://​doi.​org/​10.​1111/​bmsp.​12191
+Zhai, X., Haudek, K. C., & Ma, W. (2022). Assessing argumenta-
+tion using machine learning and cognitive diagnostic mod-
+eling. Research in Science Education. https://​doi.​org/​10.​1007/​
+s11165-​022-​10062-w
+Zhao, S., & Huang, X. (2019). Identifying cognitive attributes using 
+deep learning classification techniques. Proceedings of the Inter-
+national Workshop on Artificial Intelligence and Education. 
+https://​doi.​org/​10.​1145/​33974​53.​33974​58
+Open practices statement  R code for the four proposed MLMs (i.e., 
+RF-P, RF-R, FNN-R, and FNN-R) for Q-matrix validation can be found 
+at: https://​osf.​io/​4n3tj/. None of the experiments were preregistered.
+Publisher’s note  Springer Nature remains neutral with regard to 
+jurisdictional claims in published maps and institutional affiliations.
+Springer Nature or its licensor (e.g. a society or other partner) holds 
+exclusive rights to this article under a publishing agreement with the 
+author(s) or other rightsholder(s); author self-archiving of the accepted 
+manuscript version of this article is solely governed by the terms of 
+such publishing agreement and applicable law.
