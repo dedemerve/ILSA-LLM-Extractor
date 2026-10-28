@@ -53,6 +53,31 @@ from chunking import (  # noqa: E402
     user_messages,
 )
 from eval_extraction import _shingles, find_source_text, grounding_score, load_gold  # noqa: E402
+
+INVENTORY_CSV = ROOT / "outputs/finetuning/source_recovery/full_source_inventory.csv"
+GOLD_CSV = ROOT / "outputs/finetuning/data/gold_standard_full_corpus_v1.4.1.csv"
+
+
+def load_corpus():
+    """Return DataFrame(study_id, title, program, cycle) for 577 text-extracted corpus studies.
+
+    Metadata for studies present in gold comes from gold; non-gold studies default to
+    program='PISA' and cycle='multiple', which is correct for the vast majority of the corpus.
+    """
+    import pandas as pd
+
+    inv = pd.read_csv(INVENTORY_CSV, dtype=str)
+    inv = inv[inv["text_extracted"].str.strip().str.lower() == "true"].copy()
+    gold = pd.read_csv(GOLD_CSV, dtype=str)
+    gold_meta = gold.groupby("study_id")[["title", "program", "cycle"]].first().reset_index()
+    merged = inv.merge(gold_meta, left_on="file_name", right_on="study_id", how="left",
+                       suffixes=("_inv", "_gold"))
+    result = merged.copy()
+    result["study_id"] = merged["file_name"]
+    result["title"] = merged["title_gold"].fillna(merged["title_inv"])
+    result["program"] = merged["program"].fillna("PISA")
+    result["cycle"] = merged["cycle"].fillna("multiple")
+    return result[["study_id", "title", "program", "cycle"]]
 from ilsa_schema import (  # noqa: E402
     CHUNK_FIELDS, MethodsOutput, json_schema, methods_json_schema, normalize_text, parse_output,
 )
@@ -289,8 +314,18 @@ def check_test_lock(split: str, arm: str, final: bool) -> None:
 
 
 def run(args: argparse.Namespace) -> Path:
-    gold = load_gold(args.split)
-    studies = sorted(gold["study_id"].unique())
+    if args.split == "corpus":
+        import pandas as pd
+        meta_df = load_corpus()
+        study_meta = {row["study_id"]: (row["title"], row["program"], row["cycle"])
+                      for _, row in meta_df.iterrows()}
+        studies = sorted(study_meta.keys())
+    else:
+        gold = load_gold(args.split)
+        study_meta = {sid: (str(g["title"].iloc[0]), str(g["program"].iloc[0]), str(g["cycle"].iloc[0]))
+                      for sid in gold["study_id"].unique()
+                      for g in [gold[gold["study_id"] == sid]]}
+        studies = sorted(study_meta.keys())
     if args.limit:
         studies = studies[:args.limit]
     if args.backend == "vllm":
@@ -304,8 +339,7 @@ def run(args: argparse.Namespace) -> Path:
 
     predictions = []
     for n, sid in enumerate(studies, 1):
-        g = gold[gold["study_id"] == sid]
-        title, program, cycle = str(g["title"].iloc[0]), str(g["program"].iloc[0]), str(g["cycle"].iloc[0])
+        title, program, cycle = study_meta[sid]
         source = find_source_text(sid)
         if source is None:
             predictions.append({"study_id": sid, "pairs": [], "status": "missing_source"})
@@ -385,7 +419,7 @@ def main() -> None:
     ap.add_argument("--adapter")
     ap.add_argument("--base-url", default="https://api.together.xyz/v1")
     ap.add_argument("--api-key-env", default="TOGETHER_API_KEY")
-    ap.add_argument("--split", default="val", choices=["train", "val", "test"])
+    ap.add_argument("--split", default="val", choices=["train", "val", "test", "corpus"])
     ap.add_argument("--arm", required=True, help="label of this experimental arm")
     ap.add_argument("--demos", type=int, default=0)
     ap.add_argument("--min-interval", type=float, default=0.0, help="seconds between API calls (TPM limits)")
