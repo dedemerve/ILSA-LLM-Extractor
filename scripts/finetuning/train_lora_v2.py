@@ -227,7 +227,7 @@ def main() -> None:
     args.out.mkdir(parents=True, exist_ok=True)
     targs = TrainingArguments(
         output_dir=str(args.out), num_train_epochs=args.epochs, learning_rate=args.lr,
-        lr_scheduler_type="cosine", warmup_ratio=0.05, weight_decay=0.0,
+        lr_scheduler_type="cosine", warmup_steps=4, weight_decay=0.0,
         per_device_train_batch_size=args.batch_size, per_device_eval_batch_size=1,
         gradient_accumulation_steps=args.grad_accum, bf16=True,
         optim="paged_adamw_8bit" if args.load_in_4bit else "adamw_torch",
