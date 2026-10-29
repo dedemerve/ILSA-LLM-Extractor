@@ -17,6 +17,8 @@
 
 | A0 `base_qwen3_chunked` | Qwen3-8B, non-thinking | none | 0.041 | 0.110 | 0.192 |
 | A1 `qwen3_lora_selected` | Qwen3-8B, non-thinking | LoRA v2 (rank 16, checkpoint-81) | **0.057** | 0.200 | 0.371 |
+| A0 `base_qwen3_chunked` **(TEST)** | Qwen3-8B, non-thinking | none | 0.039 | 0.288 | — |
+| A1 `qwen3_lora_selected` **(TEST)** | Qwen3-8B, non-thinking | LoRA v2 (rank 16, checkpoint-81) | **0.060** | 0.180 | — |
 
 ## Notes
 
@@ -31,8 +33,10 @@
 
 ## H1 result
 
-**H1 DESTEKLENDI:** A1 strict F1 (0.057) > A0 strict F1 (0.041). LoRA fine-tuning, val split üzerinde base Qwen3-8B'ye göre strict pair F1'i artırdı.  
-Selected adapter: checkpoint-81 (epoch 3).
+**H1 DESTEKLENDI (val ve test):** A1 strict F1 > A0 strict F1 her iki split'te. LoRA fine-tuning, base Qwen3-8B'ye göre strict pair F1'i artırdı.  
+- Val: A1=0.057 > A0=0.041  
+- Test: A1=0.060 > A0=0.039  
+Selected adapter: checkpoint-81 (epoch 3). max_model_len=16384 (A0), 12288 (A1, LoRA).
 
 ## Success criteria status
 
@@ -40,3 +44,4 @@ Selected adapter: checkpoint-81 (epoch 3).
 - [x] A1 strict pair F1 on val > A0 strict pair F1 on val (0.057 > 0.041)
 - [x] Adapter reloads with strict=True and tensor comparison passes (fallback key check)
 - [x] results_summary.md written with all completed arm F1 scores
+- [x] A0/A1 test set evaluation completed (A0 strict=0.039, A1 strict=0.060)
