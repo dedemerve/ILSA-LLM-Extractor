@@ -49,10 +49,14 @@ except ImportError:
 PROJECT_ROOT  = Path(__file__).resolve().parents[1]
 STAGE4_DIR    = PROJECT_ROOT / "outputs" / "stage4"
 STAGE5_DIR    = PROJECT_ROOT / "outputs" / "stage5"
-# enriched_panel varsa onu kullan, yoksa eski country_estimates'e düş
+# unified_panel varsa kullan (tüm 7 program + lag_ kovaryatlar + legacy PISA cycle'ları)
+# yoksa country_estimates'e düş
+_UNIFIED      = STAGE5_DIR / "unified_panel.csv"
 _ENRICHED     = STAGE5_DIR / "enriched_panel.csv"
 _ESTIMATES    = STAGE4_DIR / "country_estimates.csv"
-ESTIMATES_CSV = _ENRICHED if _ENRICHED.exists() else _ESTIMATES
+ESTIMATES_CSV = _UNIFIED if _UNIFIED.exists() else (
+    _ENRICHED if _ENRICHED.exists() else _ESTIMATES
+)
 # v2 ağırlıklar varsa onu kullan, yoksa v1'e düş
 _WEIGHTS_V2   = STAGE5_DIR / "predictor_weights_v2.csv"
 _WEIGHTS_V1   = STAGE4_DIR / "predictor_weights.csv"
@@ -578,12 +582,13 @@ def run_loco(
                     })
                 for j, cnt in enumerate(common_c_):
                     pred_rows.append({
-                        "program": prog, "domain": dom, "test_cycle": test_cycle,
+                        "program": prog, "domain": dom, "cycle": test_cycle,
                         "country_iso3": cnt,
                         "y_true": round(float(y_te_[j]), 4),
-                        "y_M0A": float("nan"), "y_M0": float("nan"),
-                        "y_M1": float("nan"), "y_M3": float("nan"),
+                        "y_M0": float("nan"),
+                        "y_M1": float("nan"),
                         "y_M2": round(float(y_m2_[j]) if not np.isnan(y_m2_[j]) else float("nan"), 4),
+                        "n_train": 0, "n_test": int(mask_.sum()),
                     })
                 continue
 
@@ -640,14 +645,13 @@ def run_loco(
 
             for j, cnt in enumerate(common_c):
                 pred_rows.append({
-                    "program": prog, "domain": dom, "test_cycle": test_cycle,
+                    "program": prog, "domain": dom, "cycle": test_cycle,
                     "country_iso3": cnt,
                     "y_true": round(float(y_te[j]), 4),
-                    "y_M0A": round(float(y_m0a[j]) if not np.isnan(y_m0a[j]) else float("nan"), 4),
                     "y_M0":  round(float(y_m0[j]), 4),
                     "y_M1":  round(float(y_m1[j]), 4),
                     "y_M2":  round(float(y_m2[j]) if not np.isnan(y_m2[j]) else float("nan"), 4),
-                    "y_M3":  round(float(y_m3[j]) if not np.isnan(y_m3[j]) else float("nan"), 4),
+                    "n_train": len(y_tr), "n_test": len(y_te),
                 })
 
         if fold_preds["y_true"]:
@@ -724,7 +728,28 @@ def run_loco(
     preds_df   = pd.DataFrame(pred_rows)
     shap_df    = pd.DataFrame(shap_rows)
 
-    shap_df = pd.DataFrame(shap_rows)
+    # Join se_true from country_estimates (always from the canonical file, not enriched_panel)
+    _est_for_se = pd.read_csv(_ESTIMATES)
+    _est_for_se["program"] = _est_for_se["program"].str.upper()
+    _est_for_se["domain"]  = _est_for_se["domain"].str.lower()
+    se_lookup = (
+        _est_for_se[["program", "cycle", "country_iso3", "domain", "se"]]
+        .rename(columns={"se": "se_true"})
+    )
+    preds_df = preds_df.merge(
+        se_lookup, on=["program", "cycle", "country_iso3", "domain"], how="left"
+    )
+    for m in ("M0", "M1", "M2"):
+        preds_df[f"resid_{m}"] = preds_df["y_true"] - preds_df[f"y_{m}"]
+
+    col_order = [
+        "program", "cycle", "country_iso3", "domain",
+        "y_true", "se_true",
+        "y_M0", "y_M1", "y_M2",
+        "resid_M0", "resid_M1", "resid_M2",
+        "n_train", "n_test",
+    ]
+    preds_df = preds_df[col_order]
 
     results_df.to_csv(OUT_RESULTS, index=False)
     preds_df.to_csv(OUT_PREDS,    index=False)

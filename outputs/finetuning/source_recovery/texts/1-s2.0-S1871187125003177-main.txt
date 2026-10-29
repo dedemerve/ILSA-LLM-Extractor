@@ -1,0 +1,1607 @@
+Thinking Skills and Creativity 60 (2026) 102069
+
+Contents lists available at ScienceDirect
+
+Thinking Skills and Creativity
+journal homepage: www.elsevier.com/locate/tsc
+
+Interpretable machine learning reveals key determinants of
+creative thinking among East Asian students: Evidence from
+PISA 2022
+Hui Chen a,1 , Hongji Deng a,1 , Hao Yu a , Yan Dong a,*, Huazhen Wang b,*
+a
+b
+
+Faculty of Education, Beijing Normal University, No.19 Xinjiekouwai Street, Haidian District, 100875, Beijing, China
+College of Computer Science and Technology, Huaqiao University, No.668 Jimei Avenue, Jimei District, Xiamen 361021, Fujian, China
+
+A R T I C L E I N F O
+
+A B S T R A C T
+
+Keywords:
+PISA 2022
+Creative thinking
+Factors influencing creative thinking
+Interpretable machine learning
+SHAP method
+
+This study investigates the key factors and underlying mechanisms influencing creative thinking
+among East Asian secondary school students using PISA 2022 data. Using a rigorous machine
+learning approach, we compared five predictive models and identified LightGBM as the most
+accurate in forecasting creative thinking. We subsequently employed SHAP (SHapley Additive
+exPlanations), an interpretable machine learning technique, to quantify feature contributions and
+decompose individual predictions into additive effects, enabling both global and local interpretability. The results revealed three key findings: 1) Academic performance (reading, science,
+and math performance), ESCS (family economic, social and cultural status), and gender were the
+five most important predictors; 2) While reading and science performance exhibited a nearly
+linear positive relationship with creative thinking, ESCS, math performance, empathy and selfefficacy in digital competencies exhibit threshold effects—their positive influence was strongest
+within optimal value ranges. By contrast, creative family climate and expected educational
+attainment showed negative relationship with creative thinking; 3) SHAP-based interaction analyses identified the strongest interactions between reading performance and ESCS, science
+performance and gender, and science performance and ESCS. These findings enhance the theoretical understanding of the multidimensional determinants of creative thinking in East Asian
+educational contexts and provide researchers and practitioners with empirically grounded insights for designing targeted interventions.
+
+Creativity has been widely recognized as a fundamental 21st-century competency and an essential element of contemporary education (Chen et al., 2025a; Zhang et al., 2021). This is evidenced by its prominent inclusion in the 5Cs framework developed by the
+Partnership for 21st Century Learning (P21), where creativity constitutes a core dimension for future-ready individuals (Gan et al.,
+2020). Importantly, creativity development depends not merely on fostering intuitive and inspirational processes, but more crucially
+on cultivating core cognitive capacities, particularly creative thinking (Dietrich, 2004). Therefore, educational policy for creativity
+enhancement should prioritize the systematic development of creative thinking skills.
+Since 2000, the OECD’s Programme for International Student Assessment (PISA) has served as a benchmark for evaluating global
+education systems through standardized assessments of 15-year-olds’ competencies. Conducted triennially, PISA administers tests in
+* Corresponding authors.
+E-mail addresses: yan.dong@bnu.edu.cn (Y. Dong), wanghuazhen@hqu.edu.cn (H. Wang).
+1
+Hui Chen and Hongji Deng are the co-first authors
+https://doi.org/10.1016/j.tsc.2025.102069
+Received 19 June 2025; Received in revised form 22 October 2025; Accepted 17 November 2025
+Available online 19 November 2025
+1871-1871/© 2025 Elsevier Ltd. All rights are reserved, including those for text and data mining, AI training, and similar technologies.
+
+Thinking Skills and Creativity 60 (2026) 102069
+
+H. Chen et al.
+
+reading, mathematics, and science to nationally representative samples exceeding 500,000 students worldwide, complemented by
+comprehensive contextual questionnaires (Barbot & Kaufman, 2025). The 2021 assessment introduced creative thinking as an
+innovative assessment domain (OECD 2024a). This groundbreaking initiative evaluated over 140,000 adolescents across more than 60
+OECD countries and economies, constituting the most extensive cross-national dataset on creative thinking to date. Notably, five East
+Asian economies (i.e., South Korea, Singapore, Hong Kong-China, Macao-China, and Chinese Taipei) participated in the creative
+thinking assessment (OECD 2024a). These economies are widely regarded as prototypical East Asian societies, characterized by a
+shared Confucian heritage that values academic achievement, discipline, and respect for authority, coupled with high economic
+development and well-resourced, examination-oriented education systems (Hanushek & Woessmann, 2023). This combination of
+cultural and institutional characteristics offers a highly relevant and representative context in which to explore how multiple factors
+influence students’ creative thinking within high-performing, high-pressure educational environments (Li et al., 2025a).
+A systematic investigation of the key factors shaping students’ creative thinking is essential for enabling educational policymakers
+to design targeted interventions and developmental strategies that effectively foster creative competencies. Building on the established
+theoretical frameworks and empirical evidence, this study primarily develops a comprehensive analytical framework of factors
+influencing secondary school students’ creative thinking, encompassing both individual and environmental dimensions. Subsequently,
+leveraging PISA 2022 assessment data from East Asian economies, we employ an interpretable machine learning technique, a novel
+approach in this research domain, to identify critical determinants and elucidate their mechanisms in shaping adolescents’ creative
+thinking, overcoming the limitations of conventional analytical methods used in prior studies. The findings offer empirically grounded
+insights to inform policy formulation, educational research, and classroom practices aimed at nurturing creative thinking within East
+Asian cultural contexts.
+1. Literature review
+1.1. The definition of creative thinking in PISA
+PISA defines creative thinking as “the competence to engage productively in the generation, evaluation and improvement of ideas
+that can result in original and effective solutions, advances in knowledge and impactful expressions of imagination (OECD, 2019)”.
+This conceptualization aligns with the cognitive processes and outcomes characteristic of “little-c” creativity (Kaufman & Beghetto,
+2009). That is, the form of creative thinking that adolescents aged 15 can realistically demonstrate in everyday educational contexts,
+such as those creative actions in which the nonexpert may participate each day.
+The competency model of creative thinking proposed by PISA underscores three core facets of creative thinking: (1) generate
+
+Fig. 1. The factors influencing students’ creative thinking in PISA2022 Creative Thinking Framework.
+2
+
+Thinking Skills and Creativity 60 (2026) 102069
+
+H. Chen et al.
+
+diverse ideas, (2) generate creative ideas, and (3) evaluate and improve ideas. This definition of creative thinking applies to learning
+contexts that require imagination and the expression of one’s inner world, such as creative writing or the arts, as well as contexts in
+which generating ideas is functional to the investigation of problems or phenomena (OECD, 2019).
+1.2. Existing theoretical framework of influential factors for creative thinking
+The construction of a comprehensive theoretical model of critical influential factors for creative thinking is rather complicated
+since the development of creativity involves multiple dimensions and dynamic interactions. A robust body of evidence has consistently
+established a strong positive relationship between individual cognitive abilities (particularly intelligence and domain-specific academic performance) and creative thinking (e.g., Kim, 2020; Yang & Zhao, 2021). These factors constitute a fundamental cognitive
+foundation for creative thinking, as they provide the necessary knowledge structures and mental flexibility for generating and evaluating novel ideas.
+Grounded in the seminal 4P framework (i.e., “person,” “process,” “place,” and “product”) from early creativity psychology, Davis
+(1986) conceptualized creative thinking as an individualized problem-solving system wherein novel ideas or solutions trigger
+cognitive restructuring. Specifically, individuals actively modify their perceptual frameworks while deploying both conscious and
+unconscious cognitive strategies such as novel associations, reconceptualization, and perspective-taking to facilitate innovative outcomes. This theoretical position underscores that domain-specific knowledge, social-emotional competency, and creative self-efficacy
+constitute fundamental individual determinants of creative thinking. Importantly, environmental catalysts further modulate this
+process, as evidenced by social-cognitive triggers and structural enablers (Dodds et al., 2002). Notably, empirical work by Wu et al.
+(2014) highlights the predominant role of school and familial systems in shaping these interactive dynamics, suggesting that creativity
+development is ultimately embedded within socio-ecological systems.
+In the PISA2022 Creative Thinking Framework (OECD, 2019), it is emphasized that successful student engagement in creative work
+and the development of creative thinking depend on both internal and external resources (shown in Fig. 1). Students’ internal resources, external factors, and their creative achievement and progress are strongly interconnected. Specifically, internal resources
+encompass the knowledge, skills, and attitudes that facilitate creative thinking, such as domain-specific knowledge and experience,
+cognitive ability, and openness to new ideas. External factors, on the other hand, include cultural norms and expectations, school and
+home climate, and educational approaches. These external factors shape the development and refinement of students’ internal resources, as well as their level of creative engagement.
+As discussed above, the existing theoretical framework of influential factors for creative thinking converges on a multi-systemic
+understanding of creative thinking development, integrating individual, social, and environmental factors through complementary
+theoretical lenses. It is crucial to note, however, that the empirical strength of these relationships varies significantly across these
+factors. While the links between individual cognitive or academic factors and creative thinking are well-established and robust (Akpur,
+2023; Gajda et al., 2017), the evidence for some environmental factors is often more limited, context-dependent, and demonstrates
+weaker effect sizes (Acar et al., 2023). This study includes a range of predictors from the well-established to the exploratory to
+empirically test their relative importance and complex interactions within the context of East Asia.
+1.3. Empirical studies concerning influential factors on creative thinking
+1.3.1. Individual factors influencing creative thinking
+Previous empirical research on influential factors affecting creative thinking has traditionally examined individual and environmental factors in isolation. Regarding individual factors, studies have systematically investigated various determinants, including
+gender differences (Hong et al., 2013; Matud et al., 2007), academic achievement (Yang & Zhao, 2021), frequency of physical activity
+(Romance et al., 2023), social-emotional characteristics (Saleem et al., 2024), and attitudes towards creative thinking (Puozzo &
+Audrin, 2021).
+A strong consensus in the literature confirms that general cognitive ability and academic performance are among the most powerful
+predictors of creative thinking (Akpur, 2023). For example, Yang and Zhao’s (2021) study established a significant positive correlation
+between students’ creative thinking abilities and academic performance, with this relationship being especially pronounced among
+academically disadvantaged students. This relationship is thought to be mediated by the fact that higher academic achievement
+provides a richer knowledge base for forming novel associations and solving problems creatively (Kim, 2020).
+Social-emotional characteristics are defined as temperamental, cognitive, and behavioral traits that shape emotional processing
+and social interactions (Eisenberg et al., 2015). The PISA 2022 Creative Thinking framework (OECD, 2019) highlights seven core
+dimensions of these characteristics: curiosity, persistence, assertiveness, empathy, cooperative tendency, stress resistance, and
+emotional control, and emphasizes they play pivotal roles in the development of creative thinking. Empirical evidence substantiates
+these theoretical connections; notably, Saleem et al. (2024) investigated with 484 Toronto preschoolers, examining the relationship
+between social-emotional competence and creative thinking, demonstrating that stronger social-emotional skills are associated with
+higher creative thinking. This finding suggests that foundational social-emotional skills may serve as important precursors for creative
+thinking during critical early educational stages.
+As defined by the PISA 2022 Creative Thinking framework (OECD, 2019), attitudes towards creative thinking refer to students’
+engagement with cognitive processes, activities, and tasks that support or contribute to one’s capacity to engage in creative thinking.
+The framework identifies four key dimensions of these attitudes: creative self-efficacy, openness to intellect, openness to art, and
+imagination coupled with adventurousness. Empirical research has substantiated the significance of these attitudinal factors; for
+3
+
+Thinking Skills and Creativity 60 (2026) 102069
+
+H. Chen et al.
+
+example, Puozzo and Audrin (2021) investigated the role of creative self-efficacy (i.e., belief in one’s creative capabilities) within an
+educational intervention, demonstrating that students who developed stronger beliefs in their creative self-efficacy showed measurable improvements in both conceptual understanding and creative thinking about the topic.
+1.3.2. Environmental factors influencing creative thinking
+Research on environmental influences on creativity has predominantly examined family and school contexts, exploring factors such
+as family socioeconomic status (SES) (Acar et al., 2023; Lu et al., 2024), digital activities in the classroom (Fakaruddin et al., 2024;
+Wang et al., 2024), as well as family and school creative climate (Hoffmann et al., 2025; Li et al., 2025b). Empirical evidence
+consistently demonstrates the significant role of these contextual factors. For instance, Castillo-Vergara et al. (2018) conducted a
+survey assessing creative thinking among 1062 fifth-grade students from 24 Chilean educational institutions, revealing that higher
+family SES correlated with enhanced creative thinking. Further supporting this relationship, Acar et al. (2023) examined the relationship between SES and creativity through a comprehensive meta-analysis of 117 empirical studies, and found a small but significant
+positive correlation between creativity and SES.
+The environmental creative climate has also been demonstrated to influence students’ creative thinking. For instance, Hoffmann
+et al. (2025) conducted a large-scale study involving 5274 students across 31 high schools in Mexico, revealing that students who
+perceived their school as fostering a positive creative climate were more likely to believe in the value of creativity and subsequently
+engage in more creative behaviors. Similarly, Li et al., 2025b examined 610 Chinese secondary students and demonstrated that family
+creative climate had a fully mediated positive effect on creative scientific problem finding through intrinsic motivation. Together,
+these findings underscore the critical role of both school and family creative climate in shaping adolescents’ creative thinking, while
+also highlighting the dynamic interplay between external creative climates and students’ personal factors.
+In addition to these established factors, there is growing though less consistent scholarly interest in the role of digital technology
+use and creativity development, particularly given the global shift towards digitalization in education. This has led to the emergence of
+digital creativity as a distinct research field (Zhang et al., 2022), where information and communication technologies (ICT) serve as
+both platforms and agents for creative processes. Notably, the empirical evidence linking digital technology use directly to creative
+thinking is emergent and often demonstrates weaker effects compared to more established factors like academic performance or SES
+(Acar et al., 2023). Early, small-scale investigations (e.g., Wheeler & Bromfield, 2002) suggested a potential relationship. More
+recently, experimental studies (e.g., Wang & Li, 2024) with specific interventions have shown that digital environments can provide
+opportunities to enhance certain aspects of creative thinking, such as idea fluency and flexibility. However, the generalizable and
+scalable impact of digital technology use on creative thinking remains an open question, with findings often being highly
+context-dependent.
+1.4. The present study
+1.4.1. Rationale for predictive variable selection in the present study
+Grounded in the aforementioned theoretical and empirical literature, the selection of predictive variables for this study was guided
+by a dual principle of comprehensiveness and hierarchical prioritization. Comprehensiveness is reflected in the effort to include
+variables that cover the two broad categories of factors influencing students’ creative thinking, as outlined in the PISA 2022 Creative
+Thinking Framework: internal resources and external factors, while also aiming to represent the secondary dimensions under each of
+these categories as fully as the available data permitted. Variables were excluded if they were not measured in the PISA 2022
+assessment module or if they exhibited an excessive proportion of missing values (>10 %).
+Hierarchical prioritization was implemented as follows: First, we included well-established predictors with strong empirical
+support, such as core academic performance (reading, math, and science) and family economic, social, and cultural status (ESCS). This
+approach enables a robust comparison of feature importance and ensures that the analysis accounts for the most influential known
+determinants of creative thinking. Second, we incorporated factors of emerging or contextually specific interest where empirical
+evidence remains mixed or is particularly relevant to the East Asian educational context. Examples include expected educational
+attainment, digital technology use and self-efficacy, digital environment, and environmental creative climate. These variables were
+included not based on an assumption of their dominant influence, but rather to empirically evaluate their relative importance against
+established factors and to investigate their potential interaction effects within a large-scale, real-world dataset.
+1.4.2. Research gaps and study aims
+In summary, while existing studies have successfully identified various discrete factors which range from personal traits to environmental conditions, they still reveal three critical limitations that constrain both theoretical advancement and practical application.
+Firstly, a concerning pattern emerges wherein most factors are typically investigated in isolation through small-scale studies, with
+particularly glaring gaps in large-sample research within East Asian educational settings. This is particularly problematic given East
+Asia’s unique examination-oriented culture (Li, 2012), where intense academic pressure may differentially impact creative development compared to Western contexts, making region-specific investigations imperative for understanding contextual influences on
+creative thinking. Secondly, although recent work has begun exploring multifactorial models of creative thinking (Hoffmann et al.,
+2025), the field still lacks robust methodologies to quantify the relative weights of each factor (i.e., the feature importance), severely
+limiting the capacity for evidence-based policy prioritization. Thirdly, while conventional analytical approaches such as structural
+equation modeling (SEM) can be extended to model certain interactions and non-linearities (Kelava & Brandt, 2009), it often requires
+strong a priori theoretical assumptions about which specific effects to test, and the model specification process can become
+4
+
+Thinking Skills and Creativity 60 (2026) 102069
+
+H. Chen et al.
+
+computationally complex when exploring a high-dimensional set of potential predictors from large-scale assessments like PISA.
+Machine learning is considered an appropriate methodology for analyzing large-scale data (i.e., the number of possible predictors
+as well as data points). More importantly, interpretable machine learning (IML) approaches offer a powerful, data-driven framework to
+automatically screen and model complex relationships without pre-specified parametric assumptions (Freiesleben et al., 2024). These
+methods can not only extract a measure of variable importance (also called feature importance), which quantifies how useful different
+predictors are in forecasting the outcome, but also flexibly uncover intricate patterns, including nonlinear effects and multi-way interactions (Lavelle-Hill et al., 2025). Therefore, the present study employed an IML approach primarily for its data-driven capability to
+automatically screen and model complex, non-linear relationships and higher-order interactions without requiring pre-specified model
+forms. This is particularly advantageous for the exploratory analysis of high-dimensional data from large-scale assessments like PISA,
+where the number of potential predictors and interactions is vast. Based on the above consideration, the present study aims to address
+the following three questions:
+RQ1: What are the key determinants of creative thinking among East Asian middle school students, and what is their relative
+importance?
+RQ2: How do the relationships between these key factors and creative thinking vary in terms of directionality and heterogeneity?
+RQ3: How do interactions between these critical factors shape creative thinking in the East Asian context?
+2. Method
+2.1. Research framework
+All analyses were conducted in Python 3.10, utilizing key libraries including scikit-learn, xgboost, lightgbm, and shap for model
+implementation, tuning, and interpretation. This study employs a rigorous interpretable machine learning pipeline to systematically
+analyze determinants of creative thinking, as illustrated in Fig. 2. After extracting data for East Asian students from the PISA 2022
+dataset, predictor variables were systematically selected across individual and environmental dimensions based on the existing
+theoretical framework and empirical research. Variables with missing data rates exceeding 10 % were excluded to ensure robustness.
+A nested resampling procedure was implemented to enhance the validity and stability of the results (Bischl et al., 2012; Jankowsky
+et al., 2024). The entire dataset was repeatedly partitioned 100 times into 80 % training and 20 % testing subsets, each with a unique
+random seed (integers from 1 to 100). For each iteration, all downstream procedures—including missing value imputation, data
+transformation, hyperparameter tuning via cross-validation, model fitting and evaluation—were performed independently within the
+training set to prevent data leakage. Five machine learning models were trained and evaluated: Elastic Net Regression (ENR), Random
+Forest Regression (RFR), Support Vector Regression (SVR), XGBoost, and LightGBM. ENR was incorporated to serve as an interpretable
+baseline model for comparison against the more complex, non-linear models. Three tree-based models (i.e., RFR, XGBoost, LightGBM)
+were selected especially due to their capacity to capture nonlinear and interactive effects. Model performance was assessed using three
+metrics: root mean square error (RMSE), mean absolute error (MAE), and R², with results aggregated across all iterations to ensure
+
+Fig. 2. Research framework.
+5
+
+Thinking Skills and Creativity 60 (2026) 102069
+
+H. Chen et al.
+
+reliability. The best-performing model and optimal hyperparameters were identified based on average predicting performance over the
+100 splits.
+SHAP (SHapley Additive exPlanations) analysis was then applied to interpret the best-performing model with its optimal hyperparameters. Mean absolute SHAP values (i.e., Mean |SHAP|) were computed over 100 split iterations to quantify and rank the global
+importance of each feature. This resulted in a robust and aggregated measure of feature importance. Furthermore, to enable detailed
+interpretation of individual predictors’ effects and their interactions, one representative data split was selected for in-depth explanatory analysis using SHAP dependence plots and interaction plots. Finally, the empirical insights were synthesized into evidence-based
+recommendations for educational policy and practice aimed at enhancing creative thinking among adolescents in East Asia. The
+analyzed data file and all source code files are available for public via the Open Science Framework (https://osf.io/s3rqh/).
+2.2. Construction of model feature set
+2.2.1. Dependent variable
+The dependent variable in this study is students’ creative thinking. It was measured in PISA 2022 through a computer-based
+assessment comprising open-ended tasks situated in realistic, creative scenarios. Students’ written and constructed responses were
+human-rated based on three cognitive facets: generate diverse ideas, generate creative ideas, and evaluate and improve ideas,
+Table 1
+Description of Predictive Variables.
+Variable name
+
+Abbreviation
+
+Index measurement and description
+
+Basic demographic information
+Gender
+Extracurricular physical activity
+Expected educational attainment
+
+GENDER
+EXERPRAC
+EXPECEDU
+
+1 = female; 2 = male.
+1–10 (1 = once a week; 10 = ten times or more a week)
+1–9 (1 = below secondary education; 2 = lower secondary education; 3 = general upper secondary
+education; 4 = vocational upper secondary education; 5 = post-secondary non-tertiary education; 6=
+junior college; 7 = bachelor’s degree; 8= master’s degree; 9 = doctoral degree)
+
+Academic performance
+Math performance
+MATH
+Reading performance
+READING
+Science performance
+SCIENCE
+Social-emotional characteristics
+Curiosity
+CURIOAGR
+Perseverance
+PERSEVAGR
+Empathy
+EMPATAGR
+Assertiveness
+ASSERAGR
+Cooperative tendency
+COOPAGR
+Stress resistance
+STRESAGR
+Emotional control
+EMOCOAGR
+Attitude towards creative thinking
+Creative self-efficacy
+CREATEFF
+Openness to intellect
+CREATOP
+Openness to art
+OPENART
+Digital technology use and self-efficacy
+Self-efficacy in digital competencies
+ICTEFFIC
+Frequency of ICT2 activity on weekday
+ICTWKDY
+Frequency of ICT activity on weekend
+ICTWKEND
+Family environment characteristics
+Family economic, social and cultural
+ESCS
+status
+Index of highest parental education
+PAREDINT
+Family support
+FAMSUP
+Family creative climate
+ICT availability at home
+
+CREATFAM
+ICTHOME
+
+School environment characteristics
+School creative climate
+Creative activities at school
+
+CREATSCH
+CREATAS
+
+ICT availability at school
+Use of ICT for school activities outside
+of the classroom
+Use of ICT in inquiry-based learning
+activities
+Subject-related ICT use in the
+classroom lessons
+1
+2
+
+ICTSCH
+ICTOUT
+ICTENQ
+ICTSUBJ
+
+1–100 (The higher the score, the better the performance)
+
+WLE1, 5-point Likert scale (1 = strongly disagree, 5 = strongly agree).
+
+WLE, 4-point Likert scale (1 = not at all confident, 4= very confident)
+WLE, 4-point Likert scale (1 = strongly disagree, 4 = strongly agree)
+WLE, 4-point Likert scale (1 = I cannot do this, 4 = I can easily do this)
+WLE, 1–6 (1 = no time at all, 2 = less than 1 hour a day, 3 = 1–3 h a day, 4 = 3–5 h a day. 5 = 5–7 h a
+day, 6 = more than 7 h a day)
+Index of economic, social and cultural status
+Highest level of education of parents (levels from 1–9)
+WLE, 1–5 (1 = never, 2 = once or twice a year, 3 = once or twice a month, 4 = once or twice a week, 5
+= almost every day)
+WLE, 4-point Likert scale (1 = strongly disagree, 4 = strongly agree)
+WLE, 1–5 (1 = never, 2 = once or twice a month, 3 = once or twice a week, 4 = almost every day, 5 =
+several times a day)
+WLE, 4-point Likert scale (1 = strongly disagree, 4 = strongly agree)
+WLE, 1–5 (1 = never, 2 = once or twice a year, 3 = once or twice a month, 4 = once or twice a week, 5
+= almost every day)
+WLE, 4-point Likert scale (1 = strongly disagree, 4 = strongly agree)
+WLE, 1–5 (1 = never, 2 = once or twice a year, 3 = once or twice a month, 4 = once or twice a week, 5
+= almost every day)
+WLE, 1–5 (1 = never, 2 = less than half of the lessons, 3 = half of the lessons, 4 = more than half of the
+lessons, 5 = every lesson)
+
+weighted likelihood estimate (mean = 0, sd = 1)
+Information and Communication Technology
+6
+
+Thinking Skills and Creativity 60 (2026) 102069
+
+H. Chen et al.
+
+culminating in a standardized composite score ranging from 0 to 60 (OECD, 2024b).
+The creative thinking score for each student was represented by 10 plausible values (PVs) generated through the PISA 2022′s Item
+Response Theory (IRT) scaling procedure. As shown in OECD technical guidelines (OECD, 2024b), these PVs are drawn from the
+posterior ability distribution using Markov Chain Monte Carlo (MCMC) estimation to properly account for measurement error in the
+assessment. In alignment with PISA’s international analytical standards, the 10 PVs were combined using Rubin’s rules (Rubin, 1978)
+for multiple imputations. Specifically, by calculating the mean across PVs for point estimates while appropriately pooling their variances to reflect the imputation uncertainty. This approach yields a single composite creative thinking score for each student that
+incorporates both the probabilistic nature of IRT scaling and the complex survey design of PISA, while maintaining the assessment’s
+measurement properties throughout our analytical pipeline.
+2.2.2. Selection of predictive variables
+Building on the analytical framework of factors influencing creative thinking, this study incorporated a total of 30 predictive
+variables encompassing both individual and environmental factors (see Table 1 for details). The individual-level variables, drawn from
+the PISA 2022 Student Main Survey Questionnaire, Student ICT Questionnaire, and achievement tests in mathematics, reading, and
+science, comprised 19 indicators across five dimensions: basic demographic information, academic performance, socio-emotional
+characteristics, attitude towards creative thinking, and digital technology use and self-efficacy. The calculation methods for mathematics, reading, and science performance scores were consistent with those for creative thinking, incorporating 10 PVs in weighted
+computations. For environmental factors, variables characterizing home and school environments were selected from the same
+questionnaires (all student-reported), including five family environment indicators and six school environment indicators.
+2.3. Data sources and preprocessing
+The data for this study were derived from the PISA 2022 assessment and cover five East Asian economies: Hong Kong (China),
+Macau (China), Chinese Taipei, South Korea, and Singapore. Japan was excluded as it did not participate in the creative thinking
+assessment module. The final sample comprises 29,208 students, of whom 48.62 % are female. This includes 5907 students from Hong
+Kong (China), 6454 from South Korea, 4384 from Macau (China), 6606 from Singapore, and 5857 from Chinese Taipei.
+To ensure the robustness and generalizability of our machine learning models, we adopted a nested resampling procedure. The
+entire dataset was randomly split into 80 % training and 20 % testing sets, a process repeated 100 times, each with a unique random
+seed. For every iteration, all data preprocessing steps were fit exclusively on the training set and then applied to the testing set to
+prevent data leakage. Specifically, this involved: (1) data transformation, wherein categorical variables like gender were numerically
+encoded (1=female, 2=male) using label encoding, while continuous variables were standardized (Z-score normalization); (2) missing
+value imputation using the k-nearest neighbors (KNN) algorithm (KNNImputer from the scikit-learn library). This preprocessing
+pipeline addressed missing data, categorical representation, and scale harmonization while preserving the dataset’s statistical properties for the following machine learning applications.
+2.4. Machine learning models
+To establish a predictive model for students’ creative thinking, we implemented and compared five distinct machine learning
+Table 2
+Comparison of the Five Machine Learning Models.
+Model
+
+Type
+
+Key Strengths
+
+Key Weaknesses
+
+Suitability for This Study
+
+ENR
+
+Linear
+
+Highly interpretable, robust to
+multicollinearity, and computationally
+efficient.
+
+Serves as an excellent, parsimonious
+baseline model. Its high interpretability
+allows for clear inference on key drivers.
+
+SVR
+
+KernelBased
+
+Effective in high-dimensional spaces and
+robust to outliers.
+
+RFR
+
+Ensemble
+(Bagging)
+
+Excellent at capturing nonlinear patterns
+and interactions, robust to outliers and
+irrelevant features.
+
+XGBoost
+
+Ensemble
+(Boosting)
+
+Efficiently handles mixed data types,
+powerful at capturing complex patterns
+and interactions.
+
+LightGBM
+
+Ensemble
+(Boosting)
+
+Faster training speed and lower memory
+usage than XGBoost (advantageous for
+100 resampling iterations), handles large
+datasets efficiently.
+
+Assumes linear relationships between
+features and target, cannot capture
+complex nonlinear effects or
+interactions.
+Performance is highly sensitive to
+hyperparameter tuning,
+computationally intensive for large
+datasets, less interpretable.
+Computationally expensive to train,
+less interpretable than linear models,
+may bias towards features with more
+categories.
+Requires careful hyperparameter
+tuning, computationally intensive to
+train, models can be complex and less
+interpretable.
+Can be more sensitive to overfitting
+on small datasets.
+
+7
+
+Suitable for exploring potential complex,
+nonlinear relationships that ENR might miss.
+Highly suitable. Handles mixed data types
+well. Its ability to model complex
+interactions is valuable for understanding
+the multifaceted predictors of creativity.
+Highly suitable. Its high accuracy makes it a
+strong candidate for prediction. The use of
+SHAP values can mitigate interpretability
+challenges.
+Highly suitable. Its computational efficiency
+is a major advantage for nested resampling
+procedure with 100 splits. The use of SHAP
+values can mitigate interpretability
+challenges.
+
+Thinking Skills and Creativity 60 (2026) 102069
+
+H. Chen et al.
+
+models: Elastic Net Regression (ENR), Support Vector Regression (SVR), Random Forest Regression (RFR), XGBoost, and LightGBM.
+The strengths, weaknesses and suitability of each model are shown in Table 2. This multi-model approach is standard practice in
+predictive machine learning, as there is no single universally optimal algorithm a priori. Unlike traditional inferential statistics, which
+typically specifies a single model to test predefined hypotheses, this data-driven methodology prioritizes identifying the model that
+best captures the underlying predictive patterns in the data. The models were trained using the 30 selected predictive features, with
+creative thinking as the target variable. Through hyperparameter tuning via grid search (the hyperparameter grids of the five models
+are shown in Table 3) and five-fold cross-validation, we optimized each model’s architecture.
+2.4.1. Elastic net regression
+Elastic net regression, introduced by Zou and Hastie (2005), is a regularized linear regression method that combines the L1 (Lasso)
+and L2 (Ridge) penalties to overcome the limitations of each individual approach. This hybrid technique is particularly effective in
+scenarios with high-dimensional data or highly correlated predictors, as it promotes both sparsity and grouping stability. By balancing
+the trade-off between variable selection and regularization strength through a mixing parameter, elastic net achieves improved
+predictive performance and model interpretability. In this study, the maximum number of iterations for the elastic net regression
+algorithm is set to 10,000 to ensure adequate convergence of the optimization process.
+2.4.2. Support vector regression
+Support vector regression (SVR), an extension of Support Vector Machine (SVM) for regression tasks, was formalized by Smola and
+Schölkopf (2004). It employs Structural Risk Minimization (SRM) and the Kernel Trick to build an ε-insensitive tube in
+high-dimensional feature space, effectively handling high-dimensional, and non-linear problems while ensuring global optimality
+under convex optimization. In addition, even with a small data sample, the SVR may provide high generalization results.
+2.4.3. Random forest regression
+Random Forest is an ensemble learning method that builds multiple decision trees for prediction, where each tree is trained on an
+independently bootstrapped subset of data and can handle both regression and classification tasks (Breiman, 2001). In random forest
+regression, individual trees output numerical values, while in classification they output class labels. The algorithm employs bootstrap
+sampling (with replacement) to create diverse training subsets for each tree, and typically uses random feature selection for node
+splitting. Model robustness is improved through aggregation (e.g., voting or averaging).
+2.4.4. XGBoost
+XGBoost, developed by Chen and Guestrin (2016), is an advanced gradient boosting framework that enhances predictive performance by iteratively constructing decision trees to minimize residual errors. The algorithm incorporates several innovative features: it
+utilizes a regularized objective function with L1/L2 penalty terms to prevent overfitting, implements dynamic sample weighting
+through gradient and Hessian-based optimization to focus on challenging observations, and employs an efficient approximate quantile
+algorithm for rapid split point identification during tree construction. This combination of methodological innovations makes XGBoost
+particularly effective for handling complex predictive modeling tasks across various domains.
+2.4.5. LightGBM
+LightGBM (Light Gradient Boosting Machine), developed by Microsoft (Ke et al., 2017), is an advanced gradient boosting
+framework designed for efficient and scalable machine learning. As an improvement over traditional gradient boosting methods,
+LightGBM introduces two key innovations: Gradient-based One-Side Sampling (GOSS) and Exclusive Feature Bundling (EFB), which
+significantly enhance computational efficiency while maintaining high accuracy. The algorithm employs a leaf-wise tree growth
+strategy (as opposed to level-wise growth) to achieve better convergence with lower loss, making it particularly effective for handling
+large-scale datasets.
+Table 3
+Hyperparameter Grids of the Five Machine Learning Models.
+Model
+
+Hyperparameters
+
+Grid
+
+ENR
+
+alpha
+l1_ratio
+C
+kernel
+gamma
+n_estimators
+max_depth
+min_samples_split
+n_estimators
+max_depth
+learning_rate
+n_estimators
+max_depth
+learning_rate
+
+[0.001, 0.01, 0.1, 1.0, 10.0]
+[0.1, 0.3, 0.5, 0.7, 0.9]
+[0.1, 1, 10]
+[‘linear’, ‘rbf’]
+[‘scale’, ‘auto’]
+[100, 200]
+[None, 10, 20]
+[2, 5]
+[100, 200]
+[3, 6, 9]
+[0.01, 0.1]
+[100, 200]
+[3, 6, 9]
+[0.01, 0.1]
+
+SVR
+RFR
+XGBoost
+LightGBM
+
+8
+
+Thinking Skills and Creativity 60 (2026) 102069
+
+H. Chen et al.
+
+2.5. Leave-One-Group-Out cross-validation
+To mitigate the risk of overoptimistic performance estimates due to our data’s grouped structure where students are nested within
+five distinct economies, we employed Leave-One-Group-Out Cross-Validation (LOGO-CV). LOGO-CV is a resampling technique
+designed to assess the generalization performance of predictive models in the presence of grouped data structures. Its validation
+procedure involves iteratively holding out all samples from one distinct group as the test set, while using the remaining groups for
+model training (Pedregosa et al., 2011). In our procedure, each of the five economies (Hong Kong-China, South Korea, Macau-China,
+Singapore, and Chinese Taipei) is iteratively held out as the test set, while the model is trained on the remaining four. By enforcing a
+strict group-level separation between training and test sets, LOGO-CV yields a conservative and robust estimate of model generalizability, ensuring our findings are not unduly influenced by economy-level confounding effects.
+2.6. SHAP method
+While machine learning models such as XGBoost exhibit strong predictive capabilities in regression tasks, their inherent opacity as
+“black box” systems complicates the interpretation of decision-making processes. In response to this challenge, the SHapley Additive
+exPlanations (SHAP) method was created. It is a cutting-edge explanatory approach that utilizes the cooperative game theory and
+localized explanations principles, aiming to explicitly demonstrate the influence of individual features on the model’s predictions
+(Zhang et al., 2024). By treating model features as participants contributing to the prediction outcome, SHAP constructs an additional
+explanatory model for each prediction instance, and calculates the “SHAP value” for each feature. The SHAP value corresponding to
+each feature can be understood as the importance of individual input features in contributing to the model’s predicted value (Xu et al.,
+2025). In Python, the SHAP package offers a convenient and efficient tool to compute and visualize Shapley values for model
+explainability (Chen et al., 2025b). For a given prediction f, the SHAP value for feature i is defined as:
+φi =
+
+∑ |S|!(|N| − |S| − 1)!
+[f(S ∪ {i}) − f(S)]
+|N|!
+S⊆N\{i}
+
+where N represents the complete set of influencing features, |N| represents the total number of features, S denotes a subset of features,
+and |S| denotes the number of features in S. The term S⊆N\{i} refers to the summation over all subsets that exclude feature i, and the
+weighting factor |S|!(|N|-|S|-1)! / |N|! ensures fair allocation of contributions across all possible subsets S. f(S ∪ {i}) − f(S) represents
+the marginal contribution of feature i to the subset S, calculated as the difference in predictions before and after including i. φi denotes
+the SHAP value of feature i, quantifies its marginal contribution to the model’s prediction. A positive value indicates a favorable
+contribution to the prediction, whereas a negative value suggests a negative effect. Similarly, the SHAP interaction value for feature i
+and j is defined as:
+φi,j =
+
+∑ |S|!(|F| − |S| − 2)!
+[f(S ∪ {i, j}) − f(S ∪ {i}) − f(S ∪ {j}) + f(S)]
+2(|F| − 1)!
+S⊆F\{i, j}
+
+3. Results
+3.1. Performance comparison of machine learning models
+As summarized in Table 4, all models achieved moderate to high predictive performance averaged across 100 data splits, with
+explained variance (R²) ranging between 0.60 and 0.64. ENR, RFR, and SVR showed marginally lower performance (R2=0.60), while
+LightGBM yielded the highest predictive performance (R2=0.63). The optimal hyperparameter combination for LightGBM across 100
+data splits was determined as follows: n_estimators = 200, max_depth = 9, learning_rate = 0.1. Given its superior performance,
+LightGBM was selected as the final model for subsequent interpretability analysis. Notably, ENR achieved predictive accuracy
+(R²=0.60) comparable to that of the more complex models, RFR and SVR. Given that ENR is a more parsimonious and inherently
+interpretable linear model, it represents a strong, easy-to-interpret baseline that may offer better generalizability.
+Table 4
+Predictive Performance (M ± SD) of the Five Machine Learning Models Across 100 Data Splits (5-Fold CV).
+Model
+ENR
+RFR
+SVR
+XGBoost
+LightGBM
+
+R2
+
+RMSE
+
+MAE
+
+M
+
+SD
+
+M
+
+SD
+
+M
+
+SD
+
+0.6028
+0.6035
+0.6018
+0.6127
+0.6304
+
+0.0076
+0.0077
+0.0080
+0.0074
+0.0078
+
+6.47
+6.47
+6.48
+6.39
+6.24
+
+0.06
+0.06
+0.06
+0.06
+0.06
+
+5.18
+5.17
+5.17
+5.10
+4.96
+
+0.05
+0.05
+0.05
+0.05
+0.05
+
+Note. ENR: Elastic Net Regression, RFR: Random Forest Regression, SVR: Support Vector Regression, RMSE: root mean square error, MAE: mean
+absolute error.
+9
+
+Thinking Skills and Creativity 60 (2026) 102069
+
+H. Chen et al.
+
+3.2. Robustness check using LOGO-CV
+The LOGO-CV evaluation provided a more conservative assessment of model performance and revealed a notable distinction.
+Unlike the initial random-splitting procedure, ENR (R²: 0.4440 ± 0.1011) outperformed LightGBM (R²: 0.3898 ± 0.1126) across the
+five held-out economies. A paired t-test further confirmed the statistical superiority of ENR (t = 2.8040, p = 0.0486). These results
+suggest that part of LightGBM’s stronger performance in the primary analysis may derive from its capacity to capture economy-specific
+group characteristics. However, the primary objective of this study is not prediction but the exploration of complex, non-linear relationships and interactions among determinants of creative thinking. As tree-based algorithms like LightGBM excel in this regard, we
+retained it as the final model for the subsequent SHAP analysis. Thus, the LOGO-CV serves as a critical robustness check, affirming that
+while group-level effects exist, the interpretative insights from LightGBM remain valuable for elucidating the multifaceted mechanisms
+underlying creative thinking.
+3.3. Model explainability using SHAP method
+3.3.1. Identifying the key factors influencing creative thinking
+This study employed SHAP method to identify key predictors of creative thinking, with feature importance quantified through
+Mean |SHAP| value across all predictors. Table 5 demonstrated the feature importance and ranking for the 30 predictive variables
+across 100 data splits. The results revealed that reading performance emerged as the most influential predictor, followed by science
+performance, ESCS, math performance, and gender. The features with the lowest importance were primarily ICT-related external
+environmental factors, including ICTWKDY, ICTHOME, and ICTWKEND. Moreover, the importance rankings of the features remained
+highly stable across the 100 data splits, with the top 10 features consistently retaining their ranks in every split, indicating the
+robustness and reliability of the identified key predictors. The descriptive statistics and correlations for the top 10 predictors and
+outcome variable were shown in Table 6.
+In addition to using the mean |SHAP| value from the SHAP method to assess feature importance, we also incorporated Elastic Net
+Regression (an interpretable linear model) as a baseline. Accordingly, we evaluated variable importance using the standardized
+regression coefficients from the Elastic Net Regression model. The results showed that the top 10 variables ranked by these coefficients
+were, in order: READING, SCIENCE, ESCS, MATH, GENDER, CREATFAM, EXPECEDU, EMPATAGR, CREATEFF, and ICTEFFIC. The top
+five variables were entirely consistent with those identified by the SHAP analysis, and among the top 6–10, only one variable differed
+(CREATAS was replaced by CREATEFF), demonstrating that Elastic Net Regression also captured a largely consistent set of influential
+Table 5
+Feature Importance and Ranking for the 30 Predictors Across 100 Data Splits.
+Feature
+READING
+SCIENCE
+ESCS
+MATH
+GENDER
+ICTEFFIC
+EXPECEDU
+EMPATAGR
+CREATAS
+CREATFAM
+ASSERAGR
+STRESAGR
+CREATEFF
+ICTSUBJ
+ICTOUT
+ICTENQ
+OPENART
+PAREDINT
+CURIOAGR
+FAMSUP
+COOPAGR
+ICTSCH
+EMOCOAGR
+EXERPRAC
+CREATSCH
+PERSEVAGR
+ICTWKDY
+ICTHOME
+CREATOP
+ICTWKEND
+
+Mean |SHAP|
+
+Ranking
+
+Frequency in Top10
+
+M
+
+SD
+
+M
+
+SD
+
+3.407
+1.644
+1.029
+0.905
+0.858
+0.509
+0.450
+0.433
+0.408
+0.371
+0.337
+0.327
+0.325
+0.317
+0.259
+0.255
+0.223
+0.187
+0.179
+0.174
+0.153
+0.152
+0.127
+0.101
+0.097
+0.084
+0.082
+0.075
+0.070
+0.066
+
+0.024
+0.012
+0.007
+0.007
+0.002
+0.006
+0.004
+0.004
+0.005
+0.004
+0.003
+0.003
+0.003
+0.004
+0.004
+0.002
+0.002
+0.003
+0.002
+0.003
+0.002
+0.002
+0.001
+0.001
+0.001
+0.001
+0.001
+0.002
+0.001
+0.001
+
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11.02
+12.2
+12.84
+13.94
+15.2
+15.8
+17
+18
+19.06
+19.94
+21.32
+21.68
+23
+24.01
+24.99
+26.17
+26.85
+27.99
+28.99
+30
+
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0.14
+0.47
+0.49
+0.24
+0.40
+0.40
+0
+0
+0.24
+0.24
+0.47
+0.47
+0
+0.10
+0.10
+0.38
+0.39
+0.22
+0.10
+0
+
+10
+
+100
+100
+100
+100
+100
+100
+100
+100
+100
+100
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+
+H. Chen et al.
+
+Table 6
+Descriptive Statistics and Correlations for the Top 10 Predictors and Outcome Variable.
+
+11
+
+Variable
+
+Mean
+
+SD
+
+1
+
+READING
+SCIENCE
+ESCS
+MATH
+GENDER
+ICTEFFIC
+EXPECEDU
+EMPATAGR
+CREATAS
+CREATFAM
+Creative thinking
+
+516.66
+537.25
+-0.10
+547.39
+1.51
+0.05
+6.79
+0.01
+0.16
+-0.01
+35.30
+
+95.42
+93.44
+0.95
+101.92
+0.50
+0.97
+1.70
+0.95
+0.82
+0.96
+10.30
+
+1
+0.867***
+0.340***
+0.855***
+-0.129***
+0.131***
+0.255***
+0.124***
+-0.056***
+0.079***
+0.722***
+
+2
+
+3
+
+4
+
+5
+
+6
+
+7
+
+8
+
+9
+
+10
+
+11
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+​
+
+​
+
+1
+0.333***
+0.918***
+0.002
+0.130***
+0.263***
+0.094***
+-0.039***
+0.063***
+0.706***
+
+1
+0.339***
+-0.034***
+0.172***
+0.244***
+0.149***
+0.069***
+0.122***
+0.414***
+
+1
+0.037***
+0.122***
+0.294***
+0.082***
+-0.037***
+0.057***
+0.683***
+
+1
+-0.034***
+-0.033***
+-0.071***
+-0.001
+-0.036***
+-0.155***
+
+1
+0.141***
+0.159***
+0.111***
+0.203***
+0.175***
+
+1
+0.096***
+0.049***
+0.127***
+0.195***
+
+1
+0.047***
+0.296***
+0.178***
+
+1
+0.113***
+-0.036***
+
+1
+0.064***
+​
+
+1
+
+Note. ***p < 0.001.
+
+Thinking Skills and Creativity 60 (2026) 102069
+
+Thinking Skills and Creativity 60 (2026) 102069
+
+H. Chen et al.
+
+features, thereby reinforcing the stability of these key predictors across different interpretability frameworks.
+3.3.2. Feature directionality analysis of the key factors influencing creative thinking
+To elucidate the specific impact direction of each predictor on creative thinking, we computed SHAP values for each sample, as
+visualized in Fig. 3. The SHAP beeswarm plot illustrates the marginal contributions of the predictive variables, where each point
+represents a distinct level, with blue and red sample points denoting lower and higher true values of the predictors, respectively. Here,
+the x-axis corresponds to the SHAP values of each sample, revealing the directional influence of the predictors. Specifically, predictors
+that positively influence creative thinking are characterized by a “left blue, right red” pattern, indicating that higher predictor values
+correspond to increased positive SHAP values. Conversely, those with a negative impact display a “left red, right blue” pattern,
+suggesting that lower predictor values are associated with reduced creative thinking.
+Fig. 3 reveals distinct patterns in the associations between predictors and creative thinking based on SHAP values: the six positively
+associated predictors (reading, science, math performance, ESCS, self-efficacy in digital competencies, and empathy) all demonstrate a
+consistent “left-blue, right-red” pattern, indicating that higher feature values correspond to increased SHAP values in the model’s
+predictions of creative thinking. Conversely, family creative climate and expected educational attainment show the inverse “left-red,
+right-blue” pattern, suggesting that lower values of these features align with higher predicted creative thinking scores in the model.
+Gender displays a directional bias, with female students consistently showing higher SHAP values than males. Notably, school creative
+activities exhibits nonlinear relationships with SHAP values. Specifically, its influence transitions across feature value ranges, implying
+threshold effects or interactions with other variables. These complex patterns underscore that the model’s learned associations cannot
+be reduced to simple monotonic relationships, necessitating further analysis to disentangle conditional dependencies and heterogeneity in effects.
+3.3.3. Heterogeneous analysis of the key factors influencing creative thinking
+To further explore the contribution patterns of key predictive variables to students’ creative thinking, a set of SHAP dependence
+plots (shown in Fig. 4) were generated for the top 10 most important features. The x-axis represents the values of the features, whereas
+the y-axis displays the SHAP values corresponding to each feature. Each point denotes the SHAP value of a specific feature in each data
+sample. The SHAP dependence plots illustrate how individual features contribute to the model’s prediction of creative thinking across
+their value ranges.
+Figs. 4a-c depict the relationships between creative thinking and reading, math, and science performance scores, respectively.
+SHAP values for all three performance domains increased monotonically with higher scores, following an approximately linear trend.
+This suggests a consistent positive association between academic performance and creative thinking. Notably, when performance
+scores were below 500 points, SHAP values were negative, indicating that lower academic performance levels correlate with reduced
+creative thinking performance. Above this threshold, SHAP values turned positive, reflecting a transition to beneficial associations.
+Additionally, there exists a diminishing marginal contribution of math performance beyond 600 points (Fig. 4c), implying that the
+
+Fig. 3. SHAP beeswarm plot for the top 10 most important features. Note. READING: reading performance; SCIENCE: science performance; ESCS:
+family economic, social and cultural status; MATH: math performance; GENDER: gender; ICTEFFIC: self-efficacy in digital competencies; EXPECEDU: expected educational attainment; EMPATAGR: empathy; CREATAS: school creative activities; CREATFAM: family creative climate.
+12
+
+Thinking Skills and Creativity 60 (2026) 102069
+
+H. Chen et al.
+
+Fig. 4. SHAP dependence plots for the top 10 most important features.
+
+predictive influence of math performance on creative thinking weakens at higher proficiency levels.
+Figs. 4d-f reveal threshold effects in the relationships between students’ creative thinking and three variables: ESCS (Fig. 4d),
+empathy (Fig. 4e), and self-efficacy in digital competencies (Fig. 4f). For ESCS and empathy, SHAP values increase steeply within ±1
+standard deviation of the mean, indicating heightened sensitivity to changes in this range. Beyond these bounds, the slope of SHAP
+value growth attenuates, suggesting diminishing marginal predictive influence. Self-efficacy in digital competencies displays a distinct
+pattern: SHAP values rise monotonically below the mean (feature value < 0), but the rate of increase decelerates above the mean,
+13
+
+Thinking Skills and Creativity 60 (2026) 102069
+
+H. Chen et al.
+
+Fig. 4. (continued).
+
+implying a saturation effect in its association with creative thinking. Collectively, these results demonstrate nonlinear associations
+between the three factors and creative thinking, with their predictive power plateauing or declining past certain thresholds.
+Figs. 4h-i reveal negative associations between students’ creative thinking and two predictive variables: family creative climate
+(Fig. 4h) and expected educational attainment (Fig. 4i). For family creative climate, counterintuitively, SHAP values exhibit a
+decreasing trend with increasing feature values, revealing an inverse relationship in the model’s predictions that contradicts conventional expectations. A similar pattern is observed for expected educational attainment, where higher levels correspond to lower
+SHAP values. This suggests that elevated educational expectations may be inversely associated with creative thinking predictions. A
+detailed examination of discrete educational levels shows positive SHAP values for general upper secondary education (level = 3),
+vocational upper secondary education (level = 4), junior college (level = 6), and bachelor’s degree expectations (level = 7), whereas
+negative SHAP values for post-secondary non-tertiary education (level = 5), master’s (level = 8) and doctoral degree expectations
+(level = 9).
+Fig. 4j reveals a nonlinear, approximately U-shaped relationship between school creative activities and their SHAP-based contributions to creative thinking. Specifically, when activity values range from -1 to 2, SHAP values decline sharply, suggesting an initial
+negative association with creative thinking. However, beyond this threshold (values > 2), SHAP values rebound gradually, indicating
+that sufficient creative activities positively correlate with creative thinking.
+3.3.4. Interaction analysis of the key factors influencing creative thinking
+The variation in SHAP values of a single predictive factor across different samples is attributable not only to the heterogeneity
+caused by the magnitude of the feature values themselves but also to the interactions with other factors. First, we computed the
+pairwise SHAP interaction values among the top 10 predictive features (ranked by feature importance) and visualized them using a
+heatmap (Fig. 5). Due to the high multicollinearity among reading, science, and math performance scores (rs > 0.8), interactions
+between these three variables were excluded from interpretation. The heatmap revealed that the three strongest interaction effects
+were between reading performance and ESCS (0.1730), science performance and gender (0.0822), and science performance and ESCS
+(0.0737). Additionally, given the counterintuitive negative relationship between family creative climate and creative thinking, we also
+14
+
+Thinking Skills and Creativity 60 (2026) 102069
+
+H. Chen et al.
+
+examined its interactions with other variables to better understand this unexpected result. As shown in Fig. 5, the variable with the
+strongest interaction with family creative climate was empathy (0.0230). Based on these global interaction indices, we further
+generated SHAP interaction dependence plots (Figs. 6a-d) to visually elucidate how these four pairs of variables interactively influence
+creative thinking.
+As shown in Fig. 6a and 6b, when ESCS values are low (<0), samples with low reading and science performance (blue points)
+display systematically higher SHAP values than those with higher performance (red points), suggesting that students with lower
+reading and science performance exhibit higher creative thinking in the context of low family socioeconomic and cultural status. When
+ESCS values are high (>0), the trend is reversed, indicating that students with higher reading and science performance demonstrate
+greater creative thinking ability within high family socioeconomic and cultural status. This result further implies that students’ creative thinking is jointly influenced by individual cognitive factors and family contextual factors, with a high family socioeconomic and
+cultural status acting as a catalyst that enables academic performance to drive creative thinking.
+As shown in Fig. 6c, for students with lower science performance (< 500 points), female samples (blue points) systematically
+exhibit higher SHAP values than male samples (red points), indicating that being female is associated with a higher level of creative
+thinking among low science achievers. Conversely, for students with higher science performance (> 500 points), male samples tend to
+have higher SHAP values than their female counterparts, suggesting that the creative thinking advantage shifts to males within the
+high science achiever group. This result reveals a significant crossover interaction between gender and science performance. It underscores that the relationship between gender and creative thinking is not uniform but is critically moderated by the level of science
+performance.
+As shown in Fig. 6d, when the family creative climate is low (<0), students with lower empathy (blue points) systematically exhibit
+higher SHAP values than those with higher empathy (red points), suggesting that lower empathy provides a relative advantage for
+creative thinking in low creative family environments. Conversely, when the family creative climate is high (>0), students with higher
+empathy demonstrate higher SHAP values than those with lower empathy, indicating that higher empathy becomes a stronger asset for
+creative thinking when supported by a stimulating family environment. This result reveals that the influence of family creative climate
+on students’ creative thinking is not direct, but is largely contingent upon their level of empathy. The climate itself is neither purely
+
+Fig. 5. SHAP interaction values heatmap for the top 10 features.
+15
+
+Thinking Skills and Creativity 60 (2026) 102069
+
+H. Chen et al.
+
+Fig. 6. SHAP interaction dependence plot for four pairs of predictive variables.
+
+good nor bad; it activates or suppresses students’ innate trait of empathy, which in turn drives creative thinking output.
+4. Discussion
+4.1. Empirical contributions
+Leveraging East Asian student data from the 2022 PISA survey, this study applied the SHAP interpretable machine learning
+framework as a novel tool to systematically analyze the key factors and underlying mechanisms influencing creative thinking. The
+analysis operates at three levels: global feature importance (mean |SHAP|), local feature directionality and heterogeneity (individual
+SHAP distributions), and bivariate feature interactions (SHAP interaction values). Our approach advances beyond traditional methods
+by 1) identifying the key factors influencing creative thinking through SHAP values, 2) capturing nonlinear relationships via
+dependence plots, and 3) revealing interaction effects through SHAP interaction values and interaction dependence plots. The findings
+offer preliminary insights and potential avenues for educational policymakers aimed at developing targeted intervention strategies for
+cultivating students’ creative thinking.
+In terms of feature importance and directionality, the results indicate that academic performance (reading, science, and math
+performance), family ESCS, and gender are the top five factors predicting creative thinking. First, foundational academic performance
+is positively correlated with creative thinking. This finding aligns with previous research (Yang & Zhao, 2021; Kim, 2020), highlighting
+the role of academic performance as a prerequisite for developing creative thinking. Notably, among the three domains of academic
+performance, reading performance emerges as the strongest predictor. This result is different from OECD’s analysis of all countries,
+who found that math performance was the most predictive variable for creative thinking (OECD, 2024a). The superior reading performance may be attributed to the unique design of the PISA 2022 creative thinking assessment, emphasizing students’ ability to
+comprehend and articulate written responses to open-ended problems (OECD, 2019). This assessment approach likely amplifies the
+influence of reading ability. Second, ESCS significantly and positively predicts creative thinking, corroborating prior studies on the
+impact of family environment (Lu et al., 2024; Jankowska et al., 2024). This can be explained by theories of resource and capital
+16
+
+Thinking Skills and Creativity 60 (2026) 102069
+
+H. Chen et al.
+
+accumulation: higher ESCS families not only provide more material resources (e.g., learning tools and extracurricular materials) but
+also cultivate an environment conducive to innovative thinking through exposure to arts, critical discussions, and cultural capital
+transmission (Jankowska et al., 2024).
+Third, gender differences reveal that female students outperform males in creative thinking, a trend consistent across all countries
+in the PISA 2022 data (OECD, 2024a). However, as critically discussed by Barbot and Kaufman (2025), the magnitude and consistency
+of this gender gap are unprecedented in the creativity literature and raise fundamental questions about the construct validity of the
+PISA assessment itself. Therefore, while our SHAP analysis identifies gender as one of the top predictors, this disparity may not solely
+reflect true differences in creative thinking. It could be significantly amplified by the assessment’s heavy reliance on verbal and visual
+domains where the gap was most pronounced (OECD, 2024a), potentially favoring communication styles more commonly associated
+with females. Furthermore, the observed gap may be partly attributable to developmental differences in 15-year-old adolescence.
+Neurocognitive research suggests that girls at age 15 often show advanced maturation in prefrontal brain regions and connecting white
+matter tracts supporting executive functions, such as cognitive flexibility and self-regulation (Lenroot & Giedd, 2006), which are
+critical for performing well on complex, open-ended assessments like the PISA creative thinking test. This suggests that creativity
+training and education should consider gender-specific interventions, but more importantly, future assessments must strive for a more
+balanced and multidimensional measurement of creative thinking to avoid methodological confounding.
+Furthermore, it was found that self-efficacy in digital competencies, expected educational attainment, empathy, creative activities
+at school, and family creative climate were among the sixth to tenth most influential predictors. Self-efficacy in digital competencies,
+defined as a belief in one’s ability to use digital tools effectively, showed a positive association with creative thinking, likely by
+enabling students to explore, iterate, and express ideas in digital environments (Santoso et al., 2019). Empathy also exhibited a modest
+yet consistent positive contribution to creative thinking, and this positive link was consistent with prior research (Tie et al., 2024).
+Heightened empathy enables individuals to perceive problems from multiple viewpoints, enhancing cognitive flexibility and fostering
+more innovative and creative solutions (Walther et al., 2017). Notably, the study found a negative relationship between students’
+expected educational attainment and creative thinking. This result may reflect the highly competitive educational environment in East
+Asia, where excessively high educational expectations are often linked to overreliance on rigid test-taking strategies, increased risk
+aversion, and a shift from intrinsic motivation to extrinsic achievement goals—factors known to suppress creative thinking (Ke &
+Liang, 2023; Muench et al., 2022).
+Notably, family creative climate and school creative activities showed counterintuitive negative associations with creative
+thinking. This pattern mirrors the surprising finding in the PISA report of a negative correlation between participation in creative
+activities and creative thinking (OECD, 2024a). A plausible explanation for these paradoxical findings is that the mere frequency of
+creative participation is insufficient for enhancing creativity outcomes; instead, the development of creativity primarily requires
+in-depth engagement and high-quality activities (Barbot & Kaufman, 2025). That is, overparticipation without depth, or sporadic
+participation across many domains, may potentially hinder creativity development because such engagement often lacks consistency
+and intrinsic motivation. In this context, our interaction analysis, which revealed the interaction between family creative climate and
+empathy on creative thinking, directly addresses the need for more nuanced investigation into these complex relationships.
+Regarding feature heterogeneity, reading and science performance demonstrate a nearly linear positive correlation with creative
+thinking. In contrast, ESCS, math performance, empathy, and self-efficacy in digital competencies exhibit threshold effects, where their
+positive impact on creative thinking is most pronounced when values fall within a specific range. This finding aligns with the
+moderation principle of creative thinking cultivation (Castillo-Vergara et al., 2018), which suggests that the influence of family socioeconomic and cultural factors, as well as individual psychological traits, on creative thinking is not uniformly positive but rather
+operates within an optimal range.
+Regarding feature interactions, the results reveal that creative thinking emerges from complex interactions between personal and
+contextual factors, rather than from isolated predictors. Three key patterns demonstrate this interdependence: First, we observed a
+compensatory interaction between ESCS and academic performance. In low-ESCS settings within East Asian societies, higher academic
+performance correlated with reduced creative thinking, likely due to intensified conformity pressures and examination-oriented imperatives in resource-limited environments (Ke & Liang, 2023). Conversely, in high-ESCS settings, socioeconomic resources buffer
+these pressures, enabling academic achievement to enhance creative thinking by providing access to diverse learning experiences,
+psychological security, and opportunities for knowledge exploration beyond standardized curricula. Second, a notable crossover
+interaction emerged between gender and science performance. Females exhibited a creativity advantage among low science achievers,
+while males demonstrated an advantage among high achievers. This finding challenges blanket assumptions about gender differences
+in creativity, highlighting that such effects are conditional on domain-specific competence.
+Finally, the interaction analysis resolved the counterintuitive negative main effect of family creative climate by revealing its
+dependence on student empathy. In low creative family environments, lower empathy appeared beneficial, possibly because less
+empathetic students are less affected by familial discouragement or lack of engagement. However, in high creative climates, higher
+empathy markedly enhanced creative output, which is because an enriching environment allows empathetic children to leverage their
+emotional sensitivity for imaginative and divergent thinking (Li & Li, 2025). This indicates that the family creative climate functions
+not as a direct determinant, but as a moderator that either suppresses or activates a student’s innate empathic potential. Interventions
+focusing on family climate should therefore account for individual differences in empathy to be effective. It is important to note that
+the measure of family creative climate is based on student self-report. This introduces the possibility that the interaction effect is partly
+shaped by students’ subjective perceptions, as those with higher empathy might be more attuned to and report a more positive familial
+climate. Future research would benefit from incorporating multi-informant reports (e.g., from parents) to disentangle these effects.
+
+17
+
+Thinking Skills and Creativity 60 (2026) 102069
+
+H. Chen et al.
+
+4.2. Implications and future directions
+While our findings are derived from correlational data and cannot directly prescribe policy, the multi-faceted evidence of global
+importance, local heterogeneity, and bivariate interactions offers valuable heuristic insights and highlights critical avenues for future
+research and potential intervention. The complex, interdependent nature of the predictors suggests that initiatives aimed at fostering
+creative thinking may be most effective when they move beyond one-size-fits-all approaches.
+First, the consistent prominence of reading performance, which surpassed even math and science performance as the top predictor,
+underscores its foundational role. This implies that efforts to enhance creative thinking should strongly prioritize reading ability,
+particularly the kind that supports comprehension and expression in open-ended scenarios. Educational initiatives might experiment
+with integrating advanced reading modules that emphasize interpretative flexibility, analogical reasoning, and narrative creativity
+across subjects, not just in language arts.
+Second, the prevalence of threshold effects (e.g., in ESCS, math performance, empathy, and digital self-efficacy) suggests that more
+is not always better. Resources and interventions may yield greater returns if they are calibrated toward achieving sufficient levels in
+these traits rather than maximizing them. Additionally, the negative association of expected education attainment and creative
+thinking serves as a critical warning: Policymakers and parents should be cautious of excessive academic expectations, which may
+trade off short-term achievement for long-term innovative capacity.
+Third, and most significantly, the interactions reveal that effectiveness depends critically on targeting specific subgroups. Our
+findings suggest that: 1) Support for high-achieving students in low-ESCS schools should aim to reduce conformity pressure and
+provide creative outlets insulated from high-stakes testing; 2) Educational strategies should consider gender not as a fixed predictor of
+creative thinking, but as a factor that interacts strongly with mastery in specific domains, such as the science domain; 3) Familyoriented programs might move beyond generic climate advice. Instead, they could explore providing parents with strategies
+tailored to their child’s empathy level.
+5. Conclusion
+This study utilizes PISA 2022 data from East Asian students and employs the SHAP interpretable machine learning framework to
+systematically examine the key determinants of middle school students’ creative thinking and their underlying mechanisms. Although
+some of the key determinants identified in this study conform to those presented in the PISA results document, their nonlinear and
+interdependent roles in the East Asian context offer a refined map for designing smarter interventions. The main findings reveal that:
+(1) In terms of feature importance, academic performance (reading, science, and math performance), family ESCS, and gender emerge
+as the five most influential predictors; (2) Regarding feature directionality and heterogeneity, reading and science performance show
+nearly linear positive relationship with creative thinking, while ESCS, math performance, empathy and self-efficacy in digital competencies exhibit threshold effects—their positive influence peaks when values fall within optimal ranges. By contrast, creative family
+climate and expected educational attainment show negative relationship with creative thinking; (3) Regarding feature interactions, the
+three most substantial interaction effects were identified between reading performance and ESCS; between science performance and
+gender; and between science performance and ESCS. Specifically, in low-ESCS settings, higher reading and science performance
+correlated with reduced creative thinking, while in high-ESCS settings, this relationship was reversed. Furthermore, females exhibited
+a creativity advantage among low science achievers, while males demonstrated an advantage among high science achievers.
+Notably, this study has at least the following three limitations: First, while this study focused on East Asia, the absence of
+comparative data from other cultural regions (e.g., Western countries) limits the generalizability of findings. Future research could
+leverage the global PISA database to examine how cultural values (e.g., individualism vs. collectivism) moderate creative thinking
+development. Second, while this study revealed the interaction effects between the key predictors, translating these insights into action
+requires causal verification. Future longitudinal and experimental studies should prioritize investigating the mechanisms behind these
+interactions. For example, through randomized trials offering differentiated creativity support based on students’ academic,
+emotional, and socioeconomic profiles. Our study serves to generate hypotheses and pinpoint specific subgroups and mechanisms that
+merit prioritized investigation. Third, the robustness check using LOGO-CV confirmed that LightGBM’s superior performance in
+standard validation was partly artificial, inflated by its sensitivity to economy-specific characteristics. Consequently, while the SHAP
+analysis from LightGBM effectively reveals complex relationships within these East Asian economies, the relative importance of
+predictors and their interactions might not be fully generalizable to entirely different cultural contexts. This underscores that our
+findings are most robust for understanding the mechanisms within similar educational systems, and researchers should be cautious
+when extrapolating them.
+Funding
+This work was supported by the National Natural Science Foundation of China under Grant [62,577,014], and by the Interdisciplinary Research Fundation for Doctoral Candidates of Beijing Normal University [BNUXKJC2401].
+CRediT authorship contribution statement
+Hui Chen: Writing – original draft, Methodology, Investigation, Conceptualization. Hongji Deng: Writing – original draft, Formal
+analysis, Data curation. Hao Yu: Investigation. Yan Dong: Supervision, Funding acquisition. Huazhen Wang: Writing – review &
+18
+
+Thinking Skills and Creativity 60 (2026) 102069
+
+H. Chen et al.
+
+editing.
+Declaration of competing interest
+There is no known competing financial interests or personal relationships that could have appeared to influence the work reported
+in this paper, as we conducted this study only as part of our research program.
+Acknowledgements
+Not applicable.
+Data availability
+Data will be made available on request.
+References
+Acar, S., Tadik, H., Uysal, R., Myers, D., & Inetas, B. (2023). Socio-economic status and creativity: A meta-analysis. The Journal of Creative Behavior, 57(1), 138–172.
+Akpur, U. (2023). Creativity and academic achievement: A meta-analysis. European Journal of Educational Sciences, 10(2), 207–226.
+Barbot, B., & Kaufman, J. C. (2025). PISA 2022 Creative Thinking Assessment: Opportunities, challenges, and cautions. The Journal of Creative Behavior, 59(1), Article
+e70003.
+Bischl, B., Mersmann, O., Trautmann, H., & Weihs, C. (2012). Resampling methods for meta-model validation with recommendations for evolutionary computation.
+Evolutionary Computation, 20(2), 249–275.
+Breiman, L. (2001). Random forests. Machine Learning, 45, 5–32.
+Castillo-Vergara, M., Galleguillos, N. B., Cuello, L. J., Alvarez-Marin, A., & Acuña-Opazo, C. (2018). Does socioeconomic status influence student creativity? Thinking
+Skills and Creativity, 29, 142–152.
+Chen, J., Wu, L., Zhang, Y., & Wang, M. (2025a). Exploring the effects of a user feedback strategy on students’ creative thinking in a design-based project. Thinking
+Skills and Creativity, Article 101862. Article.
+Chen, T., & Guestrin, C. (2016). Xgboost: A scalable tree boosting system. In Presented at the Proceedings of the 22nd ACM SIGKDD International Conference on Knowledge
+Discovery and Data Mining (pp. 785–794).
+Chen, Y., Jiao, S., Gu, X., & Li, S. (2025b). Decoding the spatiotemporal effects of industrial clusters on carbon emissions in a Chinese River basin. Journal of Cleaner
+Production, Article 145851. Article.
+Davis, G. A. (1986). Creativity is forever (2nd Ed.). Dubuque, Iowa: Kendall/Hunt.
+Dietrich, A. (2004). The cognitive neuroscience of creativity. Psychonomic Bulletin & Review, 11, 1011–1026.
+Dodds, R. A., Smith, S. M., & Ward, T. B. (2002). The use of environmental clues during incubation. Creativity Research Journal, 14(3-4), 287–304.
+Eisenberg, N., Spinrad, T. L., & Knafo-Noam, A. (2015). Prosocial development. In M. E. Lamb, & R. M. Lerner (Eds.), Handbook of child psychology and developmental
+science: Socioemotional processes (7th ed., pp. 610–656). John Wiley.
+Fakaruddin, F. J., Shahali, E. H. M., & Saat, R. M. (2024). Creative thinking patterns in primary school students’ hands-on science activities involving robotic as
+learning tools. Asia Pacific Education Review, 25(1), 171–186.
+Freiesleben, T., König, G., Molnar, C., & Tejero-Cantero, A. (2024). Scientific inference with interpretable machine learning: Analyzing models to learn about realworld phenomena. Minds and Machines, 34(3), 32.
+Gajda, A., Karwowski, M., & Beghetto, R. A. (2017). Creativity and academic achievement: A meta-analysis. Journal of Educational Psychology, 109(2), 269–300.
+Gan, Q., Bai, X., Liu, J., Wei, R., Ma, L., Xu, G., … Kang, C. (2020). Creativity Competence: Part III of the 5Cs framework for twenty-First century key competences.
+Journal of East China Normal University (Educational Sciences), 38(2), 57–70.
+Hanushek, E. A., & Woessmann, L. (2023). The knowledge capital of nations: Education and the economics of growth. MIT Press.
+Hoffmann, J. D., Ivcevic, Z., & Castillo-Gualda, R. (2025). School climate and students’ attitudes toward creativity. Thinking Skills and Creativity, Article 101880.
+Article.
+Hong, E., Peng, Y., O’Neil, H. F., Jr, & Wu, J. (2013). Domain-general and domain-specific creative-thinking tests: Effects of gender and item content on test
+performance. The Journal of Creative Behavior, 47(2), 89–105.
+Jankowska, D. M., Lebuda, I., & Gralewski, J. (2024). Creating home: Socioeconomic status and home environment as predictors of family climate for creativity.
+Thinking Skills and Creativity, 52, Article 101511. Article.
+Jankowsky, K., Steger, D., & Schroeders, U. (2024). Predicting lifetime suicide attempts in a community sample of adolescents using machine learning algorithms.
+Assessment, 31(3), 557–573.
+Kaufman, J. C., & Beghetto, R. A. (2009). Beyond big and little: The four c model of creativity. Review of General Psychology, 13(1), 1–12.
+Ke, G., Meng, Q., Finley, T., Wang, T., Chen, W., Ma, W., … Liu, T. Y. (2017). Lightgbm: A highly efficient gradient boosting decision tree. Advances in Neural
+Information Processing Systems, 30.
+Ke, Z., & Liang, C. (2023). Research on the relationship between exam-oriented education and students’ creativity. Journal of East China Normal University (Educational
+Sciences), 41(4), 72–82.
+Kelava, A., & Brandt, H. (2009). Estimation of nonlinear latent structural equation models using the extended unconstrained approach. Review of Psychology, 16(2),
+123–132.
+Kim, J. Y. (2020). A longitudinal study of the relation between creative potential and academic achievement at an engineering university in Korea. Journal of
+Engineering Education, 109(4), 704–722.
+Lavelle-Hill, R., Smith, G., Deininger, H., & Murayama, K. (2025). An explainable artificial intelligence handbook for psychologists: Methods, opportunities, and
+challenges. Psychological Methods. Advance online publication.
+Lenroot, R. K., & Giedd, J. N. (2006). Brain development in children and adolescents: Insights from anatomical magnetic resonance imaging. Neuroscience &
+Biobehavioral Reviews, 30(6), 718–729.
+Li, J. (2012). Cultural foundations of learning: East and west. Cambridge University Press.
+Li, J., Fan, Q., Zhao, K., Zhang, Y., & Liang, H. (2025a). Student creative thinking in East Asia: The role of extracurricular activities and supportive environments.
+Thinking Skills and Creativity, 58, Article 101937. Article.
+Li, Z., & Li, Q. (2025). The impact of family environment, optimism, and empathy on students’ creativity. Personality and Individual Differences, 236, Article 113019.
+Article.
+Li, M., Xiang, S., Zhang, H., Lyu, Y., Jiang, Z., Zhao, Q., … Hu, W. (2025b). How do familial creative climate influence creative scientific problem finding of
+adolescents: Chain mediation effects of intrinsic motivation for science and conceptual complexity. Thinking Skills and Creativity, 57, Article 101812. Article.
+
+19
+
+Thinking Skills and Creativity 60 (2026) 102069
+
+H. Chen et al.
+
+Lu, Z., Ding, Y., & Nie, Y. (2024). How does family socioeconomic status affect creativity? The role of creative self-efficacy and critical thinking disposition. Current
+Psychology, 43(6), 5674–5681.
+Matud, M. P., Rodríguez, C., & Grande, J. (2007). Gender differences in creative thinking. Personality and individual differences, 43(5), 1137–1147.
+Muench, R., Wieczorek, O., & Gerl, R. (2022). Education regime and creativity: The Eastern Confucian and the Western Enlightenment types of learning in the PISA
+test. Cogent Education, 9(1), Article 2144025.
+OECD. (2019). PISA 2021 creative thinking framework (Third draft). OECD.
+OECD. (2024a). PISA 2022 results (Volume III): Creative minds, creative schools. PISA, OECD Publishing.
+OECD. (2024b). PISA 2022 technical report. Paris: PISA, OECD Publishing.
+Pedregosa, F., Varoquaux, G., Gramfort, A., Michel, V., Thirion, B., Grisel, O., … Duchesnay, É. (2011). Scikit-learn: Machine learning in Python. the Journal of
+Machine Learning Research, 12, 2825–2830.
+Puozzo, I. C., & Audrin, C. (2021). Improving self-efficacy and creative self-efficacy to foster creativity and learning in schools. Thinking Skills and Creativity, 42, Article
+100966. Article.
+Romance, R., Nielsen-Rodríguez, A., Mendes, R. S., Dobado-Castaneda, J. C., & Dias, G. (2023). The influence of physical activity on the creativity of 10 and 11-yearold school children. Thinking Skills and Creativity, 48, Article 101295. Article.
+Rubin, D. B. (1978). Multiple imputations in sample surveys-a phenomenological Bayesian approach to nonresponse. In , 1. Proceedings of the survey research methods
+section of the American Statistical Association (pp. 20–34). American Statistical Association.
+Saleem, S., Burns, S., & Perlman, M. (2024). Cultivating young minds: Exploring the relationship between child socio-emotional competence, early childhood
+education and care quality, creativity and self-directed learning. Learning and Individual Differences, 111, Article 102440. Article.
+Santoso, H., Elidjen, E., Abdinagoro, S., & Arief, M. (2019). The role of creative self-efficacy, transformational leadership, and digital literacy in supporting
+performance through innovative work behavior: Evidence from telecommunications industry. Management Science Letters, 9(13), 2305–2314.
+Smola, A. J., & Scholkopf, B. (2004). A tutorial on support vector regression. Statistics and Computing, 14, 199–222.
+Tie, B., Yang, W., Huo, T., Gao, Y., Yang, X., Tian, D., … Qiu, J. (2024). Empathy to creativity: The associations between empathy and everyday creativity. Journal of
+Personality, 1–14.
+Walther, J., Miller, S. E., & Sochacka, N. W. (2017). A model of empathy in engineering as a core skill, practice orientation, and professional way of being. Journal of
+Engineering Education, 106(1), 123–148.
+Wang, B., & Li, P. P. (2024). Digital creativity in STEM education: The impact of digital tools and pedagogical learning models on the students’ creative thinking skills
+development. Interactive Learning Environments, 32(6), 2633–2646.
+Wheeler, S., Waite, S. J., & Bromfield, C. (2002). Promoting creative thinking through the use of ICT. Journal of Computer Assisted Learning, 18(3), 367–378.
+Wu, H. Y., Wu, H. S., Chen, I. S., & Chen, H. C. (2014). Exploring the critical influential factors of creativity for college students: A multiple criteria decision-making
+approach. Thinking Skills and Creativity, 11, 1–21.
+Xu, C., Xiong, W., Zhang, S., Shi, H., Wu, S., Bao, S., & Xiao, T. (2025). Research on the nonlinear relationship between carbon emissions from residential land and the
+built environment: A case study of Susong County, Anhui Province using the XGBoost-SHAP model. Land, 14(3), 440.
+Yang, J., & Zhao, X. (2021). The effect of creative thinking on academic performance: Mechanisms, heterogeneity, and implication. Thinking Skills and Creativity, 40,
+Article 100831. Article.
+Zhang, G., Li, X., Zhang, L., & Wei, X. (2024). Dynamics and causes of cropland non-agriculturalization in typical regions of China: An explanation based on
+interpretable machine learning. Ecological Indicators, 166, Article 112348. Article.
+Zhang, J., Chen, W., Xiao, Y., & Wang, B. (2022). Exploration of digital creativity: Construction of the multiteam digital creativity influencing factor model in the
+action phase. Frontiers in Psychology, 13, Article 822649.
+Zhang, Y., Pi, Z., Chen, L., Zhang, X., & Yang, J. (2021). Online peer assessment improves learners’ creativity: Not only learners’ roles as an assessor or assessee, but
+also their behavioral sequence matter. Thinking Skills and Creativity, 42, Article 100950. Article.
+Zou, H., & Hastie, T. (2005). Regularization and variable selection via the elastic net. Journal of the Royal Statistical Society Series B: Statistical Methodology, 67(2),
+301–320.
+Hui Chen is a PhD student in the Faculty of Education at Beijing Normal University. His research interests include machine learning, learning analytics, and AIED.
+Hongji Deng is a master student in the Faculty of Education at Beijing Normal University. His research interests include machine learning, learning analytics, and AIED.
+Hao Yu is a PhD student in the Faculty of Education at Beijing Normal University. His research interests include project-based learning, math education, and interdisciplinary education.
+Yan Dong is a professor in the Faculty of Education at Beijing Normal University. Her research interests include STEM education and programming education.
+Huazhen Wang is an associate professor in the College of Computer Science and Technology at Huaqiao University. Her research interests include machine learning,
+large language model, and educational robot.
+
+20
+
+

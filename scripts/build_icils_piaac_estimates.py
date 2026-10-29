@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-ICILS (2013, 2018, 2023) ve PIAAC (Cycle1=2012, Cycle2=2017) için
+ICILS (2013, 2018, 2023) ve PIAAC (Cycle1=2012, Cycle2=2022) için
 ülke düzeyinde ağırlıklı ortalamalar ve standart hatalar.
 
 ICILS : IEA Zone-JRR (JKZONE+JKREP+TOTWGTS) → BSG*.sav ülke dosyaları
@@ -24,7 +24,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 STAGE5_DIR   = PROJECT_ROOT / "outputs" / "stage5"
 STAGE5_DIR.mkdir(parents=True, exist_ok=True)
 
-ILSA_BASE = Path("/Users/mrved/Desktop/ILSA Datasets")
+ILSA_BASE = Path("/Users/mrved/Desktop/ILSA Datasets for LLM Extraction")
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s  %(message)s")
 log = logging.getLogger(__name__)
@@ -280,7 +280,7 @@ PIAAC_CATALOG = [
     ("C1", 2012,
      ILSA_BASE / "PIAAC Datasets/PIAAC Cycle1",
      ",", "prg???p1.csv"),
-    ("C2", 2017,
+    ("C2", 2022,
      ILSA_BASE / "PIAAC Datasets/PIAAC Cycle2",
      ";", "prg???p2.csv"),
 ]
@@ -310,7 +310,7 @@ PIAAC_COVARIATES = {
         "PARENTAL_EDUCATION": "PARED",    # parents' highest ISCED (0–4 or 0–3)
         "GENDER":             "GENDER_R", # 1=male, 2=female
     },
-    2017: {
+    2022: {
         "PARENTAL_EDUCATION": "PAREDC2",
         "GENDER":             "GENDER_R",
     },

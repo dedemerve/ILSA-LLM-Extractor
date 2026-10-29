@@ -1,0 +1,995 @@
+Machine learning algorithm for grading open-ended
+physics questions in Turkish
+Ayşe Çınar, et al. [full author details at the end of the article]
+Received: 16 November 2019 /Accepted: 30 January 2020/
+# Springer Science+Business Media, LLC, part of Springer Nature 2020
+Abstract
+Worldwide, open-ended questions that require short answers have been used in many
+exams in fields of science, such as the International Student Assessment Program
+(PISA), the International Science and Maths Trends Research (TIMSS). However,
+multiple-choice questions are used for many exams at the national level in Turkey,
+especially high school and university entrance exams. This study aims to develop an
+objective and useful automatic scoring model for open-ended questions using machine
+learning algorithms. Within the scope of this aim, an automated scoring model con-
+struction study was conducted on four Physics questions at a University level course
+with the participation of 246 undergraduate students. The short-answer scoring was
+handled through an approach that addresses students’ answers in Turkish. Model
+performing machine learning classification techniques such as SVM (Support Vector
+Machines), Gini, KNN (k-Nearest Neighbors), and Bagging and Boosting were applied
+after data preprocessing. The score indicated the accuracy, precision and F1-Score of
+each predictive model of which the AdaBoost.M1 technique had the best performance.
+In this paper, we report on a short answer grading system in Turkish, based on a
+machine learning approach using a constructed dataset about a Physics course in
+Turkish. This study is also the first study in the field of open-ended exam scoring in
+Turkish.
+Keywords Machine learning . Automatic short answer grading . Short-answer scoring
+https://doi.org/10.1007/s10639-020-10128-0
+Highlights
+• In this study, a very high performance of the AdaBoost.M1 algorithm was observed in the scoring of four
+physics questions which were quite different and difficult.
+• In the evaluation of scoring of open-ended questions by using machine learning algorithms, the systems
+imitate the field expert. It was constructed with the methods closest to the human scoring in this research.
+• In the case of open-ended questions in the selection and placement exam taking place at the national level
+in Turkey, the AdaBoost.M1 technique will be shown to be successful.
+Electronic supplementary material The online version of this article (https://doi.org/10.1007/s10639-020-
+10128-0) contains supplementary material, which is available to authorized users.
+Published online: 2 March 2020
+Education and Information Technologies (2020) 25:3821–3844
+
+1 Introduction
+Nowadays, technological developments are progressing rapidly, and this process also
+affects education. One of the most important reflections of these effects is the ability to
+measure knowledge (Jayashankar and Sridaran 2017). Assessment and evaluation play
+a central role in the education process. The assessment and evaluation used in deter-
+mining the students’ knowledge and level are very important for both the students and
+the teacher. A reliable and valid assessment tool not only reveals what the students are
+missing, but also predicts in which subjects or areas they can be successful in the future.
+Measurement and evaluation tools such as open-ended, short-answer, multiple-choice,
+true/false, gap filling, essay and other methods are used in measuring the level of
+student knowledge. Short-answer questions are open-ended questions that require the
+students to create an answer limited to between 3 and 5 words and two paragraphs (Ziai
+et al. 2012). They are mostly used in examinations to assess the necessary knowledge
+and understanding of students. The usage of short-answer questions in measuring the
+students’ knowledge is more decisive than multiple-choice questions (Gronlund 1998).
+In multiple-choice questions, students choose one of the options offered to them, and
+do not specify why they give this answer. On the other hand, open-ended or short-
+answer questions allow students to write and explain their answers and defend their
+ideas (Burrows et al., 2015). Thus, a more detailed and accurate assessment can be
+made about the student’s level of knowledge. While open-ended questions have this
+advantage, it is quite difficult to score and evaluate them than multiple-choice
+questions.
+While multiple-choice questions can be scored automatically with optical readers,
+the number of students and the measurement based on human factors (injustice based
+on prejudice, fatigue, inconsistency, and validity-reliability) make it difficult to measure
+information in the scoring and evaluation of open-ended questions.
+The human effort requirement, which is used to evaluate students’ answers to open-
+ended questions, increased with large-scale exams (Alvarado et al. 2018). Using
+computer-aided automatic scoring systems, they can evaluate and analyze responses
+of the open-ended questions in a much more detailed, pre-judged, and objective
+manner, and in a shorter time than human teachers. The automatic scoring systems of
+open-ended questions have become significant and grown exponentially in the last few
+years.
+In this research, short-answer scoring will be handled through an approach that
+addresses students’ answers in a Turkish Physics course.
+2 Related work
+The Turkish alphabet is based on Latin letters and contains 29 letters. In particular, the
+letters “ç, Ç, ğ, Ğ, ı, ö, ö, ş, ş, ü, Ü” are not used in the Latin alphabet while they are
+frequently used in the Turkish language, and these letters are not included in the
+database available in the world. In terms of structure, it is among the “agglutinant”
+languages which are called as additive. There are no prefixes in Turkish. In addition; in
+the syntax, identifiers come first, followed by those defined (for example; adjectives
+used before nouns); there is no grammatical gender; word derivation and inflection are
+3822
+Education and Information Technologies (2020) 25:3821–3844
+
+done with suffixes in Turkish. By using suffixes, at least ten different words can be
+derived from a root word; therefore, it has a rather complex structure compared to other
+languages. This language, which is very difficult to learn and write even for people,
+constitutes a much more complex identification problem for machines. The interpreta-
+tion of the meaning of a sentence written in Turkish is for the machine a challenging
+task. Therefore, there is a limited number of studies on machine learning in Turkish.
+However, there are many studies in the world for scoring open-ended questions using
+Automatic short answer grading (ASAG) systems for different languages.
+Automatic short answer (response) grading (ASAG) is one of the favorite research
+areas in the field of educational data mining (Burrows et al. 2015). In general, the most
+used ASAG approaches are response-based, reference-based, corpus-based, Machine
+Learning, semi-automatic and fully-automatic systems (Sakaguchi et al. 2015). A
+response-based approach uses detailed features extracted from the student’s response
+itself, and learns a scoring function from human-scored responses. A reference-based
+approach compares the student’s response to reference texts, such as exemplars for each
+score level, or specifications of required content from the assessment’s scoring guide-
+lines (Sakaguchi et al. 2015). A corpus-based approach requires a reasonable corpus,
+depending on the domain (Klein et al. 2011). In the Machine Learning approach,
+supervised or unsupervised learning models are used through data mining (Shermis
+2015). In semi-automatic systems, students’ answers are processed (clustered) to
+facilitate the grading process (Basu et al. 2013). Fully-automatic systems produce
+grades for each student, with or without additional feedback. The most important of
+these studies are presented below;
+Alfonseca and Perez (2004) used an algorithm which is called BLEU (Bilingual
+Evaluation Understudy), based on n-gram and normalization structure. They carried out
+Evaluating Responses with Bleu, and they showed that Atenea is more powerful than
+coordinate matching and vector space model baselines (Perez et al. 2004; Perez-Marin
+2004). After that, Perez et al. 2004) managed to merge BLEU and LSA scores together,
+instead of the individual features as part of a machine learning solution. As a result of
+this step, Atenea is considered as a corpus-based method. Bukai et al. (2006) handled
+LSA based on an inverted index data structure, which is constructed by content from
+the web using topically-relevant documents with SAMText (Short Answer Measure-
+ment of TEXT), and discussed that the inverted index and crawling idea is more useful
+for short answers compared to long answers. Mohler and Mihalcea (2009) developed
+several systems to examine unsupervised grading methods using Knowledge-based and
+Corpus-based text-to-text similarity measures. They used a corpus composed from
+Wikipedia. They showed a Pearson correlation value of r = 0.463 between the computer
+assigned grades and the average of human assigned grades. They also believed in
+merging the best student answers with teacher responses in this approach. Klein et al.
+(2011) implemented the student answers into the LSA model, and they used three
+approaches such as random selection, clustering, or marked selecting. Klein et al.
+(2011) stated that the third approach was the most effective, enabling automatic
+selection, and showed the minimization of the manually marked set of submissions.
+Bailey and Meurers (2008) explored CAM (Content Evaluation Module) based on the
+nearest neighbor classifier, and measured the percentage of content overlap using word
+unigram, trigram, noun phrases, text similarity thresholds, and parts of speech. Nielsen
+et al. (2008) considered their machine learning system based on the C4.5 decision tree
+3823
+Education and Information Technologies (2020) 25:3821–3844
+
+for classification. In this system, the choice of features includes both lexicalized and
+syntactic features. Hou and Tsao (2011) performed a system based on four classes of
+features which are extracted, comprising POS tags, term frequency, tf. idf, and entropy,
+which is combined with an SVM classifier. Basu et al. (2013) applied the k-medoids
+clustering method and an LDA algorithm approach. In another work, Jayashankar and
+Sridaran (2017) asserted a model which is a combination of data mining and word
+clouds to help teachers evaluate student answers through visualization. McDonald et al.
+(2012) implemented Naive Bayes and Max Ent classifiers using a number of features
+like bag of words, word length, and word and character n-grams. Madnani et al. (2017)
+used four fields (Science, Mathematics, English Language, and Arts and Social Stud-
+ies) and human raters to examine the performance of 8 different classifiers and
+regressors. They developed a variety of supervised learning strategies to
+automatically score 130 different contextual questions, with more than 230,000
+responses. Riordan et al. (2017) compared SVM performance using an n-gram algo-
+rithm combined with length, word and character combinations, according to neural
+architectures. Sakaguchi et al. (2015) examined a classifier based on sparse response-
+based features (e.g. character n-gram and word n-gram); the obtained predictions were
+combined with dense reference-based features to build another stacked classifier. They
+emphasized the performance using quadratically weighted κ between the human and
+predicted scores. Zhang et al. (2016) compared Deep Belief Networks (DBN) to some
+classifiers. The DBN performed better than the other classifiers in terms of accuracy,
+precision, and F-measure.
+3 Model of the research
+As reported by Madnani et al. (2017), the most suitable approach depends on the open-
+ended nature of the question and the language structure. For these reasons, we have
+constructed the most suitable model considering the structure of the Turkish language
+and terminology of the Physics course.
+In this research, short answer grading is handled with a supervised approach which
+was based on the students’ answers. This model has been determined as the most
+suitable model for the Turkish language. A supervised machine learning algorithm uses
+pre-scored training samples from human raters on a written-response prompt. The
+algorithm learns the behavior of the raters by analyzing the classification patterns in
+the pre-scored answers. In the evaluation of scoring of open-ended questions by using
+machine learning algorithms, the systems imitate the field expert. For these reasons, we
+believed the method is the closest to human scoring as an alternative to the methods
+given above in the Turkish Physics course. The architecture and the machine learning
+model of this research is shown in Fig. 1.
+3.1 Data collection
+This study aims to develop an objective and useful automatic scoring model for open-
+ended questions using machine learning algorithms. Within the scope of this aim, an
+Automated scoring model construction was conducted on four questions at university
+level.
+3824
+Education and Information Technologies (2020) 25:3821–3844
+
+Open-ended questions can be scored with analytic, classification, ranking and
+overall impression scoring methods. The main disadvantage of open-ended
+questions is that they cannot be scored objectively like multiple-choice items,
+since the score may differ according to the person who does the scoring.
+(Romagnano 2001; Van der Linden and Hambleton 1997). The most reliable
+of these methods is analytical scoring (key scoring). In key scoring, the
+answers to the questions are prepared in advance, and each answer is analyzed
+to the finest detail (Graham et al. 2012). In this context, within the scope of
+this study, the answer key of the four university physics questions’ scores was
+determined by three physics education experts, and one assessment and evalu-
+ation expert. The score limits of each item were determined, and the raters’
+opinions were consulted.
+The characteristics of the questions were as follows:
+&
+Question 1 (Q1) was about the topic of electricity, which is at comprehension level
+of the cognitive field taxonomy and there were two categories scoring as 1–0.
+&
+Question 2 (Q2) was about the topic of conservation of energy, which is at
+comprehension level of the cognitive field taxonomy, with three sub-questions
+and there were five categories scoring as 0–1–2-3-4.
+&
+Questions 3 and Questions 4 (Q3 and Q4) are definition questions about the topic of
+work and energy, which is in the knowledge stage of cognitive field taxonomy, and
+there are two categories scoring as 1–0.
+The average number of words in the answers given to Q3 and Q4 in the knowledge
+dimension, with 2 categories (0–1), was 61, the average number of words in the
+answers given to Q1 in the comprehension dimension, with 2 categories (0–1), was
+Fig. 1 The architecture and Machine Learning model of the research
+3825
+Education and Information Technologies (2020) 25:3821–3844
+
+52 and the average number of words in the answers given to Q2 in the comprehension
+dimension, with 5 categories (0–1–2-3-4), was 125.
+In this study, the scoring key and the scoring of each question as determined
+according to expert opinions are presented in Table 1. Used open-ended questions
+and an example from students’ handwritten answers for each question are also pre-
+sented in Turkish in Appendix 1.
+In the scoring of answers; words that have the same meaning (synonyms),
+abbreviations of expressions (t; time, m; mass, h; height, Ek (KE); Kinetic Energy,
+Ep (PE); Potential Energy, ME: Mechanical Energy, R (r); Resistance, I (i),
+Current, W (w), work, F (f); Force, X (x), Displacement) and sentence structure
+differences were considered. If these statements were found in the correct answers,
+the answers were considered as correct. The score limits of each item were
+determined, and the raters’ opinions were consulted. In this study, the answers
+given to the short answer questions were scored by three raters using the deter-
+mined scoring key.
+This study was conducted with the participation of 246 (19–22 years) under-
+graduate students who had taken the Physics course. 142 of these students (43 first
+year, 40s year, 39 third year, and 20 fourth year) were enrolled in the department
+of science education in a state university education faculty in Istanbul, and one
+hundred forty-two of them (20 first year, 29 s year, 28 third year, and 27 fourth
+year) were enrolled in the Physics Department in a state university science faculty
+in Istanbul, Turkey. Before the research, the participants were informed about the
+study, and it was explained that there was no obligation to participate in the
+research. The participants declared that they volunteered for the study. Participa-
+tion in the research was based on volunteering. The students were given 60 min to
+answer the questions.
+A frequently used method of calculating inter-rater reliability is an inter-rater
+correlation. The answers were independently graded by three Physics experts for
+each student according to the answer key, and inter-rater reliability was calculated
+for each question. Correlations between the scores were determined by the raters
+to the short answer questions, using the key scoring as 0.87 for Q1, 0.79 for Q2,
+0.92 for Q3 and 0.90 for Q4, and 0.87 for the median correlation.
+3.2 Data extraction
+In our study, four different datasets were prepared in an excel sheet for each question.
+At this stage, data sets were made ready to access data and file processing.
+3.3 Data preprocessing
+In the scope of the study, the following data preprocessing techniques were applied.
+3.3.1 Text normalization (tokenization)
+A token is a distinct part of a text, corpus, etc. Accordingly, tokenization can be
+described as splitting a corpus into sentences or individual words. Together with
+tokenization, we also applied normalization to convert all the text to the same case
+3826
+Education and Information Technologies (2020) 25:3821–3844
+
+Table 1 Scoring key and scoring of each question
+Question
+Number
+Questions (English)
+Scoring Key (English) *
+1
+Sinan is preparing the report of the experiment they did in the physics laboratory
+class that day. The question in the test report is:
+“If there is a single bulb in an electrical circuit, in which case two bulbs of the same
+power are connected in series, compare the brightness of the bulbs and explain the
+reason for your answer.”
+Sinan rethinks their experiments in the laboratory and answers the question as
+follows:
+-“While there is only one light bulb in an electrical circuit,
+the light bulb is quite bright. When a second bulb is added serially to this bulb,
+both bulbs light up equally and less brightly. The reason for this is that the single
+bulb uses all the current flowing through the circuit.
+When there are two bulbs in the circuit,
+the current is shared by the bulbs and therefore they are equal but less bright.”
+Sinan thinks he understands very well what is happening in the experiment,
+but he makes a big mistake. Can you find this error? (Hewitt et al. 2015)
+0 point: If student did not answer or gave an incorrect answer.
+1 point: Sinan thinks that the current passing through both bulbs and the bulbs share
+this current. However, the same current passes first through the first bulb and then
+through the other. The two bulbs are dimmer than a single bulb.
+Because the increased resistance in the circuit reduces the current.
+Sinan; considers that the bulbs are connected in parallel.
+2
+You drop an apple from a certain height without speed and it hits the ground with a
+certain velocity. Assume that you cut the same apple in half and drop half of it at
+the same height. (Assume no air friction,
+please express your answers only verbally without writing formulas)
+a) What is the speed of the cut apple in half according to the speed of the whole
+apple?
+b) Explain the reason by considering the factors that affect its speed for the answer to
+option a.
+c) Explain the reason taking into account the energy conservation laws for your
+answer to option a. (Hewitt et al. 2015)
+a) 0 point: If student did not answer or gave incorrect answer
+(in this case the answers of b and c are ignored).
+1 point: Speed does not change. / Speeds are the same.
+b) 0 point: If student did not answer or gave incorrect answer.
+2 points (if option a is correct): only if height is specified in option b,
+2 points (if option a is correct): only if mass is specified in option b,
+3 points (if option a is correct): In option b, if both height and mass are specified:
+The objects that are allowed to fall free from the same height have different
+masses, but their velocities are the same. Because the velocity of an object that
+makes free fall movement is related to height but it is independent of mass.
+c) 0 point: If student did not answer or gave incorrect answer.
+4 points (if option a and b are correct): According to energy conservation laws,
+if an object has only potential energy when it is at a certain height and the object is
+allowed to fall free from the height, the height decreases as it falls to the ground as
+3827
+Education and Information Technologies (2020) 25:3821–3844
+
+Table 1 (continued)
+Question
+Number
+Questions (English)
+Scoring Key (English) *
+soon as it is allowed to fall but the object starts to accelerate.
+In this case, the kinetic energy increases while the potential energy decreases.
+As soon as the object hits the ground, it has only kinetic energy increased and the
+total mechanical energy is preserved.
+3
+What is Mechanical Energy? Please explain.
+(Please express your answers only verbally without writing formulas)
+0 point: If student did not answer or gave incorrect answer.
+1 point: Mechanical energy is the sum of potential and kinetic energy for
+conservative systems.
+4
+What does scientific Work mean? Please explain.
+(Please express your answers only verbally without writing formulas)
+0 point: If student did not answer or gave incorrect answer.
+1 point: Work is applying force to an object in a certain direction and moving that
+object in the direction of the applied force.
+3828
+Education and Information Technologies (2020) 25:3821–3844
+
+(upper or lower), stripping whitespaces, removing punctuation, numbers and some
+words.
+3.3.2 Weighting-TF-IDF
+Term weighting is an important preprocessing technique. In the study, to evaluate
+how important a word is to a document in the corpus, we applied the Term
+Frequency-Inverse Document Frequency (TF-IDF) measure. The measure de-
+creases the weight of commonly used words (such as “the”, “is”, “of”, and so
+forth) and increases the weight of not so often used words in a collection of
+documents. While term frequency is used to estimate the ratio of the frequency of
+a given term (word) in a document, inverse document frequency is used to
+estimate the weight of not so often used words in all the documents in the corpus.
+The equations of both measures are given as follows.
+TF term
+ð
+Þ ¼
+Frequency of a term in a document
+Total number of terms in a document
+ð1Þ
+IDF term
+ð
+Þ ¼ log
+Total number of the documents
+The number of documents containing term
+
+
+ð2Þ
+TF−IDF ¼ TF*IDF
+ð3Þ
+3.3.3 N-gram tokenizer
+The n-gram tokenization technique is applied to break the text down into words
+consecutively. During the first phase of the study, it was developed as uni-gram,
+bi-gram and also tri-gram models from the tokenized text. Afterwards, it was
+decided to build a unigram model since the observed performance of the uni-gram
+model became better than others.
+Table 2 Feature Selection size using bag-of-visual-words representation
+Questions
+Min. words in answers
+Max. words in answers
+Unique Features
+Selected Features
+1
+1
+52
+640
+528
+2
+1
+125
+1040
+1037
+3
+1
+66
+745
+724
+4
+1
+57
+432
+316
+3829
+Education and Information Technologies (2020) 25:3821–3844
+
+3.3.4 Feature selection
+Since redundant attributes (features) mostly cause a negative impact on the
+accuracy of the classification algorithms, the feature selection has a great impor-
+tance in data mining. The essential problem is to decide on the method for
+choosing related features from a set of collected features. There are different
+methods for feature selection, such as document frequency, chi-squared statistic,
+information gain, mutual information, and correlation coefficient (Hsu and Hsieh
+2010). Among them, we used the correlation coefficient method to eliminate some
+words as redundant features that have a low coefficient with other features to
+increase the accuracy of the classification models in our study. To eliminate these
+redundant words, we used the function findCorrelation() with a cutting of param-
+eter (cutoff = 0.30). Table 2 shows the maximum number of individual words, and
+the number of features generated for each question.
+3.3.5 Balancing the dataset
+Many machine learning applications are engaged in imbalanced data (Zhang and
+Mani 2003). In our study, we observed that there was a class imbalance problem
+in the answers to each individual question. An oversampling technique named
+Smote (Synthetic Minority Over-sampling) was used to eliminate the imbalanced
+data problem (Chawla et al. 2002).
+3.3.6 Data partition
+After obtaining the balanced dataset, it was split as 75% training and 25%
+testing sets at random, when applied boosting and bagging algorithms were
+applied, and repeated the process ten times to have ten different predictive
+models. After that, k-fold cross validation techniques for Gini, SVM and KNN
+were applied.
+3.4 Model building
+Text classification is an assignment process of the documents into predefined class
+(categories) based on their semantic content by using supervised learning algorithms
+(Joachims 1999). In our study, Bagging and AdaBoost.M1 (Adaptive Boosting)
+algorithms were applied as ensemble learning techniques (Bagging and
+Boosting) to define the grade (class) of the exam papers. Besides, SVM, Gini
+and KNN algorithms were applied as supervised machine learning techniques.
+The algorithms were applied in three stages. The first stage of the application
+was the building of an individual predictive model of them on the class labeled
+training dataset. The second stage was the class predicting of the testing data
+with these predictive models. In the last stage the performance of the men-
+tioned classification models were compared, concerning the proportion of the
+total number of correct predictions in all evaluated cases (accuracy), the preci-
+sion and F1-score.
+3830
+Education and Information Technologies (2020) 25:3821–3844
+
+3.4.1 Bagging (Bootstrap aggregation)
+Bagging is an ensemble learning technique. Because of the complexity and scale
+of the problem of a large and high-dimensional data, it is impossible to find a
+good classification model that can work in one step (Syarif et al. 2012). The
+technique is very beneficial for this kind of data. It reduces variance and also helps
+to avoid overfitting. The Breiman's Bagging algorithm was applied by using the
+bagging () function in the library of R Package named “adabag” in this study
+(Alfaro et al. 2015).
+3.4.2 Boosting
+Boosting is another ensemble learning technique. It creates a strong learner,
+combining many weak learners. The main idea of the boosting algorithms is to
+train classifiers consecutively to improve their performance (Freund and Schapire
+1996). The actual classification task is done by combining the votes of the
+different classifiers and weighing them by the error they had on the training set.
+The AdaBoost.M1 (Adaptive Boosting) algorithm is one of the ensemble boosting
+classifiers invented by Yoav Freund and Robert Schapire in 1996. It was applied
+by using the boosting() function in the library of R Package named “adabag” in
+this study (Alfaro et al. 2015).
+3.4.3 Gini algorithm
+Creating binary splits, the Gini algorithm generates both classification and
+regression trees by using the function rpart() in the library of the “rpart” R
+package. Thus, before using the function, this package must have been installed
+to reach its library (Therneau et al. 2017).
+3.4.4 Support vector machines (SVM)
+Support Vector Machines (SVM) is a supervised learning classification algorithm.
+It has been extensively used in text classification problems. SVM is a kind of
+Linear Classifiers. A linear classifier classifies a text document based on a linear
+combination of feature values (Mowafy et al. 2018). The SVM algorithm is
+applied by using the function svm() in the library of the “e1071” R package
+(Meyer et al. 2019).
+3.4.5 K-Nearest neighbors algorithm (KNN)
+KNN is one of the supervised learning algorithms. It classifies the samples
+according to the class of their nearest neighbors. In this study, this algorithm
+was applied by using the function knn() in the library of the “class” R package
+(Ripley and Venables 2019).
+3831
+Education and Information Technologies (2020) 25:3821–3844
+
+Fig. 2 The Comparison of the Accuracy of Five Algorithms for Each Question
+3832
+Education and Information Technologies (2020) 25:3821–3844
+
+Table 3 The Performance Measures of the Adaboost.M1 Algorithm
+Question Number
+Iteration Number
+Accuracy
+Precision
+F1-Score
+1
+1
+0.8415842
+0.8269231
+0.8431373
+2
+0.8780488
+0.7826087
+0.8780488
+3
+0.8700000
+0.8600000
+0.8686869
+4
+0.9072165
+0.9000000
+0.9090909
+5
+0.8942308
+0.8545455
+0.8952381
+6
+0.9908257
+0.9824561
+0.9911504
+7
+0.8958333
+0.8965517
+0.9122807
+8
+0.9468085
+0.9615385
+0.9523810
+9
+0.9130435
+0.9047619
+0.9047619
+10
+0.8952381
+0.9019608
+0.8932039
+2
+1
+0.8281250
+0.8214000
+0.9350000
+2
+0.8163265
+0.9167000
+0.9867000
+3
+0.7966102
+0.9444000
+0.9880000
+4
+0.7424242
+0.8947000
+0.8765000
+5
+0.7968750
+0.9375000
+0.9579000
+6
+0.7027027
+0.9375000
+0.9016000
+7
+0.7424242
+0.9375000
+0.9901000
+8
+0.6567164
+0.7500000
+0.9494700
+9
+0.7924528
+0.9500000
+0.9598000
+10
+0.8382353
+0.9524000
+0.9654000
+3
+1
+0.9130435
+0.9523810
+0.9090909
+2
+0.8550725
+0.9375000
+0.8571429
+3
+0.8888889
+0.9111111
+0.8913043
+4
+0.8915663
+0.8717949
+0.8831169
+5
+0.9090909
+0.9047619
+0.9047619
+6
+0.9009901
+0.8958333
+0.8958333
+7
+0.8850575
+0.8888889
+0.8648649
+8
+0.8720930
+0.9393939
+0.8493151
+9
+0.9113924
+0.9268293
+0.9156627
+10
+0.8829787
+0.8800000
+0.8888889
+4
+1
+0.9857143
+1.0000000
+0.9777778
+2
+0.9259259
+1.0000000
+0.9000000
+3
+0.8750000
+0.7777778
+0.7777778
+4
+0.9857143
+1.0000000
+0.9787234
+5
+0.9142857
+0.8400000
+0.8750000
+6
+0.9750000
+0.9615385
+0.9615385
+7
+0.9600000
+0.9200000
+0.9387755
+8
+0.9014085
+0.8636364
+0.8444444
+9
+0.9137931
+0.9375000
+0.8571429
+10
+0.9583333
+0.9600000
+0.9411765
+3833
+Education and Information Technologies (2020) 25:3821–3844
+
+4 Findings
+In this study, the supervised machine learning techniques Gini, SVM, KNN,
+and also Breiman’s Bagging, Freund and Schapire’s Adaboost.M1 algorithms
+were applied on four different datasets related to a single Physics question,
+respectively. Two partitions were created for each dataset as 75% training set,
+and 25% testing set. Following the partitioning, the algorithms were applied on
+the training data and predicted the grade of each answer sheet in the testing
+data, consecutively.
+As mentioned before, to apply Adaboost.M1, firstly we handled ten different
+random training and testing datasets with the ratio of 75% and 25% within the
+whole data. Then, the algorithm was applied on these datasets to build ten
+different predictive models. Each predictive model was evaluated for each
+category in the testing data set according to the performance measures called
+accuracy, precision, and F1-score performance measures for each category in
+the testing data set, as shown in Figs. 3, 4, 5, and 6 in Appendix 2.
+The experimental results confirmed the superiority of Adaboost.M1 over the
+other algorithms, because of the highest average of accuracy of each predictive
+model for each question. Each predictive model was evaluated through the
+accuracy performance measures for each category in the testing data set, as shown
+in Fig. 2.
+A validation test was also performed at ten iterations, using Adaboost.M1 for
+each question. Accuracy, precision and F1-Score were presented in Table 3.
+According to the evaluation of the test results; the accuracy values ranged
+between 0.84–0.99 for Q1 (528 features), 0,65–0.84 for Q2, which is the longest
+and most complex question (1037 features), 0.85–0.91 for Q3 (724 features) and
+0.87–0.98 for Q4 (316 features) for the Adaboost.M1 algorithm, for ten iterations.
+The precision values ranged between 0.78–0.98 for Q1, 0.75–0.95 for Q2, 0.87–
+0.95 for Q3 and 0.77–1.00 for Q4 for the Adaboost.M1 algorithm, for ten
+iterations. The F1-score ranged between 0.84–0.95 for Q1, 0.87–0.98 for Q2,
+0.84–0.91 for Q3 and 0.77–0.97 for Q4 for the Adaboost.M1 algorithm, for ten
+iterations.
+In this study, four Physics questions with different characteristics were used.
+The scoring key of the questions and the scoring method for each question were
+determined according to expert opinions. The average number of words in the
+given answers was 61 for Q3 and Q4 which had 2 grades (0–1). Similarly, the
+average number of words in the given answers was 52 for Q1 which had 2 grades
+(0–1). Finally, the average number of words in the given answers was 125 for Q2
+which had 5 grades (0–1–2-3-4).
+The SVM, Gini, KNN, Bagging and Boosting algorithms were compared for a
+total of 984 responses according to their performance metrics. The Adaboost.M1
+algorithm was selected as the best algorithm among them. The accuracy of the
+mentioned algorithm ranged between 0.84–0.99 for Q1 (528 features), 0.65–0.84
+for Q2 (1037 features), 0.85–0.91 for Q3 (724 features) and 0.87–0.98 for Q4
+3834
+Education and Information Technologies (2020) 25:3821–3844
+
+(316 features) for ten iterations. Its precision ranged between 0.78–0.98 for Q1,
+0.75–0.95 for Q2, 0.87–0.95 for Q3 and 0.77–1.00 for Q4 for ten iterations. The
+F1-score ranged between 0.84–0.95 for Q1, 0.87–0.98 for Q2, 0.84–0.91 for Q3
+and 0.77–0.97 for Q4 for ten iterations.
+Within the scope of the study, we repeated these stages for each different
+question. The results achieved for each question showed that the algorithm related
+to the Boosting technique gave more accurate predictions.
+5 Discussion and conclusion
+Worldwide, open-ended questions that require short answers have been used in
+many exams such as the International Student Assessment Program (PISA), the
+International Science and Maths Trends Research (TIMSS) in many fields of
+science. However, multiple-choice questions are used for many exams at the
+national level, especially in high school and university entrance exams in
+Turkey. Although multiple-choice questions are useful for large groups nowa-
+days, they cannot measure the learners’ level of achievement related to the
+subject.
+This study aims to develop an objective and useful automatic scoring model for
+open-ended Physics questions using text classification algorithms. Within the
+scope of this aim, an automated scoring model construction study was conducted
+on four Physics questions at a University course. Short-answer scoring was
+handled through an approach that addresses the students’ answers in Turkish.
+We used and compared the methods closest to human scoring as alternative
+methods. With this purpose, we developed an application in R language, which
+includes five main parts such as; data extraction, data preprocessing, model
+performing, and performance evaluation of the models. In model performing,
+machine learning classification techniques which are SVM, Gini, KNN, and
+Bagging and Boosting were applied after data preprocessing. The score
+indicated that the accuracy of each predictive model of the Boosting technique
+was acceptable. This study was conducted with the participation of 246
+undergraduate students who had taken the Physics course.
+Zhang et al. (2016) compared six different classification algorithms using
+16,228 short answers (average word length 7) for high school level Physics. In
+this study, they stated that DBN (Deep Belief Networks) showed the best
+performance with an F1-score of 0.72–0.75. Herwanto et al. (2018) used three
+different PISA datasets and UKARA on the Bahasa Indonesian language in
+their study. The answers of the students were around 300 words, and there were
+dichotomous (0–1) and polytomous (11,12,00) phases in the scoring of the
+questions. Six thousand seven hundred seventy-six students’ answers were
+scored with the Adaboosting.M1 algorithm. As a result of this study; it was
+stated that the F1-score values were in the range of 0.97–0.70, and the
+dichotomous phase scoring was seen as more successful. In the Alvarado
+3835
+Education and Information Technologies (2020) 25:3821–3844
+
+et al. (2018) study, 1876 students’ answers (the number of words varied
+between 3 and 9 words) were taken into consideration using the corpus. Two
+hundred eighteen university students and six medical science questions which
+consisted of binary classifications were used in this study. They aimed to
+classify the answers as true-false (1–0) automatically. For this purpose, they
+compared six different classification algorithms, and stated that N-gram had the
+best performance with 0.93 precision value. Despite the results of the above-
+mentioned studies, in our study, five different classification models were built
+by using the SVM, Gini, KNN, Bagging and Boosting algorithms for a total of
+984 responses (average number of words in four questions is 75) for university
+Physics subjects. When comparing the performance metrics of these models, the
+model of the Adaboost.M1 algorithm was chosen as the best model. The results
+of four questions showed that the F1-score of the mentioned algorithm changes
+in the range of 0.77 and 0.98 for ten iterations.
+Pribadi et al. (2018) used Texas Corpus, and three iterations in their study,
+which was applied with 87 questions, and each question contained 7 to 10 sub-
+questions. A total of 2442 student responses were used in the study. Student
+responses were scored by two different raters in the 0–5 range, according to the
+reference answers. The shortest sentence had one word and the longest sentence
+had 170 words in the Texas corpus. In Pribadi et al. (2018) study, firstly 261
+students closest to the teacher reference answer were classified using the MMR
+(Maximum Marginal Relevance), and then 2442 students’ answers were scored
+using the GAN-LCS method, according to the 261 reference student answers. In
+the results of this study; MMR showed 91.95% accuracy and the Root Mean
+Square (RMSE) correlation values of GAN-LCS were reported to be in the range
+of 0.884 to 0.468. Galhardi et al. (2018) compared the Baseline, N-gram, Text
+Statistics, Lexical Similarity and Semantic Similarity methods for the Portuguese
+language. Three thousand six hundred seventy-five students’ answers (the number
+of words varies between 1 and 136 words) using 245 primary school students and
+15 biology questions which consisted of 0–1–2-3 and 0–1 classifications (grade?)
+were used in their study. It was showed that the best performance among the used
+algorithms has N-gram with 69% accuracy for the multi-label (0–1–2-3) classifi-
+cation and 85% accuracy for the binary (0–1) classification. In our study, there
+was a similar categorized question (Q2). It had 5 categories (0–1–2-3-4). The
+accuracy of the chosen classification model values ranged between 0.87–0.98 for
+this question.
+This study was carried out without using a pre-built corpus because a
+Turkish corpus in the field of Physics does not exist yet. The achieved results
+for each question showed that the algorithm related to the boosting technique
+gave more accurate predictions compared to other algorithms. To achieve the
+closest performance to human scoring, ten iterations were used in the compar-
+ison of each classification. When the results of the studies above are compared
+with the results of our study considering the criteria of corpus usage, the
+number of iterations, length of student responses, and scoring phases, the
+3836
+Education and Information Technologies (2020) 25:3821–3844
+
+Adaboost.M1 algorithm is believed to be the closest to human scoring and had
+the best performance. In addition to these criteria, as it is well-known that
+open-ended Physics questions have a language that is difficult to explain even
+in exams held by students orally or using paper and pen, since Physics has a
+visceral and scientific language structure (VanLehn et al. 2002). In this respect,
+with this study, the best automatic scoring algorithm for open-ended questions
+used in physics, which is such a complicated field, has been developed for the
+Turkish language. Thus, a small Turkish Physics corpus will be built due to
+this study.
+Consequently, the study shows that it is possible to use open-ended questions
+that measure knowledge in some national selection and placement exams in
+Turkey. As it is known in the international level, c-rater is technology in the
+Educational Testing Service (ETS) used for automatic content scoring for short
+free-text responses (Leacock and Chodorow 2003). C-rater demonstrates the
+correctness, failing, incorrectness or inadequacy of students’ responses, and it
+is not designed to score open-ended questions. In this respect, the c-rater is
+suitable for usage in traditional written exams. This is because teachers can
+measure whether students understand what they do and how much they can
+understand. Our model was aimed at correctly scoring open-ended questions,
+instead of multiple-choice questions applied to numerous people. In this respect,
+our model has a structure different from the c- rater. The model proposed in
+this study is similar to the PISA and TIMMS exams, and it provides a novel
+contribution to the literature and can be applied not only in Turkey’s exams but
+also in the PISA and TIMSS.
+This study is also the first study in the field of open-ended exam scoring in
+Turkish. The plan is to implement this algorithm by using a larger sample, in
+different courses and different levels of Physics courses in Turkish. This model,
+developed by this research, is believed to be successful for different languages
+at the international level, as well.
+The study was conducted for a Physics course in the Turkish language. Since
+there is no Turkish data set in the field of Physics, the accessible data set could
+not be used in this study. Therefore, a Turkish Physics data set was created for
+this study. When the studies in the field of ASAG were examined, it was seen
+that accessible data sets were used, and the results were compared. Since the
+data set was used for the first time in this study, the results of the model could
+not be compared with the results of other studies in the literature. However, the
+performance of the model was presented in detail, and successful results were
+obtained for the Turkish Physics course. This study was conducted on the
+topics of electricity, conservation of energy, work and energy in Physics. In
+addition, the answer to each question was obtained in Turkish. The questions
+used in this study were on the level of knowledge and comprehension of
+cognitive field taxonomy. Therefore, the performance of the model covers the
+knowledge and comprehension levels of cognitive field taxonomy. The above
+explanations were accepted as limitations of the study.
+3837
+Education and Information Technologies (2020) 25:3821–3844
+
+Appendix 1
+Open-Ended Questions and an Example from Students’ Handwritten Answers
+for each Question
+3838
+Education and Information Technologies (2020) 25:3821–3844
+
+Appendix 2
+Accuracy, precision, F1-score performance measures for each category
+in the testing data sets as shown in Figs. 3, 4, 5, and 6
+Fig. 3 The comparison of Accuracy, Precision and F1-Score of the algorithms at ten different random
+iterations for Question 1
+3839
+Education and Information Technologies (2020) 25:3821–3844
+
+Fig. 4 The comparison of Accuracy, Precision and F1-Score of the algorithms at ten different random
+iterations for Question 2
+3840
+Education and Information Technologies (2020) 25:3821–3844
+
+Fig. 5 The comparison of Accuracy, Precision and F1-Score of the algorithms at ten different random
+iterations for Question 3
+3841
+Education and Information Technologies (2020) 25:3821–3844
+
+References
+Alfaro, E., Gamez, M., & Garcia, N. (2015). Adabag: Applies multiclass AdaBoost.M1, SAMME and
+bagging. R package version 4.2. https://cran.r-project.org/web/packages/adabag/. Accessed 9 Dec 2019.
+Alfonseca, E., & Perez, D. (2004). Automatic assessment of open ended questions with a BLEU-inspired
+algorithm and shallow NLP. Advances in Natural Language Processing. LNCS, 3230, 25–35.
+Alvarado, J. G., Ghavidel, H. A., Zouaq, A., Jovanovic, J., & McDonald, J. (2018). A comparison of features
+for the automatic labeling of student answers to open-ended questions. Proceeding of the 11th
+International Educational Data Mining Conference, Buffalo, NY, 55-65.
+Bailey, S., & Meurers, D. (2008). Diagnosing meaning errors in short answers to reading comprehension
+questions, Proceedings of the 3rd Workshop on Innovative Use of NLP for Building Educational
+Applications, Association for Computational Linguistics, 107–115.
+Basu, S., Jacobs, C., & Vanderwende, L. (2013). Powergrading: A clustering approach to amplify human
+effort for short answer grading. Transactions of the Association of Computational Linguistics, 1, 391–401.
+Bukai, O., Pokorny, R., & Haynes, J. (2006). An automated short-free-text scoring system: Development and
+assessment. Proceedings of the 20th Interservice-Industry Training, Simulation, and Education
+Conference, 1–11.
+Burrows, S., Gurevych, I., & Stein, B. (2015). The eras and trends of automatic short answer grading.
+International Journal of Artificial Intelligence in Education, 25, 60–117.
+Chawla, N. V., Bowyer, K. W., Hall, L. O., & Kegelmeyer, W. P. (2002). SMOTE: Synthetic minority over-
+sampling technique. Journal of Artificial Intelligence Research, 16, 321–357.
+Freund, Y., & Schapire, R. E. (1996). Experiments with a new boosting algorithm, machine learning.
+Proceedings Of The TThirteenth International Conference (Icml96), 148–156.
+Galhardi, L., Barbosa, C.R.S.C., ThomdeSouza, R.C., & Brancher, J.D. (2018). Portuguese automatic short
+answer grading, VII Congresso Brasileiro de Informática na Educação-CBIE 2018, 1373–1382.
+Graham, M., Milanowski, A., & Miller, J. (2012). Measuring and promoting inter-rater agreement of teacher
+and principal performance ratings. Washington, DC: U.S. Department of Education: Center for Educator
+Compensation Reform.
+Gronlund, N. E. (1998). Assessment of student achievement (6th ed.). Boston: Allyn & Bacon.
+Herwanto, G.B., Sari, Y., Prastowo, B.N., Riasetiawan, M., Bustoni, I.A., & Hidayatulloh, I. (2018). UKARA:
+A fast and simple automatic short answer scoring system for Bahasa Indonesia, Proceeding Book of 1st
+International Conference on Educational Assessment and Policy, 2, 48–53.
+Hewitt, P. G., Lyons, S., Suchocki, J. A., & Yeh, J. (2015). Conceptual integrated science (2nd ed.) Pearson.
+Hou, W., & Tsao, J. (2011). Automatic assessment of students' free-text answers with different levels.
+International Journal on Artificial Intelligence Tools, 20(2) ,327–347.
+Hsu, H., & Hsieh, C. (2010). Feature selection via correlation coefficient clustering. Journal of Software,
+5(12), 1371–1377.
+Jayashankar, S., & Sridaran, R. (2017). Superlative model using word cloud for short answers evaluation in
+eLearning. Education and Information Technologies, 22(5), 2383–2402.
+Fig. 6 The comparison of Accuracy, Precision and F1-Score of the algorithms at ten different random
+iterations for Question 4
+3842
+Education and Information Technologies (2020) 25:3821–3844
+
+Joachims T. (1999). Transductive inference for text classification using support vector machines. Proceedings
+of the 16th International Conference on Machine Learning (ICML), San Francisco: Morgan Kaufmann
+publishers, 200–209.
+Klein, R., Kyrilov, A., & Tokman, M. (2011). Automated assessment of short free-text responses in computer
+science using latent semantic analysis. Proceedings of the 16th Annual Joint Conference On Innovation
+and Technology In Computer Science Education (ITiCSE’11), 158–162.
+Leacock, C., & Chodorow, M. (2003). C-rater: Automated scoring of short-answer questions. Computers and
+the Humanities, 37, 389–405.
+Madnani, N., Loukina, A., & Cahill, A. (2017). A large scale quantitative exploration of modeling strategies
+for content scoring. Proceedings of the 12th Workshop on Innovative Use of NLP for Building Educational
+Applications, 457–467.
+Mcdonald, J. Knott, A., & Zeng R. (2012). Free-text input vs menu selection: Exploring the difference with a
+tutorial dialogue system. Proceedings of Australasian Language Technology Association Workshop, 97
+−105.
+Meyer, D., Dimitriadou, E., Hornik, K., Weingessel, A., Leisch, F., Chang, C. C. et al. (2019). Package
+‘e1071’. https://cran.r-project.org/web/packages/e1071/e1071.pdf. Accessed 9 Dec 2019.
+Mohler, M., & Mihalcea, R. (2009). Text-to-text semantic similarity for automatic short answer grading.
+Proceedings of the 12th Conference of the European Chapter of the Association for Computational
+Linguistics, Association for Computational Linguistics, 567–575.
+Mowafy, M., Rezk, A., & El-bakry, H. M. (2018). An efficient classification model for unstructured text
+document. American Journal of Computer Science and Information Technology, 6, 1–16.
+Nielsen, R. D., Ward, W., Martin, J. H., & Palmer, M. (2008). Annotating students’ understanding of science
+concepts. In Proceedings of the 6th international conference on language resources and evaluation (pp.
+1–8).
+Perez, D., Alfonseca, E., & Rodriguez, P. (2004). Upper bounds of the BLEU algorithm applied to assessing
+student essays. Proceedings of the 30th international association for educational assessment (IAEA).
+Perez-Marin, D. (2004). Automatic evaluation of user’s short essays by using statistical and shallow natural
+language processing techniques. Unpublished PhD thesis, Computer Science Department, Universidad
+Autonoma of Madrid.
+Pribadi, F. S., Permanasari, A. E., & Adji, T. B. (2018). Short answer scoring system using automatic reference
+answer generation and geometric average normalized-longest common subsequence (GAN-LCS).
+Education and Information Technologies, 23, 2855–2866.
+Riordan, B. Horbach, A., Cahill, A. Zesch, T. & Lee, C. M. (2017). Investigating neural architectures for short
+answer scoring. Proceedings of the 12th Workshop on Innovative Use of NLP for Building Educational
+Applications, 159-168.
+Ripley, B., & Venables, W. (2019). Package ‘class’. https://cran.r-project.org/web/packages/class/class.pdf.
+Accessed 9 Dec 2019.
+Romagnano, L. (2001). The myth of objectivity in mathematics assessment. Mathematics Teacher, 94(1), 31–
+37.
+Sakaguchi, K., Heilman, M., & Madnani, N. (2015). Effective feature integration for automated short answer
+scoring. Proceedings of NAACL: HLT, Association for Computational Linguistics, 1049–1054.
+Shermis, M. D. (2015). Contrasting state-of-the-art in the machine scoring of short-form constructed
+responses. Educational Assessment, 20(1), 46–65.
+Syarif, I., Zaluska, E., Prugel-Bennett, A., & Wills, G. (2012). Application of bagging, boosting and stacking
+to intrusion detection. Machine learning and data mining in pattern recognition (pp. 539–602).
+Heidelberg Springer Berlin.
+Therneau, T., Atkinson, B., & Ripley, B. (2017). Recursive Partitioning and Regression Trees, Package ‘rpart’.
+https://cran.r-project.org/web/packages/rpart/rpart.pdf. Accessed 9 Dec 2019.
+Van der Linden, W. J., & Hambleton, R. K. (1997). Item response theory: Brief history, common models, and
+extensions (pp. 1–28). New York: Handbook of modern item response theory: Springer-Verlag.
+Vanlehn, K., Jordan, P., Rosé, C., Bhembe, D., Böttner, M., Gaydos, A., Makatchev, M., Pappuswamy, U.,
+Ringenberg, M., Roque, A. Siler, S., & Srivastava, R. (2002). The architecture of Why2-atlas: A coach for
+qualitative physics essay writing. Proceedings of the 6th International Conference on Intelligent Tutoring
+Systems.
+Zhang, J. & Mani, I. (2003). KNN approach to unbalanced data distributions: A case study involving
+information extraction. Proceedings of the ICML 2003 Workshop on Learning from Imbalanced Datasets.
+Zhang, Y., Shah, R., & Chi, M. (2016). Deep learning + student modeling + clustering: A recipe for effective
+automatic short answer grading. The 9th International Conference on Educational Data Mining
+(EDM2016), 562–567.
+3843
+Education and Information Technologies (2020) 25:3821–3844
+
+Ziai, R., Ott, N., & Meurers, D. (2012). Short answer assessment: Establishing links between research strands.
+The 7th Workshop on the Innovative Use of NLP for Building Educational Applications, Association for
+Computational Linguistics, 190–200.
+Publisher’s note Springer Nature remains neutral with regard to jurisdictional claims in published maps and
+institutional affiliations.
+Affiliations
+Ayşe Çınar1 & Elif Ince2 & Murat Gezer3 & Özgür Yılmaz4
+* Elif Ince
+elifince@istanbul.edu.tr; https://scholar.google.com.tr/citations?user==CDda_EQAAAAJ&hl==tr
+Ayşe Çınar
+acinar@marmara.edu.tr
+Murat Gezer
+murat.gezer@istanbul.edu.tr; https://scholar.google.com/
+citations?user==mNNrXr0AAAAJ&hl==en
+Özgür Yılmaz
+oyilmaz@istanbul.edu.tr; https://scholar.google.com.tr/citations?user==VLlsX74AAAAJ&hl==tr
+1
+The Faculty of Business Administration, Department of Business Administration in English Sub-
+Department of Quantitative Methods, Marmara University, İstanbul, Turkey
+2
+Hasan Ali Yucel Education Faculty, Department of Science Education, Istanbul University-Cerrahpaşa,
+Büyükçekmece, Istanbul, Turkey
+3
+Department of Informatics, Istanbul University, Vezneciler-Fatih, Istanbul, Turkey
+4
+Hasan Ali Yucel Education Faculty, Department of Computer Education and Instructional Technology,
+Istanbul University-Cerrahpaşa, Büyükçekmece, Istanbul, Turkey
+3844
+Education and Information Technologies (2020) 25:3821–3844

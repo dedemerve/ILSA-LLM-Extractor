@@ -1,0 +1,1536 @@
+Journal of Educational Change
+https://doi.org/10.1007/s10833-026-09545-8
+
+A machine learning analysis of school-level drivers of
+organisational innovativeness
+Hayri İncekara1
+
+· Ahmet Göçen2
+
+· Mehmet Tufan Yalçın3
+
+Received: 26 June 2025 / Accepted: 10 February 2026
+© The Author(s) 2026
+
+Abstract
+This study applied explainable machine learning (ML) to identify school-level
+conditions that predict organisational innovativeness using OECD TALIS 2018
+principal data from 47 education systems. Six machine learning algorithms were
+compared, and XGBoost achieved the best predictive performance. SHAP (SHapley
+Additive exPlanations) was then applied to interpret the model and rank the most
+influential factors. The results show that organisational innovativeness is shaped
+primarily by relational and cultural conditions rather than by isolated structural inputs. School climate emerged as the strongest predictor, particularly the encouragement of staff-initiated projects, mutual support, shared responsibility, participatory
+decision-making, and cooperation with the local community. Shortage of time with
+students, by contrast, reduced predicted innovativeness. Principals’ job satisfaction
+was the second most influential factor. Leadership practices that promote teacher
+cooperation for pedagogical development showed a modest positive association.
+Diversity beliefs among teachers and access to mentoring programmes contributed
+small but generally positive signals. Overall, the findings suggest that organisational
+innovativeness in schools depends mainly on a supportive and participatory school
+climate, principals’ job satisfaction, instructional leadership practice, diversity belief and structured mentoring.
+Keywords Machine learning · Organisational innovativeness · TALIS · School
+climate · Leadership · Mentoring · Job satisfaction
+
+Introduction
+The pace of educational transformation has accelerated significantly over the past
+two decades. Modern educational institutions, originally designed to meet the standardized demands of the Industrial Era, are now confronted with diverse challenges
+
+Extended author information available on the last page of the article
+
+13
+
+Journal of Educational Change
+
+driven by digital transformation and the rise of artificial intelligence (Arar et al.,
+2024). These technological disruptions, combined with rapidly evolving social, economic, and environmental conditions, necessitate that contemporary schools adopt
+innovative management practices and adapt continuously to uphold core educational
+aims, including learning, equity, student well-being, and social justice (Dedering
+& Pietsch, 2025; Germain, 2022). Consequently, adaptability and innovation have
+become central themes in educational research (Levin, 2015; Pietsch et al., 2024).
+Given that innovation is increasingly recognized as a critical driver of school
+improvement and stakeholder outcomes (Alzouebi et al., 2025; Guzman & JaillierCastrillon, 2021), further research is warranted to identify specific pathways for fostering innovative school environments.
+Schools function as complex social systems where innovation is considered a vital
+source of organizational vitality (Fidan & Balcı, 2017). Unlike corporate models
+that prioritize efficiency and profitability (Ahlstrom, 2010), educational innovation
+is fundamentally distinct in its drivers and characteristics. While the OECD (2016)
+notes that educational innovations vary globally, recent scholarship emphasizes that
+they are predominantly relational, cultural, and political rather than merely technical or structural (Akın, 2016; Erdoğan et al., 2024; Riveras-León & Tomàs-Folch,
+2020). This relational foundation is situated within what Anderson (1996) describes
+as a framework of “cultural politics” that serves as both the source and the determinant of innovation. According to this perspective, educational innovations arise
+from cultural politics, and their viability depends on how effectively these political dynamics are navigated. However, even when cultural dynamics are successfully
+managed, Slavin (1989) cautions that innovations in educational organizations typically follow a trajectory of initial excitement, broad adoption, disappointment, and
+eventual abandonment—a recurring cycle that he characterizes as “the classic swing
+of the pendulum”. Taken together, these dynamics underscore the need for theoretical frameworks that conceptualize educational innovation as culturally embedded
+and shaped by intersecting relational, political, and transnational forces that extend
+beyond organizational boundaries.
+Organisational innovativeness
+Innovativeness is broadly defined as employees’ perceptions of their organization’s
+openness to change and new ideas (Patterson et al., 2005), which represent essential
+preconditions for translating novel ideas into applied practice. Blömeke et al. (2021)
+identified four distinct operational definitions of innovativeness at the individual and
+organisational levels: (1) individual attitudes, (2) psychological climate characteristics, (3) organisational climates, and (4) organisational leadership characteristics.
+At the individual level, innovativeness refers to either the individual attitude that
+expresses a personal tendency among organization members to evaluate and implement new ideas or the psychological climate characteristic, which involves members’ evaluations of their own organization but where responses are analysed at the
+individual level. At the organisational level, innovativeness is addressed as either
+organisational climate characteristics, which are analysed by aggregating individual
+responses to the organisational level, or as an organisational leadership character-
+
+13
+
+Journal of Educational Change
+
+istics. In this context, innovativeness can be said to be both an individual and an
+organisational variable. Our study adopts the organisational level.
+Organisational innovativeness has been conceptualized as a process involving the
+identification of new knowledge sources, the adaptation of ideas generated from these
+sources, and the capacity to respond to internal and external knowledge flows (Birasnav et al., 2023). In schools, organisational innovativeness refers to the extent to
+which the institution provides a supportive climate and infrastructure for the renewal
+of pedagogical practices, administrative processes, and learning environments (Hargreaves & Shirley, 2009; OECD, 2019). The OECD (2019) identifies innovative educational organizations within the scope of the school’s ability to recognize needs for
+change, respond quickly to changes, adopt new ideas, and provide support for developing innovations. From this perspective, which complements this study’s definition
+of organizational innovativeness, school innovativeness is not merely a count of new
+ideas but also a climate-level construct that reflects the organizational capacity to
+identify needs and generate, adopt, and sustain new practices.
+Within this framework, innovativeness is understood both as a mechanism for
+institutional self-renewal and as an outcome of ongoing improvement processes (Pan
+et al., 2024). Schools that are highly innovative demonstrate the ability to implement novel approaches that generate meaningful improvements across all aspects of
+the organization, including teaching, administration, and stakeholder collaboration
+(Pihie & Bagheri, 2013). However, as Vincent-Lancrin (2023) highlights, organizational innovativeness does not emerge spontaneously; instead, it requires deliberate leadership orientations that promote innovation, structures that create access to
+diverse knowledge sources, teams dedicated to managing innovation processes, and
+strategic investments in resources that sustain innovation over time.
+Despite the growing relevance of the topic, empirical research exploring how
+organisational innovativeness can be implemented and strengthened in school settings remains limited, particularly compared with the extensive literature in the business field (Blömeke et al., 2021; Newaz, 2022; Smith et al., 2008). Nevertheless,
+a range of contextual, cultural, and structural factors, including leadership, organisational culture, national policies, and power distance, have been shown to shape
+schools’ innovative capacity (Lu & Campbell, 2021; Masry-Herzallah & Da’as, 2021;
+McCharen et al., 2011; Vieluf et al., 2012). In an increasingly globalized educational
+landscape, shared strategic approaches adopted across education systems may enable
+schools to increase their organizational innovativeness (Dedering & Pietsch, 2025).
+Reflecting this growing interest, the OECD’s Teaching and Learning International
+Survey (TALIS) includes a specific set of indicators designed to measure organisational innovativeness at the school level (Ainley & Carstens, 2018). Consequently,
+identifying potential universal dimensions of an innovative school climate via largescale international datasets has become an important line of inquiry, which this study
+addresses through machine learning techniques applied to large-scale datasets from
+TALIS 2018.
+
+13
+
+Journal of Educational Change
+
+Factors affecting organisational innovativeness
+Many studies have examined the factors affecting organisational innovativeness in
+different sectors, ranging from schools to business organisations. Smith et al. (2008)
+conducted a systematic literature review of more than 100 studies and identified nine
+core factors that determine an organization’s capacity to manage innovation: management style and leadership, resources, organisational structure, corporate strategy,
+technology, knowledge management, employees, and the innovation process. A more
+recent review by Newaz (2022) expanded this view, grouping 102 distinct factors
+into ten thematic clusters (pp. 183–190): culture, human resource management, top
+management orientation, the external environment, organisational proficiencies,
+leadership, knowledge management, market pressure and competition, technology
+adaptation, and research and development. To illustrate one of these factors, Newaz
+(2022) highlighted how national culture, internal norms, and practices exercise a crucial influence on organizational performance and innovation.
+Although Smith’s and Newaz’s findings arise primarily from corporate and business contexts, their identified drivers—including leadership behaviours, knowledge
+processes, and resource management—parallel factors are observed in educational
+settings such as school leadership, teacher collaboration, professional development,
+and participatory decision-making (Blömeke et al., 2021; Ham & Lee, 2024; Hsieh et
+al., 2024; Pan et al., 2024; Svenja et al., 2012). Similarly, within the Turkish national
+context, Kaya (2021) demonstrated that school-level characteristics—including size,
+resource adequacy, school climate, leadership, job satisfaction, and staffing levels—
+significantly influence organizational innovativeness.
+In addition to these descriptive findings, several theoretical perspectives can help
+explain how such factors influence organisational innovativeness in schools. A central framework for understanding how working conditions shape teachers’ well-being
+and performance is the job demands–resources (JD-R) model developed by Bakker
+and Demerouti (2007). Rather than focusing on innovation per se, the model distinguishes job demands and job resources and explains how they jointly affect employees’ strain, engagement, and performance. In understanding the implications of this
+model for school innovativeness, it should be noted that the term “job resources”
+refers to school conditions, such as leadership or school climate, that, on the one
+hand, counterbalance potential impediments to teachers’ classroom performance and
+health (e.g., lack of time, infrastructure needs) and, on the other hand, enhance their
+work engagement and well-being (Bakker, 2011). Conversely, the constantly changing and uncertain demands of the teaching profession, combined with the emotional
+labour required in teacher–student and teacher–parent interactions, can lead to the
+depletion of mental and emotional resources (Uslukaya et al., 2025). In this context,
+the leadership of school principals and other job resources can play a significant role
+not only in establishing and maintaining an innovation-conducive school climate but
+also in buffering the negative effects of high job demands on teachers’ well-being and
+sustaining the organisational capacity for innovation.
+Another significant theoretical lens for understanding school innovativeness is
+social capital theory, which focuses on how social relationships, trust and networks
+within schools shape teachers’ work and school climates (e.g., Geijsel, 2001; Pan et
+
+13
+
+Journal of Educational Change
+
+al., 2024). Studies based on this theory have defined school innovativeness through
+teachers’ perceptions of organisational openness to innovations and new ideas (Pan
+et al., 2024). The majority of studies examining the factors that affect innovativeness
+in schools emphasize the determining role of the school climate and social bonds. For
+example, Kirsten and Du Preez (2010) suggest strengthening teamwork, and Moolenaar et al. (2011) propose that teachers’ participation in social networks can enable
+risk-taking and support innovative behaviours. Furthermore, collaboration is one of
+the fundamental prerequisites for school innovativeness; it facilitates the implementation of school reforms and lays the groundwork for applying new ideas (Bryk and
+Schneider 2002; Kirsten and Du Preez 2010; Moolenaar et al. 2011; Westheimer
+2008).
+From both the JD-R and social capital perspectives, leadership emerges as a pivotal enabler in creating and sustaining an innovation culture. Vincent-Lancrin (2023)
+argues that developing a pro-innovation culture hinges on leaders who motivate and
+empower their staff to experiment while ensuring access to the knowledge and skills
+needed for innovation. Empirical studies further underscore this: transformational,
+entrepreneurial, and participative leadership styles have been shown to directly foster
+organisational innovativeness (Birasnav et al., 2023; Çoban & Atasoy, 2020; Hsieh et
+al., 2024; Pihie et al., 2014). Consistent with these findings, research on modern leadership theories (e.g., distributed leadership, transformational leadership, instructional
+leadership, and school leadership) consistently reveals that leadership is a crucial factor in the development of innovative behaviours in schools (Harris, 2008; Leithwood
+& Jantzi, 2005; Marks & Printy, 2003). These studies indicate that leadership fosters
+teacher job satisfaction, commitment, and a climate based on trust, thereby enabling
+their innovative practices.
+In summary, the literature converges on a multifaceted set of drivers, ranging from
+structural and cultural conditions to leadership and external pressures that jointly
+determine an organization’s innovation capacity. However, given the multivariable
+nature of these influences, there is a need for more research to answer the open question of which elements most powerfully shape a school’s innovativeness. Unpacking
+the relative importance of these factors in schools is essential for designing targeted
+policies and practices that nurture a sustainable innovation climate, a need that has
+become even more urgent as artificial intelligence (AI) technologies further accelerate change and as large-scale data such as TALIS 2018 enable more sophisticated,
+data-driven analyses of organisational innovativeness.
+
+Purpose of the study
+In light of this context, the present study aims to examine the factors influencing
+school leaders’ perceptions of institutional openness to innovation and change, as
+measured by TALIS 2018 items. Drawing on ISCED Level 2 data from the OECD’s
+TALIS 2018, the study utilizes internationally comparable responses from school
+principals to identify key factors associated with organizational innovativeness. To
+elucidate patterns and relationships that are latent within the data, an ML analytical approach is employed. Different ML algorithms are benchmarked for predictive
+
+13
+
+Journal of Educational Change
+
+power, and the best-performing model is then examined in greater depth. The findings are interpreted in light of the literature, with particular emphasis on factors that
+carry significant implications for educational policy and school development.
+
+Method
+Given that organisational innovativeness stems from the interplay of multiple factors operating simultaneously, traditional univariate and bivariate approaches may
+be insufficient for identifying which conditions exert the strongest influence when
+considered together. Thus, ML-based modelling approaches have emerged as powerful tools for uncovering multidimensional and potentially nonlinear relationships,
+enabling the identification of established predictors as well as the discovery of previously unrecognized yet potentially influential factors (Christensen et al., 2025; Masci
+et al., 2018; Shalev-Shwartz & Ben-David, 2014). This methodological development
+provides considerable potential for uncovering optimal conditions for educational
+organizations and settings (Hilbert et al., 2021).
+In addition to highly interpretable approaches such as linear regression, we examine nonlinear ML models, including decision trees and support vector regression
+(SVR), as well as advanced ensemble learning techniques such as random forest,
+XGBoost, and LightGBM. These models are benchmarked in terms of both predictive
+accuracy and interpretability for predicting the organizational innovativeness dimension. Following these comparisons, the final analysis was conducted via XGBoost,
+which demonstrated superior performance in this study. To ensure transparency and
+explainability, we augment the analysis via SHAP (SHapley Additive Explanations),
+a method widely adopted in the field of explainable AI (XAI) (Lundberg & Lee,
+2017). This approach not only yields a highly accurate prediction model but also
+quantifies the contribution of each feature to the model’s output (Molnar, 2020).
+Data source and variables
+The TALIS variables encompass a range of managerial dimensions—such as leadership practices, decision-making processes, the school climate, teacher development,
+and resource management—measured through corresponding items and scales, as
+documented in the TALIS 2018 technical report (OECD, 2019). In the present study,
+all variables were estimated via a single pooled model utilizing the complete international dataset derived from the TALIS 2018 cycle. While this dataset includes sampling weights at the teacher and school levels to ensure national representativeness
+within each jurisdiction, it does not provide country-level weights designed to balance nations against one another (OECD, 2019). Consequently, separate countryspecific models were not constructed; instead, all observations meeting the inclusion
+criteria contributed equally to the analysis.
+In this study, we used data from school principals in 47 TALIS 2018 countries and
+economies (n = 9,247 schools), drawing on a dataset comprising 303 school-level
+variables. As one of these variables, organisational innovativeness in TALIS 2018
+is captured by the T3PORGIN scale, which combines four principal questionnaire
+
+13
+
+Journal of Educational Change
+
+items (TC3G28A–D) measured on a four-point Likert scale (1 = “Strongly disagree”
+to 4 = “Strongly agree”). This scale indicates a school’s capacity to identify and
+pursue new ideas, adapt to emerging changes, and provide support for innovation,
+thereby reflecting the extent to which its culture, structures, and processes encourage
+and enable innovative practices.
+The data were collected from school principals working at ISCED level 2 (lower
+secondary education), which corresponds to the stage between primary education
+and upper secondary/high school education. After excluding participants who had
+missing values on T3PORGIN, we retained 8,792 participants, as 455 observations
+were missing for the dependent variable. From the initial 303 variables, we applied
+the exclusion criteria described in the relevant sections (see Table 1), resulting in a
+final set of 221 variables included in the analysis (all dataset, related analysis logs,
+and paths were attached to this paper).
+Variable selection was guided by a manipulability criterion, focusing on schooland practice-level variables that are potentially amenable to policy or organisational
+intervention (e.g., leadership practices, professional collaboration, and the school
+climate). The primary aim was not to model macro-level structural determinants of
+organisational innovativeness but to identify actionable levers within schools.
+Feature selection
+The success of machine learning models depends heavily on the quality and representational power of the features included (Guyon & Elisseeff, 2003). In this context,
+feature selection not only reduces dimensionality but also enhances generalizability,
+mitigates overfitting, and strengthens interpretability. In the present study, feature
+selection was performed in two main steps: (1) missing-data–rate–based filtering and
+(2) high-correlation–based elimination. Table 1 lists some of the features extracted,
+along with the reasons for their extraction.
+
+Table 1 Some features were
+removed during preprocessing
+because of high correlation or
+missing data.
+
+Feature name
+
+Reason for feature
+extraction
+
+Missing data
+rate (%)
+
+TC3G20C5
+TC3G20C4
+TC3G20A5
+TC3G40C
+TC3G20C1
+TC3G20D1
+TC3G15E
+TC3G15A2
+TC3G15D2
+TC3G15B2
+TC3G32
+TC3G35
+
+High correlation
+High correlation
+High correlation
+High correlation
+High correlation
+High correlation
+Missing data
+Missing data
+Missing data
+Missing data
+Missing data
+Missing data
+
+–
+–
+–
+–
+–
+–
+85.92
+72.20
+57.82
+51.30
+42.66
+34.55
+
+Correlation
+0.81
+0.79
+0.79
+0.79
+0.75
+0.75
+–
+–
+–
+–
+–
+–
+
+13
+
+Journal of Educational Change
+
+Missing-data–rate–based filtering
+In the first step, we calculate the proportion of missing values for each variable and
+exclude those with more than 12% missing data, as documented in Christensen et al.
+(2025). This threshold balances the need to maintain the sample size with the requirement for data quality. The literature recommends careful evaluation of variables with
+5–20% missingness (Little & Rubin, 2019), since imputing variables with very high
+absence rates can introduce noise and reduce reliability (Schafer & Graham, 2002).
+Applying this criterion removed 48 variables from the dataset.
+High-correlation–based elimination
+In the second step, we examined pairwise Pearson correlations among the remaining variables to guard against multicollinearity. Any pair with r > 0.60 was flagged
+(Dormann et al., 2013). From each highly correlated pair, we removed the variable
+with the higher missing-data rate, thereby preserving the feature with more complete
+information. This dual criterion minimized information loss while addressing redundancy, resulting in the exclusion of 34 additional variables.
+The removal of items was documented with justifications to ensure methodological transparency. After both filters were applied, 221 variables remained for analysis. These features represent a broad spectrum of managerial dimensions, such as
+leadership practices, decision-making processes, teacher support strategies, resource
+management, and school-climate measures, each of which are theoretically linked to
+organisational innovativeness in the education literature.
+Missing data analysis and imputation
+When inspecting the TALIS 2018 dataset, missing responses emerged as a significant
+concern. In OECD-administered surveys, items left unanswered for systematic or
+random reasons were coded as − 99. During preprocessing, these − 99 codes were
+converted to NaN so that the analyses could properly recognize them as missing.
+To determine the appropriate imputation strategy, the missing data mechanism
+was evaluated by examining the relationships between missing values and other variables, as well as the patterns of missing data. Specifically, t-tests were conducted for
+continuous variables, and chi-square tests were used for categorical variables. The
+analyses indicated that the missingness was largely missing completely at random
+(MCAR). Given this finding, missing values in continuous variables were handled
+via the K-Nearest Neighbors (KNN) method, whereas missing values in categorical
+variables were imputed via the model.
+The KNN approach was selected because it estimates each missing value by identifying observations that are closest in Euclidean distance and averaging their values
+for the corresponding variable (Troyanskaya et al., 2001). This method preserves
+the underlying structural relationships in the data, producing statistically meaningful
+estimates. Notably, this approach was also successfully used by Christensen et al.
+(2025) for imputing missing TALIS data when exploring school factors related to
+professional learning communities.
+
+13
+
+Journal of Educational Change
+
+For implementation, the imputation procedure was carried out in Python via
+the KNNImputer function from the scikit-learn library. The following parameters
+were specified in this process: n_neighbors (k) = 5, weights = “uniform”, and metric
+= “nan_euclidean”. The “nan_euclidean” metric computes the Euclidean distance
+between two observations only on variables that are present in both; in this way,
+observations with missing values can still be included in the distance calculations and
+in the imputation process.
+The choice of k = 5 was based on established guidelines. In KNN algorithms, the
+number of neighbours (k) is typically chosen between 3 and 15 in the literature,
+and the optimal value depends on the dataset (Jerez et al., 2010; Troyanskaya et al.,
+2001). In the present study, we used k = 5, which is a computationally efficient and
+highly generalisable choice for medium-sized datasets (Beretta & Santaniello, 2016).
+This value is also the default parameter in the scikit-learn library. To ensure that
+neighbourhood calculations were not affected by differences in scale, all variables
+were standardized via StandardScaler.
+The imputation of missing values was applied only to the independent (predictor)
+variables. The dependent variable T3PORGIN was not included in the imputation
+process. Only observations with complete data on the dependent variable were used
+in the modelling process.
+After imputation, the dataset was carefully examined; the distributions, means,
+and standard deviations of the variables were compared with their original (premissingness) values. These checks indicated that KNN imputation did not distort
+the data structure and produced realistic, representative values. This approach aligns
+with established best practices. The literature suggests that KNN imputation works
+particularly well when the proportion of missing data is moderate and clear patterns
+of similarity exist among variables (Jerez et al., 2010). By standardizing variables
+and addressing outliers prior to imputation, potential risks were minimized. As a
+result, the KNN-imputed dataset effectively resolved the missing-data problem and
+provided a clean foundation for subsequent modelling.
+Data normalization
+Machine learning algorithms, especially distance-based methods (e.g., KNN, SVR)
+and those that rely on parameter weight optimization (e.g., LightGBM), are sensitive to the scale of the input features (Han et al., 2012). When numerical variables
+at different scales are combined, features with larger ranges can unduly dominate
+the model. To avoid this situation, all predictor variables are standardized via the
+StandardScaler function in the scikit-learn library. This operation recenters the data
+to zero mean and rescales it to unit variance, effectively approximating a standard
+normal distribution. Such standardization is critical for algorithms such as SVR and
+KNN imputation, which compute distances in feature space (Fei et al., 2021).
+In our workflow, after removing the target variable T3PORGIN, we standardized only the predictor features. First, we fitted the StandardScaler on all numerical
+inputs; then, we used the trained scaler to transform these features. The target variable remained at its original scale since regression models require unscaled target
+values to produce accurate predictions.
+
+13
+
+Journal of Educational Change
+
+Data splitting and evaluation strategy
+After all the preprocessing steps (including missing data imputation and data normalization), the dataset was partitioned into training and test subsets such that the
+reliability of the model development process and the impartiality of the performance
+evaluation were ensured. The dataset was split into 80% training (n = 7033) and 20%
+test (n = 1759) datasets. The training set was used for model learning and hyperparameter optimization, whereas the test set was kept completely isolated as a heldout test set and used only for final performance evaluation. To optimize the model
+hyperparameters and prevent overfitting, fivefold cross-validation (5-fold CV) was
+conducted on the training set. This procedure guarantees that the test data are not
+involved in the model selection process. To preserve the distribution of the dependent
+variable across the training and test sets, stratification based on quartiles (Q1, Q2, and
+Q3) was applied. The success of this stratification was verified by the similarity of the
+quartile values in the training and test sets (see Table 2).
+These results indicate that the training and held-out test sets have similar distributions of the dependent variable, thereby ensuring that the model evaluation is fair and
+representative. The data-splitting procedure was made reproducible by setting the
+parameter random_state = 42.
+Model selection and hyperparameter optimization
+Model selection is one of the most critical stages in any data mining or machine learning workflow, as it directly influences the analysis’s predictive power and explanatory
+value. To identify and predict the factors driving organisational innovativeness in the
+TALIS 2018 dataset, we evaluated a diverse set of general-purpose machine learning
+algorithms adapted for regression tasks—ranging from classic statistical models to
+state-of-the-art ensemble learners.
+Selected algorithms
+● Linear Regression (LR): A foundational method for modelling linear relationships, prized for its transparency and often used as a baseline for comparison (Su
+et al., 2012).
+● Decision Tree Regressor (DT): A rule-based model that partitions data via recursive splits, offering intuitive interpretability but a greater risk of overfitting
+without proper regularization (Luo et al., 2021).
+● Random Forest Regressor (RF): An ensemble of decision trees whose averaged
+predictions yield greater stability and generalization performance (Segal, 2004).
+● Support Vector Regressor (SVR): A margin-based model that excels with smaller
+datasets by minimizing the distance of observations to the decision boundary
+Table 2 Quartile cut points for
+the dependent variable in the
+training and test sets
+
+13
+
+Set
+Training
+Test
+
+Q1
+11.29
+11.22
+
+Q2 (Median)
+11.98
+11.98
+
+Q3
+13.81
+13.84
+
+Journal of Educational Change
+
+(Çizmeci & İncekara, 2025).
+● Light Gradient Boosting Machine (LightGBM): A gradient-boosted framework
+that uses leafwise growth to produce fast, highly accurate models (Ke et al., 2017).
+● Extreme Gradient Boosting (XGBoost): A regularized boosting algorithm renowned for its balance of computational efficiency and predictive power (Chen
+& Guestrin, 2016).
+These algorithms represent a range commonly used in predictive modelling, similar
+to the selection in Christensen et al. (2025), which included CART (similar to DT),
+LASSO/Ridge (variants of LR), Random Forest, and XGBoost.
+Factors affecting model performance: hyperparameters
+Machine learning algorithms depend on hyperparameters—settings specified by the
+user before training—that critically shape learning behavior but are not learned from
+the data itself. Proper hyperparameter selection helps a model avoid overfitting (too
+complex) and underfitting (too simple), directly influencing predictive accuracy and
+generalizability (Weerts et al., 2020). In this study, we perform hyperparameter optimization in three steps:
+1. Define candidate grids for each algorithm.
+2. Evaluate each combination via 5-fold cross-validation on the training data, ensuring that every fold serves once as a validation.
+3. Select the best hyperparameters based on the highest R² averaged across folds.
+This systematic tuning process ensures that each algorithm operates at its optimal
+performance, balancing bias and variance to achieve reliable predictions of organisational innovativeness. The resulting optimal configurations for each model are summarized in Table 3, alongside the search ranges evaluated.
+Table 3 summarizes the hyperparameter configurations for each model. Specifically, the Hyperparameter Ranges (Tuning) column lists the parameters actively
+tuned and the search ranges evaluated via cross-validation; the Best Params (Optimized) column reports the final values selected as optimal; the Other Parameters
+(Defaults) column indicates additional model-defining settings that were retained at
+library default values; and the Library/Version column documents the exact software
+library and version used to ensure full reproducibility of the results.
+Following hyperparameter optimization, each model was retrained on the full
+training set via its selected configuration, and the final model performance was subsequently evaluated on the held-out test set.
+Model performance evaluation
+To understand and compare the post-training success of machine learning algorithms,
+performance evaluation metrics for model outputs are crucial. In this study, the accuracy and generalizability of the regression models developed to predict the organisational innovation dimension in education were comprehensively assessed via both
+
+13
+
+Journal of Educational Change
+Table 3 Hyperparameter ranges and best selected values for each model
+Model
+Hyperparameter ranges
+Best params
+Other parameters
+(Tuning)
+(Optimized)
+(Defaults)
+Decision
+max_depth=[3,5,10,None],
+max_depth = 3, criterion=’squared_
+Tree
+min_samples_split=[2,5,10]
+min_samples_ error’, splitter=’best’,
+split = 2
+min_samples_leaf = 1,
+max_features=None
+SVR
+kernel=[“linear”,”rbf”],
+kernel=’rbf’,
+gamma=’scale’,
+C=[0.1,1,10]
+C=1
+epsilon = 0.1,
+degree = 3,
+coef0 = 0.0,
+shrinking=True
+Linear
+None
+default
+fit_intercept=True,
+Regression
+positive=False
+Random
+n_estimators=[50,100],
+n_estimacriterion=’squared_error’,
+Forest
+max_depth=[None,10,20]
+tors = 100,
+min_samples_split = 2,
+max_depth = 20 min_samples_leaf = 1,
+max_features=’sqrt’,
+bootstrap=True
+LightGBM
+n_estimators=[50,100],
+n_estimanum_leaves = 31,
+learning_rate=[0.01,0.1],
+tors = 50, learn- min_data_in_leaf = 20,
+max_depth=[−1,10]
+ing_rate = 0.1, boosting_type=’gbdt’,
+max_depth = 10 subsample = 1.0, colsample_bytree = 1.0,
+reg_alpha = 0.0,
+reg_lambda = 0.0
+XGBoost
+n_estimators=[50,100],
+n_estimamin_child_weight = 1,
+learning_rate=[0.01,0.1],
+tors = 100,
+subsample = 1.0, colmax_depth=[3,6,10]
+learnsample_bytree = 1.0,
+ing_rate = 0.1, gamma = 0.0,
+max_depth = 3 reg_alpha = 0.0, reg_lambda = 1.0, objective=’reg:
+squarederror’,
+booster = ‘gbtree’
+
+Library/
+version
+scikitlearn 1.6.1
+scikitlearn 1.6.1
+
+scikitlearn 1.6.1
+scikitlearn 1.6.1
+
+lightgbm
+4.6.0
+
+xgboost
+2.1.4
+
+quantitative error metrics and graphical analyses. After hyperparameter optimization,
+each model was retrained using the best-found parameters.
+Each model’s prediction results were evaluated via the following metrics:
+The mean absolute error (MAE) is the average difference between the actual and
+predicted values. It is less sensitive to outliers and provides information about the
+magnitude of the model’s absolute errors (Willmott & Matsuura, 2005).
+M AE =
+
+1 n
+|yi − yi |
+i=1
+n
+
+The root mean square error (RMSE) penalizes larger deviations more heavily by
+squaring the errors. Therefore, it is sensitive to outliers and provides a more detailed
+view of the model’s error distribution (Willmott & Matsuura, 2005).
+RM SE =
+
+13
+
+
+
+1 n
+2
+(yi − yi )
+i=1
+n
+
+Journal of Educational Change
+
+The coefficient of determination (R2) indicates the proportion of variance in the
+dependent variable that the model explains. An R² of 1 signifies perfect explanation,
+whereas an R² of 0 indicates that the model explains none of the varince.a
+∑
+(yi − ŷi )2
+R2 = 1 − ∑i
+i (yi − y i )
+
+To assess model performance more accurately and reduce random sampling errors,
+hyperparameters were tuned using 5-fold cross-validation within the training set
+(Kohavi, 1995); the held-out test set was used only once for final evaluation.
+Model performance was assessed via three key metrics: the root mean square error
+(RMSE), the mean absolute error (MAE), and the coefficient of determination (R²).
+These metrics enabled a comparative analysis of both models’ accuracy and generalizability. The performance results summarized in Table 4 illustrate each model’s
+effectiveness in predicting the organisational innovation dimension.
+XGBoost outperformed all the other models, achieving the lowest errors
+(RMSE = 1.7350; MAE = 1.3402) and the highest R² (0.2929). This indicates that,
+owing to its regularization mechanisms, XGBoost excels both at learning from the
+training data and at generalizing to unseen data (Chen & Guestrin, 2016). Its ability
+to capture complex, nonlinear relationships also aligns well with the multifaceted
+nature of organisational innovativeness.
+The performance of the LightGBM is very close to that of XGBoost, particularly
+in terms of the MAE. Its leafwise growth strategy increases accuracy but requires
+careful tuning to avoid overfitting (Ke et al., 2017).
+Linear regression, despite its simplicity, achieved a higher R² than SVR and random forest did, suggesting that several predictors have meaningful linear relationships with the organisational innovation index. However, it remained less accurate
+overall than XGBoost. The decision tree exhibited the weakest performance, reflecting the limited representational power and generalization capacity of a single tree.
+Feature importance and explainability
+In fields grounded in explanations such as the social sciences, the interpretability
+of machine learning models is critically important (Lipton, 2018). In this study, we
+evaluated not only the predictive power of our models for organisational innovativeness in educational settings but also the transparency of their decision processes. To
+identify the key drivers of organisational innovation, we conducted an explainability
+analysis on all models via SHAP (SHapley Additive exPlanations), which applies
+Table 4 Performance metrics
+for each model
+
+Model
+Decision Tree
+SVR
+Linear Regression
+Random Forest
+LightGBM
+XGBoost
+
+RMSE
+1.8297
+1.7530
+1.7442
+1.7707
+1.7421
+1.7350
+
+MAE
+1.3910
+1.3441
+1.3658
+1.3691
+1.3482
+1.3402
+
+R²
+0.2136
+0.2781
+0.2853
+0.2635
+0.2871
+0.2929
+
+13
+
+Journal of Educational Change
+
+game-theoretic Shapley values to quantify each feature’s positive or negative contribution to individual predictions and to provide both global and local interpretability
+(Lundberg & Lee, 2017).
+Because the XGBoost model achieved the lowest RMSE and MAE and the highest R², it was selected for detailed interpretability analysis. We applied SHAP to
+XGBoost to make its decision processes more understandable and assess each feature’s impact. The SHAP analysis identified the 20 most influential variables—those
+contributing most strongly to the model’s predictions of organisational innovation
+scores. Figure 1 presents a SHAP summary bar chart that ranks these top factors by
+their overall effect on predicted innovativeness.
+
+Fig. 1 Overall effect ranking
+
+13
+
+Journal of Educational Change
+
+According to the results in Fig. 1, the most prominent items are those related to
+the dimensions of school climate, job satisfaction, school leadership, schooling in
+diverse environments, and induction and mentoring.
+The school climate dimension clearly dominates, accounting for 13 of the top
+20 features, with TC3G26I (“This school encourages staff to lead new initiatives”)
+emerging as the single most influential predictor, with a mean absolute SHAP value of
+approximately 0.28. Other highly influential school climate items include TC3G26F
+(collaborative school culture), TC3G27G (cooperation with the local community),
+TC3G26D (shared responsibility culture), and TC3G27B (curricular implementation
+success). These items collectively capture multiple facets of organizational culture:
+internal collaboration, partnerships, and shared professional norms.
+Job satisfaction represents the second most influential dimension, with four
+items positioned within the top 12 features: TC3G44G (willingness to recommend
+the school), TC3G44E (enjoyment of work), TC3G45C (satisfaction with staff support), and TC3G44J (overall job satisfaction). This suggests that principal well-being
+and positive workplace experiences are substantively connected to organizational
+innovativeness.
+School leadership contributes through TC3G22D (“I took actions to support cooperation among teachers to develop new teaching practices.“), ranking 10th overall,
+which indicates that instructional leadership practices make meaningful contributions to the model’s predictions.
+The Schooling in Diverse Environments dimension appears through TC3G40D
+(principals’ perceptions of teachers’ beliefs about cultural commonalities), whereas
+induction and mentoring contribute via TC3G34 (mentoring programme availability), both of which rank in the lower half of the top 20.
+Overall, these findings highlight relational and organizational climate variables over operational or structural features, aligning with contemporary research
+that emphasizes the centrality of organizational culture in school effectiveness and
+innovation.
+Table 5 indicates that school climate is the dominant block among the top predictors of organisational innovativeness, comprising 13 of the top 20 features. TC3G26I
+(encouraging staff to lead new initiatives) is the single most influential predictor,
+with a mean absolute SHAP value roughly twice that of the next-ranked feature,
+underscoring that explicit institutional support for staff-initiated initiatives is central
+to the model’s identification of innovative schools. The remaining climate indicators cluster around empowerment and participation in decision making (TC3G26A,
+TC3G26C), autonomous decision making (TC3G26E), collaboration and mutual
+support (TC3G26F, TC3G26K), shared responsibility and normative coherence
+(TC3G26D, TC3G26G, TC3G26H), implementation capacity (TC3G27B), and
+external orientation through community cooperation (TC3G27G). In addition,
+teacher–student relations (TC3G26J) appear among the top predictors, whereas
+time shortages with students (TC3G29O) signal a practical constraint on sustained
+improvement work. Overall, these patterns suggest that a supportive, participatory,
+and outwards-looking climate—combined with coherent implementation capacity
+and adequate time resources—constitutes the strongest lever associated with organisational innovativeness.
+
+13
+
+Journal of Educational Change
+Table 5 School climate items
+among the top SHAP predictors
+of organisational innovativeness
+
+Table 6 Job satisfaction items
+among the top SHAP predictors
+of organisational innovativeness
+
+Global
+rank
+1
+
+Code
+
+Item description
+
+TC3G26I
+
+2
+
+TC3G26F
+
+3
+
+TC3G27G
+
+5
+
+TC3G26D
+
+6
+
+TC3G27B
+
+7
+
+TC3G26A
+
+9
+
+TC3G26H
+
+13
+
+TC3G26C
+
+14
+17
+18
+
+TC3G26E
+TC3G26K
+TC3G26G
+
+19
+
+TC3G29O
+
+20
+
+TC3G26J
+
+This school encourages staff to lead new
+initiatives
+There is a collaborative school culture
+which is characterised by mutual support
+The school co-operates with the local
+community
+This school has a culture of shared responsibility for school issues
+Teachers succeed in implementing the
+school’s curriculum
+This school provides staff with opportunities to actively participate in school
+decisions
+The school staff enforces rules for student
+behaviour consistently throughout the
+school
+This school provides students with opportunities to actively participate in school
+decisions
+I make the important decisions on my own
+Teachers can rely on each other
+The school staff share a common set of
+beliefs about teaching and learning
+Shortage or inadequacy of time with
+students (extent to which this hinders
+capacity to provide quality instruction)
+Teachers and students usually get on well
+with each other
+
+Global rank Code
+4
+TC3G44G
+8
+11
+
+TC3G44E
+TC3G45C
+
+12
+
+TC3G44J
+
+Item description
+I would recommend this school as a
+good place to work.
+I enjoy working at this school.
+I am satisfied with the support that I
+receive from the staff in this school.
+All in all, I am satisfied with my job.
+
+Table 6 shows that principal job satisfaction is a prominent predictor block, with
+four satisfaction-related items appearing among the top 12 features in the SHAP
+importance ranking. Collectively, these items capture workplace attachment/valuation (TC3G44G), positive affect toward work (TC3G44E), perceived collegial support (TC3G45C), and global job satisfaction (TC3G44J). Their prominence suggests
+that, within the fitted model, schools are more likely to be classified as innovative
+when principals report higher satisfaction and stronger relational support at work.
+This pattern is consistent with the view that job satisfaction may reflect the availability of psychological and social resources—such as sustained motivation, efficacy,
+and supportive professional relationships—that can help leaders maintain improve-
+
+13
+
+Journal of Educational Change
+Table 7 School leadership item
+among the top SHAP predictors
+of organisational innovativeness
+
+Global rank
+10
+
+Table 8 Schooling in diverse
+environments is among the top
+SHAP predictors of organisational innovativeness
+
+Global rank
+15
+
+Code
+TC3G22D
+
+Code
+TC3G40D
+
+Item description
+I took actions to
+support co-operation among teachers to develop new
+teaching practices.
+
+Item description
+Children and young
+people should learn
+that people of different
+cultures have a lot in
+common (principal’s
+estimate of how many
+teachers would agree).
+
+ment efforts and coordinate change. In particular, satisfaction with staff support
+(TC3G45C) highlights the importance of trust-based collegial relationships, which
+can facilitate collaborative problem-solving and implementation work. Importantly,
+these represent predictive associations, not causal effects. Nevertheless, they position
+principal satisfaction as more than a personal outcome; it appears to function as an
+organisationally relevant condition linked to schools’ capacity to sustain innovationoriented activity.
+Table 7 indicates that school leadership, operationalized as the promotion of
+teacher collaboration for pedagogical development (TC3G22D), is among the model’s most influential predictors (global rank = 10). Within the fitted XGBoost model,
+this suggests that schools are more likely to be predicted as organisationally innovative when principals report frequent actions to facilitate professional cooperation
+among their staff. Substantively, TC3G22D aligns with an instructional leadership
+logic that emphasizes the continuous development of staff (Hallinger, 2005), where
+principals can act as catalysts for professional team learning (Mavi et al., 2025).
+This process helps clarify expectations and strengthens the collective implementation capacity of the teaching force. Importantly, this result highlights that leadership
+practices anchored in fostering a collaborative culture—rather than solely administrative oversight—are meaningfully implicated in the school conditions linked to
+innovativeness.
+Table 8 shows that principals’ perceptions of teachers’ endorsement of cultural commonalities (TC3G40D) appear among the model’s top predictors (global
+rank = 15), indicating a small contribution to the prediction of organisational innovativeness. Substantively, higher perceived agreement with this belief may reflect a
+school environment oriented toward inclusion and openness, where diverse perspectives are treated as compatible rather than threatening—conditions that can plausibly
+support experimentation, knowledge sharing, and receptivity to new practices. However, because this is a SHAP-based importance ranking, the results here and above
+should be interpreted as a predictive association (not a causal effect).
+Table 9 shows that the availability of a mentoring programme (TC3G34) appears
+among the model’s top predictors (global rank = 16), indicating a small but nontrivial
+
+13
+
+Journal of Educational Change
+Table 9 Induction and mentoring among the top SHAP
+predictors of organisational
+innovativeness
+
+Global rank
+16
+
+Code
+TC3G34
+
+Item description
+Do teachers at this
+school have access to a mentoring programme?
+
+contribution to predicting organisational innovativeness. Substantively, mentoring
+can be understood as an organisational infrastructure for professional learning, as it
+supports knowledge transfer, reflection, and guided experimentation, thereby accelerating the diffusion of effective practices across staff. In this sense, mentoring signals a school’s commitment to continuous development—an enabling condition for
+innovation-oriented activity.
+SHAP in Fig. 2 visualizes how each item within the related TALIS domain affects
+the organizational innovativeness score. SHAP transforms machine learning models
+from “black boxes” into tools aligned with human-centered policymaking (Molnar,
+2020), making decision processes traceable. This approach is especially valuable in
+complex social systems such as education, enabling the development of data-driven
+decision-support mechanisms (Ribeiro et al., 2016). We used SHAP as a post hoc
+explainability method to interpret the model’s predictions by estimating each feature’s contribution to predicted organisational innovativeness.
+SHAP is used to interpret the XGBoost model by decomposing each school’s predicted organizational innovativeness into additive contributions from each predictor.
+In Fig. 2, the x-axis shows the SHAP value for a given feature: dots to the right of
+zero indicate that the feature pushes the model’s prediction upwards (higher predicted innovativeness), whereas dots to the left indicate a downwards push; distance
+from zero reflects the strength of that contribution.
+School climate
+The school climate emerges as the strongest set of predictors of organisational innovativeness in the SHAP summary. Items such as TC3G26I (“This school encourages
+staff to lead new initiatives”), TC3G26F (“There is a collaborative school culture
+characterized by mutual support”), and TC3G27G (“The school co-operates with the
+local community”) display the largest SHAP magnitudes. For each of these features,
+higher values (red points) are concentrated on the positive SHAP side, indicating
+that higher agreement is associated with higher model-predicted innovativeness,
+whereas lower values (blue points) tend to shift predictions downwards. In contrast,
+TC3G29O (shortage/inadequacy of time with students) shows a reversed pattern,
+where higher shortage levels (red) are concentrated on the negative SHAP side, suggesting that time scarcity functions as a practical constraint that reduces predicted
+innovativeness.
+Job satisfaction
+Job satisfaction indicators—TC3G44G (“I would recommend this school as a good
+place to work”), TC3G44E (“I enjoy working at this school”), TC3G45C (“I am
+satisfied with the support that I receive from the staff”), and TC3G44J (“All in all,
+
+13
+
+Journal of Educational Change
+
+Fig. 2 SHAP beeswarm plot of the 20 most influential TALIS items
+
+I am satisfied with my job”)—also show predominantly positive SHAP contributions, although they rank below the leading climate indicators. Across these variables, higher values (red) are more frequently associated with positive SHAP values,
+indicating that the model predicts higher innovativeness in schools where principals
+report stronger workplace satisfaction and perceived support.
+
+13
+
+Journal of Educational Change
+
+School leadership
+Among the school leadership indicators, TC3G22D (“I took actions to support cooperation among teachers to develop new teaching practices”) exhibited a modest but
+consistently positive SHAP pattern. As shown in Fig. 2, a higher reported frequency
+of this practice (indicated by red dots) aligns with rightward shifts in SHAP values.
+This implies that the model assigns higher predicted innovativeness to schools where
+principals more regularly facilitate teacher cooperation. Conversely, lower frequencies (blue dots) are associated with neutral or slightly negative contributions to the
+prediction.
+Schooling in diverse environments
+The diversity-belief item TC3G40D (“Children and young people should learn that
+people of different cultures have a lot in common”) has low-magnitude and variable
+SHAP effects. Although the central tendency appears slightly positive, the substantial
+overlap around zero indicates that this feature exerts a weaker and less consistent
+influence on predicted innovativeness than the dominant school climate and job satisfaction predictors do.
+Induction and mentoring
+The induction/mentoring indicator TC3G34 (“Do teachers at this school have access
+to a mentoring programme?”) displays a small, generally positive association with
+predicted innovativeness, visible as a modest rightward spread of higher feature values. This suggests that the presence of mentoring access is linked to slightly higher
+model-predicted innovativeness, although its effect is clearly secondary to the core
+climate and satisfaction dimensions.
+
+Discussion
+Prior research indicates that the conditions shaping school innovativeness vary across
+contexts, including school size; school climate; leadership, staffing, and resource
+adequacy; and school location and school type (Birasnav et al., 2023; Kaya, 2021;
+Yalçın et al., 2023), among other organisational and contextual factors. In this study,
+using TALIS 2018 principal data and an explainable machine-learning approach,
+we found that the strongest predictors of principals’ perceived organisational innovativeness cluster around the school climate, followed by principal job satisfaction
+and instructional leadership practices, with diversity-related beliefs and mentoring
+access contributing smaller yet generally positive signals. Collectively, these results
+provide actionable guidance for educational leaders and policymakers by highlighting the organisational conditions most strongly associated with innovative capacity in schools—particularly participatory and collaborative climates, supportive
+work environments for principals, and leadership routines that reinforce continuous
+improvement.
+
+13
+
+Journal of Educational Change
+
+School climate
+School climate items emerge as the most influential predictor set in the study, aligning with prior TALIS-based evidence from Türkiye, which indicates that school
+climate positively predicts organisational innovativeness (Kaya, 2021). The highestranked climate indicators consistently reflect teacher initiative and collective efficacy. Schools where staff are encouraged to lead new initiatives and where a mutually
+supportive, collaborative culture is reported show the strongest positive contributions to predicted innovativeness. A second set of climate items highlights shared
+responsibility and participatory decision-making, including opportunities for both
+staff and students to participate in school decisions, as well as an explicit culture of
+shared responsibility for school issues. The prominence of cooperation with the local
+community further highlights the importance of external orientation, suggesting that
+innovativeness is linked not only to internal collaboration but also to schools’ capacity to mobilize relationships and resources beyond the organization. In addition to
+these enabling conditions, the model identifies a clear capacity constraint: greater
+hindrance due to the shortage or inadequacy of time with students contributes negatively to predicted innovativeness.
+Taken together, the SHAP patterns suggest that the model primarily “recognizes”
+innovative schools as those combining empowered staff initiatives, collaborative and
+participatory cultures, community connectedness, coherent implementation capacity, and strong relational trust—while time scarcity functions as a practical inhibitor. These findings are consistent with scholarship linking school innovativeness
+to collaborative organizational climates and social capital (e.g., Blömeke et al.,
+2021; Birasnav et al., 2023; Dedering & Pietsch, 2025; Pan et al., 2024) and with
+broader work showing that trust, collaboration, supportive management, openness
+to innovation, understanding of curricular goals, and high expectations for student
+achievement tend to cooccur with innovation-oriented organizational functioning
+in education (e.g., Chou et al., 2018; Çoban & Atasoy, 2020; Ersozlu et al., 2022;
+Hidayat & Patras, 2024; Hu et al., 2024; Huang & Wang, 2021; Kundu & Roy, 2023;
+Moolenaar et al., 2010, 2011; Polatcan et al., 2024; Vermeulen et al., 2020; Zhou &
+Ismail, 2025).
+Job satisfaction
+Our item-level results indicate that principals’ job satisfaction—captured by (a) willingness to recommend the school, (b) enjoyment of their work, (c) perceived collegial support and (d) perceived overall feelings of satisfaction at work—shows a clear
+positive association with organisational innovativeness. Interpreted substantively,
+the model “credits” innovativeness to leadership contexts in which principals feel
+attached to their school, experience their work as meaningful and efficacious, and
+perceive strong relational support from colleagues. This pattern aligns with TALISbased evidence from Türkiye, which shows that school administrators’ job satisfaction significantly predicts organisational innovativeness (Kaya, 2021). It is also
+consistent with education-sector studies that link satisfaction and supportive climates
+to innovation-related outcomes, albeit often from a teacher-focused perspective (e.g.,
+
+13
+
+Journal of Educational Change
+
+Atasoy & Özden, 2022; Hu et al., 2024). Beyond schooling, correctional-sector evidence similarly reports positive associations between perceptions of organisational
+innovation and job satisfaction (Lambert & Hogan, 2010).
+Theoretically, the prominence of job-satisfaction items becomes more intelligible when situated within the emotional and psychosocial realities of school leadership and the job demands–resources (JD–R) tradition. Principals’ work is widely
+characterized by sustained accountability pressures, frequent conflict management,
+and intensive relational labour. Maxwell and Riley (2017), for example, show that
+principals report substantially greater emotional demands and burnout (and lower
+well-being) than the general population does, even while job satisfaction can remain
+comparatively high. Longitudinal JD–R evidence likewise indicates that job demands
+are linked to greater burnout and lower job satisfaction over time, whereas resources
+such as resilience show protective associations (Marsh et al., 2023). Complementary
+findings from Canadian principals further suggest that work intensification is consequential for job satisfaction, whereas support and high-quality professional relationships operate as key buffers (Wang et al., 2018).
+Within this framing, principals’ job satisfaction can be interpreted as an integrative indicator of whether leaders can successfully manage emotional labour while
+mobilizing psychological and social resources. Evidence from the broader well-being
+literature links job satisfaction to lower burnout-related outcomes (as shown metaanalytically among teachers) (Yorulmaz et al., 2017) and connects positive psychological resources (e.g., hope, efficacy, resilience, optimism) to job satisfaction and
+well-being (Avey et al., 2011; Kurt & Demirbolat, 2019). In turn, psychological capital and job satisfaction have been associated with innovative behaviour in organisational research, providing a plausible mechanism for why satisfaction-related items
+exhibit strong positive contributions in our model (Alshebami, 2021). Taken together,
+these strands suggest a coherent interpretation: principals who report higher job satisfaction are more likely to retain the affective energy, resilience, and relational capacity required to sustain experimentation, support teachers’ risk-taking, and persist
+through implementation challenges—core conditions for school-level organisational
+innovation.
+Leadership
+Our results indicate that school leadership practices—such as leaders’ specific
+actions to support cooperation for the development of new practices—are associated with organisational innovativeness. This finding is consistent with evidence
+that leadership can foster innovation-oriented behaviours in schools. For example,
+via multilevel analysis of Taiwan TALIS 2018 data, Hsieh et al. (2024) reported
+that distributed leadership had a significant direct effect on teacher innovativeness,
+whereas the effect of instructional leadership was mainly indirect and was mediated
+through teacher self-efficacy. Related work also explores how leaders can enable systemic change in increasingly complex environments (Arar et al., 2024), and a recent
+systematic review of social justice leadership argues that culturally responsive and
+equity-oriented approaches move beyond rigid, hierarchical models by foregrounding inclusivity, care, and critical consciousness in educational settings (Chaaban et
+
+13
+
+Journal of Educational Change
+
+al., 2025). Accordingly, a positive relationship between principal inclusive leadership
+and teachers’ innovative behaviour has been found in recent research, with psychological empowerment and the school innovation climate serving as mediators (Bao,
+2024).
+More specifically, among the leadership approaches discussed in the organisational
+innovativeness literature, our results align most closely with instructional leadership.
+Behaviors such as staffing a school with high-quality teachers, providing appropriate
+support, observing teaching practices, and fostering teacher growth and collaboration are widely treated as core responsibilities of instructional leaders (Hallinger,
+2005; Horng & Loeb, 2010). Similarly, Kilag and Sasan (2023) asserted that instructional leaders promote teacher development by modelling effective practices, providing feedback, and facilitating collaborative learning opportunities—suggesting that
+instructional leadership extends beyond monitoring to position teacher collaboration
+as a routine for building professional capacity. By fostering a climate of cooperation, leaders help clarify expectations and strengthen the collective implementation
+of new practices by the followers. Consistent with this interpretation, Sullivan et al.
+(2012), in their study of leadership for collaboration in public management, identified
+leadership behaviours focused on supporting professional collaboration as vital for
+organisational effectiveness.
+Schooling in diverse environments
+The diversity-belief item (TC3G40D) asks principals to estimate how many teachers in their school would agree that children and young people should learn that
+people of different cultures have a lot in common. Across TALIS countries, this
+belief is reported as the most widely endorsed cultural-diversity orientation among
+teachers, with very high levels of principal-reported agreement (OECD, 2019). Conceptually, this belief aligns with culturally responsive school leadership (CRSL), a
+framework that emphasizes leaders’ roles in shaping school environments and curricula to affirm minority identities, promote inclusion and equity, and build common ground across diverse student populations (Khalifa, 2020; Khalifa et al., 2016).
+CRSL positions principals as critical agents who foster inclusive climates through
+critically self-reflective practice, culturally sustaining pedagogy, and meaningful
+community engagement—capacities that may simultaneously enable organizational
+innovativeness by expanding the range of perspectives and practices available within
+the school. Thus, as Yamashiro et al. (2022) argue, leadership preparation programs
+must address the mutually reinforcing goals of increasing the development of leaders
+from underrepresented populations and cultivating culturally responsive leadership
+dispositions for effective schooling in diverse environments. Our finding that this
+diversity-belief variable predicts organisational innovativeness suggests that culturally responsive orientations may serve not only equity goals but also broader organisational capacity for change and adaptation.
+Empirically, scholars suggest that schools embracing cultural diversity may foster more transformational and innovative organisational structures (Cardona et al.,
+2025; Culha & Yücel, 2024) and that inclusive, emotionally supportive environments
+can enhance innovative behaviour (Çelik et al., 2024). Consistent with diversity-
+
+13
+
+Journal of Educational Change
+
+as-resource arguments, groups that value diversity may produce stronger outcomes
+by widening perspectives and improving problem solving (Homan et al., 2007),
+and diversifying the educator workforce has a strong positive influence on students
+(Cheung & Gong, 2022).
+Moreover, our SHAP results indicate that this item contributes only weakly and
+variably to predicting innovativeness compared with the dominant climate and jobsatisfaction predictors. Thus, while the direction is broadly compatible with CRSL
+and diversity-as-resource perspectives, the empirical signal here is best interpreted as
+small within the study.
+Induction and mentoring
+Our results suggest that providing induction and mentoring support to a larger proportion of teachers enables schools to become more innovative in organizational terms.
+Schools with structured mentoring opportunities for all teachers tend to exhibit more
+innovative practices. The importance of supporting new teachers through structured
+mentoring has been well documented in the literature (Ingersoll & Strong, 2011;
+Smith & Ingersoll, 2004). However, our finding that schools providing mentoring
+to all teachers show greater innovativeness suggests broader benefits. This aligns
+with Bressman et al.‘s (2018) argument that experienced teachers, like novices, need
+opportunities for reflection, goal setting, and professional growth. Similarly, in the
+business sector, Moore and Wang (2017) reported that mentoring top leaders promotes organizational innovativeness by fostering psychological safety—an environment where not only leaders but also all organizational members are encouraged to
+explore new ideas and speak up. Mentoring that encompasses all career stages may
+contribute to a learning organization culture that supports continuous improvement
+and innovation in schools.
+Limitations
+The findings adopt an exploratory, predictive perspective by identifying factors
+associated with organisational innovativeness; accordingly, the study does not
+claim causal effects. The scope is limited to variables available in TALIS 2018 and
+to participating education systems, which provides rare cross-system coverage but
+also constrains contextual sensitivity. The machine learning models capture statistical regularities that hold on average in the pooled international sample; however,
+they cannot explain how the meaning and salience of “innovation” may vary across
+systems with distinct histories, policies, and sociocultural norms. A key limitation
+concerns cross-national measurement invariance of the dependent variable: because
+only configural invariance was supported (and stronger forms such as metric/scalar
+invariance were not established), the identified associations should be interpreted as
+pooled-sample patterns rather than effects that operate identically across countries.
+Under these conditions, the use of a pooled prediction model raises the possibility that the algorithm may partially capture country-specific measurement artefacts
+or response styles, in addition to substantive relationships between predictors and
+the outcome. Consequently, predictors identified as important in the pooled model
+
+13
+
+Journal of Educational Change
+
+should not be interpreted as evidence of invariant effects operating uniformly across
+countries. Rather, these findings indicate variables that are salient within the pooled
+international sample, with the explicit recognition that the nature, strength, and functional form of these associations may vary across national contexts. Future research
+should replicate these analyses via country-specific models or multigroup approaches
+under stronger measurement invariance conditions to assess the robustness and contextual specificity of the identified predictors. In addition, all the measures rely on
+principals’ self-reports, increasing the risk of single-source bias and common method
+variance, which may inflate associations. Finally, prioritizing malleable school process variables necessarily deemphasizes structural contextual factors (e.g., socioeconomic composition) that shape inequality and may help identify systematically
+underresourced schools; future work could integrate such indicators as controls,
+moderators, or complementary risk markers and examine country-specific models to
+assess contextual variation.
+
+Conclusion
+This study used TALIS 2018 principal data from 47 education systems to examine which school-level conditions most strongly predict principals’ perceptions of
+organisational innovativeness. Using an explainable machine learning workflow, we
+compared several predictive algorithms, selected XGBoost as the best-performing
+approach, and then applied SHAP to interpret the direction and relative contribution of the most influential predictors. Overall, the results suggest that organisational
+innovativeness is shaped less by single structural inputs and more by an interlocking
+set of cultural and relational conditions within schools.
+The school climate emerged as the dominant predictor cluster: predicted innovativeness was greater in schools where staff are encouraged to initiate new practices,
+collaboration and mutual support are strong, responsibility is shared, decision-making
+is participatory, and the school maintains an outward orientation through cooperation
+with the local community. In contrast, practical capacity constraints—particularly
+perceived shortages of time for working with students—were associated with lower
+predicted innovativeness, which is consistent with the idea that implementation bandwidth is a key condition for sustaining change. Principals’ job satisfaction constituted a robust secondary predictor. Greater predicted innovativeness was associated
+with principals reporting stronger attachment to their school, greater enjoyment and
+overall satisfaction at work, and more supportive collegial relations, suggesting that
+leader well-being and relational support may function as organisational resources
+for persistence and follow-through during improvement efforts. Leadership practices,
+especially actions to support teacher cooperation in developing new practices, also
+showed a small but positive association, aligning with an instructional-leadership
+interpretation that emphasizes leaders’ supporting professional learning and collaboration. Two additional predictors—principals’ inclusive diversity beliefs and
+access to mentoring—showed smaller yet generally positive contributions. Although
+weaker and, for diverse beliefs, more variable, these patterns suggest that inclusive
+
+13
+
+Journal of Educational Change
+
+orientations and mentoring infrastructures may modestly strengthen the relational
+and learning conditions that support innovation.
+Methodologically, the study demonstrates the value of combining predictive
+benchmarking with explainable AI to map the relative importance and direction of
+correlates of school innovativeness in large-scale datasets. This finding indicates
+that efforts to strengthen innovativeness may benefit from cultivating participatory,
+trust-based climates; protecting time and implementation capacity; supporting principal well-being; and institutionalizing collaborative leadership practices and mentoring routines. Future research should extend these findings with longitudinal and
+mixed-method designs to clarify mechanisms and strengthen causal inference and to
+examine how patterns vary across national and organisational contexts. Finally, these
+results should be interpreted as pooled-sample predictive regularities that highlight
+potential leverage points within schools, not as universal effects that operate identically across countries; structural and contextual constraints remain central considerations for policy design.
+Funding Open access funding provided by the Scientific and Technological Research Council of Türkiye
+(TÜBİTAK). The authors have not received financial support for the research, authorship, and/or publication of this article.
+Data availability The data supporting the findings of this study are attached. It can also be retrieved from
+the TALIS 2018 database.
+
+Declarations
+Conflict of interest The authors declare no potential conflicts of interest with respect to the research,
+authorship, and/or publication of this article.
+Ethical approval No ethical permission is needed, as the study included international open data from the
+TALIS 2018 dataset.
+AI-assisted technologies in the writing process We have used AI tools only for copy editing. We have
+not added related sections in the method as the use of an LLM (or other AI-tool) for “AI assisted copy
+editing” purposes does not need to be declared.
+Open Access This article is licensed under a Creative Commons Attribution 4.0 International License,
+which permits use, sharing, adaptation, distribution and reproduction in any medium or format, as long
+as you give appropriate credit to the original author(s) and the source, provide a link to the Creative
+Commons licence, and indicate if changes were made. The images or other third party material in this
+article are included in the article’s Creative Commons licence, unless indicated otherwise in a credit line
+to the material. If material is not included in the article’s Creative Commons licence and your intended use
+is not permitted by statutory regulation or exceeds the permitted use, you will need to obtain permission
+directly from the copyright holder. To view a copy of this licence, visit ​h​t​t​p​:​/​/​c​r​e​a​t​i​v​e​c​o​m​m​o​n​s​.​o​r​g​/​l​i​c​e​n​
+s​e​s​/​b​y​/​4​.​0​/​​​​.​​
+
+References
+Ahlstrom, D. (2010). Innovation and growth: How business contributes to society. Academy of Management Perspectives, 24(3), 11–24. https://doi.org/10.5465/amp.24.3.11
+
+13
+
+Journal of Educational Change
+Ainley, J., & Carstens, R. (2018). Teaching and learning international survey (TALIS) 2018 conceptual
+framework. OECD Education Working Papers, 187, 1–108. https://doi.org/10.1787/799337c2-en
+Akın, U. (2016). Innovation efforts in education and school administration: Views of Turkish school
+administrators. Eurasian Journal of Educational Research, 16(63), 243–260.
+Alshebami, A. S. (2021). The influence of psychological capital on employees’ innovative behavior: Mediating role of employees’ innovative intention and employees’ job satisfaction. SAGE Open. ​h​t​t​p​s​:​/​/​d​
+o​i​.​o​r​g​/​1​0​.​1​1​7​7​/​2​1​5​8​2​4​4​0​2​1​1​0​4​0​8​0​9​​​​
+Alzouebi, K., Al Hammadi, D. Y., Ankit, A., & Abu Khurma, O. (2025). School innovation: Building a
+culture through leadership and stakeholder engagement. Societies, 15(4), Article 77.
+Anderson, G. L. (1996). The cultural politics of schools: Implications for leadership. In K. Leithwood, J.
+Chapman, D. Corson, P. Hallinger, & A. Hart (Eds.), International handbook of educational leadership and administration (pp. 947–966). Springer. https://doi.org/10.1007/978-94-009-1573-2_27
+Arar, K., Tlili, A., & Salha, S. (2024). Human-Machine symbiosis in educational leadership in the era
+of artificial intelligence (AI): Where are we heading? Educational Management Administration &
+Leadership. https://doi.org/10.1177/17411432241292295
+Atasoy, R., & Özden, C. (2022). The effect of instructional leadership, organizational innovativeness, and
+school hindering on teachers’ satisfaction at bilsems. Education Reform Journal, 7(2), 57–75.
+Avey, J. B., Reichard, R. J., Luthans, F., & Mhatre, K. H. (2011). Meta-analysis of the impact of positive
+psychological capital on employee attitudes, behaviors, and performance. Human Resource Development Quarterly, 22(2), 127–152. https://doi.org/10.1002/hrdq.20070
+Bakker, A. B. (2011). An evidence-based model of work engagement. Current Directions in Psychological
+Science, 20(4), 265–269. https://doi.org/10.1177/0963721411414534
+Bakker, A. B., & Demerouti, E. (2007). The Job Demands-Resources model: State of the art. Journal of
+Managerial Psychology, 22(3), 309–328. https://doi.org/10.1108/02683940710733115
+Bao, Y. (2024). A dual mediation model of the association between principal inclusive leadership and
+teacher innovative behavior. Scientific Reports, 14, Article 63332. ​h​t​t​p​s​:​/​/​d​o​i​.​o​r​g​/​1​0​.​1​0​3​8​/​s​4​1​5​9​8​-​0​
+2​4​-​6​3​3​3​2​-​0​​​​
+Beretta, L., & Santaniello, A. (2016). Nearest neighbor imputation algorithms: A critical evaluation. BMC
+Medical Informatics and Decision Making, 16(Suppl 3), Article 74. ​h​t​t​p​s​:​/​/​d​o​i​.​o​r​g​/​1​0​.​1​1​8​6​/​s​1​2​9​1​
+1​-​0​1​6​-​0​3​1​8​-​z​​​​
+Birasnav, M., Gantasala, S. B., Gantasala, V. P., & Singh, A. (2023). Total quality leadership and organizational innovativeness: The role of social capital development in American schools. Benchmarking :
+An International Journal, 30(3), 811–833. https://doi.org/10.1108/BIJ-08-2021-0470
+Blömeke, S., Nilsen, T., & Scherer, R. (2021). School innovativeness is associated with enhanced teacher
+collaboration, innovative classroom practices, and job satisfaction. Journal of Educational Psychology, 113(8), 1645–1667. https://doi.org/10.1037/edu0000668
+Bressman, S., Winter, J. S., & Efron, S. E. (2018). Next generation mentoring: Supporting teachers beyond
+induction. Teaching and Teacher Education, 73, 162–170.
+Bryk, A., & Schneider, B. (2002). Trust in schools: A core resource for improvement. Russell Sage
+Foundation.
+Cardona, R., Corrales, A., Miller, Q., & Peters, M. (2025). School principal cultural proficiency and transformational leadership. AASA Journal of Scholarship & Practice, 22(1), 8–22.
+Çelik, Ç., Polat, S., & Esen, E. (2024). The relationship between inclusive leadership and innovative work
+behavior: The mediating role of inclusive climate and emotional commitment. Research in Educational Administration and Leadership, 9(3), 417–482.
+Chaaban, Y., Badwan, K., & Arar, K. (2025). Educational leadership for social justice: A systematic review
+of empirical evidence. Review of Education, 13(2), Article e70077.
+Chen, T., & Guestrin, C. (2016). XGBoost: A scalable tree boosting system. In Proceedings of the 22nd
+ACM SIGKDD International Conference on Knowledge Discovery and Data Mining (pp. 785–794).
+ACM. https://doi.org/10.1145/2939672.2939785
+Cheung, R., & Gong, N. (2022). Understanding how a leaders of color network supports the retention of
+a diverse leader workforce. Leadership and Policy in Schools, 21(1), 112–125. ​h​t​t​p​s​:​​/​/​d​o​i​​.​o​r​g​/​1​​0​.​1​0​​
+8​0​/​1​5​​7​0​0​7​6​​3​.​2​0​2​1​​.​2​0​2​​2​7​0​9
+Chou, C., Shen, C., Hsiao, H., & Shen, T. (2018). Factors influencing teachers’ innovative teaching behaviour with information and communication technology (ICT): The mediator role of organisational
+innovation climate. Educational Psychology, 39(1), 65–85. ​h​t​t​p​s​:​​/​/​d​o​i​​.​o​r​g​/​1​​0​.​1​0​​8​0​/​0​1​​4​4​3​4​1​​0​.​2​0​1​8​​
+.​1​5​2​​0​2​0​1
+
+13
+
+Journal of Educational Change
+Christensen, A. A., Nielbo, K. L., & Gümüş, S. (2025). Exploring school factors related to professional
+learning communities: A machine learning approach using cross-national data. Educational Studies.​
+h​t​t​p​s​:​​/​/​d​o​i​​.​o​r​g​/​1​​0​.​1​0​​8​0​/​0​3​​0​5​5​6​9​​8​.​2​0​2​4​​.​2​3​6​​9​8​5​5
+Çizmeci, İ. H., & İncekara, H. (2025). Stacking ensemble based hybrid machine learning approach for
+predicting obesity levels. In 2025 7th International Congress on Human-Computer Interaction, Optimization and Robotic Applications (ICHORA) (pp. 1–8). IEEE. ​h​t​t​p​s​:​​/​/​d​o​i​​.​o​r​g​/​1​​0​.​1​1​​0​9​/​I​C​​H​O​R​A​6​​5​
+3​3​3​.​2​​0​2​5​.​​1​1​0​1​7​1​6​4
+Çoban, Ö., & Atasoy, R. (2020). Relationship between distributed leadership, teacher collaboration and
+organizational innovativeness. International Journal of Evaluation and Research in Education
+(IJERE), 9(4), 903–911. https://doi.org/10.11591/ijere.v9i4.20679
+Culha, A., & Yücel, A. (2024). Okul müdürlerinin kapsayıcı liderlik davranışlarının Okul kültürüne Etkisi
+[The impact of inclusive leadership behaviors of school principals on school culture]. Bayburt Egitim
+Fakültesi Dergisi, 19(43), 2344–2362.
+Dedering, K., & Pietsch, M. (2025). School leader trust and collective teacher innovativeness: On individual and organisational ambidexterity’s mediating role. Educational Review, 77(2), 351–380. ​h​t​t​p​
+s​:​​/​/​d​o​i​​.​o​r​g​/​1​​0​.​1​0​​8​0​/​0​0​​1​3​1​9​1​​1​.​2​0​2​3​​.​2​1​9​​5​5​9​3
+Dormann, C. F., Elith, J., Bacher, S., Buchmann, C., Carl, G., Carré, G., García Marquéz, J. R., Gruber, B.,
+Lafourcade, B., Leitão, P. J., Münkemüller, T., McClean, C., Osborne, P. E., Reineking, B., Schröder,
+B., Skidmore, A. K., Zurell, D., & Lautenbach, S. (2013). Collinearity: A review of methods to deal
+with it and a simulation study evaluating their performance. Ecography, 36(1), 27–46.
+Erdoğan, O., Sezgin, F., Özdemir, S., Özdemir, N., Zepeda, S. J., & Kılınç, A. Ç. (2024). How national
+and school cultural factors influence the link between distributed leadership and collective teacher
+innovativeness: Testing a multilevel moderated mediation model. European Journal of Education,
+59(4), Article e12718.
+Ersozlu, A., Karakus, M., Karakas, F., & Clouder, D. (2022). Nurturing a climate of innovation in a didactic educational system: A case study exploring leadership in private schools in Turkey. Leadership
+and Policy in Schools, 23(2), 275–295. ​h​t​t​p​s​:​​/​/​d​o​i​​.​o​r​g​/​1​​0​.​1​0​​8​0​/​1​5​​7​0​0​7​6​​3​.​2​0​2​2​​.​2​1​2​​9​0​7​4
+Fei, N., Gao, Y., Lu, Z., & Xiang, T. (2021). Z-score normalization, hubness, and few-shot learning. In
+Proceedings of the IEEE/CVF International Conference on Computer Vision (pp. 142–151). IEEE.
+Fidan, T., & Balcı, A. (2017). Managing schools as complex adaptive systems: A strategic perspective.
+International Electronic Journal of Elementary Education, 10(1), 11–26.
+Geijsel, F. P. (2001). Schools and innovations: Conditions fostering the implementation of educational
+innovations. Nijmegen University Press.
+Germain, E. (2022). Well-being and equity: A Multi-Disciplinary framework for rethinking education policy. Peabody Journal of Education, 97(1), 6–17. ​h​t​t​p​s​:​​/​/​d​o​i​​.​o​r​g​/​1​​0​.​1​0​​8​0​/​0​1​​6​1​9​5​6​​X​.​2​0​2​2​​.​2​0​2​​6​7​1​6
+Guyon, I., & Elisseeff, A. (2003). An introduction to variable and feature selection. Journal of Machine
+Learning Research, 3, 1157–1182.
+Guzman, C. U., & Jaillier-Castrillon, E. (2021). Educational innovation as one of the drivers of human
+evolution. Cypriot Journal of Educational Sciences, 16(5), 2651–2675. ​h​t​t​p​s​:​/​/​d​o​i​.​o​r​g​/​1​0​.​1​8​8​4​4​/​c​j​e​
+s​.​v​1​6​i​5​.​6​3​5​4​​​​
+Hallinger, P. (2005). Instructional leadership and the school principal: A passing fancy that refuses to fade
+away. Leadership and Policy in Schools, 4(3), 221–239.
+Ham, S. H., & Lee, S. (2024). Participative decision-making and school innovativeness: An uncertainty
+management perspective. The Asia-Pacific Education Researcher, 33(3), 717–726.
+Han, J., Kamber, M., & Pei, J. (2012). Data mining: Concepts and techniques (3rd ed). Morgan Kaufmann.
+Hargreaves, A., & Shirley, D. (2009). The fourth way: The inspiring future for educational change. Corwin
+Press.
+Harris, A. (2008). Distributed leadership through the looking glass. Journal of Educational Administration, 46(2), 172–188. ​h​t​t​p​s​:​​/​/​d​o​i​​.​o​r​g​/​1​​0​.​1​1​​0​8​/​j​e​​a​.​2​0​0​​8​.​0​7​4​4​​6​b​a​a​​.​0​0​1
+Hidayat, R., & Patras, Y. (2024). Teacher innovativeness: The effect of self-efficacy, transformational leadership, and school climate. Journal of Pedagogical Research, 8(2), 150–163. ​h​t​t​p​s​:​/​/​d​o​i​.​o​r​g​/​1​0​.​3​3​9​
+0​2​/​j​p​r​.​2​0​2​4​2​4​5​4​7​​​​
+Hilbert, S., Coors, S., Kraus, E., Bischl, B., Lindl, A., Frei, M., & Stachl, C. (2021). Machine learning for
+the educational sciences. Review of Education, 9(3), Article e3310. https://doi.org/10.1002/rev3.3310
+Homan, A. C., Van Knippenberg, D., Van Kleef, G. A., & De Dreu, C. K. (2007). Bridging faultlines
+by valuing diversity: Diversity beliefs, information elaboration, and performance in diverse work
+groups. Journal of Applied Psychology, 92(5), 1189–1199.
+
+13
+
+Journal of Educational Change
+Horng, E., & Loeb, S. (2010). New thinking about instructional leadership. Phi Delta Kappan, 92(3),
+66–69.
+Hsieh, C. C., Tai, S. E., & Li, H. C. (2024). Impact of school leadership on teacher innovativeness: Evidence from multilevel analysis of Taiwan TALIS 2018. Asia Pacific Journal of Education. ​h​t​t​p​s​:​​/​/​d​o​
+i​​.​o​r​g​/​1​​0​.​1​0​​8​0​/​0​2​​1​8​8​7​9​​1​.​2​0​2​4​​.​2​3​9​​7​0​4​0
+Hu, B., Park, K. H., & Xu, Z. (2024). The mediating effect of teachers’ collective innovativeness between
+school climate and job satisfaction. European Journal of Educational Research, 13(4), 1573–1585.
+https://doi.org/10.12973/eu-jer.13.4.1573
+Huang, X., & Wang, C. (2021). Factors affecting teachers’ informal workplace learning: The effects of
+school climate and psychological capital. Teaching and Teacher Education, 103, Article 103363.
+https://doi.org/10.1016/j.tate.2021.103363
+Ingersoll, R. M., & Strong, M. (2011). The impact of induction and mentoring programs for beginning
+teachers: A critical review of the research. Review of Educational Research, 81(2), 201–233. ​h​t​t​p​s​:​/​/​
+d​o​i​.​o​r​g​/​1​0​.​3​1​0​2​/​0​0​3​4​6​5​4​3​1​1​4​0​3​3​2​3​​​​
+Jerez, J. M., Molina, I., García-Laencina, P. J., Alba, E., Ribelles, N., Martín, M., & Franco, L. (2010).
+Missing data imputation using statistical and machine learning methods in a real breast cancer problem. Artificial Intelligence in Medicine, 50(2), 105–115.
+Kaya, M. (2021). Investigation of factors affecting organizational innovativeness in schools. I E : Inquiry
+in Education, 13(2), 9.
+Ke, G., Meng, Q., Finley, T., Wang, T., Chen, W., Ma, W., Ye, Q., & Liu, T. Y. (2017). LightGBM: A highly
+efficient gradient boosting decision tree. Advances in neural information processing systems. (Vol.
+30). NeurIPS.
+Khalifa, M. A. (2020). Culturally responsive school leadership. Harvard Education Press.
+Khalifa, M. A., Gooden, M. A., & Davis, J. E. (2016). Culturally responsive school leadership: A synthesis
+of the literature. Review of Educational Research, 86(4), 1272–1311. ​h​t​t​p​s​:​/​/​d​o​i​.​o​r​g​/​1​0​.​3​1​0​2​/​0​0​3​4​6​
+5​4​3​1​6​6​3​0​3​8​3​​​
+Kilag, O. K. T., & Sasan, J. M. (2023). Unpacking the role of instructional leadership in teacher professional development. Advanced Qualitative Research, 1(1), 63–73.
+Kirsten, B., & Du Preez, R. (2010). Improvisational theatre as team development intervention for climate
+for work group innovation. SA Journal of Industrial Psychology, 36(1), 1–9.
+Kohavi, R. (1995). A study of cross-validation and bootstrap for accuracy estimation and model selection. In Proceedings of the 14th International Joint Conference on Artificial Intelligence (Vol. 2, pp.
+1137–1143). Morgan Kaufmann.
+Kundu, A., & Roy, D. (2023). How do teachers innovate? Role of efficacy for innovation and school climate perception. Psychology in the Schools, 60(12), 4860–4881. https://doi.org/10.1002/pits.22987
+Kurt, N., & Demirbolat, A. O. (2019). Investigation of the relationship between psychological capital perception, psychological well-being and job satisfaction of teachers. Journal of Education and Learning, 8(1), 87–99.
+Lambert, E. G., & Hogan, N. L. (2010). Wanting change: The relationship of perceptions of organizational
+innovation with correctional staff job stress, job satisfaction, and organizational commitment. Criminal Justice Policy Review, 21(2), 160–184.
+Leithwood, K., & Jantzi, D. (2005). A review of transformational school leadership research 1996–2005.
+Leadership and Policy in Schools, 4(3), 177–199. https://doi.org/10.1080/15700760500244769
+Levin, H. M. (2015). The importance of adaptability for the 21st century. Society, 52(2), 136–141.
+Lipton, Z. C. (2018). The mythos of model interpretability: In machine learning, the concept of interpretability is both important and slippery. Queue, 16(3), 31–57.
+Little, R. J. A., & Rubin, D. B. (2019). Statistical analysis with missing data (3rd ed). Wiley.
+Lu, J., & Campbell, P. (2021). Conceptualising innovation and professional learning in the Hong Kong
+education context. Practice, 3(2), 67–82. ​h​t​t​p​s​:​​/​/​d​o​i​​.​o​r​g​/​1​​0​.​1​0​​8​0​/​2​5​​7​8​3​8​5​​8​.​2​0​2​0​​.​1​8​3​​1​8​8​7
+Lundberg, S. M., & Lee, S. I. (2017). A unified approach to interpreting model predictions. In Advances
+in Neural Information Processing Systems (Vol. 30). NeurIPS. ​h​t​t​p​s​:​/​/​d​o​i​.​o​r​g​/​1​0​.​4​8​5​5​0​/​a​r​X​i​v​.​1​7​0​5​
+.​0​7​8​7​4​​​
+Luo, H., Cheng, F., Yu, H., & Yi, Y. (2021). SDTR: Soft decision tree regressor for tabular data. IEEE
+Access, 9, 55999–56011.
+Marks, H. M., & Printy, S. M. (2003). Principal leadership and school performance: An integration of
+transformational and instructional leadership. Educational Administration Quarterly, 39(3), 370–
+397. https://doi.org/10.1177/0013161X03253412
+
+13
+
+Journal of Educational Change
+Marsh, H. W., Dicke, T., Riley, P., Parker, P. D., Guo, J., Basarkod, G., & Martin, A. J. (2023). School
+principals’ mental health and well-being under threat: A longitudinal analysis of workplace demands,
+resources, burnout, and well-being. Applied Psychology: Health and Well-Being, 15(3), 999–1027.
+https://doi.org/10.1111/aphw.12423
+Masci, C., Johnes, G., & Agasisti, T. (2018). Student and school performance across countries: A machine
+learning approach. European Journal of Operational Research, 269(3), 1072–1085.
+Masry-Herzallah, A., & Da’as, R. A. (2021). Cultural values, school innovative climate and organizational
+affective commitment: A study of Israeli teachers. International Journal of Educational Management, 35(2), 496–512. https://doi.org/10.1108/IJEM-06-2020-0302
+Mavi, D., Tuti, G., & Özdemir, M. (2025). Instructional leadership as a catalyst for teacher professionalism: A multilevel mediation model of teacher collaboration. Journal of Educational Administration,
+63(6), 536–550. https://doi.org/10.1108/JEA-02-2025-0055
+Maxwell, A., & Riley, P. (2017). Emotional demands, emotional labour and occupational outcomes in
+school principals: Modelling the relationships. Educational Management Administration & Leadership, 45(3), 484–502. https://doi.org/10.1177/1741143215607878
+McCharen, B., Song, J. H., & Martens, J. (2011). School innovation: The mutual impacts of organizational
+learning and creativity. Educational Management Administration & Leadership, 39(6), 676–694.
+https://doi.org/10.1177/1741143211416387
+Molnar, C. (2020). Interpretable machine learning: A guide for making black box models explainable.
+Leanpub.
+Moolenaar, N. M., Daly, A. J., & Sleegers, P. J. C. (2010). Occupying the principal position: Examining
+relationships between transformational leadership, social network position, and schools’ innovative
+climate. Educational Administration Quarterly, 46(5), 623–670. ​h​t​t​p​s​:​/​/​d​o​i​.​o​r​g​/​1​0​.​1​1​7​7​/​0​0​1​3​1​6​1​X​
+1​0​3​7​8​6​8​9​​​
+Moolenaar, N. M., Sleegers, P. J., & Daly, A. J. (2011). Ties with potential: Social network structure and
+innovative climate in Dutch schools. Teachers College Record, 113(9), 1983–2017.
+Moore, J. H., & Wang, Z. (2017). Mentoring top leadership promotes organizational innovativeness
+through psychological safety and is moderated by cognitive adaptability. Frontiers in Psychology, 8,
+Article 318. https://doi.org/10.3389/fpsyg.2017.00318
+Newaz, M. N. (2022). Factors of organizational innovativeness: A systematic literature review. International Journal of Advances in Engineering and Management, 4, 182–216.
+OECD. (2016). Innovating education and educating for innovation: The power of digital technologies and
+skills. OECD Publishing. https://doi.org/10.1787/9789264265097-en
+OECD (2019). TALIS 2018 technical report. OECD Publishing. ​h​t​t​p​s​:​​/​/​w​w​w​​.​o​e​c​d​.​​o​r​g​/​​e​d​u​c​a​​t​i​o​n​/​​t​a​l​i​s​/​​T​A​
+L​I​​S​_​2​0​1​​8​_​T​e​c​​h​n​i​c​a​l​​_​R​e​p​​o​r​t​.​p​d​f
+Pan, H. L., Lin, Y. C., & Chung, C. H. (2024). Teacher collaboration, school innovativeness and innovative teaching in Taiwan: Evidence from TALIS. International Journal of Educational Research, 127,
+Article 102383.
+Patterson, M. G., West, M. A., Shackleton, V. J., Dawson, J. F., Lawthom, R., Maitlis, S., Robinson, D. L.,
+& Wallace, A. M. (2005). Validating the organizational climate measure: Links to managerial practices, productivity and innovation. Journal of Organizational Behavior, 26(4), 379–408.
+Pietsch, M., Cramer, C., Brown, C., Aydin, B., & Witthöft, J. (2024). Open innovation in schools: A new
+imperative for organising innovation in education? Technology, Knowledge and Learning, 29(2),
+1051–1077.
+Pihie, Z. A. L., Asuimiran, S., & Bagheri, A. (2014). Entrepreneurial leadership practices and school innovativeness. South African Journal of Education, 34(1), 1–11. https://doi.org/10.15700/201412120955
+Pihie, Z. A. L., & Bagheri, A. (2013). The impact of principals’ entrepreneurial leadership behaviour on
+school organizational innovativeness. Life Science Journal, 10(2), 1033–1041.
+Polatcan, M., Özkan, P., & Bellibaş, M. Ş. (2024). Cultivating teacher innovativeness through transformational leadership and teacher agency in schools: The moderating role of teacher trust. Journal of
+Professional Capital and Community, 9(3), 234–251. https://doi.org/10.1108/JPCC-01-2024-0008
+Ribeiro, M. T., Singh, S., & Guestrin, C. (2016). ‘Why should I trust you?‘: Explaining the predictions of
+any classifier. In Proceedings of the 22nd ACM SIGKDD International Conference on Knowledge
+Discovery and Data Mining (pp. 1135–1144). ACM.
+Riveras-León, J. C., & Tomàs-Folch, M. (2020). The organizational culture of innovative schools: The role
+of the principal. Journal of Educational Sciences, 21, 21–37.
+Schafer, J. L., & Graham, J. W. (2002). Missing data: Our view of the state of the art. Psychological Methods, 7(2), 147–177. https://doi.org/10.1037/1082-989X.7.2.147
+
+13
+
+Journal of Educational Change
+Segal, M. R. (2004). Machine learning benchmarks and random forest regression (UCSF Center for Bioinformatics and Molecular Biostatistics). Retrieved from https://escholarship.org/uc/item/35x3v9t4
+Shalev-Shwartz, S., & Ben-David, S. (2014). Understanding machine learning: From theory to algorithms. Cambridge University Press.
+Slavin, R. E. (1989). PET and the pendulum: Faddism in education and how to stop it. Phi Delta Kappan,
+70(10), 752–758.
+Smith, M., Busi, M., Ball, P., & Van Der Meer, R. (2008). Factors influencing an organisation’s ability to
+manage innovation: A structured literature review and conceptual model. International Journal of
+Innovation Management, 12(4), 655–676. https://doi.org/10.1142/S1363919608002138
+Smith, T. M., & Ingersoll, R. M. (2004). What are the effects of induction and mentoring on beginning
+teacher turnover? American Educational Research Journal, 41(3), 681–714. ​h​t​t​p​s​:​/​/​d​o​i​.​o​r​g​/​1​0​.​3​1​0​2​
+/​0​0​0​2​8​3​1​2​0​4​1​0​0​3​6​8​1​​​​
+Su, X., Yan, X., & Tsai, C. L. (2012). Linear regression. WIREs Computational Statistics, 4(3), 275–294.
+https://doi.org/10.1002/wics.1198
+Sullivan, H., Williams, P., & Jeffares, S. (2012). Leadership for collaboration: Situated agency in practice.
+Public Management Review, 14(1), 41–66. https://doi.org/10.1080/14719037.2011.589617
+Svenja, V., David, K., Eckhard, K., & Sonja, B. (2012). TALIS teaching practices and pedagogical Innovations evidence from TALIS: Evidence from TALIS. OECD Publishing.
+Troyanskaya, O., Cantor, M., Sherlock, G., Brown, P., Hastie, T., Tibshirani, R., Botstein, D., & Altman, R.
+B. (2001). Missing value Estimation methods for DNA microarrays. Bioinformatics, 17(6), 520–525.
+Uslukaya, A., Demirdis, B., & Yalcin, M. T. (2025). Transformational leadership and work interference
+with family in Türkiye: The mediating role of teacher commitment and the moderating role of power
+distance. Educational Management Administration & Leadership. ​h​t​t​p​s​:​/​/​d​o​i​.​o​r​g​/​1​0​.​1​1​7​7​/​1​7​4​1​1​4​3​
+2​2​5​1​3​9​3​4​5​1​​​
+Vermeulen, M., Kreijns, K., & Evers, A. T. (2020). Transformational leadership, leader–member exchange
+and school learning climate: Impact on teachers’ innovative behaviour in the Netherlands. Educational Management Administration & Leadership, 50(3), 491–510. ​h​t​t​p​s​:​/​/​d​o​i​.​o​r​g​/​1​0​.​1​1​7​7​/​1​7​4​1​1​4​3​
+2​2​0​9​3​2​5​8​2​​​
+Vieluf, S., Kaplan, D., Klieme, E., & Bayer, S. (2012). Teaching practices and pedagogical innovations:
+Evidence from TALIS. OECD Publishing. https://doi.org/10.1787/9789264123540-en
+Vincent-Lancrin, S. (2023). Measuring innovation in education 2023: Tools and methods for data-driven
+action and improvement. OECD Publishing. https://doi.org/10.1787/a7167546-en
+Wang, F., Pollock, K. E., & Hauseman, C. (2018). School principals’ job satisfaction: The effects of work
+intensification. Canadian Journal of Educational Administration and Policy, 185, 73–90.
+Weerts, H. J., Mueller, A. C., & Vanschoren, J. (2020). Importance of tuning hyperparameters of machine
+learning algorithms. ArXiv. https://doi.org/10.48550/ArXiv.2007.07588
+Westheimer, J. (2008). Learning among colleagues: Teacher community and the shared enterprise of
+education 1. In M. Cochran-Smith, S. Feiman-Nemser, D. J. McIntyre, & K. E. Demers (Eds.),
+Handbook of research on teacher education: Enduring questions in changing contexts (3rd ed., pp.
+756–783). Routledge.
+Willmott, C. J., & Matsuura, K. (2005). Advantages of the mean absolute error (MAE) over the root mean
+square error (RMSE) in assessing average model performance. Climate Research, 30(1), 79–82.
+http://www.jstor.org/stable/24869236
+Yalçın, M. T., Çoban, Ö., Koçak, Ö., & İncedal, A. (2023). Dağıtımcı liderlik ve Sosyal Sermaye
+bağlamında örgütsel yenilikçilik [Organizational innovativeness in the context of distributed leadership and social capital]. International Journal of Eurasia Social Sciences (IJOESS), 14(52), 687–
+705. https://doi.org/10.35826/ijoess.3277
+Yamashiro, K., Huchting, K., Ponce, M. N., Coleman, D. A., & McGowan-Robinson, L. (2022). Increasing school leader diversity in a social justice context: Revisiting strategies for leadership Preparation
+programs. Leadership and Policy in Schools, 21(1), 35–47. ​h​t​t​p​s​:​​​/​​/​d​o​​i​.​o​r​​g​/​​1​0​.​​1​0​​8​0​/​​1​5​7​0​0​​​7​6​3​.​2​​​0​2​1​
+.​​2​0​2​2​7​0​6
+Yorulmaz, Y. İ, Çolak, İ, & Altınkurt, Y. (2017). A meta-analysis of the relationship between teachers’ job
+satisfaction and burnout. Eurasian Journal of Educational Research, 17(71), 175–192.
+Zhou, H., & Ismail, H. (2025). Nurturing innovation in the classroom: The mediating role of psychological capital in the association between school climate and teachers’ innovative behavior in Nanjing
+kindergartens. Psychology in the Schools, 62(4), 1423–1441. https://doi.org/10.1002/pits.23516
+
+13
+
+Journal of Educational Change
+Publisher’s note Springer Nature remains neutral with regard to jurisdictional claims in published maps
+and institutional affiliations.
+
+Authors and Affiliations
+Hayri İncekara1
+
+· Ahmet Göçen2
+
+· Mehmet Tufan Yalçın3
+
+Ahmet Göçen
+agocen@aku.edu.tr
+Hayri İncekara
+hayrincekara@gmail.com
+Mehmet Tufan Yalçın
+mehmettufany@karatekin.edu.tr
+1
+
+Republic of Türkiye Ministry of National Education, Konya, Türkiye
+
+2
+
+Faculty of Education, Afyon Kocatepe University, Afyonkarahisar, Türkiye
+
+3
+
+Faculty of Humanities and Social Sciences, Çankırı Karatekin University, Çankırı, Türkiye
+
+13
+
+

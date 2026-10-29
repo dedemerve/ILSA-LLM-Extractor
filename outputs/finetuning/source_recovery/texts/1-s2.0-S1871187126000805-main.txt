@@ -1,0 +1,974 @@
+Thinking Skills and Creativity 61 (2026) 102205
+
+Contents lists available at ScienceDirect
+
+Thinking Skills and Creativity
+journal homepage: www.elsevier.com/locate/tsc
+
+The essence of creative thinking in PISA 2022: An item-level
+machine learning approach to construct validity at the facet levelI
+Elisabeth Barbara Kraus
+
+∗
+
+, Benjamin Goecke , Ann-Kathrin Jaggy
+
+Hector Research Institute of Education Sciences and Psychology; University of Tübingen, Germany
+
+ARTICLE
+Keywords:
+Creativity
+PISA
+Machine Learning
+XAI
+Validity
+
+INFO
+
+ABSTRACT
+The definition and measurement of creative thinking remain subjects of debate. In 2022, the
+Programme for International Student Assessment (PISA) introduced creative thinking as a new
+domain, conceptualized across three facets: generating diverse ideas, generating creative ideas,
+and evaluating and improving ideas. While this framework provides a valuable foundation,
+questions regarding the construct validity of PISA’s creative thinking assessment persist. This
+study adopts a data-driven approach to examine the construct validity of the three creative
+thinking facets by exploring their relationships with psychological constructs, demographic and
+process data, and item characteristics. Using item-level response data from PISA 2022, we
+modeled how individual item scores relate to these variables. To account for the hierarchical
+data structure and potential confounding between item content and score, we employed a multilevel predictive modeling approach based on machine learning algorithms. Explainable AI (XAI)
+techniques were applied post-hoc to identify the most influential predictors and their effects.
+Results showed that item characteristics such as content domain, process-related indicators,
+and academic competences in mathematics, reading, and science were the strongest predictors
+for item-level scores across all facets. In contrast, self-reported creativity and engagement
+in creative activities showed limited relevance. Accumulated local effects analyses revealed
+systematic but modest differences in predicted scores across item domains and facets, indicating
+subtle interactions between content, competences, and performance. However, these differences
+were small, suggesting limited empirical differentiation between the three facets as implemented
+in PISA 2022. From a validity perspective, these findings imply that while PISA’s creative
+thinking assessment captures meaningful variance related to engagement and aptitude, it may
+not fully distinguish between theoretically distinct aspects of creative thinking. The study further
+highlights the utility of machine learning and XAI in construct validation research.
+
+1. Introduction
+Creative thinking is widely recognized as a crucial 21st-century skill, essential for navigating complex challenges and driving
+innovation in both personal and professional contexts (OECD, 2019a; World Economic Forum, 2023). Specifically, over the last
+decade, the relevance of creativity for education has increased markedly as societies face rapid technological, social, and environmental change (Hernández-Torrano & Ibrayeva, 2020). Acknowledging this importance, the international large-scale Programme for
+International Student Assessment (PISA) introduced measures of creative thinking as the innovative domain in its 2022 cycle (OECD,
+
+I This article is part of a Special issue entitled: ‘Unpacking the PISA 2022 Creative Thinking Assessment’ published in Thinking Skills and Creativity.
+∗ Correspondence to: University of Tübingen, Europastr. 6, 72072 Tübingen, Germany.
+E-mail address: elisabeth.kraus@uni-tuebingen.de (E.B. Kraus).
+
+https://doi.org/10.1016/j.tsc.2026.102205
+Received 15 October 2025; Received in revised form 24 March 2026; Accepted 24 March 2026
+Available online 25 March 2026
+1871-1871/© 2026 The Authors.
+Published by Elsevier Ltd.
+(http://creativecommons.org/licenses/by/4.0/).
+
+This is an open access article under the CC BY license
+
+Thinking Skills and Creativity 61 (2026) 102205
+
+E.B. Kraus et al.
+
+2023b), marking a significant step towards a better understanding of how creative thinking is developed across diverse educational
+systems and how it is distributed among 15-year old students from different contexts. In fact, the PISA 2022 cycle (OECD, 2023b),
+with its dedicated assessment of creative thinking, provides an unprecedented dataset, offering immense potential for research and
+educational policy. However, the sheer scale and novelty of this assessment requires a thorough and critical examination of whether
+the assessments’ items measure what they are supposed to measure.
+Acknowledging the multifaceted nature of creativity (cf. Walia, 2019), the PISA 2022 framework conceptualized creative
+thinking in terms of three distinct facets (or processes) (also ‘‘ideation processes’’; cf. OECD, 2024, p. 220): generating diverse
+ideas, generating creative ideas, and evaluating and improving ideas. These processes were then assessed systematically across
+four content domains: written expression, visual expression, social problem-solving, and scientific problem-solving. Although this
+procedure arguably meaningfully extended construct coverage of creative thinking, the official reporting of OECD only ever reported
+performance in creative thinking collapsed across items, and thus across facets and domains. This approach, while convenient
+and useful for international comparisons, raised fundamental questions regarding the construct validity of the creative thinking
+domain (Barbot & Kaufman, 2025) and it remains questionable whether combining these items into a single dimension is defensible
+from a validity perspective.
+Building on these concerns and acknowledging open questions about the construct validity of creative thinking in PISA 2022,
+the current study takes a data-driven, exploratory approach to identify variables that predict item-level responses of the creative
+thinking domain of PISA 2022. To do so, we assume that the distinction between the three facets of creative thinking is theoretically
+meaningful and we therefore examine item-level predictors for each of the three facets. Using a multi-level predictive modeling
+approach combined with explainable AI (XAI) (Dwivedi et al., 2023), we seek to map the distinct ‘conceptual profiles’ of each facet,
+taking also into account the four content domains as well as person-related (cognitive and/or dispositional) and background-related
+variables as predictors for item-level scores. The herein reported results aim to provide first exploratory insights into the extent to
+which facet- and domain-level reporting might capture meaningful variation beyond the currently used composite score of creative
+thinking. In the next sections, we will briefly provide a conceptual background of the creative thinking assessment in PISA 2022,
+illustrate how numerous predictors of performance are conceivable, and explain how a data-driven machine learning approach could
+inform more theory-based future research.
+
+1.1. What the PISA items are supposed to measure
+Creativity is often defined in terms of its outcomes. For example, a standard definition of creativity, synthesized by Runco
+and Jaeger (2012), posits that in order for an idea or a product to be considered creative, it must be both novel (original) and
+useful (effective or appropriate). While this certainly provides a robust foundation, it leaves room for how the underlying cognitive
+processes of creativity are conceptualized and hence allows wide variation in how creativity is eventually operationalized in research
+and educational assessment. As a result, research and assessment practices have varied widely in what they treat as evidence of
+creativity, from the originality of a finished product (e.g., Acar et al., 2017) to the ways in which ideas are generated (e.g., Lubart,
+2001).
+In PISA 2022, creative thinking was deliberately designed to move beyond such product-based understandings of creativity.
+In fact, the PISA assessment defined creative thinking as ‘‘the competence to engage productively in the generation, evaluation,
+and improvement of ideas that can result in original and effective solutions, advances in knowledge, and impactful expressions of
+imagination’’ (OECD, 2019b, p.11). Delineating this definition in the context of the current PISA assessment, where 15-year old
+students were assessed, two frameworks can be identified that informed the development of tasks and items (cf. OECD, 2024). First,
+the assessment focused on ‘‘little-c’’ creativity (e.g., Simonton, 2013), which can be understood as everyday, practice-based form of
+creativity that any student could demonstrate in more or less familiar contexts (Kaufman & Beghetto, 2009). This stands in contrast
+to ‘‘Big-C’’ creativity, which usually refers to some eminent achievements that would be out of scope for the life stages ordinary
+students find themselves in.
+Second, the assessment targeted the process component of creativity, arguably drawing on frameworks such as the ’4 P’s’
+model (Rhodes, 1961), which breaks down the study of creativity into four distinct but interrelated aspects: the creative Person
+(examining personality traits and cognitive styles), the creative Process (the cognitive steps and strategies involved), the creative
+Product (the tangible or intangible outcomes), and the creative Press (the environmental or contextual factors that influence
+creativity). Of these four perspectives, specifically the Process component is most relevant for educational assessments like PISA
+because it reflects the cognitive operations that can be taught and developed to produce novel and useful outcomes, aligning with
+the definition of creative thinking as a process (Green et al., 2024).
+Beyond these frameworks, another central debate in creativity research concerns whether creative thinking reflects a general
+ability (Plucker & Beghetto, 2004) or some sort of domain-specific knowledge (Baer, 2016). The generalist view posits a core set of
+transferable skills, while the specificist view argues that meaningful creativity is fundamentally tied to domain-specific knowledge
+and conventions (cf. Baer, 2016). Contemporary theories often propose a hybrid view, where general processes are contingent upon
+domain-specific knowledge (cf. Plucker & Beghetto, 2004). The PISA 2022 framework, with its focus on creative thinking across
+different thinking processes and content domains, might provide new insights regarding these debates.
+2
+
+Thinking Skills and Creativity 61 (2026) 102205
+
+E.B. Kraus et al.
+
+1.2. PISA’s creative thinking assessment: Sources of heterogeneity
+Within the PISA process-oriented framework of creative thinking, the OECD specified three ideation processes in their competency
+model of creative thinking, that the items were intended to reflect: (1) generate diverse ideas, conceptually emphasizing ideational
+fluency (e.g., Weiss et al., 2024a); (2) generate creative ideas, focusing on originality (e.g., Runco & Dumas, 2018); and (3) evaluate
+and improving ideas, which focuses on the ability to refine existing ideas to enhance its quality or usefulness (e.g., A. Cropley,
+2006; OECD, 2019b). These processes were assessed across four content domains: (1) written expression, (2) visual expression, (3)
+social problem-solving, and (4) scientific problem-solving (please see OECD, 2024, p. 222 and 223 for a more detailed description
+of these domains). These domains were chosen so that they would reflect a range of contexts relevant to the adolescents’ learning
+environments. Given the design of this assessment, variability in students’ performance can arise from multiple sources — most
+notably from differences between the three ideation processes themselves and from the four content domains in which they are
+embedded.
+A useful theoretical lens for interpreting the three facets is the long-standing distinction between divergent and convergent
+thinking in creativity research (A. Cropley, 2006; Guilford, 1956; Lubart et al., 2013). Divergent thinking involves generating a
+wide variety of ideas, exploring multiple possibilities, and making flexible connections between concepts (Runco & Acar, 2012). It
+can be understood as the engine of ideational fluency and originality and the most frequently used indicator of creative thinking in
+the literature (Runco & Acar, 2012; Weiss et al., 2024b). Convergent thinking, in contrast, is the process of analyzing, evaluating, and
+refining ideas to arrive at the single best or most effective solution (Guilford, 1956), but has received comparatively little attention as
+indicators of creative thinking in creativity research. However, both are considered indispensable for successful creative output (D.H.
+Cropley, 2006), and both are arguably tapped through items of the PISA 2022 creative thinking assessment (Acar & Shen, 2025).
+The facet generate diverse ideas aligns most closely with divergent thinking, as it requires students to produce multiple, flexible
+responses that span different conceptual categories. Conversely, generating creative ideas and especially evaluating and improving
+ideas involves stronger elements of convergent thinking, emphasizing the deliberate selection, refinement, or elaboration of ideas
+to possibly maximize their originality and usefulness.
+From a construct validity perspective, these facets may therefore represent partially distinct constructs. In our case, structuring the
+assessment around the three ideation processes and focusing on the item-level, reflects this view particularly: creative performance
+depends not only on producing many ideas but also on refining them into appropriate, higher-quality responses. This distinction
+between divergent and convergent processes is hence central to our study’s construct validity perspective. If the three facets draw
+on partly different cognitive skills, then their predictors – and the extent to which they contribute to students’ overall scores – may
+differ as well, which eventually has implications for whether a single composite score adequately captures the construct of creative
+thinking.
+At the same time, it is important to note that validity evidence is often discussed in terms of factorial structure, but construct
+validation does not need to rely exclusively on factor-analytic approaches: it also encompasses evidence from a construct’s
+nomological network, that is, whether performance shows coherent patterns of convergent and discriminant relations with other
+theoretically relevant variables (Cronbach & Meehl, 1955). Accordingly, if the three ideation processes proposed by the PISA
+framework reflect partly different cognitive underpinnings, it follows that they should show differential relationships with other
+variables and, thus, differential predictor profiles across facets. This logic is in line with prediction-oriented construct validation
+approaches used in the divergent thinking literature (e.g. Forthmann et al., 2020; Preckel et al., 2011), where performance
+under different task conditions (speeded vs. unspeeded) was related to theoretically meaningful predictors (e.g., mental speed,
+reasoning) rather than being evaluated primarily via factor-analytic structure. Although these works did not focus on the item level,
+they illustrate how construct-relevant inferences can be supported by testing whether expected predictor patterns emerge across
+meaningful task conditions.
+In addition to cognitive sources of heterogeneity, task- and context-related factors may also influence performance. Ironically,
+although the PISA framework conceptualized creative thinking from a process perspective across multiple domains, the evidence of
+students’ performance was inevitably product-based. That is, each task required an observable response, for example some written
+idea, that could later on be scored. There were facet-specific scoring rubrics, as outlined in the OECD report (OECD, 2024, pp. 223) to
+approximately 1̃40.000 students from more than 60 countries and economies. The assessment consisted of 18 distinct contextualized
+scenarios, or ‘units’. Within these units, a total of 32 scored items were administered. Each item was designed to measure one of
+the three core cognitive facets, while each unit is situated within one of the four content domains. A single unit may have therefore
+contained multiple items that tapped into different facets of creative thinking within a specific domain context.
+Moreover, the PISA framework states that ‘‘in each domain, students complete everyday tasks that do not require technical
+knowledge or skills in order to minimize the role of prior experience as a significant driver of performance’’ (OECD, 2019b, p.
+21). However, research has shown that specific characteristics of the task domain itself can elicit fundamentally different response
+patterns, even when the tasks are perceived as similar in other respects (Reiter-Palmon et al., 2009). These findings suggest that
+the specific cognitive and experiential demands of a task may be a primary driver of creative performance, even when an attempt
+is made to keep it simple.
+1.3. Current evidence on the construct validity of PISA’s creative thinking assessment
+Empirical evidence on the construct validity of PISA’s creative thinking assessment remains scarce. Most available information
+comes from the test development phase and from OECD reports that analyzed plausible values of a single composite creative
+3
+
+Thinking Skills and Creativity 61 (2026) 102205
+
+E.B. Kraus et al.
+
+thinking score rather than the item or facet level (Barbot & Kaufman, 2025). The OECD documented several validation steps
+(e.g., international expert reviews, cognitive laboratories, pilot studies, translation reviews, and large-scale field trials) to ensure
+procedural quality and cross-country comparability (OECD, 2019b, 2023b). While these steps might establish face, procedural, and
+content validity (Goecke et al., 2025), they do not yet address whether the items function as intended to measure the distinct creative
+processes of the competency model as offered by the OECD.
+Analyses of the composite creative thinking score have yielded a mix of expected and puzzling findings. On the one hand,
+the score shows moderate positive associations with academic achievement and with dispositions such as openness and creative
+self-efficacy, which is broadly consistent with theory (OECD, 2024). The findings present initial evidence for convergent validity,
+noting theoretically anticipated positive correlations with academic achievement and student-level dispositions like openness and
+creative self-efficacy (OECD, 2024), but also reveal several perplexing findings that call the overall validity into question (cf. Barbot
+& Kaufman, 2025).
+On the other hand, two findings raise concerns about what is being measured. First, the correlations between creative
+thinking and the core academic domains of mathematics and reading are unusually high compared to the meta-analytical average
+correlation of 𝑟 = 0.22 reported in a comprehensive meta-analysis of over 120 studies on the link between creativity and academic
+achievement (Gajda et al., 2017), suggesting potential construct confounding. This large discrepancy raises the critical question of
+whether the PISA items are overly reliant on general academic competences thereby measuring competences that are not distinct to
+creative thinking (cf. Barbot & Kaufman, 2025). Second, the PISA report notes unexpected negative associations between creative
+thinking scores and students’ engagement in creative activities (also cf. Kagan & Dumas, 2025), contradicting prior research that
+typically finds modest positive links between creative performance and creative activities (e.g. Jauk et al., 2014; Weiss et al., 2025).
+Examining obvious background factors such as socio-economic status (SES) and gender revealed that creative thinking performance in PISA 2022 was systematically influenced by broader educational inequalities. Across participating countries, students
+from higher-SES backgrounds obtained higher scores, and girls consistently outperformed boys in creative thinking (Goecke et al.,
+2026). These patterns paralleled the well-established disparities observed in other PISA domains like reading and mathematics and
+indicated that demographic and contextual influences played a significant role in students’ performance on the creative thinking
+assessment.
+One explanation for these inconsistencies is that aggregating all items into a single score obscures meaningful variation (Barbot
+& Kaufman, 2025; Goecke et al., 2026). A student’s performance on a task within a specific content domain (e.g., scientific problemsolving) likely depends on an interaction between their general creative thinking processes and their individual, domain-relevant
+skills (cf. Baer, 2016). For example, success in mathematical or scientific creativity often depends on the underlying domain
+knowledge in addition to ideational fluency (Schoevers et al., 2020). For instance, a student with strong scientific knowledge
+but moderate ideational fluency might excel at a scientific creativity item, while another student with high fluency but weaker
+knowledge might struggle. By averaging performance across all facets and domains into a single score, PISA’s reporting method may
+neutralize these critical interactions, effectively obscuring any meaningful individual differences that would constitute a student’s
+unique creative profile.
+In sum, the existing evidence base for construct validity of creative thinking from the PISA 2022 assessment is incomplete. It
+remains unclear, first, which cognitive, dispositional, and background characteristics drive performance for each of the three creative
+thinking facets: generate diverse ideas, generate creative ideas, and evaluate and improve ideas; and second, to what extent this
+performance is sensitive to the content domain in which it is assessed. Addressing this gap requires moving beyond the composite
+score to investigate performance patterns at the level of individual items and facets, which is the focus of the present study. Our study
+is designed to address precisely this challenge by unpacking the composite score and examining its underlying components from
+the bottom up. By adopting an exploratory, data-driven random forest approach, we aim at capturing these relationship patterns,
+even if they are complex and possibly non-linear. Moreover, by including the full range of available PISA predictors, the analysis
+allows for the identification of unanticipated associations that may remain undetected in strictly hypothesis-driven research.
+1.4. The present study
+In their framework, the OECD distinguishes between various sources that could potentially influence creative thinking performance in the classroom (OECD, 2024, p. 217). Crucially, creative thinking performance in PISA 2022 is likely shaped by a wide
+constellation of these sources of variance. Both internal resources such as cognitive abilities, domain-specific knowledge, openness
+to experience, task motivation, and creative self-beliefs, and external influences such as classroom climate, cultural norms, and
+educational practices can affect how students approach and solve the assessment’s tasks (OECD, 2024). Prior research suggests that
+these influences can interact with one another. For example, supportive classroom environments can encourage students to take
+creative risks (e.g., Beghetto & Kaufman, 2014), whereas the impact of self-efficacy on creativity is moderated by the perceived
+difficulty of the problem (Reiter-Palmon et al., 2009). These multiple layers of influence imply that no single theoretical framework
+can capture all relevant item-level predictors in advance.
+Although the OECD reports aggregated all items into a single composite score, the theoretical framework explicitly treats the
+facets generate diverse ideas, generate creative ideas, and evaluate and improve ideas as distinct cognitive processes across four
+content domains. In this study, we therefore adopted this theoretical stance and treat these facets as potentially separable constructs
+that may rely on partly different cognitive skills and thus require separate analysis. In light of this complexity, our study applied
+a bottom-up, data-driven approach. Rather than pre-specifying a narrow set of theoretically selected predictors, we considered the
+full range of available cognitive, dispositional, background-related and contextual variables of the PISA 2022 dataset to first identify
+4
+
+Thinking Skills and Creativity 61 (2026) 102205
+
+E.B. Kraus et al.
+
+which variables prove to be the most influential in predicting students’ item-level performance of the creative thinking facets. This
+exploratory strategy enables the discovery of unexpected relationships, such as predictors that may be specific to particular facets,
+while avoiding over-reliance on any potentially incomplete theoretical model (Breiman, 2001b; Norelli et al., 2025). Although largely
+theory-free, the approach is informative for future research because it reveals empirically grounded patterns that can be tested in
+subsequent confirmatory studies and can guide the refinement of process-oriented models of creative thinking in education (Hilbert
+et al., 2021). Subsequently, we explicitly investigated the role of the content domains by including them as predictors into our model.
+Finally, we investigated a specific interaction effect between the item’s domain and students’ corresponding domain-relevant skills.
+Using item-level response data from the PISA 2022 sample, we employed a multi-level predictive modeling approach to account
+for the nested data structure consisting of multiple item responses per student and multiple students responding to the same item.
+To preserve the full data information, item responses were linked via item and person identifiers, indicating which scores belonged
+to the same item and which to the same student. Although random forests do not explicitly parameterize this nested data structure,
+their high capacity for modeling interactions and nonlinear relationships allows them to capture patterns associated with the nested
+data structures as fixed effects, similar to a linear approach using the grouping identifier variables as predictors and specifying
+interactive effects with the other covariates. In doing so, we aimed at isolating the mutual information attributable to the predictors.
+By using machine learning algorithms, we can capture complex and potentially non-linear relationships between a wide range of
+theoretically relevant constructs and the performance on creative thinking items. We applied XAI techniques, which allowed us
+to identify the most influential predictors for each creative thinking facet, independent of specific item content. This approach
+produced an empirically derived conceptual map of the psychological and contextual processes that drive students’ performance in
+PISA’s creative-thinking tasks.
+Specifically, we aimed at answering the following research questions:
+RQ1a: Which person-related (cognitive or dispositional) and background-related factors best predict performance in each of the
+three PISA 2022 creative thinking processes?
+RQ1b: Do these predictors vary across the three facets?
+RQ2: To what extent do responses in each facet depend on the content domain of the item (written expression, visual expression,
+social problem-solving, or scientific problem-solving)?
+RQ3: Does the effect of an item’s content domain on facet-level performance change as a function of students’ domain-relevant
+skills?
+2. Method
+2.1. Database (participants and procedure)
+For the current study, we reanalyzed data from PISA 2022, which is available online from the OECD data base (https://www.
+oecd.org/en/data/datasets/pisa-2022-database.html) (OECD, 2023a). PISA targets 15-year-old students enrolled in formal education.
+Within each of the 81 participating countries and economies, nationally representative samples were obtained using a two-stage
+stratified sampling design: schools were sampled with probability proportional to size, and students were then randomly selected
+within schools (OECD, 2023b). The targeted sample size per country or economy was approximately 6300 students, though final
+sizes varied due to national circumstances and exclusion rates.
+For the present study, the analytic sample was restricted to students who completed the creative thinking assessment. This
+restriction led to an overall sample size of 142,564 students from 63 different countries or economies. The sample was genderbalanced (50.0% identified as female and 50.0% identified as male; 16 out of 142,564 students did not indicate their gender). The
+mean age was 15.80 years (𝑆𝐷 = 0.29).
+Data collection took place in 2022 and followed standardized international administration protocols of the OECD (OECD,
+2023b). Students completed approximately two hours of cognitive testing on computers, followed by a 30–40 min background
+questionnaire. The assessment of items belonging to the creative thinking domain was embedded into the cognitive test sessions,
+which also included assessments of mathematics, reading, and science. Tasks were distributed across test booklets following a
+balanced incomplete block design (Rutkowski et al., 2013). All instruments were translated into the countries’ official languages,
+adapted, and quality assured according to international standards to ensure cross-country comparability.
+2.2. Variables
+To ensure a comprehensive and data-driven perspective, we incorporated all available information from the PISA 2022 dataset
+that could plausibly inform students’ performance on creative thinking items. This included cognitive, dispositional, background,
+and contextual variables, as well as process data from the computer-based assessment. Rather than restricting analyses to
+theoretically preselected constructs, we adopted an inclusive approach to maximize the explanatory potential of the models that we
+applied (Hilbert et al., 2025). This allowed us to explore both established and unexpected relationships between creative thinking
+performance on item-level and its possible determinants. In the following, we will shortly summarize the main variables from the
+creative thinking assessment and provide a short overview of the purposes of the single questionnaires of that we incorporated
+variables into our analyses.
+5
+
+Thinking Skills and Creativity 61 (2026) 102205
+
+E.B. Kraus et al.
+
+Table 1
+Facets and domains overview.
+Domains
+
+GDI
+
+GCI
+
+EII
+
+Total
+
+Written expression
+Visual expression
+Social problem-solving
+Scientific problem-solving
+
+4
+1
+4
+3
+
+6
+1
+3
+1
+
+2
+2
+3
+2
+
+12
+4
+10
+6
+
+Total
+
+11
+
+12
+
+9
+
+32
+
+Note. GDI = generate diverse ideas, GCI = generate creative ideas, EII = elaborate and improve
+ideas.
+
+2.2.1. Outcomes: Item scores of creative thinking
+The PISA 2022 creative thinking assessment measured students’ ability to generate, evaluate, and improve diverse and creative
+ideas (OECD, 2023a). In contrast to the OECD’s official reporting, we did not use the overall creative thinking proficiency scores
+(expressed as ten plausible values; PVs) as provided in the PISA 2022 dataset. To preserve the conceptual distinctions between the
+three facets of creative thinking and to enable item-level analyses, we used the raw item scores as outcome variables. To do so, we
+grouped single items according to three core facets of creative thinking from the PISA framework: (a) generate diverse ideas (GDI),
+(b) generate creative ideas (GCI), and (c) evaluate and improve ideas (EII). In addition to that, we coded an additional variable
+for the four content domains of creative thinking: (a) written expression, (b) visual expression, (c) social problem-solving, and (d)
+scientific problem-solving. An overview of how many items were administered from which facet and domain can be found in Table
+1. The scale comprised a total of 32 items.
+Each student who worked on the creative thinking assessment in PISA responded to open-ended items. Subsequently, these
+responses were scored using a three-step partial credit system by trained human raters hired by the OECD (OECD, 2023b). However,
+not all items used a full 1, 2, 3 scoring scale. In the GDI facet, some items required only two responses (e.g., the item ‘‘Robot Story’’,
+which can be exemplary found in the OECD report on page 274, OECD (2024)). The rationale was the following: when a GDI item
+required three responses, students could earn full credit (3 points) if all three responses were appropriate and sufficiently different
+from each other; they would be assigned partial credit (2 point) if two responses were different, and no credit (1 points) otherwise.
+In contrast, GDI items requiring only two responses were scored dichotomously: full credit was assigned only when both responses
+were appropriate and distinct, and no partial credit could be awarded.
+2.2.2. Predictor variables
+To predict students’ performance on the creative thinking items, we included a comprehensive set of cognitive, dispositional,
+background, and contextual variables available from the PISA 2022 datasets. Specifically, we used data from the creative
+thinking file (CY08MSP_CRT_COG.sav), the student questionnaire file (CY08MSP_STU_QQQ.sav), and the cognitive item data
+file (CY08MSP_STU_COG.sav). Due to the vastness of the datasets, we will next provide only a brief overview of what these
+datasets contain. In order to get a full overview of the individual variables that each dataset contains, we refer readers to the
+codebooks provided by the OECD, available here: https://www.oecd.org/en/data/datasets/pisa-2022-database.html. For the purpose
+of longitudinal replicability, we are also providing these codebooks in our OSF repository at https://osf.io/9r6f4/overview?view_
+only=30395440f85349a4ac85ffd20b79d1fc.
+2.2.3. Additional creative thinking variables
+In addition to the item-level performance scores in creative thinking, the PISA 2022 computer-based assessment also generated
+a range of process indicators that provided further information on students’ engagement during the creative thinking tasks. These
+process data (sometimes also referred to as paradata) were included as additional predictors into our models to capture how students
+interacted with the items. Specifically, they described the time students spent on each task, the latency between task onset and the
+first recorded action, the total number of discrete interactions within a task (for example, typing responses or manipulating on-screen
+objects), as well as the number and frequency of revisits to a task after it was initially completed. By combining information on
+both what students produced and how they engaged with the tasks, we aimed to obtain a more comprehensive picture of the factors
+that drive individual differences in creative thinking item-level performance. To preserve meaningful intra-item and intra-person
+variability, process data were retained on their original scales and were not standardized.
+2.2.4. Competences in cognitive domains
+In addition to creative thinking, PISA 2022 assessed three core cognitive domains: mathematics, reading, and science. According
+to the OECD framework, ‘‘in mathematics, PISA measures an individual’s capacity to reason mathematically and to formulate, employ,
+and interpret mathematics to solve problems in a variety of real-world contexts’’ (OECD, 2023b, p. 22). As the major domain in the
+2022 cycle, mathematics featured an updated assessment framework and received more testing time than in previous cycles (cf.
+Lewalter et al., 2023). ‘‘The reading assessment in PISA measures an individual’s capacity to understand, use, evaluate, reflect on, and
+engage with texts in order to achieve one’s goals, develop one’s knowledge and potential, and participate in society’’ (OECD, 2023, p. 22).
+The assessment included sub-skills such as text comprehension and reflection (Heine, 2023). Lastly, ‘‘the science assessment in PISA
+covers the ability to engage with science-related issues and with the ideas of science as a reflective citizen. A scientifically literate person is
+6
+
+Thinking Skills and Creativity 61 (2026) 102205
+
+E.B. Kraus et al.
+
+willing to engage in reasoned discourse about science and technology, which requires the competences to explain phenomena scientifically,
+evaluate and design scientific enquiry, and interpret data and evidence scientifically’’ (OECD, 2023b, p. 22). Each of these competences
+was incorporated into our predictive model.
+Please note that all cognitive competences in PISA are estimated using item response theory models and expressed as PVs rather
+than individual test scores. PVs are multiple imputed draws from a latent proficiency distribution, designed to represent the posterior
+uncertainty of each student’s proficiency given their observed item responses and background information (OECD, 2023b). Each
+competence provides ten PVs that are scaled to an international metric (M = 500, SD = 100) to allow cross-country comparability.
+In the current study, we used one randomly selected PV per cognitive competence domain as an individual-level indicator of students’
+general competence in mathematics, reading, and science, respectively (see section Data Pre-processing for justification).
+2.2.5. (Background-)variables from the student questionnaire
+The PISA 2022 Student Questionnaire file (CY08MSP_STU_QQQ.sav) contains detailed background information collected from
+each participating student. Among others, it includes demographic variables (e.g., age, gender, immigration status, language
+use), indicators of socio-economic and cultural background such as parental education, occupation, and home possessions (these
+indices are, for example, used to derive comprehensive socio-economic indices like ESCS or HISEI), and information about
+students’ educational trajectories and school attendance. In addition, the questionnaire covered a broad range of dispositional
+and motivational constructs, including self-efficacy, perseverance, enjoyment of learning, and interest in specific subjects, but also
+curiosity. Items on well-being, classroom climate, and perceived teacher support were sought to capture aspects of the psychosocial
+learning environment of the respective students. Several questions also assessed engagement in leisure and creative activities,
+reading habits, and the use of digital media. The questionnaire furthermore included school- and system-level identifiers, such as
+OECD membership, language of assessment, and regional information, which allowed linking individual responses to institutional
+and country-level characteristics. These variables together provide a comprehensive view of students’ cognitive, motivational, and
+contextual resources that may influence their performance in the creative thinking assessment.
+2.3. Analytical procedure
+We share our pre-processed data, relevant codebooks and our complete analysis code openly at https://osf.io/9r6f4/?view_only=
+767fdfc1ad684f7394fcfae41bae2693.
+2.3.1. Software
+We used the statistical software R, version 4.5.0 (R. Core Team, 2025) for all analyses. Specifically, we used the packages
+readxl (Wickham & Bryan, 2025), haven (Wickham et al., 2023), multilevel (Bliese, 2022), and tidyverse (Wickham et al., 2019)
+for data pre-processing. The package tidymodels (Kuhn & Wickham, 2020) was used for fitting the random forests; the packages
+DALEX (Biecek, 2018) and vip (Greenwell & Boehmke, 2020) were used in the XAI analysis. Finally, ggplot2 (Wickham, 2016) was
+used for figure creation.
+2.3.2. Data pre-processing
+For data pre-processing, we first merged the PISA 2022 cognitive, creative thinking, and student questionnaire files into a single
+dataset. Character variables with lengthy text entries (e.g., open-ended parental occupation fields) and sampling weights were
+excluded to reduce noise and file size. Additionally, we removed the PVs for creative thinking, retaining instead the single-item
+scores along with the process data (e.g., response time, latency to first action, number of actions, visits, and short visits).
+In total, the dataset comprised ten PVs for each measured cognitive competence. After verifying the strong interrelatedness
+between all of them (all 𝑟 ≥ 0.88), we randomly chose one of the ten values per cognitive competence (that is, mathematics,
+reading, and science) to circumvent high predictor multicollinearity in the subsequent analysis (Lavelle-Hill et al., 2025). Although
+it is generally recommended to conduct analyses separately for each PV and then combine the results (Jewsbury et al., 2024), this
+approach was computationally infeasible given the high dimensionality of the data and the number of models estimated. To assess
+the robustness of our approach, we repeated all analyses using a second randomly selected set of PVs.
+To prepare the dataset for analysis, we restructured it into a univariate format, which stacks student scores across items into
+a long-format structure. This transformation resulted in one row per item–person combination, with item and person identifiers
+preserving the linkage of responses to their respective items and students. This structure enabled item-level analyses across all
+creative thinking tasks and allowed scoring information and process indicators to be integrated within a single analytic framework.
+It further enabled the subsequent random forest analysis to take the nested data structure into account. We then made sure that all
+full credit scores and all partial credit scores were coded with the same numerical values. This meant that dichotomous items’ scores
+were adapted to no credit and full credit scores if necessary. In two final pre-processing steps we divided our dataset by the facets
+of generate diverse ideas (GDI), generate creative ideas (GCI) and evaluate and improve ideas (EII). This dataset splitting ensured
+that predictor importance scores were allowed to vary between facets, which was necessary in order to investigate RQ1b. In order
+to keep information about the respective other facets in the respective datasets, we built student level mean values for their scores
+and process items (e.g., total time on task, number of actions, etc.) and included them as predictors in our models as well. Thereby,
+we obtained three datasets with 610,868 (GDI), 550,623 (GCI), and 439,826 (EII) observations each and in total 1389 features in
+the predictor set. Finally, we added a randomly generated baseline variable to the datasets, which we later used to determine which
+predictors’ variable importance should be interpreted.
+7
+
+Thinking Skills and Creativity 61 (2026) 102205
+
+E.B. Kraus et al.
+
+2.3.3. Random forest analyses
+To examine the predictive relations between all predictor variables and students’ performance in creative thinking (RQ1a +
+RQ1b), we applied random forest (RF) models separately for each of the three creativity facets (GDI, GCI, and EII). The target variable
+consisted of scorings of the creative thinking items with single observations constituting individual item–person combinations,
+similar to Donnellan et al. (2023).
+Random forests (RF; Breiman, 2001a) are ensemble machine learning methods that aggregate predictions from multiple decision
+trees. Decision trees are nonparametric models that partition data into increasingly homogeneous subgroups through binary splits
+on predictor variables, aiming to maximize the reduction in node impurity, typically defined as the misclassification rate. Through
+the hierarchical structure of successive splits, random forests implicitly capture interaction effects among predictors without
+requiring them to be specified a priori. Tree growth stops once nodes reach a minimum size or further splits provide negligible
+improvement (Probst et al., 2019). Randomness is introduced by (1) drawing bootstrap samples of observations for each tree and
+(2) selecting a random subset of predictors at each split. This dual randomization allows estimation of the out-of-bag error (Breiman,
+1996), a measure of generalization performance. Final predictions are obtained by aggregating results across all trees. RF models
+were estimated using the ranger engine within the tidymodels framework, specifying 500 trees, a mtry parameter of 37 and
+permutation-based variable importance. Classification mode was used with the three-level scoring scheme of creative thinking items
+as the outcome and Gini impurity as the loss function. To ensure computational efficiency, analyses were parallelized across 63
+CPU cores. For each facet, we stored the fitted models and derived measures of permutation variable importance to assess which
+predictors contributed most strongly to classification performance.
+2.3.4. Explainable artificial intelligence analysis
+Beyond variable importance, we employed XAI techniques to interpret the fitted random forest models. In a first step, we
+evaluated permutation variable importance scores to identify the most important predictors. Permutation variable importance
+permutes, thus shuffles, all values of the predictor of interest and afterwards receives predictions for the permuted values by
+passing them through the random forest. It then computes the loss in prediction accuracy which constitutes the permutation variable
+importance score. The logic behind the mechanism is that the permutation destroys predictor information and that the information
+destruction of important variables will lead to stronger loss of accuracy than the destruction of information of less important
+variables (Hilbert et al., 2025; Molnar, 2020). Following Kraus et al. (2024) we chose to interpret just the predictor variables that
+received higher importance scores than the randomly generated baseline variable. Further, we used accumulated local effect plots
+(ALEs) (Apley & Zhu, 2020) to investigate how domains, competences, and their interaction influenced predicted probabilities for
+different score categories (RQ2 + RQ3) and derived expected item scores. An ALE plot is a model-agnostic method that estimates the
+local effect of a predictor on the prediction function by computing differences in the predicted outcome after small, local changes in
+the predictor value, and then accumulating these local effects over the observed distribution of the data to obtain a centered estimate
+of the feature’s marginal contribution (Hilbert et al., 2021). Unlike partial dependence plots, ALE plots restrict the evaluation of
+the prediction function to regions of the predictor space that are actually supported by the data, thereby substantially reducing
+bias that can arise from extrapolation and from correlations among predictors. This property makes ALE plots particularly suitable
+for high-dimensional settings with correlated covariates, such as educational large-scale assessment data, where marginal effects
+should be interpreted as conditional on realistic combinations of predictor values rather than as global average effects (Apley &
+Zhu, 2020; Dwivedi et al., 2023). ALEs were generated for both substantive competence indicators (e.g. reading or science) and for
+item domains, as well as for the interaction of competence scores and item domains. Due to the intensive computational costs in the
+estimation of the ALE profiles, we used 10,000 randomly chosen observations for the relationships between single indicators and
+the predicted scoring probabilities and 5000 randomly chosen observations for the estimation of the interactive profiles. To improve
+interpretability, ALEs were estimated for all three outcome classes and plotted jointly, enabling comparison of predictor effects across
+performance levels. These visualizations provided insights into how behavioral and contextual indicators contributed to students’
+expected creativity scores, thereby complementing global variable importance measures with local, feature-specific explanations.
+3. Results
+In the following, we present the results of the random forest analyses and subsequent XAI analyses addressing Research Questions
+1 to 3.
+3.1. Random forests and variable importance (RQ1)
+To investigate RQ1 we ran a permutation variable importance analysis on three random forest models predicting the respective
+creative thinking items’ scores. The random forests predicted the creative thinking items’ scores with 67.5% accuracy (GDI), 64.5%
+accuracy (GCI), and 65.8% accuracy (EII), which are within the expected range for analyses of this type (e.g. Lavelle-Hill et al.,
+2024; Rank & Kraus, 2026).
+In direct response to RQ1a, the variable importance analyses revealed that across facets six groups of variables were most
+important: (a) item inherent characteristics, such as the item identifier and the item domain, (b) student-related variables, such
+as the student id, student gender, or their grade level; (c) process data, indicating engagement with the item such as the number of
+actions (numberofactions), the total time on task (timing), and the latency to action (timetoaction); (d) performance in the respective
+complementary creative thinking facets; (e) other academic competences such as plausible values in mathematics, reading, and
+8
+
+Thinking Skills and Creativity 61 (2026) 102205
+
+E.B. Kraus et al.
+
+Fig. 1. Most important predictors.
+Note. GDI = generate diverse ideas, GCI = generate creative ideas, EII = elaborate and improve ideas; A full description of the most important
+predictor variables displayed here is presented in Appendix A.
+
+science, and (f) different indicators of social or economical status (e.g., HOMEPOS (scale value for home possessions) and ISCEDP
+(level of education of parents)). Moreover, the booklet version (BOOKID) and other technical variables (Option_[...]) showed to be
+important in the analyses. Finally, in the category of background variables on the students’ countries and economies (e.g. country
+identifier, or OECD membership) were among the most important predictors. The scores of the most important predictors ranged
+between 0.04 and 0.08. The exact variable importance scores are depicted in Fig. 1. With respect to RQ1b we found a high level of
+item-specific variation indicated by item indicator having the highest overall variable importance scores across all analyses.
+Even though the three facets of GDI, GCI and EII could be assumed to differ in the cognitive processes needed to perform
+well within each one, the associative patterns with different person and background related variables as indicated by the variable
+importance scores were very similar. Interestingly, the overall variable importances were lower in the GCI analysis than in the
+GDI and EII analyses. Notably, no self-reported variable linked to creativity such as perceived creativity or enjoyment of creative
+activities, nor the importance that creative activities play in the students’ leisure time or home environment was among the most
+important predictors.
+3.2. Accumulated local effects (RQ 2 + 3)
+In a second step, we investigated the estimated shape of the relationship between the target variable and our variables of interest
+of the item domain and the domain-relevant skills (RQ2 and RQ3).
+Using ALE plots, we visualize the expected change in predicted scores when the variable on the 𝑥-axis changes by a small amount,
+while the other variables remain constant in a local sense (i.e., a marginal effect). Unlike partial dependence plots (PDPs), ALE plots
+do not average over the entire distribution of the remaining predictors. Instead, they compute averages only within regions of
+the data where observations have similar values of the focal variable. This means that the estimated effects are based on realistic
+combinations of predictor values and avoid implausible situations, such as very high mathematics performance combined with very
+low levels in all other competencies.
+9
+
+Thinking Skills and Creativity 61 (2026) 102205
+
+E.B. Kraus et al.
+
+Fig. 2. Estimated relationship between domains and scored categories.
+Note. GDI = generate diverse ideas, GCI = generate creative ideas, EII = elaborate and improve ideas; ScPS = science problem solving, SoPS =
+social problem solving, VE = verbal expression, WE = written expression.
+
+3.2.1. Relationship between domains, competences and predicted scores (RQ2)
+At first, we investigated whether there were differences in the predicted scores depending on the item domain. The results are
+shown in Fig. 2.
+We found that for all four domains (science problem-solving, social problem-solving, written expression, and verbal expression),
+predicted scores were on average lowest in the GDI facet. This can be inferred from the fact that probabilities of category 3 scores
+were the least probable, followed by category 2 scores and category 1 scores and led to an average expected score of 1.79. In the
+GCI facet, this pattern was flipped completely around (expected score = 2.09), whereas there was no such distinct pattern of score
+probabilities in the EII facet (expected score = 1.95).
+If one compares the patterns of predicted probabilities between different item domains within single facets, a different picture
+emerges. On the one hand, it seems that predicted scores were lowest for science problem solving in GDI items, but not in the GCI
+and EII facets. On the other hand, in GCI and EII the verbal expression items yielded a different pattern from the other facets, with
+notably higher probability for a partial score (category 2).
+In a second step, we investigated whether there were differences in the predicted scores depending on the students’ abilities in
+reading, mathematics, and science. The results are shown in Fig. 3.
+Each cell of Fig. 3 shows the relationship between the competence indicated on the 𝑥-axis (reading, mathematics and science)
+and the predicted probability of receiving a 1 (no credit), 2 (partial credit), or 3 (full credit) score in the respective facets’ items
+(left, middle and right plot). We can infer from Fig. 3 that all relationships were positive, indicated by positive relationships between
+the competences for the full score and negative relationships for the no credit score. Most relationships with the partial score were
+curvilinear mapping an average competence to a high probability of receiving the middle scores.
+To investigate the differential relationships between the three facets (see RQ2), one needs to compare the plots horizontally
+per row. In accordance with Fig. 2, for all three competences, it was more difficult to get higher scores in the GDI facet (especially
+partial scores) than in the EII facet and even more so than in the GCI facet. This becomes apparent when comparing the average, but
+also maximum probabilities of category 1 and 3, which are always higher for category 1 in the GDI facet and lower for category 3
+in the GDI facet. This indicates that no matter how well a student reads, does in mathematics or science, the probability of receiving
+a full or partial score in the GDI facet items will always be lower than receiving a full or partial score for the other facets’ items.
+We further illustrated this finding by transforming the scoring categories into expected scores for an individual item and display
+this in Fig. 4. This Figure also shows more clearly that the slope is steepest around competence values of 400, indicating that the
+relationship between competences and creativity shows to be more relevant for less competent students compared to competent
+students.
+3.2.2. Interaction of domain specificity and competences (RQ3)
+Finally, we investigated – in RQ3 – if the students’ competences in reading, mathematics, and science interacted with the domain
+specificity of the items. Therefore, we plotted the predicted probabilities of the three different scores conditional on the students’
+plausible values in reading, mathematics, and science and conditional on the items’ domain. The results are shown in Fig. 5.
+Due to the redundant nature of probabilities for category 1, 2, and 3 scores, we restrict ourselves to the evaluation of the
+probabilities for category 1 and 3 scores. We leave it, therefore, up to the reader to infer that if the probabilities of category 1 and
+3 scores rise, category 2 scores have to fall because the probabilities have to sum up to 1 at any given point.
+The first finding was that interactive effects were only observed after a rough threshold of 300 standardized points in the
+competence scales. For students who scored lower than 300 points, the predicted probabilities varied not or only very slightly
+10
+
+Thinking Skills and Creativity 61 (2026) 102205
+
+E.B. Kraus et al.
+
+Fig. 3. Estimated relationship between abilities and scored categories.
+Note. GDI = generate diverse ideas, GCI = generate creative ideas, EII = elaborate and improve ideas.
+
+between the different domains. This can be seen by the strong overlap of the four colored lines in each cell in these intervals in Fig.
+5.
+Second, for almost all combinations of facets and competences, the relationships were very similar. However, if compared closely,
+they were weakest for items from the verbal expression domain (green lines; the exception is science GDI items). In all nine cells
+in Fig. 5, an increase in the competence leads to the smallest decrease in the category 1 probability and to the smallest increase in
+the category 3 probability. For the domain of science, it can be noted that high competences in math increase the probability of a
+category 3 score up to 39.5% (GCI) while high competences in science or reading can only increase the probability of a category 3
+score up to 39% (GCI), while we did not observe similar interactions in the GDI nor EII facet.
+Finally, the social domain items always lead to the highest or second highest category 3 probability and lowest category 1
+probability in the GCI and EII facets, but not in the GDI facet. This indicates that high performing students benefited slightly more
+from social items in comparison to any other domain than low performing students. This general pattern was also found for the
+GDI facet, with the exception that here this relationship was even stronger for items of the science domain. To further illustrate, we
+transformed the probability distributions into expected scores and present them in Fig. 6.
+Again, we note that reading consistently has a high influence on written expression items – across facets. Mathematics seems
+to influence social – and science problem solving items more strongly than written expression and verbal expression items whereas
+science shows differential interactive relationships with the domains across facets, influencing different domains most strongly in
+different facets.
+3.3. Robustness checks
+To account for the imputative nature of plausible values, we ran the analyses on two datasets with different sets of randomly
+sampled plausible values. Results did not differ in interpretation; wherefore, we moved the results of the second dataset to Appendix
+B.
+11
+
+Thinking Skills and Creativity 61 (2026) 102205
+
+E.B. Kraus et al.
+
+Fig. 4. Estimated relationship between abilities and expected scores.
+Note. GDI = generate diverse ideas, GCI = generate creative ideas, EII = elaborate and improve ideas.
+
+4. Discussion
+This study employed a data-driven machine learning approach to investigate the construct validity of the PISA 2022 creative
+thinking assessment at the facet level. Our analyses yield three central findings. First, performance on creative thinking items
+was most strongly predicted not by creativity-related dispositions, but by behavioral engagement indicators, general academic
+competences, and students’ socio-economic background. Second, the profiles of these influential predictors were remarkably similar
+across the three theoretically distinct facets of creative thinking. Third, while we observed small but complex interactions between
+students’ academic skills and the items’ content domains, these effects were often subtle and highlighted the domain-specific nature
+of performance.
+4.1. The nature of PISA creative thinking
+First of all, we used permutation variable importance to investigate which person-related (cognitive and/or dispositional) and
+background-related factors best predict performance in each of the three PISA 2022 creative thinking processes (RQ1a) and whether
+there were differences in these patterns (RQ1b).
+We found that item characteristics as well as person characteristics were among the strongest predictors. Given that the target
+variable represented scores of specific item–person combinations, this finding was not surprising. Item characteristics such as
+the domain and the item indicators had the strongest influence on the scoring. This speaks to meaningful variability in item
+characteristics because splitting the sample on whether the observed scores belonged to one specific item yielded more valuable
+information on the likelihood of this scoring being a partial or a full score than knowing which person had responded to that item.
+Further, technical variables, such as the specific test version yielded predictive information on the item scores. Since, however, the
+test version can be seen as a second-level type of information about the items, indicating whether a certain set of items was scored
+or not, we refrain from interpretation about these variables.
+12
+
+Thinking Skills and Creativity 61 (2026) 102205
+
+E.B. Kraus et al.
+
+Fig. 5. Estimated relationship between abilities and scoring categories conditional on the domain.
+Note. GDI = generate diverse ideas, GCI = generate creative ideas, EII = elaborate and improve ideas, ScPS = science, SoPS = social, VE = verbal
+expression, WE = written expression.
+
+But also student-related demographic and competence variables yielded notable impact, speaking to substantial discriminatory
+power of the items or inter-individual-, but also group differences in creative thinking. Gender, socio-economic status, and students’
+general academic competence emerged among the stronger predictors, suggesting that creative thinking from PISA 2022 may
+reflect broader educational inequalities rather than purely domain-specific creativity skills (cf. Goecke et al., 2026) Even though
+consistent with previous analyses on the same dataset (Barbot & Kaufman, 2025), it was somewhat surprising that the performanceand engagement related variables, such as the time on tasks (timing), number of actions, and the competence scores in reading,
+mathematics, and science had a relatively strong influence. In theory, creative thinking tasks should capture things like originality
+and novelty of thought rather than persistence or test-taking behavior (Runco & Acar, 2012). Yet, the strong contribution of
+behavioral engagement indicators suggests that sustained effort and task investment played a non-trivial role in determining
+scores. Students who interacted more extensively with tasks tended to achieve better scores, which could mean that creative
+thinking performance partly reflects motivational and self-regulatory components rather than creativity per se. This pattern raises
+an important validity concern: if performance indicators like time on task and number of actions predict creative thinking scores as
+strongly as, or even more strongly than, conceptual creativity measures, the assessment may conflate creativity with engagement
+or general academic diligence.
+Similarly, the relatively high variable importance of academic competence scores (in reading, mathematics, and science)
+reinforces the possibility of construct confounding. Students with stronger domain-general abilities may be advantaged simply
+because many creative thinking items still rely on comprehension, logical structuring, or content knowledge embedded in verbal or
+problem-solving contexts. Consequently, part of what is scored as creative performance might actually reflect general reasoning or
+literacy skills rather than an ideational construct. Taken together, these findings suggest that PISA’s creative thinking items may be
+partly driven by motivational and cognitive resources beyond the creativity construct itself. This does not necessarily undermine
+their educational relevance but complicates their interpretation as pure indicators of creative thinking.
+Furthermore, social background indicators, such as socio-economic status (HOMEPOS) and parental education (ISCEDP), also
+ranked high among predictors. While consistent with prior research on socio-economic disparities in creativity (Goecke et al.,
+2026), these results could point to potential biases in how creative thinking is operationalized—favoring students from educationally
+13
+
+Thinking Skills and Creativity 61 (2026) 102205
+
+E.B. Kraus et al.
+
+Fig. 6. Estimated relationship between abilities and expected item scores conditional on the domain.
+Note. GDI = generate diverse ideas, GCI = generate creative ideas, EII = elaborate and improve ideas, ScPS = science, SoPS = social, VE = verbal
+expression, WE = written expression.
+
+advantaged and Western-oriented contexts. Also, it should be noted that no self-report measure of creativity – single item, nor scale
+– was among the most important predictors. Given that this relationship has been observed in other studies (e.g., Benedek, 2024;
+Weiss et al., 2025) it remains for future research endeavors to investigate this finding further.
+A core premise of our study was to test whether the three theoretically distinct facets of creative thinking would exhibit different
+conceptual profiles (RQ1b). Surprisingly, our results provide little evidence to support this distinction. The variable importance
+profiles were remarkably consistent across the ‘generate diverse ideas’, ‘generate creative ideas’, and ‘evaluate and improve ideas’
+facets (see Fig. 1). In all three models, a similar set of predictors – engagement, academic skills, and background variables – emerged
+as dominant, and their relative importance remained largely stable.
+This finding challenges the empirical separability of the facets as measured by the PISA items. While the framework’s distinction
+between divergent and convergent thinking processes is theoretically sound, the items may not be sufficiently distinct to capture
+these processes separately, or the predictor set might not be able to differentiate between them in their convergent validity. It is
+possible that all tasks, regardless of their intended facet, draw upon a common pool of underlying resources, such as task engagement,
+comprehension, and the ability to articulate responses in a structured manner. Paradoxically, this lack of empirical differentiation
+could be interpreted as a post-hoc justification for aggregating the items into a single score. However, this justification would not
+rest on evidence for a coherent underlying construct of creative thinking, but rather on the assessment’s limited validity in capturing
+the theoretically intended distinctions between its sub-dimensions.
+4.2. The role of domains and domain-specific skills
+We used ALE plots to investigate the interactive relationships between facets, domains, and competences. To further illustrate the
+meaning of these results, we want to illustrate some expected differences in test scores considering two hypothetical students working
+on items of the domain ‘‘written expression’’ and the domain ‘‘verbal expression’’ from different facets. We chose to compare the
+14
+
+Thinking Skills and Creativity 61 (2026) 102205
+
+E.B. Kraus et al.
+
+Table 2
+Expected creativity item score for students with reading values of 300 and 700.
+(a) Written expression
+
+GDI
+GCI
+EII
+
+(b) Verbal expression
+
+𝑃 𝑉𝑟𝑒𝑎𝑑𝑖𝑛𝑔 = 300
+
+𝑃 𝑉𝑟𝑒𝑎𝑑𝑖𝑛𝑔 = 700
+
+1.01
+1.08
+0.96
+
+1.09
+1.14
+1.04
+
+GDI
+GCI
+EII
+
+𝑃 𝑉𝑟𝑒𝑎𝑑𝑖𝑛𝑔 = 300
+
+𝑃 𝑉𝑟𝑒𝑎𝑑𝑖𝑛𝑔 = 700
+
+0.88
+1.07
+0.98
+
+0.95
+1.12
+1.04
+
+written expression domain to the verbal expression domain because the ALE plots indicated they showed rather different profiles
+with respect to student competences and facets. The following results therefore illustrate cases with pronounced differences. We
+further want to assume that the students are not equally competent in reading, with one student scoring two standard deviations
+below the mean and one student scoring two standard deviations above the mean, resulting in plausible reading values of 300 and
+700. Table 2 shows the expected scores for one single item, assuming no credit to full credit being coded as 0 to 2.
+The illustrative example in Table 2 suggests several consistent patterns across creative thinking facets, reading proficiency, and
+domains. First, we observe expected scores being highest in the GCI facet-independent of the domain and the students’ reading
+proficiency. Second, we observe that students with higher reading plausible values achieve higher expected creativity item scores
+across all facets and domains. Third, an interaction between domain and facet emerges. While expected scores for GCI and EII are
+relatively stable across written and verbal expression domains, scores in the GDI facet are notably higher for written expression items
+compared to verbal expression items. This further illustrates the complex interplay between competences, domains, and facets, as
+these observed patterns do not follow straightforwardly from the marginal domain and competence effects reported earlier.
+4.3. Implications for the use of the PISA creative thinking scale
+When considered within a nomological network perspective, our findings do not fundamentally challenge the aggregation of items
+into a single creative thinking scale, but they call for a more cautious and nuanced interpretation of its scores. More specifically,
+three key implications emerged.
+First, the strong influence of engagement and general academic skills suggests that the composite score should not be interpreted
+as a ‘‘pure’’ measure of creative potential. It more likely reflects a student’s ability to effectively deploy cognitive and motivational
+resources to solve novel, open-ended problems within a formal assessment context. Second, the lack of empirical differentiation
+between the facets questions the practical utility of the three-facet model for reporting purposes. While theoretically valuable for
+test design, our results do not support the creation of separate facet-level sub-scores from a construct validity perspective. Third, the
+dependence of scores on item composition in the booklets and the observed interactions among facets, domains, and competences
+raise questions about the comparability of PISA booklets. We therefore recommend that, in research and applied contexts, the full
+item set of 32 tasks should be used whenever possible to ensure construct representative and fair measurement. Moreover, our
+results can only be interpreted from a standpoint of convergent validity rather than from a standpoint of factorial validity. The
+present analyses do not address issues of scalability, reliability, or dimensionality, but tackle the conceptual question of what the
+PISA creative thinking tasks capture.
+4.4. Outlook and conclusion
+Future research should aim to disentangle creative thinking performance from confounding influences of general ability and
+engagement. Future investigations should make specific use of the process data, provided by the computerized testing procedure, and
+investigate the different facets from a psychometric (e.g., factorial validity) or even a cognitive process perspective. Further, crosscultural comparisons and possibly comparative qualitative research could clarify whether the current operationalization of creativity
+reflect domain-general creative thinking or context-dependent cognitive–motivational behavior. Addressing these questions is critical
+not only for the refinement of the PISA creative thinking framework but also for ensuring equitable and theoretically grounded
+assessment of creativity across diverse populations.
+In conclusion, we find that creativity performance in PISA 2022 reflects a complex interplay of cognitive, motivational, and
+contextual factors. While the assessment represents a valuable step towards measuring 21st-century skills across the globe, its
+construct validity is still not straightforward. The theoretical distinction into facets finds little empirical support in our predictive
+models, and the scores are heavily influenced by general academic diligence. Strengthening the theoretical and measurement
+foundations of the scale will be essential to ensure fair, valid, and cross-culturally comparable assessments of students’ creative
+thinking.
+CRediT authorship contribution statement
+Elisabeth Barbara Kraus: Writing – review & editing, Writing – original draft, Visualization, Project administration, Methodology, Formal analysis, Data curation, Conceptualization. Benjamin Goecke: Writing – review & editing, Writing – original draft,
+Project administration, Methodology, Conceptualization. Ann-Kathrin Jaggy: Writing – review & editing, Writing – original draft,
+Supervision, Project administration, Methodology, Investigation, Conceptualization.
+15
+
+Thinking Skills and Creativity 61 (2026) 102205
+
+E.B. Kraus et al.
+
+Declaration of generative AI and AI-assisted technologies in the manuscript preparation process
+During the preparation of this work the author(s) used DeepL and ChatGPT in order to streamline the English language of this
+manuscript. After using this tool/service, the author(s) reviewed and edited the content as needed and take(s) full responsibility for
+the content of the published article.
+Appendix A. Supplementary data
+Supplementary material related to this article can be found online at https://doi.org/10.1016/j.tsc.2026.102205.
+References
+Acar, S., Burnett, C., & Cabra, J. F. (2017). Ingredients of creativity: Originality and more. Creativity Research Journal, 29(2), 133–144. http://dx.doi.org/10.
+1080/10400419.2017.1302776, Publisher: Routledge _eprint: https://doi.org/10.1080/10400419.2017.1302776.
+Acar, S., & Shen, Y. (2025). Along the convergent–divergent continuum: The role of task structure in the PISA creative thinking assessment. The Journal of
+Creative Behavior, 59(2), Article e70029. http://dx.doi.org/10.1002/jocb.70029, _eprint: https://onlinelibrary.wiley.com/doi/pdf/10.1002/jocb.70029.
+Apley, D. W., & Zhu, J. (2020). Visualizing the effects of predictor variables in black box supervised learning models. Journal of the Royal Statistical Society.
+Series B. Statistical Methodology, 82(4), 1059–1086. http://dx.doi.org/10.1111/rssb.12377.
+Baer, J. (2016). Domain specificity of creativity. In Domain specificity of creativity, Elsevier Academic Press.
+Barbot, B., & Kaufman, J. C. (2025). PISA 2022 creative thinking assessment: Opportunities, challenges, and cautions. The Journal of Creative Behavior, 59(1),
+Article e70003. http://dx.doi.org/10.1002/jocb.70003, https://onlinelibrary.wiley.com/doi/full/10.1002/jocb.70003.
+Beghetto, R. A., & Kaufman, J. C. (2014). Classroom contexts for creativity. High Ability Studies, 25(1), 53–69. http://dx.doi.org/10.1080/13598139.2014.905247,
+Publisher: Routledge _eprint: https://doi.org/10.1080/13598139.2014.905247.
+Benedek, M. (2024). On the relationship between creative potential and creative achievement: Challenges and future directions. Learning and Individual Differences,
+110, Article 102424. http://dx.doi.org/10.1016/j.lindif.2024.102424, https://www.sciencedirect.com/science/article/pii/S1041608024000177.
+Biecek, P. (2018). DALEX: Explainers for complex predictive models in R. Journal of Machine Learning Research, 19(84), 1–5, https://jmlr.org/papers/v19/18416.html.
+Bliese, P. (2022). Multilevel: Multilevel functions. http://dx.doi.org/10.32614/CRAN.package.multilevel, R package version 2.7.
+Breiman, L. (1996). Bagging predictors. Machine Learning, 24(2), 123–140. http://dx.doi.org/10.1007/BF00058655.
+Breiman, L. (2001a). Random forests. Machine Learning, 45(1), 5–32. http://dx.doi.org/10.1023/A:1010933404324.
+Breiman, L. (2001b). Statistical modeling: The two cultures (with comments and a rejoinder by the author). Statistical Science, 16(3), 199–231. http:
+//dx.doi.org/10.1214/ss/1009213726, Publisher: Institute of Mathematical Statistics.
+Cronbach, L. J., & Meehl, P. E. (1955). Construct validity in psychological tests. Psychological bulletin, 52(4), 281.
+Cropley, A. (2006). In praise of convergent thinking. Creativity Research Journal, 18(3), 391–404. http://dx.doi.org/10.1207/s15326934crj1803_13.
+Cropley, D. H. (2006). The role of creativity as a driver of innovation. 2, In 2006 IEEE international conference on management of innovation and technology (pp.
+561–565). http://dx.doi.org/10.1109/ICMIT.2006.262281.
+Donnellan, E., Usami, S., & Murayama, K. (2023). Random item slope regression: An alternative measurement model that accounts for both similarities and
+differences in association with individual items.. Psychological Methods, http://dx.doi.org/10.1037/met0000587.
+Dwivedi, R., Dave, D., Naik, H., Singhal, S., Omer, R., Patel, P., Qian, B., Wen, Z., Shah, T., Morgan, G., et al. (2023). Explainable AI (XAI): Core ideas,
+techniques, and solutions. ACM Computing Surveys, 55(9), 1–33.
+Forthmann, B., Szardenings, C., & Holling, H. (2020). Understanding the confounding effect of fluency in divergent thinking scores: revisiting average scores to
+quantify artifactual correlation. Psychology of Aesthetics, Creativity, and the Arts, 14(1), 94. http://dx.doi.org/10.1037/aca0000196.
+Gajda, A., Karwowski, M., & Beghetto, R. A. (2017). Creativity and academic achievement: A meta-analysis. Journal of Educational Psychology, 109(2), 269–299.
+http://dx.doi.org/10.1037/edu0000133.
+Goecke, B., Benedek, M., Diedrich, J. G., Forthmann, B., Patzl, S., & Weiss, S. (2026). Being female and being well-situated implies higher performance on creative
+thinking tests: Evidence across 62 countries from PISA 2022. Thinking Skills and Creativity, 59, Article 101963. http://dx.doi.org/10.1016/j.tsc.2025.101963.
+Goecke, B., Weiss, S., & Barbot, B. (2025). Content validity of creativity self-report questionnaires from PISA 2022. The Journal of Creative Behavior, 59(2), Article
+e70026. http://dx.doi.org/10.1002/jocb.70026, _eprint: https://onlinelibrary.wiley.com/doi/pdf/10.1002/jocb.70026.
+Green, A. E., Beaty, R. E., Kenett, Y. N., & Kaufman, J. C. (2024). The process definition of creativity. Creativity Research Journal, 36(3), 544–572.
+http://dx.doi.org/10.1080/10400419.2023.2254573.
+Greenwell, B. M., & Boehmke, B. C. (2020). Variable importance plots—An introduction to the vip package. The R Journal, 12(1), 343–366. http://dx.doi.org/
+10.32614/RJ-2020-013.
+Guilford, J. P. (1956). The structure of intellect. Psychological Bulletin, 53(4), 267–293. http://dx.doi.org/10.1037/h0040755.
+Heine, J.-H. (2023). Lesekompetenz. In D. Lewalter, J. Diedrich, F. Goldhammer, O. Köller, & K. Reiss (Eds.), PISA 2022. Analyse der Bildungsergebnisse in
+Deutschland (pp. 53–84). Münster & New York: Waxmann, http://dx.doi.org/10.31244/9783830998488.
+Hernández-Torrano, D., & Ibrayeva, L. (2020). Creativity and education: A bibliometric mapping of the research literature (1975–2019). Thinking Skills and
+Creativity, 35, Article 100625. http://dx.doi.org/10.1016/j.tsc.2019.100625.
+Hilbert, S., Coors, S., Kraus, E., Bischl, B., Lindl, A., Frei, M., Wild, J., Krauss, S., Goretzko, D., & Stachl, C. (2021). Machine learning for the educational sciences.
+Review of Education, 9(3), Article e3310. http://dx.doi.org/10.1002/rev3.3310.
+Hilbert, S., Kraus, E., & Lindl, A. (2025). Machine Learning: Eine Einführung für Psychologie, Geistes-und Sozialwissenschaften. Springer-Verlag.
+Jauk, E., Benedek, M., & Neubauer, A. C. (2014). The road to creative achievement: A latent variable model of ability and personality predictors. European
+Journal of Personality, 28(1), 95–105. http://dx.doi.org/10.1002/per.1941.
+Jewsbury, P. A., Jia, Y., & Gonzalez, E. J. (2024). Considerations for the use of plausible values in large-scale assessments. Large-Scale Assessments in Education,
+12(1), 24. http://dx.doi.org/10.1186/s40536-024-00213-y.
+Kagan, S., & Dumas, D. (2025). More creative activities, lower creative ability: Exploring an unexpected PISA finding. The Journal of Creative Behavior, 59(2),
+Article e70035. http://dx.doi.org/10.1002/jocb.70035, _eprint: https://onlinelibrary.wiley.com/doi/pdf/10.1002/jocb.70035.
+Kaufman, J., & Beghetto, R. A. (2009). Beyond big and little: The four c model of creativity. Review of General Psychology, 13(1), 1–12. http://dx.doi.org/10.
+1037/a0013688.
+Kraus, E. B., Wild, J., & Hilbert, S. (2024). Using interpretable machine learning for differential item functioning detection in psychometric tests. Applied
+Psychological Measurement, 48(4–5), 167–186. http://dx.doi.org/10.1177/01466216241238744.
+Kuhn, M., & Wickham, H. (2020). Tidymodels: a collection of packages for modeling and machine learning using tidyverse principles.. https://www.tidymodels.
+org.
+16
+
+Thinking Skills and Creativity 61 (2026) 102205
+
+E.B. Kraus et al.
+
+Lavelle-Hill, R., Frenzel, A. C., Goetz, T., Lichtenfeld, S., Marsh, H. W., Pekrun, R., Sakaki, M., Smith, G., & Murayama, K. (2024). How the predictors of math
+achievement change over time: A longitudinal machine learning approach.. Journal of Educational Psychology, http://dx.doi.org/10.1037/edu0000863.
+Lavelle-Hill, R., Smith, G., Deininger, H., & Murayama, K. (2025). An explainable artificial intelligence handbook for psychologists: Methods, opportunities, and
+challenges.. Psychological Methods, http://dx.doi.org/10.1037/met0000772.
+Lewalter, D., Diedrich, J., Goldhammer, F., Köller, O., & Reiss, K. (Eds.), (2023). PISA 2022. Analyse der Bildungsergebnisse in Deutschland. Münster & New York:
+Waxmann, http://dx.doi.org/10.31244/9783830998488.
+Lubart, T. I. (2001). Models of the creative process: Past, present and future. Creativity Research Journal, 13(3), 295–308. http://dx.doi.org/10.1207/
+S15326934CRJ1334_07, Publisher: Routledge _eprint: https://doi.org/10.1207/S15326934CRJ1334_07.
+Lubart, T., Zenasni, F., & Barbot, B. (2013). Creative potential and its measurement. International Journal for Talent Development and Creativity, 1(2), 41–51,
+https://eric.ed.gov/?id=EJ1301375, Publisher: International Centre for Innovation in Education (ICIE) & Lost Prizes International (LPI) ERIC Number:
+EJ1301375.
+Molnar, C. (2020). Interpretable machine learning. Lulu. com.
+Norelli, M. F., Votsis, I., & Williamson, J. (2025). The interplay of data, models, and theories in machine learning. Philosophy of Science, 1–16. http:
+//dx.doi.org/10.1017/psa.2025.10161.
+OECD (2019a). OECD future of education and skills 2030. Conceptual learning framework- learning compass 2030.
+OECD (2019b). PISA 2021 creative thinking framework (third draft). https://www.oecd.org//content/dam/oecd/en/topics/policy-sub-issues/creative-thinking/
+PISA-2021-creative-thinking-framework.pdf.
+OECD (2023a). PISA 2022 data bases. OECD Publishing, https://www.oecd.org/pisa/data/.
+OECD (2023b). PISA 2022 assessment and analytical framework. In PISA, Paris: OECD Publishing, https://doi.org/10.1787/dfe0bf9c-en.
+OECD (2024). PISA 2022 results (volume III): Creative minds, creative schools. PISA, OECD Publishing, http://dx.doi.org/10.1787/765ee8c2-en.
+Plucker, J. A., & Beghetto, R. A. (2004). Why creativity is domain general, why it looks domain specific, and why the distinction does not matter. In Creativity:
+from potential to realization (pp. 153–167). American Psychological Association, http://dx.doi.org/10.1037/10692-009.
+Preckel, F., Wermer, C., & Spinath, F. M. (2011). The interrelationship between speeded and unspeeded divergent thinking and reasoning, and the role of mental
+speed. Intelligence, 39(5), 378–388. http://dx.doi.org/10.1016/j.intell.2011.06.007.
+Probst, P., Boulesteix, A.-L., & Bischl, B. (2019). Tunability: Importance of hyperparameters of machine learning algorithms. Journal of Machine Learning Research,
+20(1), 1934–1965, http://jmlr.org/papers/v20/18-444.html.
+R. Core Team (2025). R: A language and environment for statistical computing. Vienna, Austria: R Foundation for Statistical Computing, https://www.Rproject.org/.
+Rank, A., & Kraus, E. B. (2026). Investigating the predictors of academic language competences in primary school children: A machine learning approach.
+Preschool and Primary Education, 14(1), 144–162.
+Reiter-Palmon, R., Illies, M. Y., Kobe Cross, L., Buboltz, C., & Nimps, T. (2009). Creativity and domain specificity: The effect of task type on multiple indexes of
+creative problem-solving. Psychology of Aesthetics, Creativity, and the Arts, 3(2), 73–80. http://dx.doi.org/10.1037/a0013410, Place: US Publisher: Educational
+Publishing Foundation.
+Rhodes, M. (1961). An analysis of creativity. The Phi Delta Kappan, 42(7), 305–310, https://www.jstor.org/stable/20342603, Publisher: Phi Delta Kappa
+International.
+Runco, M. A., & Acar, S. (2012). Divergent thinking as an indicator of creative potential. Creativity Research Journal, 24, 66–75. http://dx.doi.org/10.1080/
+10400419.2012.652929.
+Runco, M., & Dumas, D. (2018). Objectively scoring divergent thinking tests for originality: A re-analysis and extension. Creativity Research Journal, 30(4),
+466–468. http://dx.doi.org/10.1080/10400419.2018.1544601.
+Runco, M. A., & Jaeger, G. J. (2012). The standard definition of creativity. Creativity Research Journal, 24(1), 92–96. http://dx.doi.org/10.1080/10400419.2012.
+650092.
+Rutkowski, L., Gonzalez, E., von Davier, M., & Zhou, Y. (2013). Assessment design for international large-scale assessments. In Handbook of international large-scale
+assessment. Chapman and Hall/CRC.
+Schoevers, E. M., Kroesbergen, E. H., & Kattou, M. (2020). Mathematical creativity: A combination of domain-general creative and domain-specific mathematical
+skills. Journal of Creative Behavior, 54(2), 242–252. http://dx.doi.org/10.1002/jocb.361.
+Simonton, D. K. (2013). What is a creative idea? Little-c versus big-c creativity. In Handbook of research on creativity (pp. 69–83). Edward Elgar Publishing:
+Handbook of Research on Creativity, Section, https://china.elgaronline.com/edcollchap/edcoll/9780857939807/9780857939807.00015.xml.
+Walia, C. (2019). A dynamic definition of creativity. Creativity Research Journal, 31(3), 237–247. http://dx.doi.org/10.1080/10400419.2019.1641787.
+Weiss, S., Goecke, B., & Wilhelm, O. (2024a). How much retrieval ability is in originality? The Journal of Creative Behavior, 58(3), 370–387. http://dx.doi.org/
+10.1002/jocb.659, _eprint: https://onlinelibrary.wiley.com/doi/pdf/10.1002/jocb.659.
+Weiss, S., Jaggy, A. K., & Goecke, B. (2025). Introducing the inventory of creative activities for young adolescents: An adaption and validation study. Thinking
+Skills and Creativity, 57, Article 101836. http://dx.doi.org/10.1016/j.tsc.2025.101836.
+Weiss, S., Wilhelm, O., & Kyllonen, P. (2024b). An improved taxonomy of creativity measures based on salient task attributes. Psychology of Aesthetics, Creativity,
+and the Arts, 18(3), 429.
+Wickham, H. (2016). ggplot2: Elegant Graphics for Data Analysis. Springer-Verlag New York, https://ggplot2.tidyverse.org.
+Wickham, H., Averick, M., Bryan, J., Chang, W., McGowan, L. D., François, R., Grolemund, G., Hayes, A., Henry, L., Hester, J., Kuhn, M., Pedersen, T. L.,
+Miller, E., Bache, S. M., Müller, K., Ooms, J., Robinson, D., Seidel, D. P., Spinu, V., .... Yutani, H. (2019). Welcome to the tidyverse. Journal of Open Source
+Software, 4(43), 1686. http://dx.doi.org/10.21105/joss.01686.
+Wickham, H., & Bryan, J. (2025). Readxl: Read excel files. http://dx.doi.org/10.32614/CRAN.package.readxl, https://CRAN.R-project.org/package=readxl, R
+package version 1.4.5.
+Wickham, H., Miller, E., & Smith, D. (2023). Haven: Import and export ’spss’, ’stata’ and ’sas’ files. http://dx.doi.org/10.32614/CRAN.package.haven,
+https://CRAN.R-project.org/package=haven, R package version 2.5.4.
+World Economic Forum (2023). (p. 296). World Economic Forum, Retrieved September 11, 2025, from https://www.weforum.org/publications/the-future-of-jobsreport-2023/.
+
+17
+
+

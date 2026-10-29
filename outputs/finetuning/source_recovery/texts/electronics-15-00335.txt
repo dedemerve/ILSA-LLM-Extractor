@@ -1,0 +1,1409 @@
+Article
+
+Counterfactual Graph Representation Learning for
+Fairness-Aware Cognitive Diagnosis
+Jingxing Fan 1 , Zhichang Zhang 1,2, * and Yali Liang 2
+1
+
+2
+
+*
+
+School of Information Engineering, Gansu Minzu Normal University, Hezuo 747000, China;
+0900010@gnun.edu.cn
+School of Computer Science & Engineering, Northwest Normal University, Lanzhou 730070, China;
+2022212151@nwnu.edu.cn
+Correspondence: zzc@nwnu.edu.cn
+
+Abstract
+Cognitive diagnosis serves as a key component in personalized intelligent education, designed to accurately evaluate students’ knowledge states by analyzing their historical
+response data. It offers fundamental support for various educational applications such as
+adaptive learning and exercise recommendation. However, when leveraging student data,
+existing diagnostic models often incorporate sensitive attributes like family economic background and geographic location, which may lead to bias and unfairness. To address this
+issue, this paper introduces a Fairness-Aware Cognitive Diagnosis model (FACD) based on
+counterfactual graph representation learning. The approach builds student-centered causal
+subgraphs and integrates a graph variational autoencoder with adversarial learning to mitigate the influence of sensitive attributes on node representations. It further employs both
+central-node and neighbor-node perturbation strategies to generate counterfactual samples.
+A Siamese network is utilized to enforce representation consistency across different counterfactual scenarios, thereby deriving fair student contextual embeddings. Experimental
+results on the PISA 2015 dataset show that FACD outperforms conventional cognitive
+diagnosis models and their fairness-aware variants in terms of ACC, AUC, and RMSE.
+Ablation studies confirm the effectiveness and synergistic nature of each module. This work
+provides a viable pathway toward more reliable and equitable cognitive diagnosis systems.
+Keywords: fairness-aware cognitive diagnosis; counterfactual graph learning; graph
+representation learning; educational data mining; fair machine learning
+
+1. Introduction
+
+Attribution (CC BY) license.
+
+Cognitive diagnosis stands as one of the key technologies in personalized intelligent
+education. It aims to infer students’ proficiency across various knowledge concepts based
+on their historical response records [1]. This technology not only captures students’ knowledge states with precision but also provides a ctheoretical foundation for constructing
+adaptive learning pathways and optimizing instructional strategies (As shown in Figure 1).
+Today, cognitive diagnosis is widely applied across multiple educational scenarios, including adaptive testing [2,3], exercise recommendation [4], and personalized learning
+systems [5], making it an integral component of modern intelligent education ecosystems.
+In recent years, diagnostic models that integrate student response behavior with
+exercise textual information have gradually advanced. By incorporating neural networks,
+graph structures, and other representation learning techniques, these models have achieved
+notable improvements in both diagnostic accuracy and interpretability.
+
+Electronics 2026, 15, 335
+
+https://doi.org/10.3390/electronics15020335
+
+Academic Editor: Cecilio Angulo
+Received: 17 November 2025
+Revised: 6 January 2026
+Accepted: 7 January 2026
+Published: 12 January 2026
+Copyright: © 2026 by the authors.
+Licensee MDPI, Basel, Switzerland.
+This article is an open access article
+distributed under the terms and
+conditions of the Creative Commons
+
+Electronics 2026, 15, 335
+
+2 of 18
+
+Adaptive learning platforms
+
+Response records
+e1
+
+en
+
+e2
+...
+
+e1
+e2
+e3
+
+Learning
+
+e4
+
+Student
+
+e5
+
+Function
+
+Probability
+
+Equation
+
+Derivative
+
+Statistics
+
+Figure 1. Schematic Diagram of Cognitive Diagnosis.
+
+However, as these methods explore student data features more deeply, they often
+inadvertently introduce fairness risks. For instance, Zhang et al. [6] conducted statistical
+analyses revealing that students’ family economic status and regional development level
+significantly influence their response performance. Such disparities often stem from inequitable distribution of educational resources—students from more affluent backgrounds
+generally have better access to extracurricular tutoring, high-quality teachers, and supportive learning environments. When models indiscriminately use all available data during
+training, they may implicitly capture statistical associations between sensitive attributes
+(e.g., household wealth, geographic location) and response behavior, leading to systematic
+bias in diagnostic outcomes.
+Further supporting this, Li et al. [7] surveyed Chinese middle school students and
+found that parental education, teacher quality, and school resources all exert varying
+degrees of influence on academic performance. In addition, Zhang et al. [8] trained Item
+Response Theory (IRT) and neural cognitive diagnosis models on the PISA dataset [9],
+grouped by gender and region, and evaluated their predictive fairness. Their experimental
+results indicated that model predictions were noticeably influenced by sensitive attributes
+such as gender and region. For example, if the actual knowledge proficiency gap between
+two student groups is only 0.1, a diagnostic model might exaggerate it to 0.25. Such
+distortion—whether it amplifies or reduces the real gap—reflects group-level assessment
+bias, which ultimately undermines educational equity.
+To address these challenges, recent research on fairness-aware cognitive diagnosis
+has sought to reduce models’ reliance on sensitive information, thereby enhancing the
+fairness of predictions. Some studies have attempted to decompose overall proficiency
+into “biased” and “fair” dimensions, using adversarial discriminators to extract sensitive
+information, or applying multi-layer perceptron to generate embeddings of sensitive attributes. While existing fairness-aware methods have made meaningful progress, they
+exhibit several notable limitations: (1) they often treat students as independent entities,
+ignoring the relational structures (e.g., shared school resources, regional networks) that can
+propagate bias; (2) their fairness interventions are primarily based on statistical correlations
+or adversarial feature removal, lacking a causal perspective to explicitly model and mitigate
+the effect of sensitive attributes; and (3) their representation of context is frequently abstract
+and non-relational, unable to leverage the interconnected nature of educational ecosystems.
+To bridge this gap, this paper proposes a Fairness-Aware Cognitive Diagnosis model
+(FACD) based on counterfactual graph representation learning. The model workflow
+proceeds as follows: after constructing the causal subgraphs, a GVAE learns node-level
+
+https://doi.org/10.3390/electronics15020335
+
+Electronics 2026, 15, 335
+
+3 of 18
+
+latent representations, while an adversarial component mitigates the influence of sensitive
+attributes. The dual-perturbation strategy then produces counterfactual samples, and a
+Siamese network ensures representation consistency across these scenarios, resulting in fair
+contextual embeddings. Finally, in the diagnostic module, these fair representations are
+integrated with students’ cognitive states and exercise parameters and fed into established
+cognitive diagnosis frameworks—such as IRT or NeuralCDM—to achieve accurate and
+equitable modeling of knowledge proficiency. The novelty of our proposed FACD model
+lies in the following three aspects:
+(1)
+
+(2)
+
+(3)
+
+Causal Subgraph Construction. Unlike methods that process students in isolation,
+FACD explicitly models educational context by building student-centered causal
+subgraphs via the personalized PageRank algorithm, thereby capturing the relational
+structure among students and their environments.
+Counterfactual Intervention via Graph Perturbation. Moving beyond adversarial
+feature removal, FACD introduces a novel dual-perturbation strategy—applied to
+both the central node and its neighbors—to generate diverse counterfactual samples.
+This enables the model to learn representations that remain robust to changes in
+sensitive attributes, aligning with a causal notion of fairness.
+Structure-Aware Fair Representation Learning. FACD integrates a Graph Variational
+Autoencoder (GVAE) with adversarial training and a Siamese network to learn node
+embeddings that are both diagnostically informative and invariant to sensitive attributes within the graph context. This offers a principled pathway to disentangle
+genuine cognitive proficiency from confounding socio-economic factors.
+
+2. Related Word
+Cognitive diagnosis emerged from the intersection of psychometrics and education,
+with its primary objective being the systematic assessment and diagnosis of students’ cognitive processes. The task fundamentally relies on students’ exercise response records,
+analyzing the complex interactions among students, exercises, and knowledge components
+to construct mathematical models that evaluate students’ mastery of various knowledge
+concepts and predict their performance on unseen exercises. Over decades of development, the field has established a relatively complete theoretical system and methodology,
+accumulating substantial research outcomes. From the perspective of model construction,
+existing cognitive diagnosis models can be divided into two main categories: one based on
+psychometric theory, and the other built upon machine learning approaches.
+The first category of models, grounded in psychometrics, primarily includes Item
+Response Theory (IRT) [10], Multidimensional Item Response Theory (MIRT) [11], and the
+Deterministic Inputs, Noisy “And” gate model (DINA) [12]. Chen and Liang [13] proposed
+a Bayesian Network-based Multiprocess Incremental DINA (BNMI-DINA) model, which
+aims to enhance the effectiveness of personalized learning by providing accurate and detailed assessments of students’ cognitive abilities. These models typically rely on manually
+designed parametric functions to diagnose cognitive states through parameter estimation
+from student response data. However, such linear models based on statistical theory exhibit
+certain limitations in capturing the complex nonlinear interactions between students and
+exercises, prompting researchers to turn to more expressive machine learning methods.
+The second category of models builds upon machine learning techniques and can be
+further divided into non-deep learning models and deep learning models. As early as
+the late 20th century, researchers began exploring the application of machine learning in
+cognitive diagnosis. For instance, Zheng et al. [14] proposed a support vector machinebased approach for cognitive diagnosis classification, while Liu [15] employed fuzzy set
+theory combined with educational hypotheses to model students’ skill proficiency and
+
+https://doi.org/10.3390/electronics15020335
+
+Electronics 2026, 15, 335
+
+4 of 18
+
+problem mastery. Zhang et al. [16]. discusses a graph representation-based diagnostic
+method. With the rapid advancement of deep learning technologies, researchers have
+developed various neural network-based cognitive diagnosis models. According to their
+architectural characteristics, these deep cognitive diagnosis models can be classified into
+three types:
+The first category follows a mastery pattern classifier architecture. This approach
+adopts a diagnostic logic opposite to traditional models, taking students’ response records
+as direct input and outputting their cognitive states. The attribute hierarchy method (AHM)
+proposed by Gierl et al. [17] can be regarded as an early representative of this architecture.
+Mo et al. [18] proposed a convolutional neural network based cognitive diagnosis model.
+The second category employs a cognitive interaction simulator architecture, currently
+the most widely applied type. Maintaining the fundamental principles of traditional
+cognitive diagnosis, it infers students’ cognitive states by modeling their response processes to exercises. The Neural Cognitive Diagnosis Model (NeuralCDM) introduced
+by Wang et al. [19] serves as a typical example of this architecture. This model maps
+students and exercises into feature vectors and uses a three-layer fully connected neural
+network to model their interactions, effectively overcoming the limited expressive power
+of linear functions in traditional statistical methods. Tao et al. [20] proposed a Q-matrixconstrained neural network method for cognitive diagnosis, which enhances the reliability
+and interpretability of the network structure.
+The third category utilizes an encoder–decoder architecture, combining features from
+the previous two types. This framework takes student response records as input, employs
+an encoder to extract latent representations of student states and exercise features, and
+then uses a decoder to reconstruct the input data. The Identifiable Cognitive Diagnosis
+Framework (ID-CDF) proposed by Li et al. [21] represents a notable work in this category. Fu and Fang [22] proposed a curriculum-aware graph neural cognitive diagnosis
+framework, which integrates curriculum priors into graph-based neural modeling.
+
+3. Problem Formulation
+Consider a set of N students, M exercises, K knowledge concepts, and T student
+contextual features, denoted by sets S = {s1 , s2 , . . . , s N }, E = {e1 , e2 , . . . , e M }, C =
+{c1 , c, . . . , cK }, and F = {c f 1 , c f 2 , . . . , c f T }, respectively. Student exercise response records
+
+R are represented as triplets si , e j , rij , where rij indicates the score of student si on exercise e j . The relationship between M exercises and K knowledge concepts is defined by a
+binary matrix Q = {qik } M×K ∈ {0, 1} M×K , where qik = 1 signifies that exercise ei involves
+knowledge concept gk , and qik = 0 otherwise.
+Furthermore, student contextual features G are structured as a graph 𝒢 = (𝒱 , ℰ , X ),
+where 𝒱 is the set of nodes denoting students and |𝒱 |= N , ℰ is the set of edges, and
+X = { xi }iN=1 is the set of node features, with xi ∈ Rd representing the d-dimensional feature
+vector of the node i or the student si . The adjacency matrix A ∈ R|𝒱 |×|𝒱 | describes the
+graph structure, where Aij = 1 if there exists a directed edge from node i to node j, and
+Aij = 0 otherwise. Each node i is associated with a sensitive attribute sai ∈ {0, 1}, and
+the set of sensitive attributes for all nodes is denoted by SA = {sai }iN=1 and sai is included
+in xi .
+The cognitive diagnosis task can be formally defined as follows: given student response records R and the exercise-concept association matrix Q, the objective is to infer
+a proficiency vector θ for each student over all knowledge concepts through a student
+performance prediction process. The main symbols used in this paper and their meanings
+are presented in Table 1.
+
+https://doi.org/10.3390/electronics15020335
+
+Electronics 2026, 15, 335
+
+5 of 18
+
+Table 1. Notation.
+
+Notation
+
+Definition
+
+N, M, K
+S, E, C
+R, rij
+Q
+𝒢,𝒱 ,ℰ
+c
+X, xi
+A
+
+number of students, exercises, and knowledge concepts
+set of students, exercises and student contextual features
+response records and the score of student si on exercise e j
+exercise–knowledge concept association matrix
+the original graph, the set of vertices/edges
+teleportation constant parameter
+features of all nodes/the i-th node
+adjacency matrix
+sensitive attribute set, attribute of node i, and average attribute
+value in subgraph 𝒢 (i)
+set of counterfactual subgraphs of 𝒢 (i) under
+self-perturbation/neighbor-perturbation
+fair contextual representations of all nodes/the i-th node
+
+SA, sai , sai
+𝒢
+
+(i )
+
+, 𝒢 (i )
+
+Z, zi
+𝓏i , 𝓏i
+d, d′
+(·)(i)
+PPR
+k
+H
+ϕ, φ
+B
+
+(i )
+
+β, λ, λs
+α
+(i )
+
+θ, θ (i) , θ d , θd
+ϑe
+
+representations learned from the subgraphs of 𝒢 , 𝒢 (i)
+dimension of features/representations
+information of the subgraph with central node
+personalized PageRank importance matrix
+subgraph size (number of neighbor nodes)
+set of latent node representations, H = { h1 , h2 , . . . , hk }
+encoder and decoder parameters of GVAE
+number of bins for discretizing sensitive attributes
+hyperparameters (adversarial weight, fairness weight, neighbor
+perturbation weight)
+fusion weight between contextual features and cognitive states
+cognitive state matrix/vector of all students/the i-th student
+before/after fused with the fair contextual
+feature representations
+exercise-related parameters (e.g., difficulty, discrimination)
+
+4. Methods
+This section provides a detailed description of the proposed FACD model architecture,
+whose overall framework is depicted in Figure 2. The FACD model consists of three
+core modules: the counterfactual data augmentation module, the counterfactual fairness
+learning module, and the cognitive diagnosis module.
+To address the challenge of obtaining true causal structures in large-scale graph data,
+this work adopts a node-centric local subgraph construction strategy. The personalized
+PageRank algorithm is employed to precisely quantify node importance, selecting the most
+influential neighbor nodes for each central node to build local subgraphs containing crucial
+structural information. Subsequently, the constructed student context feature subgraphs
+are fed into a Graph Variational Autoencoder (GVAE) to learn latent node embeddings.
+Building upon this, the decoder reconstructs the subgraph structure while an adversarial
+learning mechanism is introduced, where a discriminator is trained to identify and eliminate
+information related to sensitive attributes in the embeddings, thereby mitigating the causal
+effect of sensitive attributes on node representations.
+To further enhance model fairness, a counterfactual data augmentation strategy is
+designed. By applying two perturbation operations to the original subgraphs-central node
+sensitive attribute flipping and neighbor node sensitive attribute random sampling-diverse
+counterfactual samples are generated. These samples provide a rich data foundation
+for subsequent fair graph representation learning. During the fairness learning stage,
+a Siamese network encodes the original subgraphs, central-node-perturbed subgraphs,
+
+https://doi.org/10.3390/electronics15020335
+
+Electronics 2026, 15, 335
+
+6 of 18
+
+and neighbor-node-perturbed subgraphs separately. By minimizing the distance between
+central node representations of original subgraphs and various counterfactual subgraphs,
+the counterfactual fairness loss is optimized, ensuring representation consistency across
+different counterfactual scenarios.
+1. Counterfactual Data Augmentation Module
+
+3. Cognitive Diagnosis Module
+Sensitive
+attributes S
+
+Fairness
+constraint d
+
+Student contextual
+features
+
+y
+
+Decoder
+
+Encoder
+
+CDM (⋅)
+Counterfactual
+graph structure
+
+θd
+
+Subgraph  ( i )
+2. Fairness Representation Learning Module
+
+Z
+
+θ
+
+ϕe
+
+...
+Central node
+perturbation
+
+Original subgraph
+
+Neighbor node perturbation
+
+Encoder
+
+Encoder
+
+Encoder
+
+zi
+
+zi
+
+zi
+
+Student
+Student Exercise
+feature
+contextual
+state
+representation
+
+Fairness constraint f
+
+Figure 2. Illustration of the FACD Model. The counterfactual data augmentation module (dashed
+box) generates perturbed subgraphs by altering sensitive attributes while preserving the original
+graph structure.
+
+Finally, in the cognitive diagnosis module, the model integrates the fair student context
+feature representations, student cognitive state vectors, and exercise-related parameters,
+feeding them into existing cognitive diagnosis frameworks (such as IRT, NeuralCDM, etc.)
+to achieve accurate prediction of students’ knowledge mastery.
+The core innovation of the FACD architecture lies in its graph-structured counterfactual learning framework. Traditional fairness methods are applied to i.i.d. student
+data. However, students exist within a network of shared influences (schools, regions,
+socio-economic circles). By modeling this as a graph, we can capture and intervene on
+bias propagation pathways. Our method’s novelty stems from performing counterfactual
+fairness learning within this relational structure.
+4.1. Counterfactual Data Augmentation Module
+Acquiring accurate causal models from large-scale graph structures presents considerable challenges. Following the approach of Ma et al. [23], this work confines causal
+modeling to node-centered local subgraphs, where each subgraph comprises a central node
+and its most influential neighbors. Specifically, we first compute node importance scores
+using the personalized PageRank algorithm [24], expressed as:
+PPR = c(I − (1 − c) Ā),
+
+(1)
+
+here, PPR ∈ R N × N , and PPRij quantifies the importance of node j to node i, c ∈ (0, 1) denotes the teleportation constant parameter, and I is the identity matrix. The term Ā = AD −1
+represents the column-normalized adjacency matrix, where D ∈ R N × N is the diagonal
+matrix with entries Di,i = ∑ j Ai,j . Using the computed importance scores, we construct a
+local subgraph 𝒢 (i) for each central node i as follows:
+n
+o
+𝒢 (i) = Sub(i, 𝒢 , k) = 𝒱 (i) , ℰ (i) , X (i) = { A(i) , X (i) },
+
+(2)
+
+https://doi.org/10.3390/electronics15020335
+
+Electronics 2026, 15, 335
+
+7 of 18
+
+𝒱 (i) = top( PPRi,: , k),
+
+(3)
+
+A(i) = A𝒱 (i) ,𝒱 (i) , X (i) = X𝒱 (i) ,: .
+
+(4)
+
+In these expressions, k is a preset subgraph size parameter, and top(·) selects the top-k
+neighbor nodes with the highest importance scores from the i-th row of the PPR matrix.
+To learn fair student contextual feature representations, we pre-train a counterfactual
+data augmentation module based on a Graph Variational Autoencoder (GVAE).
+TheoGVAE
+n
+defines a probabilistic generative model for the local subgraph 𝒢 (i) =
+
+A(i) , X (i) . This
+
+module encodes each subgraph, mapping nodes into latent embeddings hi ∈ Rd , with the
+set of latent representations denoted as H = { h1 , h2 , . . . , hk }. The decoder then reconstructs
+the original subgraph using both the latent embeddings H and the sensitive attribute
+values SA from the subgraph. Throughout counterfactual generation, the graph topology
+(adjacency structure) is held constant; only sensitive attributes in node features are modified
+to create counterfactual scenarios. When generating counterfactual instances, we modify
+only the node’s sensitive attribute values while preserving the graph structure A(i) . The
+decoder reconstructs the node features X (i) using the modified sensitive attributes along
+with the original embeddings.
+4.1.1. Probabilistic Model and Reconstruction
+The encoder qϕ ( H | X, A) is a graph neural network that maps the
+ subgraph into a latent
+
+variable distribution, assumed to be a Gaussian: qϕ ( H | X, A) = 𝒩 µϕ ( X, A), σϕ2 ( X, A) ).
+
+The decoder p φ ( X, A| H, SA) reconstructs both the node feature matrix X and the
+adjacency matrix A from the latent embeddings H and the sensitive attributes SA of the
+subgraph. Specifically, the decoder models:
+
+•
+•
+
+Node feature reconstruction: pθ ( X | H, SA) via a multi-layer perceptron that outputs
+the parameters of a distribution (i.e., Gaussian for continuous features).
+Graph structure reconstruction: p φ ( A| H ) via a pairwise inner product followed by a
+
+sigmoid activation to predict edge probabilities: p( Auv = 1| H ) = σ hTu hv .
+
+The variational evidence lower bound (ELBO) loss, which serves as our reconstruction
+objective, is defined as:
+
+
+
+ℒr = Eqϕ ( H | X,A) −log p φ ( X, A| H, S) + KL qϕ ( H | X, A)|| p( H )],
+
+(5)
+
+where p( H ) = 𝒩 (i, I ) is the standard Gaussian prior. The first term encourages accurate
+reconstruction of both features and structure, while the KL divergence term regularizes the
+latent space.
+4.1.2. Adversarial Fairness Constraint
+To reduce the causal effect of sensitive attributes, we introduce an adversarial discriminator Dψ . Its goal is to predict the discretized statistical summary of sensitive attributes
+within the subgraph from the latent embeddings H. The process is as follows:
+(a)
+
+Compute Subgraph Sensitive Statistic: For each subgraph 𝒢 (i) , we compute the
+average sensitive attribute value:
+sai =
+
+(b)
+
+1
+∑ j∈V (i) sa j .
+V (i )
+
+(6)
+
+Discretization into Bins: The continuous value sai ∈ [0, 1] is uniformly partitioned
+into B intervals. Each interval is assigned a categorical label b ∈ {1, 2, . . . , B} This
+transforms the problem into a B-class classification task for the discriminator.
+
+https://doi.org/10.3390/electronics15020335
+
+Electronics 2026, 15, 335
+
+8 of 18
+
+(c)
+
+Discriminator Supervision: The discriminator Dψ takes the set of latent embeddings
+H (often pooled into a subgraph-level representation) and outputs a probability distribution over the B classes. It is trained to minimize the cross-entropy loss:
+B
+
+ℒdadv = −∑b=1 I(sai ∈ binb )log Dψ ( H )b ,
+
+(7)
+
+where I(·) is the indicator function.
+The overall objective for the GVAE integrates reconstruction and adversarial fairness:
+ℒa = ℒr + βℒdadv ,
+
+(8)
+
+where β is a hyperparameter controlling the weight of the fairness constraint. The training
+follows an adversarial min-max strategy:
+
+•
+•
+
+Step 1 (Update GVAE parameters ϕ, θ): Minimize ℒa to improve reconstruction while
+making the latent embeddings H uninformative for the discriminator.
+Step 2 (Update Discriminator parameters ψ): Minimize ℒdadv alone (i.e., maximize its
+ability to predict the sensitive statistic from H).
+
+The training follows an alternating strategy: (1) update all parameters except the discriminator to minimize ℒa ; (2) update the discriminator parameters to minimize −ℒa . This
+adversarial dynamic encourages the GVAE to generate latent representations that are effective
+for reconstructing the graph but invariant to the protected sensitive attribute distribution.
+The encoder qϕ ( H | X, A) is a two-layer Graph Convolutional Network (GCN). It maps
+node features to a 256-dimensional hidden space (ReLU activation), then outputs parameters for a Gaussian latent distribution of dimension d′ = 128. The decoder p φ ( X, A| H, SA)
+reconstructs node features via a two-layer MLP (input: latent vector concatenated with
+sensitive attribute; hidden layer: 128 units, ReLU) and reconstructs edges via pairwise
+
+inner product: p( Auv = 1| H ) = σ hTu hv . The latent prior is a standard Gaussian 𝒩 (0, I ).
+A discriminator Dψ (three-layer MLP with 64 and 32 hidden units) is attached to the latent
+embeddings. It classifies the subgraph’s average sensitive attribute into B = 4 discrete bins.
+The GVAE is trained to minimize reconstruction loss while fooling this discriminator via
+the adversarial objective.
+4.1.3. Original Subgraph Perturbation
+To generate diverse counterfactual samples, we perturb the original subgraphs while
+strictly preserving the graph topology (i.e., the adjacency matrix A(i) remains unchanged).
+For each subgraph 𝒢 (i) , two perturbation strategies are applied:
+Central Node Perturbation: Flip the sensitive attribute sai of the central node using
+the operation sai ← 1 − sai (i.e., changing the value of sai from 0 to 1 or from 1 to 0), while
+keeping all other nodes’ sensitive attributes sa j unchanged for all j ̸= i.
+𝒢
+
+(i )
+
+(i )
+
+= {𝒢sai ←1−sai }.
+
+(9)
+
+Neighbor Node Perturbation: Randomly resample the sensitive attributes of all
+non-central nodes (j ̸= i) from {0, 1}, while the central node’s attribute remains fixed.
+(i )
+
+𝒢 (i) = {𝒢sa ←SMP(sa ),j̸=i },
+j
+
+j
+
+where SMP(·) samples uniformly from the sensitive attribute value space {0, 1}|𝒱
+
+(10)
+(i ) |−1
+
+.
+
+https://doi.org/10.3390/electronics15020335
+
+Electronics 2026, 15, 335
+
+9 of 18
+
+In both cases, only the sensitive attributes in the node features are altered; the graph
+structure is unchanged. The perturbed attributes, together with the original node embeddings, are passed to the pre-trained decoder to reconstruct counterfactual subgraphs.
+4.2. Fairness Representation Learning Module
+To achieve fair representation learning of student contextual features, this module
+aims to maintain consistent node representations across different counterfactual scenarios.
+Specifically, we employ a Siamese network [23,25] to encode three types of subgraphs: the
+original subgraph, the central-node-perturbed counterfactual subgraph, and the neighbornode-perturbed counterfactual subgraph. A subgraph encoder ϕ(·) is trained to generate
+′
+′
+′
+the corresponding representations 𝓏i ∈ Rd , 𝓏i ∈ Rd , 𝓏i ∈ Rd for each central node i on
+these three kinds of subgraphs:
+
+
+𝓏i = ϕ ( X ( i ) , A ( i ) ) ,
+
+(11)
+
+i
+
+(i )
+
+(i )
+
+𝓏i = AGG_MEAN ({(ϕ( Xsa ←1−sa , Asa ←1−sa ))i }),
+i
+i
+i
+i
+
+
+(i )
+(i )
+𝓏i = AGG_MEAN ({ ϕ( Xsa ←SMP(sa ),j̸=i , Asa ←SMP(sa ),j̸=i ) }).
+j
+
+j
+
+j
+
+j
+
+i
+
+(12)
+(13)
+
+Here, 𝓏i , 𝓏i , and 𝓏i denote the representations learned from the original subgraph, centralnode-perturbed counterfactual subgraph, and neighbor-node-perturbed counterfactual
+′
+subgraph, respectively. The subgraph encoder ϕ(·) ( Rk×d × Rk×k → Rk×d ) maps each
+subgraph into a representation vector, projecting each node into a latent space. The
+AGG_MEAN (·) function serves as mean aggregation operator that combines node representations from multiple sampling instances to produce the final representation for the
+central node.
+We then minimize the distance between central node representations from original and
+counterfactual subgraphs to enforce consistency across different counterfactual scenarios.
+The counterfactual fairness loss is defined as:
+ℒf =
+
+1
+((1 − λs )dis(𝓏i , 𝓏i ) + λs dis(𝓏i , 𝓏i )),
+| 𝒱 | ∑ i ∈𝒱
+
+(14)
+
+where dis(·) represents a distance metric (such as cosine distance), and λs ∈ [0, 1] is a
+hyperparameter that controls the weight of neighbor perturbation.
+4.3. Cognitive Diagnosis Module
+This module integrates the fair student contextual feature representations into the
+cognitive diagnosis process. Specifically, we derive students’ cognitive state matrix θ =∈
+R N ×K regarding knowledge concepts based on their one-hot representations x s ∈ R N × N
+and a trainable matrix S ∈ R N ×K :
+θ = σ ( x s × S ),
+
+(15)
+
+where θ ∈ R N ×K denotes the latent cognitive state matrix representing all students’ mastery
+level across K knowledge concepts, and σ (·) denotes the sigmoid activation function.
+N ×K is then adaptively fused with the fair contextual
+The cognitive state matrix θ ∈ R
+
+
+feature representations Z = {𝓏i }iN=1 𝓏i ∈ Rd
+
+′
+
+to generate fair student proficiency vectors:
+
+
+θd = σ (1 − α)θ + αZWproj ,
+
+(16)
+′
+
+where α is a fusion weight parameter, θd ∈ R N ×K is the cognitive state vectors, Z ∈ R N ×d
+′
+is the fair contextual embedding, and Wproj ∈ Rd ×K is a learnable projection matrix. The
+
+https://doi.org/10.3390/electronics15020335
+
+Electronics 2026, 15, 335
+
+10 of 18
+
+fusion weight α is determined through validation experiments and can also be made
+adaptive based on the confidence of contextual features.
+(1)
+
+(2)
+
+(N)
+
+The resulting θd = {θd , θd , . . . , θd } is fed into existing cognitive diagnosis models
+(such as IRT, NeuralCDM, or KaNCD) to predict student performance on exercises:
+(i )
+
+ŷ = CDM(θd , ϑe ),
+
+(17)
+
+where CDM(·) represents the cognitive diagnosis model, ϑe ∈ R M×de denotes exerciserelated parameters (such as difficulty and discrimination), and ŷ ∈ R M is the predict
+result on exercise set E = {e1 , e2 , . . . , e M }. The model is optimized by minimizing the
+cross-entropy loss between predictions and ground-truth labels:
+
+
+ℒmain = −∑i ∑ j rij logŷij + 1 − rij log 1 − ŷij
+
+(18)
+
+where ŷij indicates the predicted score of the student si on the exercise e j , and rij represents
+
+the corresponding ground-truth label from the exercise response triplet si , e j , rij records
+R of the student si .
+The overall loss function combines the main task loss with the counterfactual fairness loss:
+ℒ = ℒmain + λℒ f ,
+(19)
+where λ is a hyperparameter that controls the strength of the fairness constraint.
+
+5. Experiments and Results Analysis
+5.1. Dataset and Experimental Setup
+We evaluate the effectiveness of the proposed FACD model using the PISA dataset [9].
+The Programme for International Student Assessment (PISA), initiated by the Organization
+for Economic Co-operation and Development (OECD), represents a large-scale international
+assessment program designed to systematically evaluate the core subject competencies
+of 15-year-old students worldwide. Conducted every three years, each assessment cycle
+focuses on one of three major domains (including mathematics, reading, or science) as the
+primary testing subject.
+Recent datasets released by the PISA project include PISA 2015, PISA 2018, and
+PISA 2022. The PISA 2015 dataset, centered on scientific literacy, measures socioeconomic
+status (SES) through three dimensions: parental education level, occupational status, and
+household wealth (including assets such as computer ownership and home library size).
+Each dimension comprises 3–5 specific items. In this dataset, variations in cognitive
+performance primarily stem from differences in knowledge mastery and cognitive skill
+proficiency. The influence pathway of sensitive attributes is relatively direct: disparities in
+educational resources → cognitive performance. The PISA 2018 dataset introduces additional
+complexity: cognitive performance is not only shaped by traditional sensitive attributes
+but also moderated by digital device accessibility and digital skill proficiency, resulting in a
+more intricate causal pathway (sensitive attributes → digital skills → cognitive performance).
+The PISA 2022 dataset focuses on mathematical literacy under pandemic disruption. Here,
+cognitive performance disparities are predominantly driven by learning interruptions
+and unequal allocation of online educational resources. Crucially, the pandemic acts
+as a strong confounding variable that significantly obscures the independent effects of
+sensitive attributes.
+This study aims to address the interference of sensitive attributes (e.g., gender, geographic region, family socioeconomic status) with result fairness in cognitive diagnostic
+assessments. The core challenge lies in disentangling genuine cognitive ability disparities
+
+https://doi.org/10.3390/electronics15020335
+
+Electronics 2026, 15, 335
+
+11 of 18
+
+from association biases induced by sensitive attributes—a requirement demanding datasets
+that explicitly delineate the causal pathways through which sensitive attributes influence
+cognitive performance. PISA 2015’s straightforward pathway structure aligns optimally
+with this study’s core requirement to disentangle “ability versus bias.” Furthermore, fairness evaluation metrics (e.g., group-wise prediction bias in cognitive attributes, proficiency
+estimation error) derived from this dataset have achieved scholarly consensus, enabling
+direct comparison with existing research. Thus, PISA 2015 is selected as the experimental
+dataset for this study.
+To ensure data quality and modeling feasibility, we filter the dataset to include only
+students with at least 20 response records, thereby maintaining sufficient interactive data for
+each student during training. The final dataset is randomly split into training, validation,
+and test sets with a ratio of 70%:10%:20%. Table 2 summarizes the basic statistics of
+the dataset.
+Table 2. Statistics of the Experimental Dataset.
+
+Dataset
+
+#Students
+
+#Exercises
+
+#Response Records
+
+PISA
+
+30,000
+
+300
+
+668,038
+
+During model training, we employ the Xavier initialization method [26] to initialize all
+
+weight matrices. This method samples initial values from a normal distribution 𝒩 0, σ2 ,
+p
+where σ = 2/(nin + nout ) . Here, nin and nout denote the input and output dimensions
+of the layer, respectively. The model is optimized using the Adam optimizer with a learning
+rate of 0.001 and a batch size of 64. PISA systematically collects specific characteristics of
+students through multiple background questionnaires, which are primarily used to analyze
+the relationship between student performance and background factors. In this paper,
+50 key characteristics are selected as contextual features of students. Therefore, we set the
+dimension of student feature/representations d = 50 and d′ = 128. Key hyperparameters
+are tuned through experiments and set as follows: λ = 0.5, λs = 0.45, β = 10, B = 4, and
+k = 20. The GVAE and Siamese network were trained with Adam (lr = 0.001). During
+adversarial training, the discriminator was updated five times per GVAE update. Training
+used early stopping (patience = 10 epochs) based on validation reconstruction loss. All
+experiments are conducted on the same server environment, with detailed configurations
+provided in Table 3.
+Table 3. Experimental Environment Configuration.
+
+Component
+
+Version/Modal
+
+CUDA
+Python
+PyTorch
+CPU
+GPU
+Memory & VRAM
+
+11.3
+3.9
+1.12.1
+AMD EPYC 7402 24-Core Processor
+NVIDIA A30
+86 GB + 24 GB
+
+5.2. Baseline Models and Evaluation Metrics
+To comprehensively evaluate the effectiveness of the proposed method, we select four
+mainstream cognitive diagnosis models as baselines and further design different fairness
+intervention strategies for comparative analysis. The selected baseline models include:
+
+•
+
+IRT [10]: This model employs a logistic function to model student-exercise interactions, representing both student ability and exercise characteristics using onedimensional vectors.
+
+https://doi.org/10.3390/electronics15020335
+
+Electronics 2026, 15, 335
+
+12 of 18
+
+•
+
+•
+
+•
+
+MIRT [11]: As a multidimensional extension of IRT, MIRT represents both student
+ability and exercise features as multidimensional vectors to reflect proficiency across
+different knowledge concepts.
+NeuralCDM [18]: This model pioneers the introduction of neural networks into
+cognitive diagnosis, capturing complex interaction patterns between students and
+exercises through multi-layer nonlinear networks.
+KaNCD [27]: A neural cognitive diagnosis model that incorporates knowledge structure awareness, enhancing the accuracy of cognitive state estimation by integrating
+structured information such as knowledge graphs.
+
+To further analyze the effect of fairness processing strategies, we construct two variants
+based on the aforementioned baseline models:
+(1)
+
+(2)
+
+Base+: This variant concatenates student contextual features with the original input and projects them through a fully connected layer, enabling joint estimation of
+knowledge proficiency.
+Reg: This variant introduces a fairness regularization term into the objective function
+to constrain the model’s dependence on student contextual features, thereby reducing
+the potential impact of sensitive information on predictions.
+
+In cognitive diagnosis tasks, since students’ true cognitive states cannot be directly
+observed, model performance is typically assessed indirectly through students’ exercise
+response behavior. Accordingly, this paper adopts both classification and regression evaluation metrics, including:
+
+•
+•
+•
+
+ACC: Prediction accuracy, reflecting the model’s ability to judge the correctness of
+student responses.
+AUC: Area under the ROC curve, measuring the model’s overall classification performance across different thresholds.
+RMSE: Root mean square error, evaluating the deviation between predicted scores and
+ground-truth scores from a regression perspective.
+
+5.3. Comparative Experimental Results and Analysis
+To validate the effectiveness of the proposed Fairness-Aware Cognitive Diagnosis
+(FACD) model, we conducted systematic comparisons with four mainstream cognitive diagnosis models—IRT, MIRT, NeuralCDM, and KaNCD—along with their fairness-enhanced
+variants. The experimental results are summarized in Table 4.
+The experimental results demonstrate that the FACD model achieves optimal or
+near-optimal overall performance compared to all baseline models and their variants.
+Specifically, under the four foundational cognitive diagnosis frameworks, FACD exhibits
+consistent advantages across all three metrics—ACC, AUC, and RMSE—confirming its
+accuracy and robustness in diagnosing students’ knowledge states.
+Notably, the Base+ variant, which simply incorporates student contextual features, fails
+to improve performance across all baseline models and even leads to metric degradation.
+Taking AUC as an example, the Base+ variants of IRT, MIRT, NeuralCDM, and KaNCD
+show decreases of 0.0072, 0.0057, 0.0035, and 0.0056, respectively, compared to their Base
+counterparts. This suggests that directly introducing contextual features may introduce
+noise and reinforce model dependency on specific subgroups, thereby compromising both
+generalization capability and fairness.
+In contrast, the Reg variant, which incorporates fairness regularization, generally
+improves upon the Base models, indicating that constraining the model’s reliance on
+sensitive features is beneficial. However, the performance gains achieved by Reg are
+consistently smaller than those of FACD. Particularly under the MIRT framework, FACD
+
+https://doi.org/10.3390/electronics15020335
+
+Electronics 2026, 15, 335
+
+13 of 18
+
+improves AUC by 1.55 percentage points and reduces RMSE by 3.78 percentage points
+compared to Reg, significantly outperforming other comparative methods.
+Table 4. Comparative Experimental Results.
+
+Model
+
+Variant
+
+ACC ↑
+
+AUC ↑
+
+RMSE ↓
+
+IRT
+
+Base
+Base+
+Reg
+FACD
+
+0.7082
+0.7053
+0.7118
+0.7123
+
+0.7801
+0.7729
+0.7764
+0.7853
+
+0.4268
+0.4312
+0.4195
+0.4179
+
+MIRT
+
+Base
+Base+
+Reg
+FACD
+
+0.6672
+0.6591
+0.6689
+0.6734
+
+0.7181
+0.7124
+0.7179
+0.7334
+
+0.4960
+0.4983
+0.4816
+0.4638
+
+NeuralCDM
+
+Base
+Base+
+Reg
+FACD
+
+0.7159
+0.7132
+0.7175
+0.7212
+
+0.7718
+0.7683
+0.7795
+0.7786
+
+0.4322
+0.4387
+0.4251
+0.4134
+
+KaNCD
+
+Base
+Base+
+Reg
+FACD
+
+0.7174
+0.7135
+0.7183
+0.7221
+
+0.7862
+0.7806
+0.7882
+0.7905
+
+0.4325
+0.4291
+0.4179
+0.4338
+
+Overall, by integrating counterfactual data augmentation with fairness-aware representation learning, the FACD model effectively enhances fairness while maintaining
+diagnostic accuracy, offering a viable solution for fairness-aware cognitive diagnosis.
+5.4. Fairness Metric Comparison
+Beyond predictive accuracy, we quantitatively evaluate the fairness of each model
+using Group Difference in RMSE (GD-RMSE) and Equalized Odds Difference (EOD). GDRMSE measures the disparity in prediction error between demographic groups (e.g., high
+vs. low SES), defined as RMSEgroup=0 − RMSEgroup=1 . EOD quantifies the difference
+in true positive rates and false positive rates across groups, with lower values indicating
+better fairness. As shown in Table 5, FACD consistently achieves the lowest GD-RMSE
+and EOD across all base diagnosis frameworks (IRT, MIRT, NeuralCDM, KaNCD). This
+demonstrates that FACD not only maintains high accuracy but also significantly reduces
+performance disparities between groups, validating its effectiveness in promoting fairness.
+In contrast, the Base+ variant often exacerbates unfairness due to its unconstrained use
+of contextual features, while the Reg variant shows moderate improvements but is less
+effective than FACD.
+5.5. Ablation Study
+To thoroughly evaluate the contribution of each key component in the FACD model,
+we designed a series of ablation experiments by systematically removing specific modules.
+The following four model variants are constructed:
+
+•
+•
+•
+•
+
+w/o NS: Removes the central node self-perturbation module
+w/o NN: Removes the neighbor node perturbation module
+w/o NP: Removes all node perturbation modules, retaining only the original subgraph
+w/o DA: Completely removes the counterfactual data augmentation module
+
+The performance comparisons of these variants across different cognitive diagnosis models are shown in Figure 3. The results indicate that the complete FACD model
+
+https://doi.org/10.3390/electronics15020335
+
+Electronics 2026, 15, 335
+
+14 of 18
+
+achieves the best overall performance across all baseline architectures (IRT, MIRT, NeuralCDM, KaNCD), demonstrating the most balanced results in ACC, AUC, and RMSE, which
+validates the effectiveness of the overall design.
+Table 5. Fairness Metrics Comparison.
+
+Base Model
+
+Variant
+
+GD-RMSE ↓
+
+EOD ↓
+
+IRT
+
+Base
+Base+
+Reg
+FACD
+
+0.0321
+0.0385
+0.0288
+0.0214
+
+0.0452
+0.0517
+0.0391
+0.0305
+
+MIRT
+
+Base
+Base+
+Reg
+FACD
+
+0.0416
+0.0462
+0.0369
+0.0297
+
+0.0583
+0.0631
+0.0488
+0.0374
+
+NeuralCDM
+
+Base
+Base+
+Reg
+FACD
+
+0.0305
+0.0358
+0.0271
+0.0220
+
+0.0427
+0.0490
+0.0366
+0.0298
+
+KaNCD
+
+Base
+Base+
+Reg
+FACD
+
+0.0318
+0.0372
+0.0283
+0.0235
+
+0.0441
+0.0505
+0.0379
+0.0312
+
+Figure 3. Diagram of Ablation Study Results.
+
+Regarding individual module contributions, removing the central node self-perturbation
+module (-w/o NS) leads to slight decreases in ACC and AUC, along with an increase in RMSE
+across all baseline models. This indicates that central node perturbation effectively enhances
+the model’s ability to capture individual student characteristics and improves diagnostic
+precision. Similarly, removing the neighbor node perturbation module (-w/o NN) also causes
+performance degradation, though to a lesser extent than central node perturbation, suggesting
+that neighbor node perturbation provides complementary enhancement.
+Notably, when both perturbation strategies are removed simultaneously (-w/o NP),
+model performance declines more significantly, indicating that central and neighbor node
+perturbations have synergistic effects. Together, they cover different counterfactual scenarios more comprehensively, thereby improving model robustness and representation
+capability. The most substantial performance drop occurs when the counterfactual data
+augmentation module is completely removed (-w/o DA). This variant shows the largest
+performance degradation in both ACC and AUC metrics, strongly demonstrating that
+
+https://doi.org/10.3390/electronics15020335
+
+Electronics 2026, 15, 335
+
+15 of 18
+
+counterfactual data augmentation is the most critical component in the FACD model. It
+provides the foundation for learning fair and discriminative feature representations by
+generating diverse counterfactual samples.
+In summary, the ablation experiments confirm that all components in the FACD model
+contribute to the final performance. The counterfactual data augmentation module plays
+a central role, while the two node perturbation strategies enhance the model’s diagnostic
+capability and fairness at both individual and group levels, respectively.
+5.6. Parameter Sensitivity Analysis
+To investigate the impact of key hyperparameters on FACD performance, we systematically evaluated how variations in the counterfactual fairness constraint weight λ, neighbor
+perturbation weight λs , fairness constraint parameter β, and subgraph size k affect the
+model’s AUC values. The experimental results are shown in Figure 4.
+
+Figure 4. The impact of different hyperparameter values on model performance.
+
+The analysis reveals that as the fairness constraint weight λ increases, the model’s
+AUC first rises and then declines, peaking at λ = 0.5. This suggests that an appropriate
+level of fairness constraint enhances model generalization, while excessive constraint may
+compress individual feature representations too much, reducing prediction accuracy.
+In experiments with the neighbor perturbation weight λs , the model achieves optimal performance at λs = 0.4. Overall, AUC shows relatively small fluctuations as
+λs varies within [0, 1], indicating that the model has relatively low sensitivity to this parameter and that the neighbor perturbation mechanism functions stably across different
+weight configurations.
+The fairness constraint parameter β has limited impact on model performance. Although AUC is slightly higher when β = 10 compared to other settings, the differences
+between configurations are not significant, suggesting that the adversarial learning component effectively extracts features independent of sensitive attributes across different
+constraint strengths.
+
+https://doi.org/10.3390/electronics15020335
+
+Electronics 2026, 15, 335
+
+16 of 18
+
+The subgraph size k significantly affects model performance. AUC increases rapidly
+with k initially, then gradually declines, reaching its optimum at k = 20. When k is too
+small, the subgraph contains insufficient structural information, limiting the model’s ability
+to utilize contextual features. Conversely, when k is too large, excessive noisy nodes may
+be introduced, interfering with the modeling of core relationships. These results highlight
+the importance of selecting an appropriate subgraph size to balance information utilization
+and noise control.
+
+6. Conclusions
+This paper proposed FACD, a novel fairness-aware cognitive diagnosis model
+grounded in counterfactual graph representation learning. Its primary contributions and
+points of differentiation from prior work are (1) the formulation of fairness-aware diagnosis
+as a graph counterfactual learning problem, where student-centered causal subgraphs
+model educational context; (2) the introduction of a dual-perturbation strategy over the
+graph structure to generate counterfactual samples for learning fair representations, moving beyond static adversarial removal; and (3) a modular framework that integrates GVAEs,
+adversarial learning, and Siamese networks to enforce representation consistency across
+factual and counterfactual scenarios. Experiments confirm that this integrated approach
+not only enhances fairness but also improves diagnostic accuracy, offering a more reliable
+pathway toward equitable educational assessment.
+Experimental results on the PISA dataset demonstrate that FACD achieves significant
+improvements across multiple cognitive diagnosis frameworks, with both classification
+and regression performance generally surpassing traditional baseline models and their
+fairness-aware variants (Base+ and Reg). Ablation studies further verify that the three
+core components—counterfactual data augmentation, central and neighbor node perturbation, and fairness-aware representation learning—all contribute substantially to model
+performance, and their synergistic interaction is crucial for achieving both accurate and
+fair diagnostic outcomes. This research provides a viable technical pathway for developing more reliable and equitable cognitive diagnosis systems, offering practical value for
+building fair educational assessment tools in intelligent learning environments.
+Beyond algorithmic contributions, this work opens pathways for more equitable
+intelligent education systems. Translating FACD into practice requires considering deployment costs and scalability. The model’s computational overhead is front-loaded in
+training, making it suitable for periodic, centralized diagnostic updates in regional or institutional platforms. Its graph-based nature leverages existing administrative data structures
+(e.g., school networks), facilitating integration. Future work will focus on developing
+lightweight variants and exploring federated learning paradigms to address data privacy
+and distributed deployment challenges, ensuring that fairness-aware diagnosis is not only
+effective but also practically viable.
+Author Contributions: Conceptualization, Z.Z. and J.F.; methodology, J.F.; validation, J.F. and
+Y.L.; formal analysis, Y.L.; data curation, Y.L.; writing—original draft preparation, J.F. and Y.L.;
+writing—review and editing, J.F., Y.L. and Z.Z.; visualization, Y.L.; supervision, Z.Z.; project administration, Z.Z.; funding acquisition, Z.Z. All authors have read and agreed to the published version of
+the manuscript.
+Funding: This research was funded by National Natural Science Foundation of China (62163033) and
+Gansu Province University Industry Support Program Project (2025CYZC-010). The APC was funded
+by Gansu Province University Industry Support Program Project (2025CYZC-010).
+Data Availability Statement: The dataset used in the experiments of this paper is PISA2015, obtained
+from https://www.oecd.org/en/data/datasets/pisa-2015-database.html (accessed on 2 September
+
+https://doi.org/10.3390/electronics15020335
+
+Electronics 2026, 15, 335
+
+17 of 18
+
+2025). PISA is the International Student Assessment Program initiated by the Organisation for
+Economic Co-operation and Development.
+Acknowledgments: During the preparation of this manuscript, the authors used DeepSeek R1 for
+the purposes of polishing and correction of grammatical errors in the manuscript. The authors have
+reviewed and edited the output and take full responsibility for the content of this publication.
+Conflicts of Interest: The authors declare no conflicts of interest. The funders had no role in the design
+of the study; in the collection, analyses, or interpretation of data; in the writing of the manuscript; or
+in the decision to publish the results.
+
+Abbreviations
+The following abbreviations are used in this manuscript:
+FACD
+IRT
+MIRT
+DINA
+ID-CDF
+PISA
+ACC
+AUC
+RMSE
+NS
+NN
+NP
+DA
+
+Fairness-Aware Cognitive Diagnosis model
+Item Response Theory
+Multidimensional Item Response Theory
+The Deterministic Inputs, Noisy “And” gate model
+The Identifiable Cognitive Diagnosis Framework
+The Programme for International Student Assessment
+Accuracy
+Area under the ROC curve
+Root mean square error
+The node self-perturbation module
+The neighbor node perturbation module
+All node perturbation modules
+The counterfactual data augmentation module
+
+References
+1.
+2.
+3.
+4.
+5.
+6.
+
+7.
+
+8.
+9.
+10.
+11.
+12.
+
+Wang, S.; Zeng, Z.; Yang, X.; Zhang, X. Self-supervised graph learning for long-tailed cognitive diagnosis. Proc. AAAI Conf. Artif.
+Intell. 2023, 37, 110–118. [CrossRef]
+Ma, H.; Zeng, Y.; Yang, S.; Qin, C.; Zhang, X.; Zhang, L. A novel computerized adaptive testing framework with decoupled
+learning selector. Complex Intell. Syst. 2023, 9, 5555–5566. [CrossRef]
+Ghosh, A.; Lan, A. Bobcat: Bilevel optimization-based computerized adaptive testing. In Proceedings of the Thirtieth International
+Joint Conference on Artificial Intelligence, Virtual, 19–26 August 2021; pp. 2410–2417.
+Xu, W.; Zhou, Y. Course video recommendation with multimodal information in online learning platforms: A deep learning
+framework. Br. J. Educ. Technol. 2020, 51, 1734–1747. [CrossRef]
+Su, Y.; Han, Z.; Shen, S.; Yang, X.; Huang, Z.; Wu, J.; Zhou, H.; Liu, Q. Constructing a confidence-guided multigraph model for
+cognitive diagnosis in personalized learning. Expert Syst. Appl. 2024, 252, 124259. [CrossRef]
+Zhang, D.; Zhang, K.; Wu, L.; Tian, M.; Hong, R.; Wang, M. Path-specific causal reasoning for fairness-aware cognitive diagnosis.
+In Proceedings of the 30th ACM SIGKDD Conference on Knowledge Discovery and Data Mining, Barcelona, Spain, 29 August
+2024; pp. 4143–4154.
+Li, T.; Ren, W.; Xia, Z.; Wu, F. A study of academic achievement attribution analysis based on explainable machine learning
+techniques. In Proceedings of the 2023 IEEE 12th International Conference on Educational and Information Technology, Hangzhou,
+China, 15–17 November 2023; pp. 114–119.
+Zhang, Z.; Wu, L.; Liu, Q.; Liu, J.; Huang, Z.; Yin, Y.; Zhuang, Y.; Gao, W.; Chen, E. Understanding and improving fairness in
+cognitive diagnosis. Sci. China Inf. Sci. 2024, 67, 152106. [CrossRef]
+OECD. PISA 2015 Database [EB/OL]. (2017-04-00) [2025-06-25]. Available online: https://www.oecd.org/en/data/datasets/pisa2015-database.html#data (accessed on 2 September 2025).
+Fan, X. Item response theory and classical test theory: An empirical comparison of their item/person statistics. Educ. Psychol.
+Meas. 1998, 58, 357–381. [CrossRef]
+Yao, L.; Schwarz, R.D. A multidimensional partial credit model with associated item and test statistics: An application to
+mixed-format tests. Appl. Psychol. Meas. 2006, 30, 469–492. [CrossRef]
+de La Torre, J. DINA model and parameter estimation: A didactic. J. Educ. Behav. Stat. 2009, 34, 115–130. [CrossRef]
+
+https://doi.org/10.3390/electronics15020335
+
+Electronics 2026, 15, 335
+
+13.
+14.
+15.
+16.
+
+17.
+18.
+19.
+20.
+21.
+
+22.
+23.
+
+24.
+25.
+
+26.
+27.
+
+18 of 18
+
+Chen, Y.M.; Liang, S. BNMI-DINA: A Bayesian Cognitive Diagnosis Model for Enhanced Personalized Learning. Big Data Cogn.
+Comput. 2023, 8, 4. [CrossRef]
+Zheng, K.; Shuliang, D.; Zhiyong, X. Application of support vector machine to cognitive diagnosis. In Proceedings of the 2010
+Asia-Pacific Conference on Wearable Computing Systems, Sydney, Australia, 16–18 December 2010; pp. 3–6.
+Liu, Q.; Wu, R.; Chen, E.; Xu, G.; Su, Y.; Chen, Z.; Hu, G. Fuzzy cognitive diagnosis for modelling examinee performance. ACM
+Trans. Intell. Syst. Technol. (TIST) 2018, 9, 1–26. [CrossRef]
+Zhang, H.; Zhao, H.; Fu, Y.; Ma, J.; Xiang, Y. The class labels and spatial information based fault diagnosis of air handling unit
+via combining kernel Fischer discriminant analysis with an improved graph convolutional neural network. Measurement 2026,
+257, 118622. [CrossRef]
+Gierl, M.J.; Cui, Y.; Hunka, S. Using connectionist models to evaluate examinees’ response patterns to achievement tests. J. Mod.
+Appl. Stat. Methods 2008, 7, 19. [CrossRef]
+Mo, J.W.; Hao, L.H.; Yuan, H.; Shou, Z.Y. A Cognitive Diagnosis Model Using Convolutional Neural Networks to Predict Student
+Scores. Appl. Sci. 2025, 15, 2875. [CrossRef]
+Wang, F.; Liu, Q.; Chen, E.; Huang, Z.; Yin, Y.; Wang, S.; Su, Y. NeuralCD: A general framework for cognitive diagnosis. IEEE
+Trans. Knowl. Data Eng. 2022, 35, 8312–8327. [CrossRef]
+Tao, J.; Zhao, W.; Liu, F.; Guo, X.; Cheng, N.; Guo, Q.; Xu, X.; Duan, H. Cognitive Diagnosis Method via Q-Matrix-Embedded
+Neural Networks. Appl. Sci. 2024, 14, 10380. [CrossRef]
+Li, J.; Liu, Q.; Wang, F.; Liu, J.; Huang, Z.; Yao, F.; Zhu, L.; Su, Y. Towards the identifiability and explainability for personalized
+learner modeling: An inductive paradigm. In Proceedings of the ACM Web Conference 2024, Singapore, 13–17 May 2024;
+pp. 3420–3431.
+Fu, C.S.; Fang, Q.R. Curriculum-Aware Cognitive Diagnosis via Graph Neural Networks. Information 2025, 16, 996. [CrossRef]
+Ma, J.; Guo, R.; Wan, M.; Yang, L.; Zhang, A.; Li, J. Learning fair node representations with graph counterfactual fairness. In
+Proceedings of the fifteenth ACM International Conference on Web Search and Data Mining, Virtual, 21–25 February 2022;
+pp. 695–703.
+Jeh, G.; Widom, J. Scaling personalized web search. In Proceedings of the 12th International Conference on World Wide Web,
+Budapest, Hungary, 20–24 May 2003; ACM: New York, NY, USA, 2003; pp. 271–279.
+Bromley, J.; Guyon, I.; LeCun, Y.; Säckinger, E.; Shah, R. Signature verification using a “Siamese” time delay neural network. In
+Proceedings of the 7th International Conference on Neural Information Processing Systems, Denver, CO, USA, 19 November–
+2 December 1993; Morgan Kaufmann Publishers Inc.: Burlington, MA, USA, 1993; pp. 737–744.
+Glorot, X.; Bengio, Y. Understanding the difficulty of training deep feedforward neural networks. In Proceedings of the Thirteenth
+International Conference on Artificial Intelligence and Statistics, Sardinia, Italy, 13–15 May 2010; pp. 249–256.
+Ma, H.; Li, M.; Wu, L.; Zhang, H.; Cao, Y.; Zhang, X.; Zhao, X. Knowledge-sensed cognitive diagnosis for intelligent education
+platforms. In Proceedings of the 31st ACM International Conference on Information and Knowledge Management, Atlanta, GA,
+USA, 17–21 October 2022; ACM: New York, NY, USA, 2022; pp. 1451–1460.
+
+Disclaimer/Publisher’s Note: The statements, opinions and data contained in all publications are solely those of the individual
+author(s) and contributor(s) and not of MDPI and/or the editor(s). MDPI and/or the editor(s) disclaim responsibility for any injury to
+people or property resulting from any ideas, methods, instructions or products referred to in the content.
+
+https://doi.org/10.3390/electronics15020335
+
+

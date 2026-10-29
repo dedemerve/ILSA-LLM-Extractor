@@ -1,0 +1,1009 @@
+ 
+Math proficiency prediction in computer-based 
+international large-scale assessments using  
+a multi-class machine learning model 
+ 
+Aleksandar Pejić 
+Doctoral School of Computer Science 
+University of Szeged 
+Szeged, Hungary 
+pejic@inf.u-szeged.hu 
+Piroska Stanić Molcer 
+Informatics department 
+Subotica-Tech College of Applied 
+Sciences 
+Subotica, Serbia 
+piroska@vts.su.ac.rs 
+Kristian Gulači 
+Informatics department 
+Subotica-Tech College of Applied 
+Sciences 
+Subotica, Serbia 
+kristian12gulaci@gmail.com 
+ 
+ 
+Abstract—This study examines whether a multi-class 
+predictive machine learning model can be used to predict 
+students' math performance in computer-based international 
+large-scale assessments. Raw data from the PISA 2012 
+computer-based 
+assessment 
+was 
+used 
+to 
+conduct 
+the 
+experiments. Three-class neural network and random forest 
+machine learning models were developed and compared in 
+prediction 
+performance 
+for 
+students' 
+proficiency 
+in 
+mathematics. The three levels of math proficiency were low, 
+mediocre and high. Both machine learning models relied on 
+background variables from student, parental and school 
+questionnaires, as well as on the student math assessment data. 
+Manual and a few automatic feature selection methods were 
+explored while developing the machine learning models. Due to 
+the imbalance in the three-class dataset Cohen's Kappa 
+coefficient and ROC AUC were used as main metrics of the 
+model performance. 
+Keywords—multi-class, predictive model, machine learning, 
+computer-based assessment 
+I. INTRODUCTION  
+Programme for International Student Assessment (PISA) 
+is a large-scale educational assessment conducted by The 
+Organisation for Economic Co-operation and Development 
+(OECD) in a three-year cycle since year 2000 amongst 15-
+year-old students as the target population. In 2012 the survey 
+was administered in sixty-five countries all over the world. 
+Beside the traditional paper-based assessment (PBA), an 
+optional computer-based assessment (CBA) was also 
+administered, in which forty-four countries participated. 
+PISA primarily evaluates students' skills in core school 
+subjects of reading, mathematics and science. The 2012 
+assessment also measured students' financial literacy and 
+problem-solving skills. Furthermore, the problem-solving 
+survey was conducted only in CBA form, alongside of digital 
+reading and computer-based mathematics. Although both 
+PBA and CBA contained reading and mathematics items, 
+they were made of different sets of items. 
+Each PISA cycle places one of the three main assessment 
+competence domains into focus - reading, mathematics or 
+science. Besides scoring the students' performance, the PISA 
+survey also collects information on students' social and 
+economical background through a questionnaire. There are 
+also questions about students' attitudes, behavior and 
+motivation in relation to education. Furthermore, parents and 
+schools also participate by answering questionnaires, thus 
+providing more background information about students' 
+home and school environment. The domain in focus accounts 
+for about the half of the total number of items in the 
+assessment, while the other domains share the second half. In 
+2012 the survey focus was on mathematics, meaning that the 
+students were typically administered more mathematics items 
+than others. 
+OECD has recognized three main groups of technological 
+challenges for development of future PISA assessment 
+instruments: first, including a wider range of competencies 
+besides the three main domains, second, interactive and 
+dynamic delivery of assessments, and third, relevance of 
+assessment tasks. The answer for these challenges was the 
+development 
+of 
+computer-based 
+PISA 
+assessment 
+instruments. PISA's transition from PBA towards CBA mode 
+was started in 2006, when the science assessment was 
+delivered for the first time in electronic form. It was followed 
+up in 2009 with digital reading assessment, and in 2012 with 
+computer-based 
+mathematics 
+and 
+problem-solving 
+assessment [1]. In 2015 for the first time the preferred mode 
+of assessment was computer-based, when almost all 
+participating 
+countries 
+have 
+administered 
+the 
+PISA 
+questionnaires and surveys only by computer. 
+ICT usage in education and educational data mining has 
+recently come into focus of many researches [2], [3], [4], [5], 
+[6]. Various statistical and machine learning methods on 
+PISA datasets were studied in [7], [8], [9], [10], [11], [12], 
+[13], [14], [15]. 
+Because of the large amount of background variables, 
+feature selection was needed before classification with 
+machine learning models. There are several algorithm types 
+which compute the ranking of the predictor variables, making 
+it possible to choose the best ones for the dataset to train the 
+class predictor model [16], [17]. 
+The collection and digitization of data on student success 
+in school, as well as the existence of data on students that are 
+not directly related to school and schooling but can influence 
+the results of their schooling, enabled the use of data mining 
+techniques. Machine learning techniques were used in [18] to 
+predict the results of students in public examination. In [19]  
+social and economic background variables available from 
+statistics gained from data collected by schools and 
+universities were used to predict success in different school 
+subjects in Portugal. 
+Data 
+mining 
+techniques 
+were 
+used 
+to 
+student 
+performance predictions in [20], [21]. Language and 
+mathematics performance level was predicted by school, 
+teacher, parents and students' personal variables with neural 
+networks in [22]. In [23] 194 PISA background variables 
+were chosen and investigated about their effect on anxiety 
+with mathematics. 
+SISY 2021 • IEEE 19th International Symposium on Intelligent Systems and Informatics • September 16-18, 2021 •  Subotica, Serbia
+978-1-6654-1380-0/21/$31.00 ©2021 IEEE
+000049
+2021 IEEE 19th International Symposium on Intelligent Systems and Informatics (SISY) | 978-1-6654-1380-0/21/$31.00 ©2021 IEEE | DOI: 10.1109/SISY52375.2021.9582522
+
+ 
+ 
+Predictor importance was investigated on PISA 2015 
+mathematic results with help of random forest and neural 
+network in [24] in the case of Turkey. Features which were 
+investigated were from the survey about student anxiety, 
+student motivation and epistemological beliefs, and as the 
+target value PISA's own plausible values were used. 
+Plausible values (PVs) are in essence estimates for 
+population proficiency for the given PISA assessment 
+domain [25]. 
+Effects of background variables on plausible values on 
+mathematics score based on collected data in PISA 
+assessment was investigated in many researches [26], [27], 
+[28]. 
+The subject of this study is to examine whether a multi-
+class machine learning model would be viable for students' 
+math proficiency prediction in computer-based large-scale 
+education assessments. Rather than estimating the population 
+proficiency (plausible values in PISA database), in this study 
+the focus is on the proficiency of a single student. Supervised 
+machine learning models based on neural network and 
+random forest algorithms were trained from a dataset 
+assembled 
+from 
+PISA 
+cognitive 
+test 
+answers 
+and 
+questionnaire answers. Most relevant background variables 
+were identified using automatic feature selection algorithms. 
+The labels for training the supervised machine learning 
+models were engineered from the scoring data available in 
+the PISA database and relevant information in PISA 
+codebooks. Such a machine learning model could be used to 
+address the third group of PISA technological challenges 
+identified by OECD, as it would enable the assessment 
+instrument to interactively adapt to the ability of students and 
+provide a more adequate and engaging assessment 
+experience. 
+Section II. of this paper describes in detail the 
+preprocessing of data and the resulting experimental dataset 
+used for training and performance measuring of the machine 
+models. In Section III. the scientific methods of the study are 
+presented with details about the machine learning models and 
+feature selection methods, the implications of the imbalanced 
+dataset, and specifics about the chosen performance 
+measurements. Results of the conducted experiments and 
+measurements are presented in Section IV. Finally, the 
+conclusions are drawn in Section V. 
+II. EXPERIMENTAL DATASET 
+For this study the PISA 2012 CBA mathematics dataset 
+was used for two main reasons. First, the focus of the 2012 
+assessment was mathematics, thus the majority of the 
+administered test questions were mathematics, resulting with 
+more relevant data in the dataset which can be used to train 
+the machine learning models. Second, the CBA dataset was 
+picked over the PBA dataset, although it contained less 
+records (271323 students participated in CBA, while 485490 
+students participated in PBA), because of the relevance of the 
+computer-based environment.  
+The PISA 2012 computer-based assessment covered three 
+domains: problem-solving, digital reading and computer-
+based mathematics. The participating countries either 
+administered only the problem-solving computer-based 
+survey, or all three of the computer-based surveys. There 
+were 24 varieties of the problem-solving and computer-based 
+literacies (CBAL) test forms, each form composed of two 
+item clusters. CBAL refers to digital reading and computer-
+based mathematics. The two clusters were either from the 
+same survey domain, or mixed, with two clusters from 
+different survey domains.  
+The total number of computer-based mathematics items 
+was 41, grouped into 4 item clusters, each cluster containing 
+10 or 11 items. Clusters CM1, CM2 and CM4 have 10 items 
+each, while cluster CM3 has 11 items. The number of 
+mathematics test questions given to a student varies 
+depending on the administered test form. In the case of test 
+form with one mathematics cluster and one problem-solving 
+or digital reading cluster, it was either 10 or 11 test questions. 
+In the case of test form with two mathematics clusters it was 
+either 20 or 21 test questions.  
+Since PISA is an international large-scale assessment, the 
+available data files are capturing all of the differences 
+between 
+the 
+countries, 
+including 
+economic, 
+social, 
+educational and cultural aspects. Because of many country 
+specific factors, the PISA data is usually analyzed and 
+interpreted on a country level. In this study the focus is on 
+examining the performance of the machine learning models, 
+hence the whole dataset with 271323 student records was 
+processed, rather than a country specific subset of data which 
+would contain significantly less data. 
+The dataset was assembled by combining the PISA 2012 
+CBA scored cognitive item response data file with student, 
+school and parent questionnaire data files. After initial 
+preprocessing, data cleaning and selecting relevant data the 
+data files were joined into a final dataset containing records 
+for 58753 students. 
+Label for the supervised machine learning and 
+classification algorithms was created from the data available 
+in the final dataset and the scoring information for computer-
+based mathematics items in the codebook. For each student 
+in the dataset the number of administered computer-based 
+test questions was collected and the maximum score for those 
+test questions was determined. Most of the test questions 
+were scored with 1 point, with a few exceptions, where the 
+test questions were scored with 2 point. The number of 
+achieved points was divided with the number of maximal 
+points to obtain the test success coefficient. This coefficient 
+was further used to assign a low proficiency, mediocre 
+proficiency or high proficiency label to the given student. 
+The A, B and C classes were named based on these labels. 
+Data in the final dataset was shuffled and then divided 
+into two groups, train cases and test cases, in order for the 
+prediction models to be tested on unseen data. The dataset 
+was split into train and test sets in the ratio of 70 to 30. Only 
+the training part of the data was used in feature selection 
+algorithms. During the neural network model creation, the 
+training data was further divided randomly into new training 
+data and validation data. Validation data was used during the 
+learning 
+process 
+for 
+checking 
+whether 
+the 
+model 
+performance is decreasing on validation data while 
+improving on the training data. To avoid overfitting, early 
+stopping was implemented in the learning process. After the 
+learning process was finished, testing was made with the test 
+dataset which was unseen by the model previously, not even 
+for validation purposes. 
+III. METHODS 
+One manual and three automatic feature selection 
+algorithms were applied: random forest, chi-square test and 
+recursive feature elimination. In the manual feature selection 
+only mathematics related background variables were chosen 
+from the student questionnaire. They included students’ 
+attitudes, behaviors and intentions, as well as data about out 
+A. Pejić et al. • Math proficiency prediction in computer-based international large-scale assessments using a multi-class …
+000050
+
+ 
+ 
+of school lessons, concepts familiarity and overall experience 
+(Table I.). In total there were 101 manually chosen features. 
+TABLE I.  
+MANUALLY CHOSEN BACKGROUND VARIABLES 
+Variable Group 
+Manually Chosen Background 
+Variables 
+Variable Names 
+Student math attitudes 
+ST29Q01 – ST46Q09 
+Student math intentions 
+ST48Q01 – ST48Q05 
+Student math behavior 
+ST49Q01 – ST49Q09 
+Math out of school lessons 
+ST55Q01 – ST57Q06 
+Math experience 
+ST61Q01 – ST61Q09 
+Math concepts familiarity 
+ST62Q01 – ST62Q19 
+ 
+To be able to compare the relevance of manually chosen 
+and automatically chosen features on the models, the 
+automatic feature selection algorithms were configured to 
+also choose 101 features. However, the scope of the 
+background variables was broadened by allowing the 
+automatic feature algorithms to choose variables from all 
+three questionnaires. Besides the student questionnaire, 
+parents and school questionnaires were also included. The 
+reason for this was the assumption that the automatic feature 
+selection algorithms shall choose the most significant 
+background variables across all questionnaires and thus 
+improve the performance of the machine learning models. A 
+small number of generic variables were filtered out manually. 
+They were identified by the automatic feature selection 
+algorithms as significant, but due to their non-relevant 
+context they were removed from the dataset and the selection 
+was repeated. 
+The random forest feature selection method combines the 
+advantages of the filter method and the wrapper method. It 
+calculates the significance of individual features in such a 
+way that each decision tree also calculates the significance 
+for a part of the data. Features selected at the top of the 
+decision tree are more significant than those at the lower 
+branches. Finally, the mean value of the individual results is 
+calculated to obtain the final result of the random forest 
+algorithm. 
+The chi-squared test is used in feature selection because 
+its value determines how interdependent the two variables 
+are. In the case of feature selection, the two variables are 
+individual features and targets. Greater dependence between 
+the two variables indicates a better predictor. 
+Recursive feature eliminator is a method that is 
+independent of the type of features. Multiple models with 
+different features are created and performance is compared. 
+This method is the most demanding of all in terms of 
+computer power and the amount of computing time. 
+Each automatic feature selection algorithm was executed 
+five times. From the feature selection results a set of 101 
+features was assembled using the features which were chosen 
+the most times. As the most significant features we have 
+identified the variables which were chosen all five times by 
+all three algorithms (Table III.). 
+The background variables chosen by the automatic 
+feature selection algorithms were manually examined and 
+found reasonable and fitting for the context of the study. The 
+rest of the automatically chosen variables, which were 
+chosen less times, were also manually verified and found to 
+be relevant. Due to space constrains only the 5 most 
+significant background variables from the total of 101 chosen 
+by each feature selection algorithm are shown in Table II. 
+TABLE II.  
+MOST SIGNIFICANT AUTOMATICALLY CHOSEN FEATURES 
+Variable Label 
+Most Significant Background Variables 
+Variable Names 
+ST26Q07 
+Possessions - literature 
+ST28Q01 
+How many books at home 
+MATHEFF 
+Mathematics Efficacy 
+ST57Q02 
+Out-of-School Study Time - Guided Homework 
+ST57Q03 
+Out-of-School Study Time - Personal Tutor 
+ 
+Random forest is a classification algorithm which relies 
+on the decision tree method. Applying multiple decision 
+trees, each decision tree is trained, and each of the results is 
+taken into account when computing the overall classification. 
+In this case 1000 decision trees are used, none of them sees 
+the complete dataset, and therefore overfitting can not occur. 
+In case of the decision tree algorithm, subsequential 
+decisions are made to split the input features into classes 
+according to the target. 
+Feedforward neural network with two hidden layers, each 
+containing 75 neurons, is used as class predictor for three 
+classes. Since multi-class prediction is the case, the output 
+layer has 3 neurons matching the number of classes. The 
+output neurons have the softmax activation function, which 
+returns a probability value between 0 and 1. The activation 
+functions of the hidden layer are of the ReLU (Rectified 
+Linear Unit) type, and the initialization of these neurons is of 
+the He type [29]. Stochastic gradient descent was applied as 
+the learning optimizer. In the phase of preprocessing, the 
+dataset has to be encoded with respect to the output of the 
+neural network. The target data is encoded by one hot 
+encoder, where each class belongs to one specific output 
+neuron, which has value 1 for the belonging class while all 
+the other output neurons have value 0. This way, a multi-
+class classification can also be understood as a multiple 
+binary classification, because each output is bivalent. Prior to 
+the training process, the data set is divided into training data 
+and test data. During the training, the model is constantly 
+checked, and the accuracy after each individual epoch is 
+compared for both the training set and the test set. In that 
+epoch of training in which the accuracy for test data begins to 
+deteriorate, training should be stopped because it is a sign 
+that the model is overfit. To avoid overfitting, early stopping 
+was used. 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+Fig. 1. Imbalanced classes in the study dataset 
+SISY 2021 • IEEE 19th International Symposium on Intelligent Systems and Informatics • September 16-18, 2021 •  Subotica, Serbia
+000051
+
+ 
+ 
+The dataset used in the study was highly imbalanced 
+because the high proficiency students' class contained a very 
+low number of samples compared to the low and mediocre 
+proficiency classes. In order to overcome this issue, 
+Synthetic Minority Over-Sampling Technique (SMOTE) 
+[30] was used to produce artificial samples in target dataset. 
+Classes with fewer samples were oversampled for the 
+purpose of the training process. Label A stands for the class 
+with low proficiency level in mathematics, B stands for 
+mediocre proficiency class and C for the high proficiency 
+class (Figure 1).  
+Cohen's Kappa coefficient can be used in the 
+performance calculation of classifiers, because it measures 
+the agreement ratio of real and predicted values [31]. Its 
+value ranges between -1 and 1. A value of 0 means random 
+agreement, while a value of 1 means complete agreement. It 
+is calculated according to formula  (1). 
+ =
+
+	 
+ 
+              (1) 
+In formula (1) parameter po is the relative matching value 
+of real and predicted values. It is calculated as the sum of the 
+diagonal of the confusion matrix divided by the sum of all 
+the fields of the confusion matrix. Parameter pe is the 
+expected random match. The value of pe is the probability 
+that the predicted and actual classes match. 
+
+ =
+	
+ ∑
+
+
+	
+  
+(2) 
+In formula (2) N is the number of observations, k the 
+number of classes, nkT the number of times a category is true, 
+nkF the number of times category is false. 
+F1 score for the multi-class classification was calculated 
+as micro average F1 score. The precision and recall for each 
+class are computed and the precision values and the recall 
+values are averaged separately. From the averaged values the 
+overall F1 score is calculated. Formulas (3), (4) and (5) show 
+precision value, recall and F1 score calculation. 
+PV =
+TP
+TPFP 
+ 
+ 
+(3) 
+ 
+ =
+TP
+TPFN 
+ 
+ 
+(4) 
+ 
+	 = 2 ×
+ !"!#$× %&&
+ !"!#$ %&&                (5) 
+ 
+ROC curves for each class are computed separately. The 
+advantage of ROC as a performance indicator is that it is 
+independent from the classification threshold [32]. Both true 
+positive rate and false positive rate are measures that are not 
+sensitive to imbalanced data. 
+IV. RESULTS 
+ 
+In Table III. the confusion matrices are shown for both 
+models, the neural network and the random forest classifier,  
+and for the four feature selection algorithms used with each 
+model.  
+ 
+Table IV. shows the macro average accuracy values 
+across all models and feature selection methods. The average 
+accuracy was calculated across all three classes. Neural 
+network models all outperformed random forest in means of 
+accuracy. Recursive feature elimination feature selection 
+chose predictor features which resulted in best accuracy, 
+78,39%. Manually selected features gave the poorest 
+accuracy value of 74,76% . 
+ 
+TABLE III.  
+CONFUSION MATRICES 
+Model 
+Confusion Matrices 
+Feature Selection 
+ 
+TA 
+TB 
+TC 
+Neural 
+Network 
+Manual chosen 
+PA 
+6525 
+2233 
+374 
+PB 
+2387 
+4250 
+1417 
+PC 
+33 
+198 
+209 
+Random Forest 
+PA 
+6616 
+2393 
+123 
+PB 
+2049 
+4992 
+1013 
+PC 
+14 
+259 
+167 
+Recursive Feature 
+Elimination 
+PA 
+6918 
+2120 
+94 
+PB 
+2275 
+4890 
+889 
+PC 
+18 
+241 
+181 
+Chi Squared 
+PA 
+6656 
+2325 
+151 
+PB 
+2283 
+4944 
+827 
+PC 
+23 
+290 
+127 
+Random 
+Forest 
+Manual chosen 
+PA 
+6817 
+2314 
+1 
+PB 
+2526 
+5515 
+13 
+PC 
+31 
+407 
+2 
+Random Forest 
+PA 
+6942 
+2189 
+1 
+PB 
+2264 
+5760 
+30 
+PC 
+15 
+410 
+15 
+Recursive Feature 
+Elimination 
+PA 
+6931 
+2201 
+0 
+PB 
+2234 
+5798 
+22 
+PC 
+17 
+415 
+8 
+Chi Squared 
+PA 
+6748 
+2383 
+1 
+PB 
+2261 
+5789 
+4 
+PC 
+28 
+409 
+3 
+TA: True A class, TB: True B class, TC: True C class 
+PA: Predicted A class, PB: Predicted B class, PC: Predicted C class 
+TABLE IV.  
+PERFORMANCE MEASUREMENTS 
+Model 
+Performance Measurements 
+Feature Selection 
+Accuracy 
+F1 Score 
+Recall 
+Neural 
+Network 
+Manual chosen 
+74,76 % 
+0,63 
+0,63 
+Random Forest 
+77,89 % 
+0,68 
+0,67 
+Recursive Feature 
+Elimination 
+78,39 % 
+0,68 
+0,68 
+Chi Squared 
+77,62 % 
+0,64 
+0,64 
+Random 
+Forest 
+Manual chosen 
+70,01 % 
+0,70 
+0,70 
+Random Forest 
+72,26 % 
+0,72 
+0,72 
+Recursive Feature 
+Elimination 
+72,41 % 
+0,72 
+0,72 
+Chi Squared 
+71,02 % 
+0,71 
+0,71 
+ 
+TABLE V.  
+ROC-AUC MEASUREMENTS 
+Model 
+ROC-AUC Measurements 
+Feature Selection 
+A 
+B 
+C 
+Neural 
+Network 
+Manual chosen 
+0,78 
+0,67 
+0,80 
+Random Forest 
+0,82 
+0,73 
+0,85 
+Recursive Feature 
+Elimination 
+0,82 
+0,73 
+0,86 
+Chi Squared 
+0,81 
+0,72 
+0,81 
+Random 
+Forest 
+Manual chosen 
+0,79 
+0,76 
+0,84 
+Random Forest 
+0,82 
+0,79 
+0,87 
+Recursive Feature 
+Elimination 
+0,82 
+0,79 
+0,88 
+Chi Squared 
+0,81 
+0,77 
+0,84 
+ 
+The micro average F1 score was calculated across all 
+three classes. Random forest model with recursive feature 
+elimination had the best score of 0,72 (Table IV.). 
+A. Pejić et al. • Math proficiency prediction in computer-based international large-scale assessments using a multi-class …
+000052
+
+ 
+ 
+The micro average recall value was calculated across all 
+three classes. Random forest model with recursive feature 
+elimination had the best value of 0,72 (Table IV.). 
+Area under ROC curves for the three classes are shown in 
+Table V. for all feature selection and prediction model 
+combinations. 
+Regarding 
+this 
+prediction 
+performance 
+indicator, best result of 0,88 is obtained in the case of class C 
+with recursive feature elimination and random forest 
+predictor. 
+Fig 2. ROC-AUC comparison between the two prediction models, four 
+different feature selection algorithms and three class labels 
+Figure 2. visually compares the two prediction models 
+and  four feature selection algorithms across the three class 
+labels. According to AUC ROC performance metrics, class C 
+has the most powerful results.  
+Fig 3. ROC-AUC for the neural network model with recursive feature 
+elimination feature selection algorithm 
+Figure 3. depicts the ROC-AUC of all three classes for 
+the best performing neural network model with the recursive 
+feature elimination algorithm of feature selection. Figure 4. 
+shows ROC-AUC across the three classes for the best 
+performing random forest model using the recursive feature 
+elimination algorithm of feature selection. Comparison of the 
+two figures reveals that both the neural network model and 
+the random forest model perform best with class C. The two 
+models have the same performance for class A, while the 
+random forest model performs significantly better with class 
+B. 
+ 
+Fig 4. ROC-AUC for the random forest model with recursive feature 
+elimination feature selection algorithm 
+TABLE VI.  
+COHEN’S KAPPA COEFFICIENT MEASUREMENTS 
+Model 
+Cohen’s Kappa Coefficient Measurements 
+Feature Selection 
+Cohen’s Kappa 
+Neural 
+Network 
+Manual chosen 
+0,32 
+Random Forest 
+0,39 
+Recursive Feature Elimination 
+0,40 
+Chi Squared 
+0,38 
+Random 
+Forest 
+Manual chosen 
+0,41 
+Random Forest 
+0,46 
+Recursive Feature Elimination 
+0,46 
+Chi Squared 
+0,43 
+ 
+Cohen's Kappa values between 0.21 and 0.4 are declared 
+as "Fair", while values between 0.41 and 0.6 as "Moderate" 
+[33]. Random forest model with recursive feature elimination 
+has achieved the best coefficient value of 0,46 (Table V.). 
+The accuracy, recall and F1 score are standard metrics for 
+classification models. However, in the case of the two 
+models examined here, the results of these metrics are rather 
+weak. The reason behind it is that these metrics are optimal 
+for binary classification models with two classes. In this 
+study three-class models were used, which affected the 
+interpretation of these metrics, as well as their overall fitness 
+as a metric. For this reason Cohen’s Kappa coefficient and 
+ROC-AUC values were chosen as the performance measure 
+of the models. 
+V. CONCLUSION  
+Prediction of students' mathematics proficiency on PISA 
+computer-based assessment has been accomplished with 
+machine learning method based on multi-class neural 
+network and random forest models. Three math proficiency 
+classes were used: A – low proficiency, B – mediocre 
+proficiency, and C – high proficiency. The dataset was 
+imbalanced because of relatively low number of students 
+with high mathematics proficiency. SMOTE technique was 
+applied to achieve a balanced dataset. Automatic and manual 
+feature selection was compared. Automatic feature selection 
+was used to select a set of most relevant features from the 
+PISA background questionnaires. Performance of the models 
+was measured with different metrics. Cohen’s Kappa 
+coefficient was used to compare the model performance. 
+SISY 2021 • IEEE 19th International Symposium on Intelligent Systems and Informatics • September 16-18, 2021 •  Subotica, Serbia
+000053
+
+ 
+ 
+Both models demonstrated good performance. Overall the 
+neural network model showed slightly better results. 
+Based on the results of the study, it can be argued, that a 
+machine learning model could enhance an international 
+large-scale computer-based assessment instrument, such as 
+PISA, to interactively adapt to the skills of the students, and 
+thus provide a better and more interesting assessment 
+experience. 
+The topic of the study offers a number of possibilities for 
+future work: use of log-file databases for released PISA 2012 
+computer-based items for improving the machine learning 
+models and analysis of the student performance, further 
+experimentation 
+with 
+automatic 
+feature 
+engineering, 
+application of genetic algorithm optimization of neural 
+network to improve performance, further exploration and 
+optimization of multi-class models with imbalanced datasets, 
+and at last, examination of more recent PISA CBA datasets 
+from years 2015 and 2018 with science and reading as main 
+competence domains. 
+REFERENCES 
+[1] PISA Computer-Based Assessment of Student Skills in Science, © 
+OECD 2010. 
+[2] Gogh, E., Racsko, R., & Kovari, A., "Experience of Self-Efficacy 
+Learning among Vocational Secondary School Students", Acta 
+Polytechnica Hungarica, vol. 18, no. 1, pp. 101-119, 2021. 
+[3] Gavurova, B., Belas, J., Cepel, M., & Kmecova, I., "Perception of the 
+Quality of Educational System for Entrepreneurship–Comparative 
+Analysis", Acta Polytechnica Hungarica, vol. 18, no. 3, pp. 65-86, 
+2021. 
+[4] Abín, A., Núñez, J. C., Rodríguez, C., Cueli, M., García, T., & 
+Rosário, P., "Predicting mathematics achievement in secondary 
+education: The role of cognitive, motivational, and emotional 
+variables", Frontiers in Psychology, vol. 11, pp. 876, 2020. 
+[5] Wu, H., & Molnár, G., "Logfile analyses of successful and 
+unsuccessful strategy use in complex problem-solving: a cross-
+national comparison study", European Journal of Psychology of 
+Education, vol. 1, pp. 24, 2021. 
+[6] Molnár, G., & Orosz, B., "Visual, own device and experience-based 
+educational methods and possibilities in VET", in 10th IEEE 
+International 
+Conference 
+on 
+Cognitive 
+Infocommunications 
+(CogInfoCom), 2019, pp. 517-520. 
+[7] Kaya, V. H., & Elster, D., "German Students' Environmental Literacy 
+in Science Education Based on PISA Data", Science Education 
+International, vol. 29, no. 2, pp. 75-87, 2018. 
+[8] Smirnov, I., "Predicting PISA scores from students’ digital traces", in 
+Proceedings of the International AAAI Conference on Web and Social 
+Media, 2018, vol. 12, no. 1, pp. 360-364. 
+[9] Angeli, C., Howard, S. K., Ma, J., Yang, J., & Kirschner, P. A., "Data 
+mining in educational technology classroom research: Can it make a 
+contribution?", Computers & Education, vol. 113, pp. 226-242, 2017. 
+[10] Saarela, M., Yener, B., Zaki, M. J., & Kärkkäinen, T., "Predicting 
+math performance from raw large-scale educational assessments data: 
+a machine learning approach", in Proceedings of ICML Workshop on 
+Machine Learning for Digital Education and Assessment Systems; 
+vol. 48.  pp. 1-8, 2016. 
+[11] Gabriel, F., Signolet, J., & Westwell, M., "A machine learning 
+approach to investigating the effects of mathematics dispositions on 
+mathematical literacy", International Journal of Research & Method in 
+Education, vol. 41, no. 3, pp. 306-327, 2018. 
+[12] Masci, C., Johnes, G., & Agasisti, T., "Student and school 
+performance across countries: A machine learning approach", 
+European Journal of Operational Research, vol. 269, no. 3, pp. 1072-
+1085, 2018. 
+[13] Pejić, A., & Molcer, P. S., "Predicting the Outcome of a PISA 
+Problem Solving Task Using Strategic Behavior Data", in 10th IEEE 
+International 
+Conference 
+on 
+Cognitive 
+Infocommunications 
+(CogInfoCom), pp. 313-318, 2019. 
+[14] Pejić, A., & Molcer, P. S., "Predictive Machine Learning Approach 
+for Complex Problem Solving Process Data Mining", Acta 
+Polytechnica Hungarica, vol. 18, no. 1, pp. 45-63, 2021. 
+[15] Pejic, A., & Molcer, P. S. (2018, May), "Relationship Mining in PISA 
+CBA 2012 Problem Solving Dataset using Association Rules", in 12th 
+International Symposium on Applied Computational Intelligence and 
+Informatics, IEEE, 2018, pp. 549-554. 
+[16] Ma, C., Yao, B., Ge, F., Pan, Y., & Guo, Y., "Improving prediction of 
+student performance based on multiple feature selection approaches", 
+in Proceedings of International Conference on E-Education, E-
+Business and E-Technology, pp. 36-41, 2017. 
+[17] Han, Z., He, Q., & von Davier, M., "Predictive feature generation and 
+selection using process data from pisa interactive problem-solving 
+items: An application of random forests", Frontiers in psychology, 
+vol. 10, pp. 2461, 2019. 
+[18] Navamani, J. M. A., & Kannammal, A., "Predicting performance of 
+schools by applying data mining techniques on public examination 
+results", Research Journal of Applied Sciences, Engineering and 
+Technology, vol. 9, no. 4, pp. 262-271, 2015. 
+[19] Costa-Mendes, R., Oliveira, T., Castelli, M., & Cruz-Jesus, F., "A 
+machine learning approximation of the 2015 Portuguese high school 
+student grades: A hybrid approach", Education and Information 
+Technologies, vol. 26, no. 2, pp. 1527-1547, 2021. 
+[20] Yaacob, W. F. W., Nasir, S. A. M., Yaacob, W. F. W., & Sobri, N. 
+M., "Supervised data mining approach for predicting student 
+performance", Indones. J. Electr. Eng. Comput. Sci, vol. 16, no. 3, pp. 
+1584-1592, 2019. 
+[21] Hasan, R., Palaniappan, S., Mahmood, S., Abbas, A., Sarker, K. U., & 
+Sattar, M. U., "Predicting student performance in higher educational 
+institutions using video learning analytics and data mining 
+techniques", Applied Sciences, vol. 10, no. 11, pp. 3894-3914, 2020. 
+[22] Musso, M. F., Cascallar, E. C., Bostani, N., & Crawford, M., 
+"Identifying Reliable Predictors of Educational Outcomes Through 
+Machine-Learning Predictive Modeling", Frontiers in Education vol. 
+5:104, pp. 1-19, 2020. 
+[23] Yi, H. S., & Na, W., "How are maths-anxious students identified and 
+what are the key predictors of maths anxiety? Insights gained from 
+PISA results for Korean adolescents", Asia Pacific Journal of 
+Education, vol. 40, no. 2, pp. 247-262, 2020. 
+[24] Güre, Ö. B., Kayri, M., & Erdoğan, F. (2020). "Analysis of factors 
+effecting PISA 2015 mathematics literacy via educational data 
+mining", Education and Science, vol. 45, no. 202, pp. 393-415, 2020. 
+[25] OECD. PISA Data Analysis Manual: SPSS and SAS, Second Edition. 
+OECD Publishing, 2009. ISBN 9789264056268. 
+[26] Güre Bezek, Ö., Kayri, M., & Erdoğan, F., "Predicting factors 
+affecting PISA 2015 mathematics literacy via radial basis function 
+artificial neural network", Journal of Engineering and Technology, 
+vol. 3 no. 1, pp. 1-11, 2019. 
+[27] Ziya, E., Dogan, N., & Kelecioglu, H., "What Is the Predict Level of 
+Which Computer Using Skills Measured in PISA for Achievement in 
+Mathematics", Turkish Online Journal of Educational Technology-
+TOJET, vol. 9, no. 4, pp. 185-191, 2010. 
+[28] Özberk, E. H., Atalay Kabasakal, K., & Boztunç Öztürk, N., 
+"Investigating the factors affecting Turkish students’ PISA 2012 
+mathematics achievement using hierarchical linear modeling", Journal 
+of Education, vol. 32, no. 3, pp. 544-559, 2017. 
+[29] He, K., Xiangyu Z., Shaoqing R. and Jian S., "Delving deep into 
+rectifiers: 
+Surpassing 
+human-level 
+performance 
+on 
+imagenet 
+classification," in Proceedings of the IEEE international conference on 
+computer vision, pp. 1026-1034, 2015. 
+[30] Chawla, N. V., Bowyer, K. W., Hall, L. O., & Kegelmeyer, W. P., 
+"SMOTE: synthetic minority over-sampling technique", Journal of 
+artificial intelligence research, vol. 16, pp. 321-357, 2002. 
+[31] Warrens, M.. “Five ways to look at Cohen's kappa.” Journal of 
+Psychology & Psychotherapy vol. 5 pp. 1-4, 2015. 
+[32] Bradley, A. P., "The use of the area under the ROC curve in the 
+evaluation of machine learning algorithms", Pattern recognition, vol. 
+30, no. 7, pp. 1145-1159, 1997. 
+[33] Landis, J. R., & Koch, G. G., "The measurement of observer 
+agreement for categorical data", Biometrics, vol. 33, no. 1, pp. 159-
+174, 1977. 
+ 
+ 
+A. Pejić et al. • Math proficiency prediction in computer-based international large-scale assessments using a multi-class …
+000054

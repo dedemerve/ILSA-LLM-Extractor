@@ -42,9 +42,9 @@ log = logging.getLogger(__name__)
 
 # ICILS covariate → canonical construct (for lit weight lookup)
 _ICILS_TO_CANONICAL: dict[str, str] = {
-    "SES_COMPOSITE":          "SES_COMPOSITE",         # not in weights → W=1.0
-    "PARENTAL_EDUCATION":     "PARENTAL_EDU",           # BSDGEDUP canonical → 0.4559
-    "HOME_LITERACY_ACTIVITIES": "HOME_LITERACY_ACTIVITIES",  # S_HOMLIT → check weights
+    "SES_COMPOSITE":            "SES_COMPOSITE",
+    "PARENTAL_EDUCATION":       "PARENTAL_EDUCATION",    # predictor_weights_v2 canonical → 0.4559
+    "HOME_LITERACY_ACTIVITIES": "HOME_LITERACY_ACTIVITIES",  # added to weights table → 0.7175
 }
 
 
@@ -56,18 +56,55 @@ def icils_feat_weight(f: str, weights: dict) -> float:
     return weights.get(canonical, 1.0)
 
 
+def _build_icils_fold(
+    panel: pd.DataFrame,
+    feature_cols: list[str],
+    target_col: str,
+    train_cycle: int,
+    test_cycle: int,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, list[str]]:
+    """Cross-sectional fold builder for ICILS.
+
+    ICILS participation rosters change substantially across cycles: the
+    standard build_xy (intersection of countries across both train cycles)
+    yields only 3 training samples for 2013+2018→2023.  This function
+    instead uses every country that has a score at train_cycle as a
+    training row and every country at test_cycle as a test row — no
+    intersection constraint, so all available data is used.
+    """
+    tr = panel[panel["cycle"] == train_cycle].set_index("country_iso3")
+    te = panel[panel["cycle"] == test_cycle].set_index("country_iso3")
+
+    # Training: countries with a valid target at train_cycle
+    tr_valid = tr[tr[target_col].notna()]
+    # Test: countries with a valid target at test_cycle
+    te_valid = te[te[target_col].notna()]
+
+    if len(tr_valid) < 2 or len(te_valid) < 2:
+        return None, None, None, None, []
+
+    imp = lambda df: df[feature_cols].values.astype(float)
+    X_tr = imp(tr_valid)
+    y_tr = tr_valid[target_col].values.astype(float)
+    X_te = imp(te_valid)
+    y_te = te_valid[target_col].values.astype(float)
+
+    countries = te_valid.index.tolist()
+    return X_tr, y_tr, X_te, y_te, countries
+
+
 def run_icils_loco() -> pd.DataFrame:
     panel = pd.read_csv(STAGE5_DIR / "icils_enriched_panel.csv")
     panel["cycle"] = panel["cycle"].astype(int)
 
     # Load weights
     wdf = pd.read_csv(STAGE5_DIR / "predictor_weights_v2.csv")
-    key_col = "feature_name" if "feature_name" in wdf.columns else "variable"
-    weights: dict[str, float] = dict(zip(wdf[key_col], wdf["w_norm"]))
+    weights: dict[str, float] = dict(zip(wdf["predictor_canonical"], wdf["w_norm"]))
 
     target_col = "ICILS_computer_literacy"
     all_feature_cols = [c for c in panel.columns
-                        if c not in ("country_iso3", "cycle", "program", "domain")]
+                        if c not in ("country_iso3", "cycle", "program", "domain",
+                                     target_col)]
 
     cycles = sorted(panel["cycle"].unique())
     log.info("ICILS LOCO — cycles: %s, target: %s", cycles, target_col)
@@ -80,14 +117,19 @@ def run_icils_loco() -> pd.DataFrame:
         if not train_cycles:
             continue
 
-        X_tr_full, y_tr, X_te_full, y_te, countries = loco.build_xy(
-            panel, all_feature_cols, target_col, train_cycles, test_cycle
+        # Use the most recent preceding cycle as the train cycle.
+        # build_xy's intersection logic collapses ICILS (only 3 countries
+        # appear in both 2013 and 2018); _build_icils_fold uses all
+        # countries available at the train cycle, matching the actual
+        # ICILS evaluation design.
+        train_cycle = max(train_cycles)
+        X_tr_full, y_tr, X_te_full, y_te, countries = _build_icils_fold(
+            panel, all_feature_cols, target_col, train_cycle, test_cycle
         )
-        # ICILS minimum: n_train >= 10 for Ridge to be meaningful (p < n constraint)
-        if X_tr_full is None or len(y_tr) < 10:
-            reason = "None from build_xy" if X_tr_full is None else f"n_train={len(y_tr)} < 10"
+
+        if X_tr_full is None or len(y_tr) < 5:
+            reason = "None from build" if X_tr_full is None else f"n_train={len(y_tr)} < 5"
             log.warning("Fold test=%d: yetersiz train — %s", test_cycle, reason)
-            # Record as insufficient_overlap diagnostic
             results_rows.append({
                 "program": "ICILS", "domain": "computer_literacy",
                 "test_cycle": test_cycle,
@@ -101,12 +143,16 @@ def run_icils_loco() -> pd.DataFrame:
 
         # Drop all-NaN lag cols in training
         col_any_filled = np.array([
-            True if not f.startswith("lag_")
-            else np.any(~np.isnan(X_tr_full[:, i]))
-            for i, f in enumerate(all_feature_cols)
+            np.any(~np.isnan(X_tr_full[:, i]))
+            for i in range(X_tr_full.shape[1])
         ])
         fold_feat = [f for f, ok in zip(all_feature_cols, col_any_filled) if ok]
         keep_idx  = [i for i, ok in enumerate(col_any_filled) if ok]
+
+        if not fold_feat:
+            log.warning("Fold test=%d: no valid features after NaN drop, skipping", test_cycle)
+            continue
+
         X_tr = X_tr_full[:, keep_idx]
         X_te = X_te_full[:, keep_idx]
 

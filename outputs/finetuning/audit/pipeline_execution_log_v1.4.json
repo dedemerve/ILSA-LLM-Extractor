@@ -1,0 +1,77 @@
+{
+  "_generated": "2026-10-06",
+  "_purpose": "Pipeline execution log — v1.4 freeze run",
+
+  "phase": "PRE-FLIGHT + MEMORY UPDATE + GIT COMMIT V1.4",
+  "status": "BLOCKED_AT_FEW_SHOT_BASELINE",
+
+  "completed": [
+    {
+      "step": "PRE-FLIGHT AUDIT",
+      "status": "COMPLETE",
+      "artifact": "outputs/finetuning/audit/preflight_v1.4_report.json",
+      "notes": "5 blockers identified; see preflight report for details"
+    },
+    {
+      "step": "STEP 1 — MEMORY UPDATE",
+      "status": "COMPLETE",
+      "artifact": "~/.claude/projects/.../memory/project_finetuning_protocol.md",
+      "notes": "Gold v1.4 recorded as current frozen gold; v1.3 marked superseded; kappa results, threshold, split, LoRA-vs-SFT gate all recorded"
+    },
+    {
+      "step": "STEP 2 — GIT COMMIT V1.4",
+      "status": "COMPLETE",
+      "commit_sha": "f0845198f622a170175e3aa9f08e3dee295b7839",
+      "artifacts_committed": [
+        "outputs/finetuning/data/gold_standard_full_corpus_v1.4.csv",
+        "outputs/finetuning/audit/gold_freeze_manifest_v1.4.json",
+        "outputs/finetuning/audit/intra_rater_reliability_v4.json",
+        "outputs/finetuning/audit/second_pass_reliability_form.csv",
+        "outputs/finetuning/audit/second_pass_kappa_calculator.py",
+        "outputs/finetuning/audit/preflight_v1.4_report.json"
+      ]
+    }
+  ],
+
+  "blocked": [
+    {
+      "step": "STEP 3 — FEW-SHOT VALIDATION BASELINE",
+      "status": "BLOCKED",
+      "blockers": [
+        "RISK_02: few_shot_examples_frozen.json has status CANDIDATE — needs human review and freeze decision",
+        "RISK_03: baseline_prompt_frozen.txt does not exist — needs creation and freeze",
+        "RISK_04: source PDFs for 6 validation studies not found in repository — extraction cannot run"
+      ]
+    },
+    {
+      "step": "STEP 4 — BASELINE DECISION GATE",
+      "status": "BLOCKED — depends on step 3"
+    },
+    {
+      "step": "STEP 5 — LORA TRAINING",
+      "status": "BLOCKED — depends on baseline; also RISK_01 (FORECASTABLE count discrepancy) must be resolved"
+    },
+    {
+      "step": "STEPS 6-9",
+      "status": "BLOCKED — sequential dependencies"
+    }
+  ],
+
+  "unresolved_risks": [
+    {
+      "id": "RISK_01",
+      "description": "FORECASTABLE count discrepancy: pipeline prompt says 169, protocol says 153, v1.4 data shows 131 non-UNMATCHED in train",
+      "requires": "Explicit user clarification before LoRA training"
+    },
+    {
+      "id": "RISK_04",
+      "description": "Source PDFs for validation studies unavailable",
+      "requires": "User to provide PDF paths or confirm text extraction method"
+    },
+    {
+      "id": "RISK_02+03",
+      "description": "Few-shot examples and baseline prompt not frozen",
+      "requires": "User human review and freeze decision"
+    }
+  ]
+}

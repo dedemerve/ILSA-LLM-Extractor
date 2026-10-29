@@ -1,0 +1,1151 @@
+1 of 12
+The Journal of Creative Behavior, 2026; 60:e70082
+https://doi.org/10.1002/jocb.70082
+The Journal of Creative Behavior
+BRIEF REPORT
+OPEN ACCESS
+AI-­Powered Scoring for Creative Thinking: Methods and 
+Challenges in PISA Assessment
+Ricardo Primi1,2
+  |  Roger E. Beaty3
+  |  Mathias Benedek4
+  |  Denis Dumas5
+  |  Peter Organisciak6
+  |  
+John D. Patterson3
+  |  Tiago Calico7
+  |  Mario Piacentini7
+1Universidade São Francisco, Campinas, Brazil  |  2Edulab 21 Instituto Ayrton Senna, São Paulo, Brazil  |  3Penn State University, Pennsylvania, 
+USA  |  4University of Graz, Graz, Austria  |  5University of Georgia, Athens, Georgia, USA  |  6University of Denver, Denver, Colorado, USA  |  7The 
+Organization for Economic Cooperation and Development (OECD), Paris, France
+Correspondence: Ricardo Primi (ricardo.primi@usf.edu.br)
+Received: 7 February 2025  |  Revised: 17 September 2025  |  Accepted: 7 November 2025
+Keywords: automated scoring of creativity | creative thinking assessment | divergent thinking | metaphor | PISA 2022 | transformer models
+ABSTRACT
+The introduction of the PISA 2022 Creative Thinking assessment underscores the growing need for scalable, valid, and re-
+liable methods to evaluate creativity in international large-­scale assessments. Traditional human scoring, while nuanced, is 
+time-­consuming, costly, and subject to inconsistencies. This paper explores recent advances in artificial intelligence (AI) and 
+natural language processing (NLP)—particularly transformer-­based large language models (LLMs)—as promising alternatives 
+for automated scoring. We review three methodological approaches: (1) unsupervised methods using semantic distance, (2) su-
+pervised fine-­tuning with labeled data, and (3) few−/zero-­shot learning using prompt-­based inference. Empirical findings from 
+verbal and visual creative tasks show that AI-­based scoring systems can approximate human ratings with substantial accuracy 
+(r = 0.70–0.85), even across different languages and task formats. A case study using the PISA Book Covers task demonstrates 
+convergence between AI and human scores, with reliability levels comparable to traditional scoring. However, key challenges 
+remain, particularly regarding cross-­cultural comparability, bias mitigation, and interpretability. We discuss psychometric strat-
+egies (e.g., Many-­Facet Rasch Models) to model these issues and propose future directions, including scoring of distinct creativity 
+dimensions and developing transparent, open-­source platforms. If rigorously validated, AI-­based scoring offers a feasible and 
+equitable path forward for assessing creativity globally.
+In an increasingly complex and innovation-­driven world, the 
+ability to think creatively is widely recognized as an essential 
+21-­century skill. As education systems worldwide strive to pre-
+pare students for the demands of a rapidly changing global land-
+scape, assessing creative thinking has become a key priority 
+(Organization for Economic Co-­operation and Development—
+OECD  2024). However, measuring creativity on a large scale 
+presents significant methodological challenges, particularly in 
+developing reliable, valid, and scalable assessment frameworks.
+While psychological research has explored creative think-
+ing extensively since the mid-­twentieth century, with seminal 
+contributions from Guilford (1950) and Torrance (1968), large-­
+scale creativity assessments have remained rare. Traditional 
+measures of creativity, such as divergent thinking tasks that 
+evaluate fluency, originality, and elaboration, have primarily 
+been administered in controlled research settings rather than 
+in standardized international assessments. The Program for 
+International Student Assessment (PISA), however, marked a 
+This is an open access article under the terms of the Creative Commons Attribution License, which permits use, distribution and reproduction in any medium, 
+provided the original work is properly cited.
+© 2025 The Author(s). The Journal of Creative Behavior published by Wiley Periodicals LLC on behalf of Creative Education Foundation (CEF).
+
+2 of 12
+The Journal of Creative Behavior, 2026
+turning point by introducing creative thinking as a domain in 
+the 2022 cycle, sparking great interest in evaluating creativity in 
+education systems.
+The PISA 2022 Creative Thinking Assessment represents the 
+most comprehensive effort to date to measure creativity at scale. 
+The assessment is designed to capture students' ability to gener-
+ate diverse ideas (resembling fluency and flexibility measures), 
+generate creative ideas (resembling originality measures) eval-
+uate, and improve ideas across domains of written and visual 
+expression, social and scientific problem-­solving (see Barbot and 
+Kaufman 2025; OECD 2021).
+By embedding creative thinking into its assessment framework, 
+PISA has introduced significant pressure to develop scalable, 
+valid, reliable, and cross-­culturally comparable measures of 
+creative thinking. However, assessing creativity on a large scale 
+presents unique challenges. Unlike mathematics or reading, 
+where correct answers can be objectively determined, creative 
+thinking requires evaluating the quality, originality, and useful-
+ness of student-­generated ideas—criteria that are inherently sub-
+jective and influenced by cultural and contextual factors. This 
+complexity complicates efforts to standardize assessment while 
+ensuring fairness and consistency across diverse countries.
+One of the major hurdles in PISA's creative thinking assess-
+ment has been the reliance on human raters to score student 
+responses. This process demands a substantial workforce and 
+remains constrained by both subjectivity and variability in judg-
+ment. Even with extensive training, raters may introduce incon-
+sistencies. Moreover, achieving a fine-­grained, detailed analysis 
+of responses requires a level of manual effort that is prohibitively 
+time-­consuming and costly in large-­scale assessments.
+This is where AI-­powered scoring emerges as a necessary solu-
+tion. Can technology automate the scoring of creative thinking? 
+If so, what methods are available, and what challenges remain? 
+In this paper, we answer yes—advancements in large language 
+models (LLMs) and AI-­based scoring algorithms have made au-
+tomation feasible but not without new challenges. We provide an 
+overview of current techniques, present the results achieved so 
+far, and explore the challenges ahead.
+1   |   A Bird's-­Eye View of Transformers as Language 
+Models
+At the core of modern artificial intelligence (AI) advancements 
+in language processing lies neural networks, a class of machine 
+learning models inspired by the structure and function of the 
+human brain. Neural networks process information through 
+layers of interconnected artificial neurons, adjusting their in-
+ternal weights based on training data to recognize patterns and 
+make predictions. Over the past decades, various architectures 
+have been proposed to enhance neural networks' ability to pro-
+cess language, but the transformer model has emerged as the 
+foundation of today's most powerful AI-­driven language models 
+(Vaswani et al. 2017).
+The transformer is a neural network architecture designed to 
+process and generate text by predicting the probability of the 
+next word given a sequence of words. Transformers take in a 
+text, or a sequence of words, as its input and predict the proba-
+bility distribution over a large vocabulary of possible next words 
+(typically N≈50,000 in state-­of-­the-­art models). Once a word is 
+chosen based on this probability, it is fed back into the model, 
+and the process repeats, generating coherent and contextually 
+relevant text. In essence it is a conditional probability language 
+model, that predicts the next word conditioned on the sequence 
+of words in its input.
+Instead of processing words sequentially like older recurrent 
+neural networks (RNNs), transformers analyze all words in an 
+input simultaneously using self-­attention. This mechanism al-
+lows the model to weigh the importance of each word in a sen-
+tence and capture long-­range dependencies. Unlike traditional 
+models, transformers condition new word generation not just on 
+individual words—main effect—but also on their interactions. 
+As models advanced, the sequence length they can process in-
+creased—from 512 tokens in BERT GPT2 (Devlin et al. 2019) to 
+1024 in GPT-­2 GPT2 (Brown et al. 2020), 200 K in ChatGPT, and 
+1 million in Google's Gemini. This expansion significantly im-
+proved their ability to capture broader and deeper syntactic and 
+semantic structures across diverse domains.
+Because transformers are trained on vast amounts of textbooks, 
+articles, dialogs, and code—they not only learn the rules of lan-
+guage but also develop an internal representation of linguistic 
+structures and contextual meaning. By processing billions of 
+words, they grasp how terms relate across different contexts, 
+generating fluent, meaningful responses. Recent models, such 
+as OpenAI GPT-­5, DeepSeek R1, and Google's Gemini 2.5 Pro, 
+incorporate advanced training techniques for reasoning, en-
+abling them to generate chain-­of-­thought sequences before 
+producing final answers. This refinement has led to substantial 
+accuracy improvements, particularly in math and coding tasks.
+2   |   Distributed Representations, Contextual 
+Embeddings, and Latent Semantics
+A core aspect of Large Language Models (LLMs) lies in how 
+they numerically represent words. Since neural networks op-
+erate through numerical computation, textual data must be 
+transformed into mathematical representations to be processed 
+effectively. Earlier Natural Language Processing (NLP) models 
+adopted discrete word-­level representations, where each doc-
+ument—a sequence of text—was mapped into a vector of size 
+V, with V representing the total vocabulary size of the corpus. 
+These vectors typically encoded word frequency information, 
+treating each word as a distinct semantic unit.
+One foundational method for extracting semantic structures 
+from such high-­dimensional word vectors was Latent Semantic 
+Analysis (LSA). This technique decomposed the document-­
+term matrix into topic vectors, representing co-­occurring 
+word groups, and document vectors, capturing topic distribu-
+tions within a text. However, LSA and similar methods suf-
+fered from a fundamental limitation: they relied on a rigid, 
+one-­to-­one mapping between words and their semantic mean-
+ings (Rosenbusch et al. 2020; Sievert and Shirley 2014). This 
+approach ignored the inherent polysemy of language—where 
+ 21626057, 2026, 1, Downloaded from https://onlinelibrary.wiley.com/doi/10.1002/jocb.70082 by Beykent University, Wiley Online Library on [24/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+3 of 12
+The Journal of Creative Behavior, 2026
+a single word may carry multiple meanings depending on con-
+text—and the semantic proximity between distinct words that 
+share similar meanings.
+A breakthrough in addressing these limitations emerged from 
+the Parallel Distributed Processing (PDP) group at Stanford, led 
+by David E. Rumelhart and James L. McClelland (Rumelhart 
+et al. 1986) proposing that knowledge is represented in a dis-
+tributed manner across many simple units (neurons) rather than 
+localized discrete structures like words or symbols. Their dis-
+tributed representation approach introduced a new paradigm: 
+instead of representing words as discrete symbols, a simple 
+neural network trained on large text corpora learned to encode 
+words as dense, continuous vectors—known as word embed-
+dings developed by Hinton (1986) and later by Mikolov, Chen, 
+et al. (2013), Mikolov, Sutskever, et al. (2013) at Google through 
+the creation of Word2Vec.
+These embeddings captured semantic relationships by lever-
+aging co-­occurrence patterns across large corpora, such as the 
+entire Wikipedia dataset. Unlike traditional discrete represen-
+tations, embeddings learned from models like Word2Vec and 
+GloVe (Pennington et  al.  2014) encode words as vectors in a 
+continuous space (dimensions ranging from 764 to 3072), where 
+dimensions reflect latent semantic properties. Similar words—
+those frequently appearing in similar contexts—are assigned 
+closely aligned vectors. Knowledge is represented in a contin-
+uous vector space, where each entity (like a word or concept) 
+is encoded as a point in this space. This allows for capturing 
+semantic similarities based on the proximity of these points. 
+Each unit (or dimension) in a vector may represent a semantic 
+feature, and the complete vector serves to decompose a word's 
+representation into smaller, semantically meaningful com-
+ponents. Consequently, a discrete symbol (such as a word) is 
+transformed into a more efficient, continuous representation in 
+a high-­dimensional feature space. The similarity between two 
+words can then be computed based on the extent to which they 
+share these semantic features. Therefore, two words that are or-
+thographically distinct and treated as categorically different in 
+discrete symbolic systems may, in vector space, exhibit a high 
+degree of semantic similarity if they share the same or closely 
+related feature representations.
+This advancement mitigated the shortcomings of previous 
+methods by ensuring that synonyms were mapped to similar 
+representations, reducing the impact of lexical differences.
+However, these static embeddings were limited by the fact that 
+they assigned a single vector per word, regardless of context. 
+This rigid mapping failed to account for polysemous words, such 
+as “port,” which could refer to a harbor, a network endpoint, or 
+a physical interface like a USB connection. The introduction of 
+transformers and attention mechanisms revolutionized this par-
+adigm by enabling context-­dependent embeddings.
+Transformers leverage attention mechanisms to dynamically 
+adjust word representations based on surrounding context. 
+Instead of using a fixed embedding, the model reconfigures 
+word vectors by attending to relevant tokens within the se-
+quence, thereby reconstructing latent semantic structures that 
+are context-­sensitive. This capability was transformative, as 
+it allowed models to distinguish between different meanings 
+of the same word, adapting their representations dynamically 
+during processing.
+This innovation not only enriched word embeddings but also 
+enabled transformers to capture complex, long-­range dependen-
+cies within text. By attending to context and dynamically refin-
+ing word vectors, LLMs significantly enhanced the coherence 
+and relevance of generated outputs. Ultimately, the foundation 
+of modern NLP—contextual embeddings—derives from this 
+ability to construct meaning-­rich representations, which are at 
+the core of the unprecedented advancements seen in AI-­driven 
+text generation and understanding.
+3   |   Metaphors and Early Foundations of 
+Measuring Creativity via Embeddings
+Why are embeddings important? In tasks such as those found 
+in the PISA creative thinking assessment, where students gen-
+erate multiple story titles for an image or invent a narrative in-
+spired by an arbitrary number like “2983,” the challenge lies in 
+quantifying the originality (how rare and unique a response is), 
+flexibility (how varied the responses are in terms of conceptual 
+categories), and appropriateness of responses (how well the re-
+sponse aligns with task constraints and meaning). Traditional 
+approaches relied on human raters to evaluate novelty and se-
+mantic distance, but embeddings now offer an automated way 
+to assess the creative value of textual productions. Embeddings 
+provide a computational method to assess semantic similarity 
+and conceptual distance between words and ideas.
+The cognitive psychology foundations for metaphor assessment, 
+established long before embeddings, implicitly contained the 
+principles later formalized in computational models. Rumelhart 
+and Abrahamson (1973) laid the foundational groundwork for 
+understanding metaphor and analogical reasoning, proposing 
+that reasoning functions as a retrieval process dependent on 
+structure rather than content. They suggested that conceptual 
+similarity could be mapped in vector space, where elements are 
+represented as points with measurable distances.
+Tourangeau and Sternberg  (1981) extended Rumelhart and 
+Abrahamson's ideas in their Domain-­Interaction Model, offer-
+ing a cognitive explanation for how metaphors function. Their 
+model introduced two core components of creative metaphors: 
+(a) equivalence: the mapping of a concept onto another domain 
+based on shared structural features (e.g., “The mustache is the 
+antenna of the cat” because mustaches and antennas are thin, 
+positioned on the body, and interact with the environment) and 
+(b) remoteness: the greater the conceptual distance between the 
+domains (e.g., animals and communication devices), the more 
+creative the metaphor (Primi 2014).
+This cognitive framework aligns with the idea that creativity 
+relies on analogical reasoning, where structured memory re-
+trieval plays a key role. However, at the time, such models re-
+lied on human-­judged multidimensional scaling to determine 
+word distances—an approach that was labor-­intensive and lim-
+ited in scope. Today, AI-­generated embeddings allow for large-­
+scale, automated measurement of these semantic relationships, 
+ 21626057, 2026, 1, Downloaded from https://onlinelibrary.wiley.com/doi/10.1002/jocb.70082 by Beykent University, Wiley Online Library on [24/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+4 of 12
+The Journal of Creative Behavior, 2026
+providing a more scalable solution for evaluating metaphorical 
+creativity.
+Tourangeau and Sternberg's work, building on Rumelhart and 
+Abrahamson's model, highlighted the necessity of quantifying 
+semantic distance. Yet, their studies were constrained by the 
+lack of computational tools to represent words as points in a 
+high-­dimensional space. Instead, they relied on manually rated 
+similarity scores of pairs of concepts. Interestingly, much later 
+Mikolov's (2013) word embeddings demonstrated that semantic 
+relationships are preserved through vector arithmetic, allowing 
+analogies such as: King−Man+Woman = Queen. This computa-
+tional discovery provided empirical evidence that word embed-
+dings capture the very structural semantic distances theorized, 
+by cognitive psychologists, decades earlier. However, Mikolov 
+did not explicitly reference these prior models, despite their con-
+ceptual alignment.
+This approach sets the initial foundation for new methodolo-
+gies in AI-­assisted creativity measurement, allowing for cross-­
+linguistic, domain-­independent scoring systems. In doing so, it 
+advances the longstanding goal of quantifying creative thought 
+processes—an endeavor that began with human-­judged similar-
+ity ratings and has now reached the realm of machine-­encoded 
+semantic representations.
+4   |   From Human Judgments to AI-­Driven 
+Creativity Scoring
+Recently, Artificial Intelligence (AI) has been successfully 
+applied to assess creativity in these divergent thinking tasks 
+(see a review in Nakano  2025). These methods fall under 
+three broad categories: unsupervised approaches, supervised 
+approaches, and few-­shot learning approaches. Each of these 
+has demonstrated various levels of effectiveness in automat-
+ing creativity assessments, particularly in tasks like those 
+used in PISA.
+Unsupervised Methods rely on transfer learning of semantic 
+meaning from LLM's pre-­trained in a large corpus of data to 
+a specific task requiring no labeled training data. Techniques 
+use pre-­trained word embeddings (Glove, Word2Vec, BERT) 
+and cosine similarity to help evaluate how semantically distant 
+responses are from given stimuli. Supervised Methods involve 
+fine-­tuning pre-­trained models (e.g., BERT, GPT-­3, T5) using a 
+small, labeled dataset. This approach enables models to learn 
+creativity scoring patterns based on human-­rated data, enhanc-
+ing prediction accuracy. Finally, few-­shot learning leverages 
+the ability to learn the scoring task if provided with clear in-
+structions and few examples. Unlike full fine-­tuning, few-­shot 
+learning provides efficient adaptability with no need for training 
+(Brown et al. 2020).
+4.1   |   Unsupervised Approaches to Automated 
+Creativity Scoring
+Beaty and Johnson  (2021) successfully used unsupervised 
+techniques to score Alternate Uses Divergent Thinking Tasks 
+(AUT e.g., alternative uses for “rope,” “box,” “brick,” etc.). These 
+approaches, leveraging transfer learning, involve extracting 
+word embeddings from GloVe, Word2Vec (static embeddings), 
+or BERT (contextual embeddings) and computing one minus 
+the cosine similarity to measure the semantic distance between 
+the embedding of a stimulus (e.g., a “box”) and the participant's 
+response. They called this index semantic distance (SEMdis, 
+see http://​semdis.​wlu.​psu.​edu). The authors developed and pub-
+lished the Creativity Assessment Platform (CAP; https://​cap.​ist.​
+psu.​edu/​claus​; accessed August 5, 2025), an online tool designed 
+to assist researchers in scoring AUT among other creative tasks.
+For multi-­word ideas, embeddings can be averaged or computed 
+via cumulative multiplication, or the semantic distance of the 
+most remote word in a response relative to the AUT prompt 
+before cosine similarity is calculated (called MAD). Responses 
+that are semantically distant from the stimulus tend to be rated 
+as more original by human judges with correlations ranging 
+from 0.68 to 0.81 (Acar et al. 2024; Buczak et al. 2023; Dumas 
+et al. 2021; Forthmann et al. 2023; Goecke et al. 2024; Grajzel 
+et al. 2023; Luchini et al. 2025; Maddock et al. 2001; Patterson, 
+Merseal, et al. 2023; Patterson, Barbot, et al. 2023; Yu et al. 2023). 
+A variation of this method, called Divergent Semantic Index 
+(DSI), was developed for short creative writing tasks. Instead of 
+comparing responses to a stimulus, DSI computes the average 
+semantic distance among all words within a response. High DSI 
+values indicate responses that incorporate diverse concepts, cor-
+relating strongly with human creativity ratings around r = 0.80 
+(DiStefano et al. 2024; Johnson et al. 2021, 2023).
+4.2   |   Supervised Approaches and Multilingual 
+Applications
+Patterson, Barbot, et  al.  (2023) and Patterson, Merseal, 
+et  al.  (2023) study exemplifies a different technique of fine-­
+tuning using Multilingual BERT (MBERT) and XLM-­RoBERTa 
+(XLMR) to score AUT responses across 12 languages. Their 
+study showed moderate correlations with human ratings 
+(r = 0.35–0.45), demonstrating the feasibility of multilingual 
+AI-­based scoring, a crucial aspect for large-­scale assessments 
+like PISA. DiStefano et al. (2024) also fine-­tuned RoBERTa and 
+GPT-­2 for scoring metaphor creativity. These models signifi-
+cantly outperformed traditional semantic distance measures 
+and elaboration-­based approaches, achieving correlations of 
+r = 0.70–0.73 with human ratings. This result highlights the ad-
+vantage of task-­specific tuning in accurately replicating human 
+scoring criteria.
+In line with the study described above, other supervised-­
+learning approaches have extended automated scoring of 
+the AUT task to non-­English contexts, providing additional 
+evidence for the feasibility of AI-­based scoring across multi-
+ple languages. For example, XMLR was fine-­tuned to score 
+German-­language AUT responses, achieving strong con-
+vergence with human ratings (r = 0.80; Goecke et  al.  2024). 
+Zielińska et al. (2023) tested whether Polish AUT responses 
+could be scored accurately after translation into English. Using 
+semantic distance measures and fine-­tuned GPT-­3.0 models 
+available through the public Open Creativity Scoring with AI 
+(OCSAI) platform (https://​opens​coring.​du.​edu/​; Organisciak 
+and Dumas 2020), they analyzed over 6000 ideas and found 
+ 21626057, 2026, 1, Downloaded from https://onlinelibrary.wiley.com/doi/10.1002/jocb.70082 by Beykent University, Wiley Online Library on [24/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+5 of 12
+The Journal of Creative Behavior, 2026
+latent correlations between automated and human ratings 
+ranging from r = 0.56 to r = 0.95 and showed equivalent results 
+for both translated and untranslated responses. Similarly, 
+Yang et al. (2024) developed TransDis, a semantic distance-­
+based scoring system that integrates three transformer-­based 
+BERT models (SBERT_mpnet, SBERT_MiniLM, and SimCSE) 
+to evaluate originality and flexibility in Chinese-­language 
+AUT responses. Across multiple studies, TransDis demon-
+strated strong latent correlations with human ratings (r = 0.93 
+for both originality and flexibility) and exhibited criterion 
+validity comparable to human scoring. Collectively, these 
+findings suggest that automated scoring retains measurement 
+equivalence when applied to responses in different languages, 
+whether translated into English or scored directly in the orig-
+inal language.
+4.3   |   Few-­Shot and Zero-­Shot Learning 
+Approaches
+Finally, the first demonstration of the third method was pre-
+sented by Organisciak et al. (2023) who tested both zero-­shot 
+and few-­shot learning approaches for scoring creativity in the 
+Alternate Uses Task (AUT). They compared T5 and GPT-­3 
+fine-­tuned models against GPT-­4 few-­shot learning. Few-­
+Shot Learning with GPT-­4. The fine-­tuned models achieved 
+r = 0.76–0.81, significantly outperforming traditional static em-
+beddings (r = 0.12–0.26). Few-­shot learning with GPT-­4 with 20 
+labeled examples demonstrated strong performance reaching a 
+correlation of r = 0.70, showcasing its adaptability and efficiency 
+in scoring divergent thinking responses.
+Building on the two previously described approaches, Saretzki 
+et  al.  (2025) compared semantic distance scoring from the 
+Creativity Assessment Platform (CAP-­CLAUS) and few-­shot 
+learning from the Open Creativity Scoring with AI (OCSAI) 
+platform with GPT-­4.0 in a zero-­shot configuration, using a 
+large German-­language AUT dataset of approximately 50,000 
+responses from 2320 participants across 15 objects. The mod-
+els were evaluated against human ratings for both the original 
+German responses and translations into English. All three ap-
+proaches showed substantial correlations with human scores; 
+however, OCSAI achieved the highest correlations (r = 0.66 for 
+German), followed by GPT-­4 (r = 0.55) and CLAUS (r = 0.46). 
+Translation did not produce consistent improvements. Overall, 
+these latest studies found that the few-­shot approach aligned 
+more closely with human ratings than semantic distance 
+approaches.
+4.4   |   Automated Scoring of Figural Tasks
+Whereas most work has focused on verbal tasks, recent stud-
+ies have extended AI-­scoring to drawings and multimodal re-
+sponses. Patterson, Barbot, et al. (2023) and Patterson, Merseal, 
+et al. (2023) introduced AuDrA, a convolutional neural-­network 
+platform that predicts creativity from simple line drawings. 
+Using over 13,000 drawings and ratings from nearly 60 human 
+judges, the authors trained a ResNet-­based regression model and 
+tested its generalization to new tasks and raters. AuDrA scores 
+were highly correlated with human creativity ratings for new 
+drawings from the same task (r = 0.65–0.81; mean = 0.76), and 
+these correlations exceeded those between elaboration (amount 
+of ink) and human ratings, indicating that the model captures 
+more than mere complexity.
+Using a similar methodological approach that combined 
+ResNet50 with textual embeddings of drawing titles, Zhang 
+et al. (2025) developed a multimodal model to assess novelty, flu-
+ency, and flexibility, achieving correlations with human scores 
+ranging from r = 0.56 to r = 0.81. Cropley et al. (2024) evaluated 
+an off-­the-­shelf classification tool based on Google's Gemini 
+multimodal transformer models and built a classifier for the Test 
+of Creative Thinking—Drawing Production (TCT-­DP), obtain-
+ing correlations of approximately r = 0.95 with human scoring 
+on a test set.
+Extending this line of work, Acar et al. (2025) conducted a com-
+prehensive comparison of three methodological approaches for 
+automated scoring of figural creativity tests: (a) feature-­based 
+machine-­learning classifiers using CLIP-­derived image em-
+beddings, (b) fine-­tuned vision transformer models (BEiT and 
+ViT), and (c) unsupervised semantic-­distance methods. Across 
+data from the Torrance Tests of Creative Thinking—Figural 
+and the Multi-­Trial Creative Ideation task, supervised learning 
+approaches consistently outperformed unsupervised methods, 
+with BEiT-­Large vision transformers achieving the strongest 
+correlations with human ratings (up to r = 0.85). This work 
+underscores the superiority of supervised vision-­transformer 
+approaches for scalable, accurate scoring of figural divergent-­
+thinking tasks.
+5   |   PISA Creativity Thinking AI-­Driven Scoring
+How might these methods apply to the PISA Creative Thinking 
+tasks? In an initial feasibility study, Primi et al. (2024) tested 
+them on a single PISA Creative Thinking item in which students 
+wrote a creative story based on an image (the Book Covers task). 
+SEMdis scores were computed as the semantic distance be-
+tween XLM-­RoBERTa embeddings of the stimulus description 
+and student short-­story responses in three languages (English, 
+German, and Portuguese). Unlike in Alternate Uses Tasks, 
+SEMdis correlated negatively with human scores (r = −0.48 to 
+−0.53). Possibly this result may reflect the nature of the task: 
+stories averaged 47 words, and averaging word embeddings may 
+capture the semantic proximity of the response to the stimulus, 
+thus indexing appropriateness more than originality. The study 
+also tested few-­shot learning with GPT-­4.1 and DeepSeek mod-
+els, achieving correlations (r = 0.57 to 0.60) comparable to the 
+inter-­rater reliability among human scorers (r = 0.77). When 
+combining semantic distance measures and few-­shot learning 
+in a multiple regression predicting human scores, automated 
+scoring reached r = 0.77.
+Table 1 presents exemplar tasks from PISA Creative Thinking 
+across four domains (Written Expression, Visual Expression, 
+Scientific Problem Solving, and Social Problem Solving), mapped 
+to three core skills: generating creative ideas, generating diverse 
+ideas, and evaluating/improving ideas. Each task is scored along 
+criteria such as appropriateness, originality, and flexibility. For 
+each, Table 1 also outlines potential AI-­based scoring strategies: 
+ 21626057, 2026, 1, Downloaded from https://onlinelibrary.wiley.com/doi/10.1002/jocb.70082 by Beykent University, Wiley Online Library on [24/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+6 of 12
+The Journal of Creative Behavior, 2026
+TABLE 1    |    Examples of PISA Creative Thinking tasks (based on publicized items from OECD https://​www.​oecd.​org/​en/​about/​progr​ammes/​pisa/​
+pisa-­​2022-­​creat​ive-­​think​ing-­​test-­​quest​ions.​html), Scoring Criteria, and Applicable AI-­Based Scoring Methods.
+Domain/
+Skill
+PISA instructions for 
+example task(s)
+Criteria scored
+AI scoring method method
+Written 
+Expression/
+Generate 
+diverse ideas
+ROBOT STORY (T570Q01)
+Write 2 different film story ideas for 
+a film about a human named Leo 
+who is interacting with an intelligent 
+robot named Rob. You do not need 
+to write the full film story, but 
+only explain what the film will be 
+about. The two stories should be as 
+different from each other as possible
+Appropriateness
+Flexibility
+Unsupervised:
+Use semantic distance (SEMDis) 
+between task instructions and 
+all student responses to estimate 
+appropriateness, assuming that lower 
+distance indicates greater alignment
+Use semantic distance (SEMDis) 
+between two responses to estimate 
+flexibility assuming that higher 
+distance indicates greater flexibility
+Supervised:
+Fine-­tune XLM-­RoBERTa and/or 
+GPT models to classify responses 
+into PISA scores (0–2) using 
+labeled training examples
+Zero-­/Few-­Shot:
+Prompt large language models (LLMs) 
+with a definition of appropriateness and 
+example responses (both appropriate 
+and inappropriate), then ask the model 
+to classify new responses accordingly
+Prompt LLMs to assess the degree of 
+difference between two ideas to assess 
+flexibility (examples could be provided 
+but alto zero-­shot format possible)
+Written 
+Expression/
+Generate 
+creative 
+ideas
+SPACE COMIC (T240Q01)
+Refer to the comic strip on bellow. Use 
+the text boxes to answer the question
+The text in a comic strip is intended 
+to convey the dialog between 
+characters. Write a comic strip using 
+the illustrations and text boxes on 
+the right. Your comic strip should 
+be original in the sense that not 
+many people would think of it
+Use as many of the available text 
+boxes on the right as needed
+Appropriateness
+Originality
+Same as in ROBOT STORY 
+(T570Q01) for appropriateness
+Calculate average semantic distance 
+between words of the response 
+to measure Semantic Divergent 
+Integration (DIS)task instructions 
+and all student responses to estimate 
+appropriateness, assuming that lower 
+distance indicates greater alignment
+Supervised:
+Same as in ROBOT STORY (T570Q01).
+Zero-­/Few-­Shot:
+Same as in ROBOT STORY 
+(T570Q01) for appropriateness
+Prompt large language models (LLMs) 
+with a definition of originality and 
+example responses (both low and 
+high original), then ask the model to 
+classify new responses accordingly
+(Continues)
+ 21626057, 2026, 1, Downloaded from https://onlinelibrary.wiley.com/doi/10.1002/jocb.70082 by Beykent University, Wiley Online Library on [24/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+7 of 12
+The Journal of Creative Behavior, 2026
+Domain/
+Skill
+PISA instructions for 
+example task(s)
+Criteria scored
+AI scoring method method
+Visual 
+Expression/
+Generate 
+Creative 
+Ideas
+SCIENCE FAIR POSTER (T200Q01)
+Use the drawing tools on the right 
+and the text box below to answer the 
+question. Create an original poster 
+for the Science Fair that represents 
+the theme: Life in Deep Space.
+Your poster should be original 
+in the sense that not many 
+people would think to represent 
+the theme in this way.
+Describe your design in one sentence 
+in the box below the image
+Appropriateness
+Originality
+Unsupervised:
+Use semantic distance (SEMDis) 
+between title and the instructions 
+to estimate appropriateness
+Supervised:
+Fine-­tune BEiT/ViT and/
+or ResNET models to classify 
+responses into PISA scores (0–2) 
+using labeled training examples
+Zero-­/Few-­Shot:
+Prompt multimodal large language 
+models (LLMs) with a definition of 
+appropriateness and originality and 
+example responses (both appropriate 
+and inappropriate), then ask the 
+model to classify new responses 
+into appropriate and original (this 
+method was not tested yet)
+Scientific-­
+problem 
+Solving/
+Generate 
+Diverse 
+Ideas
+SAVE THE RIVER (T690Q01)
+A lab team investigating the 
+problem has collected frogs in two 
+places along the river. Where the 
+river flows out of the city, there 
+are fewer frogs than usual
+Their main hypothesis so far is that 
+pollution from the factories and farms 
+in the surrounding area is causing 
+the problem with the frogs. However, 
+the lead scientist thinks there may 
+be other reasons for the problem 
+that are unrelated to pollution
+Describe 2 different ideas that 
+might explain why there are fewer 
+frogs where the river flows out 
+of the city. Your ideas should be 
+scientifically valid (can be tested 
+using scientific methods) and as 
+different from each other as possible.
+Appropriateness
+Flexibility
+Same as in ROBOT STORY (T570Q01)
+(Continues)
+TABLE 1    |    (Continued)
+ 21626057, 2026, 1, Downloaded from https://onlinelibrary.wiley.com/doi/10.1002/jocb.70082 by Beykent University, Wiley Online Library on [24/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+8 of 12
+The Journal of Creative Behavior, 2026
+unsupervised methods (e.g., semantic distance), supervised 
+learning (e.g., fine-­tuning XLM-­RoBERTa or vision models), 
+and few−/zero-­shot prompting of LLMs.
+These AI methods align well with PISA's scoring rubrics and 
+cognitive targets. For instance, flexibility is operationalized as 
+the semantic distance between multiple ideas, and appropriate-
+ness as proximity to task constraints. Originality can be approx-
+imated using semantic divergence or LLM-­based classification. 
+Based on the existing feasibility studies and Table 1, we argue 
+that high convergence with human ratings can be achieved 
+across diverse task formats, suggesting that automated scoring 
+is not only feasible but also psychometrically valid for large-­
+scale creativity assessments.
+6   |   Challenges and Future Directions of AI Scoring 
+Systems in PISA
+It is clear that artificial intelligence (AI) can score creative 
+thinking assessments with reliability comparable to human 
+raters. However, implementing such systems at scale in 
+international assessments like PISA introduces challenges 
+that must be addressed to ensure validity, fairness, and 
+interpretability.
+6.1   |   Validity, Reliability, and Cross-­Language 
+Invariance
+A foremost challenge is ensuring psychometric reliability and 
+validity—particularly measurement invariance across multiple 
+languages and cultural contexts. AI scoring systems may rely on 
+various large language models (LLMs), each trained on differ-
+ent corpora and in different languages. These variations effec-
+tively introduce different “raters” into the assessment process. 
+To manage this complexity, Many-­Facet Rasch Models (MFRMs, 
+Primi 2014) offer a viable psychometric framework. In this con-
+text, facets could include the specific LLM used (e.g., OpenAI, 
+Gemini), the original language of the response (or whether it 
+was translated to English), the task type, content domain, rating 
+criteria, and scoring scale. Modeling these facets enables identifi-
+cation of interactions—such as model-­by-­language effects—that 
+could compromise score comparability. There is a pressing need 
+Domain/
+Skill
+PISA instructions for 
+example task(s)
+Criteria scored
+AI scoring method method
+Scientific-­
+problem 
+Solving/
+Evaluate 
+and Improve 
+Ideas
+SAVE THE RIVER (T690Q02)
+The lab team has decided to conduct 
+an experiment to test whether 
+pollution from the factories is the 
+cause of the problem with the frogs. 
+Their proposed experiment is to
+Test the water for chemicals from 
+the sections of the river nearest 
+to the farms and factories
+Think of a way to improve the 
+experiment that is original in the sense 
+that not many people would think of 
+it. Your idea should help the team to 
+gain more conclusive evidence in order 
+to know if chemical pollution is the 
+cause of the problem with the frogs
+Describe your improved 
+experiment idea bellow
+Appropriateness
+Originality
+Same as in ROBOT STORY (T570Q02)
+Social-­
+problem 
+Solving/
+Generate 
+Diverse 
+Ideas
+SAVE THE BEES (T400Q01)
+Describe 3 different ideas that 
+could be used to make people more 
+aware of the importance of bees. 
+The ideas should be as different 
+from each other as possible. Be 
+specific in your descriptions
+You do not need to explain why 
+bees are important, but rather 
+suggest concrete actions the club 
+can take to help others become 
+more aware of the issue
+Appropariateness
+Flexibility
+Same as in ROBOT STORY (T570Q01)
+Note: Items reproduced from OECD (2022) under Creative Commons License (https://​www.​oecd.​org/​en/​about/​progr​ammes/​pisa/​pisa-­​2022-­​creat​ive-­​think​ing-­​test-­​
+quest​ions.​html). Credit: Organization for Economic Co-­operation and Development (OECD).
+TABLE 1    |    (Continued)
+ 21626057, 2026, 1, Downloaded from https://onlinelibrary.wiley.com/doi/10.1002/jocb.70082 by Beykent University, Wiley Online Library on [24/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+9 of 12
+The Journal of Creative Behavior, 2026
+for large-­scale measurement invariance studies using MFRMs 
+to address questions such as: Are LLM scores equally correlated 
+with human raters within each country? Are responses with sim-
+ilar levels of originality from different countries or languages 
+scored equivalently by LLMs (a Differential Item Functioning 
+question—DIF)?
+Beyond ensuring comparability, AI scoring opens novel pos-
+sibilities for PISA. One compelling direction is to investigate 
+whether it is possible to develop a common metric for creativ-
+ity across countries by treating LLMs as anchor judges. For in-
+stance, responses sampled across the score distribution from 
+multiple countries could be translated into English and scored 
+using a prompted LLM rubric for originality, flexibility, and ap-
+propriateness, with a few benchmarked examples. Correlations 
+between human and LLM ratings could then be examined both 
+overall and within countries. If country-­level score patterns 
+based on LLM ratings align with human scores, and if measure-
+ment invariance holds, LLMs could be incorporated as anchor 
+judges in an MFRM framework. This could partially control for 
+country-­specific rater biases and enable cross-­national compar-
+isons on a common scale. Such an approach would allow stud-
+ies to ask whether originality scoring achieves measurement 
+equivalence or exhibits country-­by-­rubric interaction—in other 
+words, whether originality is a generalizable construct or a cul-
+turally specific criterion.
+6.2   |   Scoring Core Dimensions of Creativity 
+Separately
+Another important opportunity lies in scoring the core di-
+mensions of creative thinking—appropriateness, originality, 
+and flexibility—independently. In current PISA scoring ru-
+brics, appropriateness is assessed first, and responses deemed 
+inappropriate are not evaluated further for originality or 
+flexibility. This sequential approach has impeded the study 
+of the relationship between originality and appropriateness 
+(Benedek and Beaty 2025). With LLMs, it is possible to score 
+each dimension separately, as some evidence suggests (Grajzel 
+et al. 2023; Kern et al. 2024; Luchini et al. 2025). However, 
+this would also require rescoring PISA data by human judges 
+on each dimension separately to study convergence with auto-
+mated scores.
+6.3   |   Interpretability of Embeddings 
+and Scoring Rules
+A major limitation of AI scoring systems lies in the transpar-
+ency of their scoring rules. Even when AI-­generated scores ex-
+hibit high correlations with human ratings, the rationale behind 
+these scores often remains opaque. Unlike earlier computational 
+approaches, which employed simple vector-­based models in met-
+aphor studies with clear theoretical underpinnings, contempo-
+rary embedding-­based methods lack interpretability (Rumelhart 
+and Abrahamson 1973; Tourangeau and Sternberg 1981). The 
+high-­dimensional nature of LLM-­generated embeddings ob-
+scures the specific semantic features represented in each di-
+mension. Studies in mechanistic interpretability suggest that 
+multiple semantic features may be superimposed within the 
+same embedding space, complicating efforts to explain why a 
+particular response receives a given score (see https://​trans​forme​
+r-­​circu​its.​pub/​2024/​scali​ng-­​monos​emant​icity/​index.​html from 
+the Anthropic research group on mechanistic interpretability).
+One important area of investigation with PISA data is what 
+semantic information embeddings capture. Can they be 
+used, for instance, to run topic modeling (e.g., BERTopic, 
+Grootendorst  2022) to classify responses into different themes 
+and study the universe of responses and their statistical distri-
+butions? Since multimodal models create a shared embedding 
+space for images and text, can embeddings from these models be 
+used to run topic modeling on images? How is this semantic in-
+formation moderated by the number of words or overall response 
+length? Initial evidence shows that semantic distance works well 
+to assess originality in very short AUT responses but behaves dif-
+ferently in longer narratives like in PISA, where the closer the 
+response is to the stimulus, the higher the human score (Primi 
+et al. 2024). Does this result indicate that PISA scoring is valuing 
+elaboration and appropriateness more than originality, or does it 
+imply that what semantic measures capture changes as a func-
+tion of text length? These are important questions for improving 
+understanding of the scoring patterns implemented by semantic 
+distance measures.
+6.4   |   AI's Limits in Capturing Originality 
+and Creativity
+A fundamental question in AI-­driven assessment—especially 
+when using few-­shot learning—is whether LLMs can truly rec-
+ognize originality, or, more provocatively, whether they can be 
+creative themselves. If a student produces a genuinely novel idea 
+that is not represented in the model's training data, an AI sys-
+tem may fail to recognize its value, potentially assigning lower 
+scores or classifying it as irrelevant. This paradox raises con-
+cerns about AI's ability to fairly evaluate responses that fall out-
+side the distribution of its training data. An important question 
+for PISA when using a few-­shot learning regimen is to assess the 
+types of errors the model makes relative to human scoring: Are 
+LLMs more likely to underscore original responses or overesti-
+mate conventional ones? Addressing this will clarify the limita-
+tions of LLMs in scoring ideas.
+A controversial yet intriguing aspect of AI models is their ten-
+dency to generate hallucinations—plausible yet factually in-
+correct relationships. While traditionally seen as a flaw, these 
+hallucinations can, in some cases, be viewed as an emergent 
+form of creative thinking. AI-­generated responses that synthe-
+size disparate concepts, even if not entirely factual, might ex-
+hibit creative potential. This perspective raises the possibility 
+that AI could serve as both an assessor and a facilitator of cre-
+ativity, steering models toward generating novel, albeit specula-
+tive, solutions (Sun et al. 2024).
+Beyond educational assessment, the ability to steer AI models 
+toward recognizing and fostering creativity has implications 
+for artificial intelligence research itself. If AI models can be 
+fine-­tuned to assess creativity, they could, in turn, be used to 
+evaluate other AI systems, forming a reinforcement learning 
+feedback loop that incentivizes creative problem solving. This 
+ 21626057, 2026, 1, Downloaded from https://onlinelibrary.wiley.com/doi/10.1002/jocb.70082 by Beykent University, Wiley Online Library on [24/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+10 of 12
+The Journal of Creative Behavior, 2026
+could enhance AI training pipelines, enabling models not just 
+to replicate past knowledge but to actively generate novel ideas.
+6.5   |   Open Access to Tasks, Responses, and Scoring 
+Platforms
+One practical constraint in advancing this agenda with PISA 
+data is that most materials (student responses, items, and soft-
+ware) are not publicly available. They can be requested for re-
+search purposes, but access is not guaranteed, especially for 
+student responses. All the developments proposed here for 
+creativity assessment—and the practicality of large-­scale as-
+sessments—depend on coordinated work across the research 
+community. Any effort to make these data more open and pub-
+licly available would have a substantial impact on the advance-
+ment of creativity assessment.
+Another important direction is the development of open-­source 
+platforms with creativity tasks—such as those used in PISA—
+that can be adopted by the research and teaching communities 
+in their assessments. These platforms should incorporate au-
+tomated scoring systems, following the example of initiatives 
+like the Creativity Assessment Platform (CAP; https://​cap.​ist.​
+psu.​edu/​claus​) and Open Creativity Scoring with AI (OCSAI; 
+https://​opens​coring.​du.​edu/​). The scoring burden that once 
+hindered the inclusion of creativity assessments in large-­scale 
+systems has already been overcome. Automated platforms can 
+now make such assessments widely accessible and accelerate our 
+understanding of creativity as they are regularly integrated into 
+educational evaluations (Benedek and Beaty 2025). It would be 
+especially fruitful to develop such platforms using publicly re-
+leased PISA items.
+In conclusion, realizing the promise of AI-­powered scoring for 
+PISA and other large-­scale creativity assessments requires a 
+dual commitment to rigor and transparency. Psychometric safe-
+guards—such as MFRMs with LLM facets and cross-­language 
+measurement invariance studies—are essential to secure com-
+parability across countries and languages. Methodologically, 
+treating LLMs as anchor judges, independently scoring core 
+dimensions (appropriateness, originality, flexibility), and au-
+diting error profiles under few-­shot regimes can strengthen 
+validity and fairness. Technically, investments in interpret-
+ability for embedding-­based scoring and systematic analyses 
+of semantic distance behavior across response lengths will 
+clarify what is being measured. Finally, enabling secure, ethi-
+cal access to response data will accelerate cumulative science 
+and practice. Together, these steps can position PISA to use 
+AI not only to scale reliable scoring but also to deepen our 
+understanding of how creativity manifests across cultures, 
+thereby supporting more equitable, meaningful international 
+comparisons.
+Acknowledgments
+This article is part of a research program on socio-­emotional skills 
+sponsored by the Ayrton Senna Foundation in partnership with OECD. 
+The first author also receives a scholarship from the National Council 
+on Scientific and Technological Development (CNPq). The Article 
+Processing Charge for the publication of this research was funded by 
+the Coordenação de Aperfeiçoamento de Pessoal de Nível Superior -­ 
+Brasil (CAPES) (ROR identifier: 00x0ma614).
+Funding
+This work was supported by the EduLab21, Ayrton Senna Institute, 
+Conselho Nacional de Pessquisa Científica (CNPq, Grant No. 
+309900/2023-9) and Coordenacao de Aperfeicoamento de Pessoal de 
+Nivel Superior (CAPES).
+Conflicts of Interest
+The authors declare no conflicts of interest.
+Data Availability Statement
+Data sharing not applicable to this article as no datasets were generated 
+or analyzed during the current study.
+References
+Acar, S., D. Dumas, P. Organisciak, and K. Berthiaume. 2024. 
+“Measuring Original Thinking in Elementary School: Development 
+and Validation of a Computational Psychometric Approach.” Journal 
+of Educational Psychology 116, no. 6: 953–981. https://​doi.​org/​10.​1037/​
+edu00​00844​.
+Acar, S., P. Organisciak, and D. Dumas. 2025. “Automated Scoring of 
+Figural Tests of Creativity With Computer Vision.” Journal of Creative 
+Behavior 59, no. 1: e677. https://​doi.​org/​10.​1002/​jocb.​677.
+Barbot, B., and J. C. Kaufman. 2025. “PISA 2022 Creative Thinking 
+Assessment: Opportunities, Challenges, and Cautions.” Journal of 
+Creative Behavior 59, no. 1: e70003. https://​doi.​org/​10.​1002/​jocb.​70003​.
+Beaty, R. E., and D. R. Johnson. 2021. “Automating Creativity 
+Assessment With SemDis: An Open Platform for Computing Semantic 
+Distance.” Behavior Research Methods 53, no. 2: 757–780. https://​doi.​
+org/​10.​3758/​s1342​8-­​020-­​01453​-­​w.
+Benedek, M., and R. E. Beaty. 2025. “Envisioning the Future of Creative 
+Thinking Assessment.” Journal of Creative Behavior 59, no. 2: e70036. 
+https://​doi.​org/​10.​1002/​jocb.​70036​.
+Brown, T. B., B. Mann, N. Ryder, et al. 2020. “Language Models Are 
+Few-­Shot Learners (N. arXiv:2005.14165).” arXiv. https://​doi.​org/​10.​
+48550/​arXiv.​2005.​14165​.
+Buczak, P., H. Huang, B. Forthmann, and P. Doebler. 2023. “The Machines 
+Take Over: A Comparison of Various Supervised Learning Approaches 
+for Automated Scoring of Divergent Thinking Tasks.” Journal of Creative 
+Behavior 57, no. 1: 17–36. https://​doi.​org/​10.​1002/​jocb.​559.
+Cropley, D. H., C. Theurer, A. C. S. Mathijssen, and R. L. Marrone. 2024. 
+“Fit-­For-­Purpose Creativity Assessment: Automatic Scoring of the Test 
+of Creative Thinking – Drawing Production (TCT-­DP).” Creativity 
+Research Journal 37, no. 4: 539–554. https://​doi.​org/​10.​1080/​10400​419.​
+2024.​2339667.
+Devlin, J., M.-­W. Chang, K. Lee, and K. Toutanova. 2019. “BERT: 
+Pre-­Training of Deep Bidirectional Transformers for Language 
+Understanding.” arXiv:1810.04805. https://​doi.​org/​10.​48550/​arXiv.​1810.​
+04805​.
+DiStefano, P. V., J. D. Patterson, and R. E. Beaty. 2024. “Automatic 
+Scoring of Metaphor Creativity With Large Language Models.” 
+Creativity Research Journal 37, no. 4: 1–15. https://​doi.​org/​10.​1080/​
+10400​419.​2024.​2326343.
+Dumas, D., P. Organisciak, and M. Doherty. 2021. “Measuring Divergent 
+Thinking Originality With Human Raters and Text-­Mining Models: 
+A Psychometric Comparison of Methods.” Psychology of Aesthetics, 
+ 21626057, 2026, 1, Downloaded from https://onlinelibrary.wiley.com/doi/10.1002/jocb.70082 by Beykent University, Wiley Online Library on [24/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+11 of 12
+The Journal of Creative Behavior, 2026
+Creativity, and the Arts 15, no. 4: 645–663. https://​doi.​org/​10.​1037/​aca00​
+00319​.
+Forthmann, B., R. E. Beaty, and D. R. Johnson. 2023. “Semantic Spaces 
+Are Not Created Equal—How Should We Weigh Them in the Sequel? 
+On Composites in Automated Creativity Scoring.” European Journal 
+of Psychological Assessment 39, no. 6: 449–461. https://​doi.​org/​10.​1027/​
+1015-­​5759/​a000723.
+Goecke, B., P. V. DiStefano, W. Aschauer, K. Haim, R. E. Beaty, and 
+B. Forthmann. 2024. “Automated Scoring of Scientific Creativity in 
+German.” Journal of Creative Behavior 58, no. 3: 321–327. https://​doi.​
+org/​10.​1002/​jocb.​658.
+Grajzel, K., S. Acar, D. Dumas, P. Organisciak, and K. Berthiaume. 
+2023. “Measuring Flexibility: A Text-­Mining Approach.” Frontiers in 
+Psychology 13: 1093343. https://​doi.​org/​10.​3389/​fpsyg.​2022.​1093343.
+Grootendorst, M. 2022. “BERTopic: Neural Topic Modeling With a 
+Class-­Based TF-­IDF Procedure.” arXiv:2203.05794. https://​doi.​org/​10.​
+48550/​arXiv.​2203.​05794​.
+Guilford, J. P. 1950. “Creativity.” American Psychologist 5, no. 9: 444–
+454. https://​doi.​org/​10.​1037/​h0063487.
+Hinton, G. E. 1986. “Learning Distributed Representations of Concepts.” 
+Proceedings of the Annual Meeting of the Cognitive Science Society 8. 
+https://​escho​larsh​ip.​org/​uc/​item/​79w838g1.
+Johnson, D. R., J. C. Kaufman, B. Baker, et  al. 2021. “Extracting 
+Creativity From Narratives Using Distributional Semantic Modeling.” 
+https://​www.​resea​rchga​te.​net/​profi​le/​Roger​-­​Beaty/​publi​cation/​35675​
+5697_​Extra​cting_​Creat​ivity_​from_​Narra​tives_​using_​Distr​ibuti​onal_​
+Seman​tic_​Model​ing/​links/​61aa2​a7caa​de5b1​bf5ff​d227/​Extra​cting​
+-­​Creat​ivity​-­​from-­​Narra​tives​-­​using​-­​Distr​ibuti​onal-­​Seman​tic-­​Model​
+ing.​pdf.
+Johnson, D. R., J. C. Kaufman, B. S. Baker, et  al. 2023. “Divergent 
+Semantic Integration (DSI): Extracting Creativity From Narratives 
+With Distributional Semantic Modeling.” Behavior Research Methods 
+55, no. 7: 3726–3759. https://​doi.​org/​10.​3758/​s1342​8-­​022-­​01986​-­​2.
+Kern, F. B., C.-­T. Wu, and Z. C. Chao. 2024. “Assessing Novelty, 
+Feasibility and Value of Creative Ideas With an Unsupervised Approach 
+Using GPT-­4.” British Journal of Psychology. https://​doi.​org/​10.​1111/​
+bjop.​12720​.
+Luchini, S. A., N. T. Maliakkal, P. V. DiStefano, et al. 2025. “Automated 
+Scoring of Creative Problem Solving With Large Language Models: 
+A Comparison of Originality and Quality Ratings.” Psychology of 
+Aesthetics, Creativity, and the Arts. https://​doi.​org/​10.​1037/​aca00​
+00736​.
+Maddock, J. E., R. G. Laforge, J. S. Rossi, and T. O'Hare. 2001. “The 
+College Alcohol Problems Scale.” Addictive Behaviors 26, no. 3: 385–398. 
+https://​doi.​org/​10.​1016/​S0306​-­​4603(00)​00116​-­​7.
+Mikolov, T., K. Chen, G. Corrado, and J. Dean. 2013. “Efficient 
+Estimation of Word Representations in Vector Space.” https://​arxiv.​org/​
+abs/​1301.​3781.
+Mikolov, T., I. Sutskever, K. Chen, G. S. Corrado, and J. Dean. 2013. 
+“Distributed Representations of Words and Phrases and Their 
+Compositionality.” In Advances in Neural Information Processing 
+Systems, 3111–3119. https://​proce​edings.​neuri​ps.​cc/​paper/​2013/​hash/​
+9aa42​b3188​2ec03​9965f​3c492​3ce90​1b-­​Abstr​act.​html.
+Nakano, T. C. 2025. “Inteligência artificial na cotação de testes de cria-
+tividade: Uma realidade no contexto internacional.” Psicologia: Ciência 
+e Profissão.
+OECD. 2021. “PISA 2021 Creative Thinking Framework.” https://​doi.​
+org/​10.​1787/​97892​64305​274-­​en.
+OECD. 2024. PISA 2022 Results (Volume III): Creative Minds, Creative 
+Schools. https://​doi.​org/​10.​1787/​765ee​8c2-­​en.
+Organisciak, P., S. Acar, D. Dumas, and K. Berthiaume. 2023. “Beyond 
+Semantic Distance: Automated Scoring of Divergent Thinking Greatly 
+Improves With Large Language Models.” Thinking Skills and Creativity 
+49: 101356. https://​doi.​org/​10.​1016/j.​tsc.​2023.​101356.
+Organisciak, P., and D. Dumas. 2020. “Open Creativity Scoring 
+[Computer Program].” https://​opens​coring.​du.​edu/​.
+Patterson, J. D., B. Barbot, J. Lloyd-­Cox, and R. E. Beaty. 2023. 
+“AuDrA: An Automated Drawing Assessment Platform for Evaluating 
+Creativity.” Behavior Research Methods 56: 3619–3636. https://​doi.​org/​
+10.​3758/​s1342​8-­​023-­​02258​-­​3.
+Patterson, J. D., H. M. Merseal, D. R. Johnson, et al. 2023. “Multilingual 
+Semantic Distance: Automatic Verbal Creativity Assessment in Many 
+Languages.” Psychology of Aesthetics, Creativity, and the Arts 17, no. 4: 
+495–507. https://​doi.​org/​10.​1037/​aca00​00618​.
+Pennington, J., R. Socher, and C. Manning. 2014. “GloVe: Global 
+Vectors for Word Representation.” In Proceedings of the 2014 
+Conference on Empirical Methods in Natural Language Processing 
+(EMNLP), edited by A. Moschitti, B. Pang, and W. Daelemans, 1532–
+1543. Association for Computational Linguistics. https://​doi.​org/​10.​
+3115/​v1/​D14-­​1162.
+Primi, R. 2014. “Divergent Productions of Metaphors: Combining Many-­
+Facet Rasch Measurement and Cognitive Psychology in the Assessment 
+of Creativity.” Psychology of Aesthetics, Creativity, and the Arts 8: 461–
+474. https://​doi.​org/​10.​1037/​a0038055.
+Primi, R., R. E. Beaty, J. D. Patterson, et  al. 2024. “Beyond Human 
+Raters: Using AI and NLP in PISA's Creative Thinking Tests [Paper 
+Presentation].” Annual Meeting Program 2024 National Council of 
+Measurement in Education (NCME) Annual Meeting, Philadelphia, 
+EUA.
+Rosenbusch, H., F. Wanders, and I. L. Pit. 2020. “The Semantic Scale 
+Network: An Online Tool to Detect Semantic Overlap of Psychological 
+Scales and Prevent Scale Redundancies.” Psychological Methods 25, no. 
+3: 380–392. https://​doi.​org/​10.​1037/​met00​00244​.
+Rumelhart, D. E., and A. A. Abrahamson. 1973. “A Model for Analogical 
+Reasoning.” Cognitive Psychology 5, no. 1: 1–28. https://​doi.​org/​10.​1016/​
+0010-­​0285(73)​90023​-­​6.
+Rumelhart, D. E., J. L. McClelland, and Group, P. R. 1986. Parallel 
+Distributed Processing: Explorations in the Microstructure of Cognition: 
+Foundations. 
+MIT 
+Press. 
+https://​doi.​org/​10.​7551/​mitpr​ess/​5236.​
+001.​0001.
+Saretzki, J., T. Knopf, B. Forthmann, et  al. 2025. “Scoring German 
+Alternate Uses Items Applying Large Language Models.” Journal of 
+Intelligence 13: 64. https://​doi.​org/​10.​3390/​jinte​llige​nce13​060064.
+Sievert, C., and K. Shirley. 2014. “LDAvis: A Method for Visualizing 
+and Interpreting Topics.” In Proceedings of the Workshop on 
+Interactive Language Learning, Visualization, and Interfaces, edited 
+by J. Chuang, S. Green, M. Hearst, J. Heer, and P. Koehn, 63–70. 
+Association for Computational Linguistics. https://​doi.​org/​10.​3115/​
+v1/​W14-­​3110.
+Sun, G., M. Jin, Z. Wang, et  al. 2024. Hallucinating LLM Could Be 
+Creative. https://​openr​eview.​net/​forum?​id=​W48CP​XEpXR​.
+Torrance, E. P. 1968. Torrance Tests of Creative Thinking. Scholastic 
+Testing Service.
+Tourangeau, R., and R. J. Sternberg. 1981. “Aptness in Metaphor.” 
+Cognitive Psychology 13, no. 1: 27–55. https://​doi.​org/​10.​1016/​0010-­​
+0285(81)​90003​-­​7.
+Vaswani, A., N. Shazeer, N. Parmar, et al. 2017. “Attention Is All You 
+Need.” 31st Conference on Neural Information Processing System. 
+Long Beach, CA. https://​papers.​neuri​ps.​cc/​paper/​2017/​file/​3f5ee​24354​
+7dee9​1fbd0​53c1c​4a845​aa-­​Paper.​pdf.
+ 21626057, 2026, 1, Downloaded from https://onlinelibrary.wiley.com/doi/10.1002/jocb.70082 by Beykent University, Wiley Online Library on [24/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+12 of 12
+The Journal of Creative Behavior, 2026
+Yang, T., Q. Zhang, Z. Sun, and Y. Hou. 2024. “Automatic Assessment 
+of Divergent Thinking in Chinese Language With TransDis: A 
+Transformer-­Based Language Model Approach.” Behavior Research 
+Methods 56, no. 6: 5798–5819. https://​doi.​org/​10.​3758/​s1342​8-­​023-­​
+02313​-­​z.
+Yu, Y., R. E. Beaty, B. Forthmann, M. Beeman, J. H. Cruz, and D. 
+Johnson. 2023. “A MAD Method to Assess Idea Novelty: Improving 
+Validity of Automatic Scoring Using Maximum Associative Distance 
+(MAD).” Psychology of Aesthetics, Creativity, and the Arts 19, no. 4: 849–
+856. https://​doi.​org/​10.​1037/​aca00​00573​.
+Zhang, H., H. Dong, Y. Wang, et al. 2025. “Automated Graphic Divergent 
+Thinking Assessment: A Multimodal Machine Learning Approach.” 
+Journal of Intelligence 13, no. 4: 45. https://​doi.​org/​10.​3390/​jinte​llige​
+nce13​040045.
+Zielińska, A., P. Organisciak, D. Dumas, and M. Karwowski. 2023. 
+“Lost in Translation? Not for Large Language Models: Automated 
+Divergent Thinking Scoring Performance Translates to Non-­English 
+Contexts.” Thinking Skills and Creativity 50: 101414. https://​doi.​org/​10.​
+1016/j.​tsc.​2023.​101414.
+ 21626057, 2026, 1, Downloaded from https://onlinelibrary.wiley.com/doi/10.1002/jocb.70082 by Beykent University, Wiley Online Library on [24/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License

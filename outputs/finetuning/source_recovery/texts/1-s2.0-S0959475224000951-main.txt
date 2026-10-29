@@ -1,0 +1,1386 @@
+Learning and Instruction 93 (2024) 101968
+
+Contents lists available at ScienceDirect
+
+Learning and Instruction
+journal homepage: www.elsevier.com/locate/learninstruc
+
+Little and often: Causal inference machine learning demonstrates the
+benefits of homework for improving achievement in mathematics
+and science
+Nathan McJames a, b, * , Andrew Parnell a, b , Ann O’Shea b
+a
+b
+
+Hamilton Institute, Maynooth University, Maynooth, County Kildare, Ireland
+Department of Mathematics and Statistics, Maynooth University, Maynooth, County Kildare, Ireland
+
+A R T I C L E I N F O
+
+A B S T R A C T
+
+Keywords:
+Bayesian Causal Forests
+Causal Inference
+Homework
+Machine Learning
+TIMSS
+
+Background: Despite its important role in education, significant gaps remain in the literature on homework.
+Notably, there is a dearth of understanding regarding how homework effects vary across different subjects, how
+student backgrounds may moderate its effectiveness, what the optimal amount and distribution of homework is,
+and how the causal impact of homework can be disentangled from other associations.
+Aims: This study examines the different effects of homework frequency and duration on student achievement in
+both mathematics and science while adopting a causal inference probabilistic framework.
+Sample: Our data consists of a nationally representative sample of 4118 Irish eighth grade students, collected as
+part of TIMSS 2019.
+Methods: We employ an extension of a causal inference machine learning model called Bayesian Causal Forests
+that allows us to consider the effect of homework on achievement in mathematics and science simultaneously. By
+investigating the impacts of both homework frequency and duration, we discern the optimal frequency and
+duration for homework in both subjects. Additionally, we explore the potential moderating role of student socioeconomic backgrounds.
+Results: Daily homework benefitted mathematics achievement the most, while three to four days per week was
+most effective for science. Short-duration assignments proved equally as effective as longer ones in both subjects.
+Notably, students from advantaged socioeconomic backgrounds did not gain more from homework.
+Conclusions: These findings can guide policies aimed at enhancing student outcomes while promoting a balance
+between academic responsibilities and extracurricular activities.
+
+1. Introduction
+Homework plays a significant role in the daily lives of many students.
+Defined as the tasks assigned to be completed outside of school hours
+(Cooper, 1989), its role in shaping academic outcomes is far from understood. The conflicting perspectives surrounding the benefits and
+drawbacks of homework (Marzano & Pickering, 2007) continue to
+permeate educational literature, sparking ongoing discourse that shows
+no signs of abating. Some argue that homework is necessary for reinforcing learning and developing important skills such as time management and responsibility (Palardy, 1988), while others claim that it can
+be detrimental to students’ mental health, and reduce the amount of
+time available for other important activities (Galloway et al., 2013).
+
+Much of the research on homework indicates a modest yet positive
+impact on academic outcomes. However, this assertion demands critical
+examination. Notably, there is a growing awareness of the need to
+scrutinise how homework is distributed throughout the week (Trautwein et al., 2002), how its effects may differ by subject (Fernández-Alonso et al., 2017), and how students from different socioeconomic
+backgrounds can be impacted by homework (Eren & Henderson, 2011;
+Rønning, 2011). Compounding these issues is the ubiquitous challenge
+of confounding which is inherent in observational data, rendering causal
+interpretations elusive. However, causal inference methods remain a
+neglected avenue in the study of homework effects.
+Motivated by these gaps in the research, this study employs a new
+approach to unravel the complex relationship between homework
+
+* Corresponding author. Hamilton Institute, Maynooth University, Maynooth, County Kildare, Ireland.
+E-mail address: nathan.mcjames.2016@mumail.ie (N. McJames).
+https://doi.org/10.1016/j.learninstruc.2024.101968
+Received 13 January 2024; Received in revised form 17 June 2024; Accepted 19 June 2024
+Available online 1 July 2024
+0959-4752/© 2024 The Authors. Published by Elsevier Ltd. This is an open access article under the CC BY license (http://creativecommons.org/licenses/by/4.0/).
+
+N. McJames et al.
+
+Learning and Instruction 93 (2024) 101968
+
+frequency, duration, and student achievement. Unlike previous research
+which has typically focused on a single subject at a time, our investigation extends to both mathematics and science. Critically, we leverage
+a recent extension (McJames et al., 2024) of a causal inference machine
+learning model called Bayesian Causal Forests (Hahn et al., 2020),
+marking a departure from conventional methodologies and allowing a
+more precise understanding of causal relationships.
+The key advantage of this model is its flexibility. While simpler
+models often rely on rigid assumptions, such as assuming a linear relationship between explanatory variables and the outcome, the model
+employed in this study utilises a set of decision trees. These decision
+trees can adapt automatically to complex features, such as non-linear
+relationships or interaction terms, without requiring the researcher to
+specify these relationships in advance. This is an important feature,
+because complex factors are known to influence the amount of homework students are likely to receive, and the benefit they may derive from
+it (Corno, 1996).
+By accurately accounting for these often complicated relationships,
+the model separates the estimation of student achievement into two
+distinct parts: a level of achievement which would be observed without
+any homework, and a second part which estimates the change in
+achievement directly attributable to the homework. This isolation of the
+causal impact of homework from other associations allows for a causal
+interpretation of the results. Specifically, the causal estimates provided
+by the model are known as conditional average treatment effects: they
+estimate for each individual the amount by which their achievement
+would change by if they were moved from a control group (no homework) to a hypothetical treatment group (homework with a defined level
+of frequency and duration).
+We apply this model to Irish eighth grade data from the Trends in
+International Mathematics and Science Study (TIMSS 2019; Mullis et al.,
+2020): A nationally representative sample of Irish eighth grade students,
+with an average age of 14.4 years, 51.2% of whom identified as male.
+The data provides us with an estimate of academic achievement in both
+mathematics and science, as measured by a standardised assessment.
+Important contextual information related to the backgrounds of the
+students, their parents, their attitudes towards studying these subjects,
+and insights into their school learning environment are also provided.
+This data, combined with details of how often the students receive
+homework, and how long this homework usually lasts, makes TIMSS
+very well suited to the current investigation.
+A more detailed description of our model, and the Irish data to which
+it is applied can be found in the methodology section, but now we review
+some key findings from the literature, and the unanswered questions
+motivating our study.
+
+extracurricular activities, and strains on families (Galloway et al., 2013;
+Pressman et al., 2015).
+An often overlooked facet in homework studies is the strategic
+allocation of homework time throughout the week. Trautwein et al.
+(2002) underscored the importance of considering not only the total
+time spent on homework but also the frequency at which it is given.
+Their study revealed that homework frequency is a strong predictor of
+academic achievement, while overall time spent on homework is not.
+This highlights the need to dissect homework into its frequency and
+duration components for a more nuanced understanding. The primary
+importance of homework frequency rather than duration is further
+supported by Fernández-Alonso et al. (2019) and Trautwein (2007) who
+arrive at similar conclusions. However, Zhu and Leung’s (2012) contrary
+findings complicate this narrative, emphasising the necessity for further
+research into the nuanced effects of homework frequency and duration
+to reconcile these conflicting perspectives.
+1.1.2. Subject specific homework effects
+In addition to the frequency and duration considerations discussed
+above, a number of studies have indicated that the effects of homework
+on student achievement may vary depending on subject. Results in this
+area are quite limited however, and studies which have compared effect
+sizes in mathematics to other subjects such as history or English have
+returned conflicting results. Some studies report a notably stronger
+relationship between homework and mathematics achievement (Eren &
+Henderson, 2011), while other studies have characterised the relationship within mathematics as the weakest when compared to other subjects (Fernández-Alonso et al., 2017). Subject specific differences are
+therefore likely to exist, but the precise nature of these differences is
+difficult to determine without further research.
+Further emphasising the need to differentiate between different academic subjects, research has shown that subject specific motivational
+factors can significantly contribute to the effort students put into
+completing their homework (Trautwein & Lüdtke, 2009), thus influencing the benefit they can derive from it (Flunger et al., 2015). Notably,
+an extra difference commonly reported in the literature is that homework time commitment expectations tend to be quite high in mathematics relative to other subjects (Fan et al., 2017). These variations in
+time expectations indicate that not only can the effects of homework
+differ by subject, but the nature and extent of the academic demands
+imposed on students can vary significantly between subjects as well.
+1.1.3. Socioeconomic background and homework benefits
+A common finding from homework studies is that students from
+socioeconomically advantaged backgrounds can benefit more from
+homework than their peers (Patall et al., 2008; Tan et al., 2020). This
+apparent divide could stem from many reasons such as greater access to
+study aids at home, a more suitable study environment with a desk, or
+the extra guidance that highly educated parents might be able to provide
+to their children. Findings such as this could also potentially stem from
+unobserved confounding if students from advantaged backgrounds are
+more likely to be provided with higher quality or better targeted
+homework assignments from school teachers (Dettmers et al., 2010).
+Among these factors, one of the most explored is the role of parental
+involvement in homework (Patall et al., 2008; Gonida & Cortina, 2014;
+Viljaranta et al., 2018), and how its impact may be moderated by socioeconomic status. Studies such as those by Daw (2012) and Eren and
+Henderson (2011) have uncovered significant interactions between
+parental income or education and the efficacy of homework. This has led
+some authors to conclude that homework may be partially responsible
+for perpetuating social inequalities by widening the achievement gap
+between those from advantaged and disadvantaged socioeconomic
+backgrounds (Rønning, 2011). On a more positive note, some research
+suggests that these adverse effects may be partially mitigated by carefully designing homework assignments that confer no advantage to
+privileged students (Edwards, 2018), and educating teachers about the
+
+1.1. Factors influencing homework efficacy
+1.1.1. Frequency, duration, and time spent on homework
+Studies exploring the impact of homework typically report a modest
+yet positive association with student achievement (Cooper et al., 2006).
+However, the literature also reveals a less optimistic side, indicating that
+an excess of homework can yield diminishing returns or, in some cases,
+even detrimentally affect student performance (Cooper, 1989). Despite
+these findings, a concerning feature of numerous investigations examining the homework and student achievement relationship is the reliance on models which assume a linear relationship (Zhou et al., 2023).
+This reliance on a linear framework oversimplifies the dynamics at play,
+potentially obscuring crucial insights.
+Moreover, only a limited number of studies have ventured into
+determining the optimal amount of time students should dedicate to
+homework. The precise identification of a threshold, beyond which
+additional homework yields no discernible benefit, holds substantial
+value. Such insights could empower educators to streamline homework
+assignments, optimising efficiency and benefits, while mitigating potential adverse effects such as heightened stress levels, reduced time for
+2
+
+N. McJames et al.
+
+Learning and Instruction 93 (2024) 101968
+
+struggles faced by disadvantaged students (McCrory Calarco et al.,
+2022). Despite the importance of this issue however, we did not find any
+causal studies that examined the moderating role of socioeconomic
+status in homework effects, so there remains room for further
+exploration.
+In addition to leading to a widening achievement gap, some authors
+have also explored the added stress that homework can cause parents
+when they feel unable to help their children effectively (Lutz & Jayaram,
+2015; Solomon et al., 2002). Therefore, while this study focuses on
+exploring the relationship between homework frequency, duration, and
+academic outcomes, it is important to recognise the broader implications and potential trade-offs associated with homework assignments.
+
+Henderson (2008), and Gustafsson (2013). To accomplish this, we
+employ a causal inference machine learning model to answer the
+following research questions:
+
+1.2. Causal inference and advanced modelling techniques in homework
+studies
+
+Given our dual focus on student achievement in both mathematics
+and science, we also attempt to answer:
+
+RQ1: What is the effect of homework frequency on Irish students’
+mathematics and science achievement in TIMSS 2019? (Where
+homework frequency is defined to be the number of days each week a
+student is normally given a homework assignment of any duration)
+RQ2: What is the effect of homework duration on Irish students’
+mathematics and science achievement in TIMSS 2019? (Where
+homework duration is defined to be the number of minutes typically
+required by a student to complete each homework assignment)
+
+RQ3: Is the optimal distribution of homework frequency and duration different in mathematics and science?
+
+A common thread that runs through almost all homework studies is
+the challenge of working with observational data. Randomised
+controlled trials are the gold standard in all areas of research, but factors
+such as cost and complexity usually make experiments of this type very
+difficult, necessitating the use of observational data (West et al., 2008).
+While rare, however, a number of homework studies have employed
+experimental designs: randomly assigning students to homework versus
+no homework groups, or to groups using traditional versus online
+homework systems (Grodner & Rupp, 2013; Foyle et al., 1990; Roschelle
+et al., 2016). Reassuringly, results from experiments such as these have
+often been in agreement with the majority of the literature, affirming a
+small but positive effect of homework. Due to the difficulty of organising
+these studies, however, they are often limited to relatively small sample
+sizes and rarely involve representative samples, somewhat limiting the
+generalisability of these findings (Daw, 2012).
+Observational data on the other hand is often much easier to collect,
+allowing rich data sets of representative samples to be collected as part
+of large scale national or international studies. Nevertheless, the drawback lies in the non-random selection of treatment groups, influenced by
+individual characteristics, commonly known as confounding variables.
+These variables may create an illusion of causality between two factors,
+introducing potential biases into statistical analyses (Greenland et al.,
+1999). Causal inference is the field of study focused on addressing these
+concerns, and various methods have been developed to mitigate these
+issues. Techniques range from controlling for confounding variables and
+matching individuals based on similar characteristics, to understanding
+how these traits impact group membership propensity (Hill, 2011; Pan &
+Bai, 2018; Stuart, 2010).
+Despite often relying on observational data, however, few studies
+have actively integrated these methods into their investigations. In fact,
+to our knowledge, the work by Gustafsson (2013) stands alone as an
+example. Moreover, despite the intricate nature of the relationship between homework and student achievement (Corno, 1996), and the
+myriad factors interacting with homework to influence its effectiveness,
+modern machine learning-based methods that can account for these
+complex patterns within the data are seldom utilised. A notable exception is the study by Eren and Henderson (2008), which linked homework
+to academic achievement using both parametric and non-parametric
+statistical models. The non-parametric approach used in their study
+demonstrates the potential of flexible and accurate regression models in
+homework related studies, which are seen too rarely in education
+research.
+
+Finally, informed by prior research which indicates that students
+from advantaged socioeconomic backgrounds may benefit more from
+homework than other students, we ask:
+RQ4: Do advantaged students benefit more from homework than
+their peers?
+The remainder of our paper is structured as follows: First, we introduce the TIMSS 2019 dataset, and the Irish sample of students who are
+the subject of our study. We also describe our analytical strategy, based
+on multivariate Bayesian Causal Forests. We then present the results of
+our study, highlighting how they address our research questions. This is
+followed by a broader discussion, explaining how our results relate to
+previous research, outlining the main contribution of our paper, and
+some limitations. Finally, we conclude our paper by considering the
+implications of our research for homework policy, and provide suggestions for future research.
+2. Method
+2.1. Data and sample
+Our study uses data from the seventh cycle of the Trends in International Mathematics and Science Study, TIMSS 2019, organised by the
+International Association for the Evaluation of Educational Achievement (IEA, Mullis et al., 2020). TIMSS 2019 took place in 64 countries,
+which represented the largest cycle of this study to date. TIMSS surveys
+students in the fourth and eighth grades but we focus our attention on
+the Irish eighth grade subset of the data, comprising a nationally
+representative sample of 4118 students. For context, these students are
+in their second year of secondary school in Ireland, and are preparing for
+a national set of examinations called the Junior Cycle Examinations.
+This is not considered a high stakes exam, but it serves as a way to assess
+students’ progress, and will help to determine the level of the courses the
+students will undertake for their final examinations, known as the
+Leaving Certificate. Additionally, the Junior Cycle Examinations provide valuable examination experience without the high-stakes implications. To ensure a nationally representative sample, TIMSS 2019
+employed a stratified two stage cluster sampling design which sampled
+complete classes from a list of all suitable schools within a country. The
+sampling weights resulting from this design were fully accounted for in
+our analysis by appropriately weighting our results.
+As part of TIMSS, the fourth and eighth grade students from
+participating countries complete a short assessment in mathematics and
+science to measure their achievement levels in these subjects.
+
+1.3. The current study
+Our study aims to reduce the remaining uncertainty surrounding the
+effects of homework on student achievement by combining three key
+features of studies conducted by Trautwein et al. (2002), Eren and
+
+3
+
+N. McJames et al.
+
+Learning and Instruction 93 (2024) 101968
+
+Additionally, the eighth grade students answer a survey consisting of
+various questions designed to gauge their motivation, confidence, and
+how much they like studying mathematics or science. Questions related
+to their socioeconomic status such as how many books they have at
+home, and the education level of their parents are also included. To offer
+a more comprehensive view of the students’ educational experiences,
+TIMSS extends its data collection efforts to encompass input from their
+mathematics and science teachers, as well as school principals. Mathematics and science teachers participate by completing a questionnaire
+that covers various aspects of classroom teaching practices, their
+perception of discipline, homework assignments, and other pertinent
+factors. Meanwhile, school principals provide valuable insights into
+school-related matters such as available resources, the emphasis on academic achievement, and various school characteristics.
+Summary statistics on important characteristics related to the Irish
+eighth grade sample of students can be found in Table 1. Further statistics on all variables collected during TIMSS, including other countries
+which were not examined as part of this study can be found in the code
+books and almanacs published by the IEA (Fishbein et al., 2021). Note
+that in order to interpret the variables associated with the teacher or the
+school in Table 1, it is necessary to view them as characteristics of the
+students. For example, the percentages in the teacher gender section
+mean that 34.4% of students have a male mathematics teacher, not that
+34.4% of mathematics teachers in Ireland are male.
+Aside from the authors’ familiarity with the Irish school system, our
+decision to focus on Ireland was based primarily on two reasons. Firstly,
+science is taught as part of an integrated curriculum in Ireland, which
+includes biology, chemistry, physics, and earth and space. Junior Cycle
+Science teachers in Ireland are trained in, and responsible for teaching
+all aspects of the science curriculum to their students. This makes
+Ireland well-suited to our study of homework, as there is no need to
+consider variations in homework requirements across the different science strands, and students are typically taught by the same teacher for
+the whole course which is taught as a single subject. Secondly, the
+sample size of 4118 students is well-suited to our machine learning
+approach, as it is large enough to enable the model to detect
+
+relationships and interactions between variables in the data.
+2.2. Measures and variables
+2.2.1. Homework
+The homework indicators we will use in this study to measure the
+frequency and duration of homework assignments come from the student questionnaire (TIMSS & PIRLS International Study Center, 2020).
+Students were asked “How often does your teacher give you homework
+in the following subjects?”, and the possible responses for both mathematics and science were 1) “Every day”, 2) “3 or 4 times a week”, 3) “1
+or 2 times a week”, 4) “Less than once a week”, or 5) “Never”. The inclusion of “Every day” as a possible response introduces a minor ambiguity here, as some students might interpret it as “every day we have
+class”, which may not equate to five days per week. Nevertheless, due to
+the clear and sequential structure of the response options, we believe it is
+reasonable to expect that most students would have correctly understood “Every day” to mean five days per week. For homework duration,
+the question asked was “When your teacher gives you homework in the
+following subjects, about how many minutes do you usually spend on
+your homework?”, with possible responses being 1) “My teacher never
+gives me homework in (mathematics/science)”, 2) “1–15 min”, 3)
+“16–30 min”, 4) “31–60 min”, 5) “61–90 min”, and 6) “More than 90
+min”. This measure of duration refers to the average time spent on each
+assigned homework assignment. Therefore, for a student who reports
+receiving mathematics homework every day, with a duration of 16–30
+min on average, their total weekly time spent on mathematics homework is likely to be between 80, and 150 min.
+The student responses to the TIMSS 2019 student questionnaire
+indicating how regularly they receive homework in mathematics and
+science, and how much time they normally spend on this homework are
+summarised in Table 2. Mean achievement scores observed in each
+category are also provided. Note that the percentages in the homework
+duration categories do not add to 100% as some students reported never
+receiving homework. An interesting observation from Table 2 is that
+homework frequency tends to be much lower in science than in mathematics, with 67% of students reporting receiving mathematics homework every day, while only 16% of students report receiving science
+homework with the same frequency. In contrast, homework duration
+appears to be remarkably similar across both subjects. A tile plot displaying the popularity of each frequency and duration combination is
+shown in Fig. 1. A very popular combination in mathematics appears to
+
+Table 1
+Summary statistics for selected variables from the TIMSS 2019 data. The proportion column provides the proportion of students belonging to each category,
+while the mathematics achievement and science achievement columns provide
+the mean achievement level within each group.
+Variable
+
+Proportion
+
+Student Gender
+Male
+51.2%
+Female
+48.8%
+Born in Ireland
+Yes
+86.1%
+No
+13.9%
+Parent’s Education
+University
+32.2%
+Post-Secondary
+19.6%
+Upper-Secondary
+13.7%
+Lower-Secondary
+3.9%
+Primary/No
+2.3%
+School
+Student Unsure
+28.2%
+Mathematics Teacher Gender
+Male
+34.4%
+Female
+65.6%
+Science Teacher Gender
+Male
+32.4%
+Female
+67.6%
+School Average SES
+More Affluent
+29.7%
+Neither
+44.1%
+More
+26.2%
+Disadvantaged
+
+Mathematics
+Achievement
+
+Science
+Achievement
+
+523.7
+524.9
+
+521.0
+526.1
+
+525.1
+522.1
+
+523.2
+522.7
+
+552.4
+539.2
+506.8
+477.2
+464.8
+
+555.3
+542.2
+503.5
+469.6
+456.8
+
+503.8
+
+499.5
+
+530.2
+521.4
+
+530.3
+520.3
+
+519.8
+529.8
+
+521.2
+530.5
+
+544.9
+530.8
+499.7
+
+546.9
+528.9
+497.5
+
+Table 2
+Reported frequency and duration of homework - observed data from the TIMSS
+2019 student questionnaire. The mean achievement of students belonging to
+each category is shown in brackets after the percentage. Note that as these
+achievement scores come directly from the observed data, care should be taken
+when interpreting them, as other factors are likely to be influencing the
+achievement levels. Homework frequency is much higher in mathematics.
+Homework duration is quite consistent across both subjects.
+Homework Frequency and Duration
+Frequency:
+
+Never
+
+Less Than
+Once a
+Week
+
+1 or 2
+Times a
+Week
+
+3 or 4
+Times a
+Week
+
+Every Day
+
+Mathematics
+
+1.0%
+(434.4)
+4.2%
+(479.2)
+
+1.0%
+(484.3)
+16.0%
+(539.8)
+
+5.3%
+(502.6)
+38.7%
+(535.0)
+
+25.7%
+(513.6)
+25.3%
+(533.1)
+
+66.9%
+(534.9)
+15.8%
+(514.1)
+
+Duration:
+
+1–15
+Minutes
+
+16–30
+Minutes
+
+31–60
+Minutes
+
+61–90
+Minutes
+
+More Than
+90 Minutes
+
+Mathematics
+
+34.8%
+(517.3)
+40.0%
+(531.6)
+
+43.6%
+(533.8)
+41.0%
+(537.1)
+
+16.7%
+(533.1)
+12.3%
+(526.9)
+
+2.5%
+(524.7)
+1.5%
+(510.9)
+
+1.4%
+(511.4)
+1.0%
+(458.7)
+
+Science
+
+Science
+
+4
+
+N. McJames et al.
+
+Learning and Instruction 93 (2024) 101968
+
+Fig. 1. Tile plot of homework frequency and duration. The plot shows, for mathematics and science, the number of students who reported each combination of
+frequency and duration.
+
+be homework every day, with a duration of 16–30 min.
+A plausible reason for the higher frequency of homework in mathematics relative to science is that it is common for more instructional time
+to be devoted to mathematics than to science in Ireland. Schools can
+exercise autonomy in this regard in Ireland (Prendergast & O’Meara,
+2017), so variations will exist from school to school, but the TIMSS 2019
+data showed that the most common instructional time per week in
+mathematics was 200 min, while for science the most common
+instructional time was lower at 160 min. Clearly, instructional time is
+likely to be strongly related to the amount of homework assigned in each
+subject, so this is controlled for as a confounding variable. Additionally,
+any other class specific timetabling variations that we do not observe are
+controlled for by virtue of the hierarchical nature of our model, thus
+ensuring that timetabling differences across subjects do not lead to bias
+in our results.
+Later in our analysis, given the very small proportion of students
+reporting a homework frequency of less than once or twice per week,
+and the small proportion of students reporting a homework duration of
+greater than 30 min, we will focus on the aggregated categories of “up to
+once or twice per week”, “three or four times per week” and “every day”
+for frequency, while for duration we will focus on the categories of “up
+to 15 min”, “16–30 min”, and “greater than 30 min”. This will help to
+ensure a more parsimonious model, allow for a simpler interpretation,
+and reduce the computational burden on our model.
+The mathematics and science teachers were also asked how often
+they give homework to their students, and how long they believe the
+homework should normally take the “average” student in their class.
+Therefore, we could have used the teacher reports as our data instead,
+but decided the student reported version would be most appropriate for
+two reasons. Firstly, the teacher reported duration of homework only
+indicates how long the homework should take for the “average” student
+in the class, and fails to capture individual level differences which are
+bound to exist, and which the students themselves are best placed to
+report. Second, we wanted to be able to account for the possibility of
+homework differentiation, whereby a teacher assigns different amounts
+of homework to individual students based on their ability (see for
+example Keane & Heinz, 2019). This can also only be accomplished with
+the student version of the reports.
+
+topics, including algebra, geometry, and various scientific strands.
+However, to assign every single item from the pool of available questions to every student would make the assessment unduly long. Therefore a rotated booklet design is employed whereby each student answers
+a booklet of questions in mathematics and science, each containing a
+small subset of the entire pool of questions. By ensuring an overlap exists
+between assessment booklets, i.e., booklet one shares common questions
+with booklet two, and booklet two shares common questions with
+booklet three, it is possible to estimate the relative ability levels of
+students whilst ensuring that a wide variety of topics are covered
+without burdening students with a very long test. For the first time in the
+history of TIMSS, some countries issued the assessment electronically
+via tablets or other means in 2019, but Ireland opted for a traditional
+paper assessment.
+Given the difficulty of accurately estimating any student’s achievement level based on a limited subset of questions, assigning a single
+point estimate of achievement to any one student would be misleading.
+Therefore, to better capture the uncertainty that is present in the
+achievement estimates of the students, TIMSS supplies five plausible
+values for each student’s achievement in mathematics and science.
+These five plausible values were fully accounted for in our analysis by
+
+2.2.2. Student achievement
+Student achievement in TIMSS is measured using a short assessment
+in both mathematics and science. This standardised assessment is carefully designed and validated by the TIMSS study organisers to ensure its
+validity and reliability for measuring student achievement (Martin et al.,
+2020). The assessment is carefully structured to cover a diverse range of
+
+Fig. 2. Scatter plot of student achievement in mathematics and science, using
+the first plausible value. There is a very strong positive correlation between
+student achievement in mathematics and science (ρ ≈ 0.85). The blue line
+added as a visual aid is the line y = x. (For interpretation of the references to
+colour in this figure legend, the reader is referred to the Web version of
+this article.)
+5
+
+N. McJames et al.
+
+Learning and Instruction 93 (2024) 101968
+
+appropriately pooling the estimates from five separate models, each of
+which were applied to one of the five plausible value estimates. Fig. 2
+shows a scatter plot of student achievement in both subjects using the
+first of these plausible values. A very strong positive correlation is
+evident (ρ ≈ 0.85).
+
+necessary. In this way, BART and BCF are capable of capturing very
+complicated patterns in the data such as interactions between variables
+and non-linear relationships.
+A particularly powerful feature of BART and BCF is their ability to
+perform automatic variable selection. These models automatically assess
+the importance of different variables while building the trees, allowing
+them to prioritise and select the most relevant variables for making
+accurate predictions. This feature allows researchers to include a wide
+range of predictors that might not be feasible in more standard approaches, such as linear models, which often require manual selection to
+avoid issues like multicollinearity. For these reasons, BART and BCF
+have become increasingly popular and have been used in a diverse set of
+fields such as medicine, economics, and education (e.g., Pierdzioch
+et al., 2016; Prado et al., 2021; Spanbauer & Sparapani, 2021; Suk et al.,
+2021).
+To separate causation from mere correlation, the BCF model relies on
+a statistical framework known as the Neyman-Rubin causal model
+(Splawa-Neyman et al., 1990; Sekhon, 2008). This framework, also
+known as the potential outcomes framework, is based on the idea that
+for every observation, or student in the dataset, there are two potential
+outcomes, or values of student achievement that may be observed: One
+achievement score that would be observed if the student was impacted
+by some treatment or intervention (such as homework), and one that
+would be observed if the student was not.
+The BCF model uses two sets of decision trees to predict these outcomes. The first set, often labeled as μ, predicts the achievement of each
+student i without the treatment based on their characteristics xi. The
+second set, labeled as τ, predicts the change in achievement directly
+attributable to the treatment. By combining these predictions, the BCF
+model can estimate both potential outcomes and isolate the causal effect
+of homework from other associations in the data:
+
+2.2.3. Control variables
+In addition to homework and student achievement in mathematics
+and science, TIMSS collects data on many other important factors such
+as socioeconomic status, teacher experience, and school emphasis on
+academic success. These factors can act as confounding variables,
+simultaneously influencing both the likelihood of receiving treatment
+and the outcome of interest, potentially biasing results (Greenland et al.,
+1999). For instance, teachers in academically focused schools with
+already high performing students may assign more homework, believing
+it enhances achievement. Alternatively, teachers under pressure to
+improve student performance due to low instructional quality may
+assign more homework as a means of compensation, obscuring the true
+relationship between homework and achievement (Rønning, 2011).
+Given the ability of confounding variables to lead to unexpected findings, it is important to control for their effects wherever possible.
+Therefore, we have taken steps to control for the influence of many
+potential confounding variables from the TIMSS study. A full list of the
+TIMSS variables used in this study can be found in the supplementary
+materials.
+2.3. Modelling approach
+Our study makes use of Bayesian Causal Forests (BCF, Hahn et al.,
+2020), a causal inference machine learning algorithm based on the
+highly flexible modelling tool called Bayesian Additive Regression Trees
+(BART, Chipman et al., 2010). BART and BCF are both tree based
+
+Predicted ​ achievement ​ of ​ student i without ​ homework ​ (Potential ​ Outcome ​ 1) = μ(xi )
+Predicted ​ achievement ​ of ​ student i with ​ homework ​ (Potential ​ Outcome ​ 2) = μ(xi ) + τ(xi )
+
+models, meaning they make predictions by creating a set of decision
+rules. When followed, these decision rules form a pathway directing
+observations from the root, down to the leaves of a tree, where all observations belonging to a leaf are assigned a prediction. See Fig. 3 for an
+example. The example used in Fig. 3 has deliberately been made very
+simple for illustration, but in practice, the predictions from BART or BCF
+are usually made by combining the outputs from multiple decision trees.
+BART and BCF can also adapt to the complexity of the data by increasing
+or decreasing the tree sizes, and modifying their decision rules as
+
+Specifically, this study adopts a multivariate extension of BCF
+developed by McJames et al. (2024), which allows BCF to be applied to
+multiple outcome variables such as mathematics and science achievement simultaneously. The structure of the model remains the same, but
+instead of providing a single prediction at the leaves of the tree as shown
+in Fig. 3, a separate prediction is provided for each outcome, or in our
+case, subject of interest.
+In addition to allowing the model to provide predictions for multiple
+
+Fig. 3. Example of a BCF model with a single decision tree used to make treatment effect predictions. The decision rules direct observations from the root of a tree to
+its terminal nodes where each observation is assigned a prediction. In this purely illustrative example, the rules say that for a student with a parent who went to
+university, and a high school emphasis on academic success, homework increases achievement by 7 units.
+6
+
+N. McJames et al.
+
+Learning and Instruction 93 (2024) 101968
+
+outcomes, given that the TIMSS homework data contains multiple levels
+of frequency, ranging from never to every day, and multiple categories
+of duration, ranging from less than 15 min to greater than 90 min, we
+also allow the model to provide different estimates of the effect of
+homework based on the given frequency and duration. In summary,
+while the standard BCF model would be limited to analysing one subject
+at a time, and to estimating the impact of receiving any amount of
+homework relative to receiving no homework, the extended multivariate BCF model used in this study allows us to estimate the varying effects of homework frequency and duration in both mathematics and
+science.
+The TIMSS data employed in this study possesses a clear hierarchical
+structure, whereby students are nested within schools. This is important
+to account for, as unobserved school or classroom level variables could
+have the potential to act as confounding variables, introducing bias into
+our results as highlighted in Section 2.2.3. To account for this, our model
+is equipped with a random intercept term, which serves to shift the
+model estimates for each individual up or down, depending on the class
+they belong to. The inclusion of this random intercept term, which acknowledges the hierarchical nature of the data, introduces an extra level
+of robustness to the model, guarding against unobserved school and
+classroom level confounding variables. Full technical details associated
+with all aspects of the model can be found in the supplementary
+material.
+Across all the variables used in our study, 6% of the data was missing.
+In order to avoid losing data by completely deleting rows with missing
+values, we imputed our dataset using the R package “missRanger”
+(Mayer, 2019). This procedure involves replacing missing entries with a
+value based on the data that is available for each observation. With this
+approach we are able to maximise the data available for use, but we
+acknowledge there is a degree of uncertainty associated with these
+imputed values which is not accounted for in our main study. Therefore,
+the true 95% credible intervals for our results reported later are likely to
+
+be slightly broader than displayed. As an alternative approach for
+handling missing data, the supplementary material also includes results
+from a version of the analysis that did not rely on imputation of missing
+data, and instead relied on complete cases only. This approach led to
+broadly similar results, but we will focus on the imputation based
+approach in the paper as it maintains a nationally representative sample
+of students.
+3. Results
+A summary of our results concerning the effect of homework on
+student achievement can be found in Table 3. Here we report the estimated average treatment effects (ATEs) of providing homework with a
+specified frequency or duration relative to a reference level of up to one
+or two times per week for frequency, and up to 15 min each time for
+duration. The uncertainty in these values is reflected by the 95% credible intervals provided alongside each effect estimate. The 95% credible
+intervals represent the range of values within which the ATE lies with
+95% probability.
+For context, it helps to know that student achievement in mathematics at the eighth grade in Ireland follows an approximately normal
+distribution with a mean of 524 and a standard deviation of 73. Student
+achievement in science also follows an approximately normal distribution, but with a mean of 523 and a standard deviation of 83. Therefore,
+for ease of interpretation, in addition to the original effect estimates
+which are reported on the TIMSS achievement scale, we also provide
+normalised versions. These normalised values indicate how many
+standard deviations the effect estimates correspond to on the mathematics and science achievement scales.
+Returning first to research question one, which concerns the effect of
+homework frequency on student achievement in mathematics and science, we see that in mathematics the ATE and 95% credible interval for
+providing homework every day is 7.51 and (1.63, 16.57). This ATE
+represents the average change in mathematics achievement that we
+would expect to see after increasing homework frequency from up to one
+or two times per week to every day. The 95% credible interval can be
+interpreted as meaning that we are 95% sure the true effect is in the
+range 1.63–16.57. In science, increasing homework frequency to every
+day does not have a clear benefit. Instead, the optimal homework frequency for science is identified as three or four times per week.
+Providing homework at this frequency is expected to improve student
+achievement by 5.31 points on the TIMSS scale, and by between 2.35
+and 8.25 points with 95% probability.
+Our second research question focuses on the effect of homework
+duration on student achievement in mathematics and science. Looking
+at the results for mathematics, we see that relative to only providing
+homework that lasts up to 15 min each time, there is no clear benefit to
+increasing homework duration to 15–30, or even more than 30 min.
+Similarly, in science, as the 95% credible intervals for all effect estimates
+overlap with 0, there is insufficient evidence to say that longer duration
+homework assignments will lead to increased achievement. Therefore,
+in the absence of stronger evidence, homework assignments lasting up to
+15 min each time may be considered equally as beneficial as longer ones.
+Based on the above analysis, we can also answer our third research
+question, which asks if the optimal distribution of homework
+throughout the week may be different in mathematics and science. With
+respect to homework duration, given the lack of a clear benefit from
+increasing homework duration beyond 15 min, there is no indication
+that any duration should be preferred over any other. However, due to
+the negative impact that long homework hours may have on nonacademic outcomes, it may be reasonable to suggest that adopting a
+policy of up to 15 min in both subjects may be the best option, as it is
+equally as beneficial as the longer homework durations. For frequency,
+the picture becomes more nuanced, because in mathematics the greatest
+gains were made by increasing homework frequency to every day, while
+in science the best results stemmed from a frequency of three or four
+
+Table 3
+Average treatment effect results from the multivariate BCF model. The results
+show the estimated effect of providing homework with the specified frequency
+or duration on student achievement in mathematics and science. The reference
+level for homework frequency is up to one or two times per week, and the
+reference level for homework duration is up to 15 min 95% credible intervals are
+shown in brackets. Scaled versions of the results indicating how many standard
+deviations the effect sizes correspond to are also provided. Mathematics
+achievement benefits the most from a frequency of every day. Science
+achievement, on the other hand, benefits most from a frequency of 3/4 times per
+week. Increasing homework duration beyond 15 min each time does not provide
+clear benefits in either mathematics or science.
+Average Treatment Effect Results
+Frequency:
+
+3 or 4 Times a Week
+
+Every Day
+
+Achievement
+Points
+
+Scaled
+Version
+
+Achievement
+Points
+
+Scaled
+Version
+
+Mathematics
+
+2.88 (− 3.61,
+10.88)
+
+7.51 (1.63,
+16.57)
+
+0.10 (0.02,
+0.23)
+
+Science
+
+5.34 (2.35,
+8.25)
+
+0.04
+(− 0.05,
+0.15)
+0.07 (0.03,
+0.10)
+
+− 1.94 (− 5.96,
+2.28)
+
+− 0.02
+(− 0.07,
+0.03)
+
+Duration:
+
+16-30 Minutes
+
+More Than 30 Minutes
+
+Achievement
+Points
+
+Scaled
+Version
+
+Achievement
+Points
+
+Scaled
+Version
+
+Mathematics
+
+− 0.98 (− 3.85,
+1.94)
+
+0.12 (− 3.37,
+3.72)
+
+Science
+
+1.80 (− 1.37,
+5.32)
+
+− 0.01
+(− 0.05,
+0.03)
+0.02
+(− 0.02,
+0.06)
+
+0.00
+(− 0.05,
+0.05)
+0.04
+(− 0.03,
+0.11)
+
+3.27 (− 2.20,
+9.30)
+
+7
+
+N. McJames et al.
+
+Learning and Instruction 93 (2024) 101968
+
+however, result from homework which can be easily modified by
+teachers and incorporated into updated education policy. Therefore,
+given the causal interpretation of the results, and the straightforward
+route they provide to enhancing student achievement, they should not
+be considered unimportant. We also emphasise that while some of the
+effect estimates may be considered quite small, the uncertainty in the
+estimates allows for the possibility that they may be slightly larger and
+the values reported at the upper limits of the credible intervals are much
+more substantial. After taking these factors into account, an effect size of
+the magnitude of 0.1 can be thought of as a small to medium effect size
+(Kraft, 2020).
+Finally, motivated by our fourth research question, we explored the
+
+times per week. This indicates that the optimal distribution of homework throughout the week is in fact subject dependent.
+The effect sizes reported in Table 3 would be considered by some
+traditional measures to be very small (LeCroy & Krysik, 2007). However,
+it is important to note that in contrast to conventional effect sizes
+commonly reported in terms of Cohen’s d, which are based purely on the
+raw difference in outcomes between two groups, and susceptible to the
+effects of confounding, this effect size has a causal interpretation.
+Furthermore, while larger effect sizes are commonly reported in the
+literature (e.g. Hattie, 2008), they are often based on factors that are not
+easily modified, and consequently provide no route to encouraging or
+enabling higher student achievement. The effect sizes reported here
+
+Fig. 4. Plot of the variation in the magnitude of individual treatment effect estimates. The lack of a clear trend in either subject or at either frequency indicates that
+students with more books at home, and highly educated parents, do not benefit significantly more from homework, at least in the eighth grade level.
+8
+
+N. McJames et al.
+
+Learning and Instruction 93 (2024) 101968
+
+potential moderating role of parental education level and home educational resources on the effect of receiving homework. These variables
+were chosen because they are useful and commonly adopted proxies for
+socioeconomic background when analysing TIMSS data (e.g. Broer et al.,
+2019; Heppt et al., 2022). A visual representation of our results can be
+found in Fig. 4. The results show no clear trend, indicating that
+regardless of the number of books a student has at home, or the level of
+education of their parents, all students are predicted to benefit by
+approximately the same amount from the homework they are assigned.
+The lack of a clear trend here is evident in both subjects and at both
+frequencies, suggesting students from advantaged socioeconomic
+backgrounds do not benefit significantly more from homework than
+their peers, at least in the eighth grade.
+
+of three to four times per week was identified as being the most beneficial in science. These findings have important implications for educators and policymakers who can use this information to tailor their
+homework assignments to each subject and optimise the potential
+benefits for students.
+As discussed earlier, mathematics is typically assigned more
+instructional time per week than science in schools in Ireland. This
+difference in time allocation may have an impact on homework frequency and duration by affecting the number of classes taught per week
+in each subject. Due to limitations of the data, a detailed exploration of
+these subject specific differences was not possible. We note that while
+this is a limitation in terms of contextual understanding, it is unlikely to
+impact the results from our model as we have controlled for the total
+instructional time per week, and also accounted for any unobserved
+school level factors with the hierarchical nature of the model. However,
+further research should continue to explore these subject-specific differences related to homework efficacy and identify the underlying
+mechanisms that contribute to them.
+Our secondary exploration of the moderating role of home resources
+and parental education found no evidence of students from advantaged
+socioeconomic backgrounds benefiting more from homework than other
+students. This is in contrast to previous findings from Daw (2012), and
+Rønning (2011) who both found that advantaged students experienced a
+greater increase in achievement as a result of completing homework.
+However, we believe that the different ages of the students involved in
+these studies could offer a plausible explanation for this disparity. In the
+study conducted by Rønning (2011), the average age of the students was
+ten, which is nearly five years younger than the eighth-grade sample
+used in our study. This age difference could partially account for
+Rønning’s finding that students with highly educated parents derive
+greater benefits from homework, as younger students tend to gain more
+from parental involvement in homework due to their ongoing development of study habits, as found by Patall et al. (2008). On the other
+hand, Daw’s study involved older students from grade eight to twelve.
+At higher grade levels, as students delve into more advanced topics, their
+ability to utilise their home educational resources for research purposes
+or seek assistance from their parents may become more crucial. Therefore, the strength of the moderating role of home resources and parental
+education may differ depending on the ages of the students involved.
+Such differences warrant further investigation but were beyond the
+scope of our study.
+While our study focuses on academic outcomes, it is important to
+acknowledge the non-academic considerations associated with homework. From a beneficial perspective, homework has been reported to
+promote time management skills and responsibility among students
+(Cooper & Valentine, 2001). However, it can also contribute to
+increased stress, reduced motivation, and limited free time for extracurricular activities (Galloway et al., 2013). Parents may also feel
+pressure to assist their children with homework (Pressman et al., 2015).
+Therefore, the potential positive effects of homework on student
+achievement must be weighed against these potential negative
+consequences.
+A limitation of our study is that our investigation of homework was
+limited to the effect of homework frequency and duration. Other characteristics of the homework such as its quality and suitability for a given
+student’s ability level are known to be important, however. Dettmers
+et al. (2010), for example, found that students who perceived their
+homework to be well selected for them had higher levels of motivation
+to complete their homework. In the same study it was also found that
+students reporting their homework to be challenging put less effort into
+their homework than students who found the difficulty more manageable, thus highlighting the importance of homework being well aligned
+with a student’s ability level to be most beneficial. One possibility for
+addressing this additional factor may be to combine each student’s
+version of the homework report, with that of their teacher, in order to
+identify students who spend much more or less time on homework than
+
+4. Discussion
+Our study advances the existing literature on the effect of homework
+by applying a causal inference machine learning approach to investigate
+its relationship with academic achievement. To our knowledge, ours is
+the only study to have employed such an approach. We have examined
+the impact of homework frequency and duration without making any
+assumptions about their relationship with achievement. In this way we
+are able to account for complicated interactions between variables and
+non-linear relationships which might otherwise go undetected by standard analytical techniques. Moreover, our model accounts for a wide
+range of confounding variables, eliminating the potential bias they may
+introduce to our results. Furthermore, the multivariate nature of our
+model enables us to jointly investigate both mathematics and science,
+which is important as subject specific differences are known to exist in
+the effect of homework on academic achievement (Eren & Henderson,
+2011; Fernández-Alonso et al., 2017).
+Our main finding from this study is that homework frequency is more
+important than homework duration for improving student achievement
+in mathematics and science. This finding is supported by previous
+research which shows that regular homework assignments are predictive of increased achievement, whereas weekly time spent on homework
+is not (e.g., Fernández-Alonso et al., 2019; Trautwein, 2007; Trautwein
+et al., 2002). It is also in line with the work of Kang (2016) who argues
+that policy changes promoting spaced repetition learning strategies can
+help to improve academic outcomes. As a result, educators may consider
+breaking down large homework assignments into smaller, daily tasks
+that offer regular and spaced opportunities to engage with the material,
+rather than assigning a single, long homework problem set.
+Our finding that spending up to 15 min on homework each time is
+equally as effective as spending up to an hour or more on homework is
+also in agreement with previous studies which have found that spending
+too much time on homework can lead to diminishing returns (Cooper,
+1989). Researchers have long been wary that too much time spent on
+homework by students can have negative effects (e.g., Buell, 2008;
+Kohn, 2006). Our results can therefore help to bridge the gap between
+those who advocate for homework as a tool for improving academic
+outcomes (e.g., Cooper et al., 2006), and those who are concerned by the
+negative effects that unduly long homework assignments can have on
+aspects such as social development (e.g., Bennett & Kalish, 2007). By
+providing a middle ground based on frequent homework assignments of
+short duration, our study’s recommendation allows students to benefit
+from homework while also enabling them to spend time on other pursuits in the evenings.
+In line with previous research, our study revealed differences in the
+effect of homework on student achievement between mathematics and
+science (Eren & Henderson, 2011; Fernández-Alonso et al., 2017).
+However, in contrast to findings by Eren and Henderson (2011), who
+found homework only to be beneficial in mathematics, our study found
+that homework can have a positive effect in both subjects. Specifically,
+assigning homework every day in mathematics was found to be associated with the largest increase in student achievement, while a frequency
+9
+
+N. McJames et al.
+
+Learning and Instruction 93 (2024) 101968
+
+Foundation Ireland. For the purpose of Open Access, the authors have
+applied a CC BY public copyright licence to any Author Accepted
+Manuscript version arising from this submission.
+
+expected. Investigating how these discrepancies in expected and actual
+time spent on homework may impact achievement is an intriguing area
+for future work.
+A second important limitation is that the BCF model employed in this
+study makes a number of important assumptions. Notably, the model
+assumes that we are able to account for all possible sources of confounding. Whilst we have endeavoured to control for as many potential
+sources of confounding as possible in our model, it is certainly possible
+that there may be some unaccounted for confounding variables that
+were not controlled for or not collected as part of the TIMSS study.
+Finally, our results are limited to an eighth grade sample of mathematics and science students from Ireland. As demonstrated by our results, however, the effect of homework is different in mathematics and
+science, and therefore effect size differences in other subjects such as
+English or foreign languages can be expected. Grade level differences are
+also known to be very important, with homework effects typically found
+to be more positive for older students than younger students (Cooper,
+1989; Cooper et al., 2006). Furthermore, education policy in different
+countries can have a significant effect on homework and student
+achievement. Fan et al. (2017), for example, found that the positive
+effects of homework were greater in the US than in East Asian countries,
+despite the students in Asia often having higher motivation and a better
+attitude towards homework. Future work could therefore include an
+application of a similar method to ours to data from different subjects,
+grade levels, or other countries to improve the generalisability of our
+findings. Notably, as TIMSS provides data on many countries, many of
+which also teach science as part of an integrated curriculum as is the
+case in Ireland, an application of our methodology to countries such as
+Singapore, the US, England, or others would be of interest.
+
+Declarations of interest
+None.
+CRediT authorship contribution statement
+Nathan McJames: Writing – review & editing, Writing – original
+draft, Software, Methodology, Formal analysis, Conceptualization.
+Andrew Parnell: Writing – review & editing, Writing – original draft,
+Software, Methodology, Formal analysis, Conceptualization. Ann
+O’Shea: Writing – review & editing, Writing – original draft, Software,
+Methodology, Formal analysis, Conceptualization.
+Acknowledgement
+The authors would like to thank the Editor-in-Chief, Professor Gert
+Rijlaarsdam, and the anonymous referees for their very helpful comments and suggestions, which have significantly improved the quality of
+our article.
+Appendix A. Supplementary data
+Supplementary data to this article can be found online at https://doi.
+org/10.1016/j.learninstruc.2024.101968.
+References
+
+5. Conclusion
+
+Bennett, S., & Kalish, N. (2007). The case against homework: How homework is hurting
+children and what parents can do about it. Harmony.
+Broer, M., Bai, Y., Fonseca, F., Broer, M., Bai, Y., & Fonseca, F. (2019). Socioeconomic
+inequality and educational outcomes: Evidence from twenty years of TIMSS. Springer.
+Buell, J. (2008). Closing the book on homework: Enhancing public education and freeing
+family time. Temple University Press.
+Chipman, H. A., George, E. I., & McCulloch, R. E. (2010). Bart: Bayesian additive
+regression trees. Annals of Applied Statistics, 4(1), 266–298.
+Cooper, H. (1989). Homework. Longman.
+Cooper, H., Robinson, J. C., & Patall, E. A. (2006). Does homework improve academic
+achievement? A synthesis of research, 1987–2003. Review of Educational Research, 76
+(1), 1–62.
+Cooper, H., & Valentine, J. C. (2001). Using research to answer practical questions about
+homework. Educational Psychologist, 36(3), 143–153.
+Corno, L. (1996). Homework is a complicated thing. Educational Researcher, 25(8),
+27–30.
+Daw, J. (2012). Parental income and the fruits of labor: Variability in homework efficacy
+in secondary school. Research in Social Stratification and Mobility, 30(3), 246–264.
+Dettmers, S., Trautwein, U., Lüdtke, O., Kunter, M., & Baumert, J. (2010). Homework
+works if homework quality is high: Using multilevel modeling to predict the
+development of achievement in mathematics. Journal of Educational Psychology, 102
+(2), 467–482.
+Edwards, H. (2018). Homework without barriers [Master’s thesis, California State
+University]. Digital Commons. https://digitalcommons.csumb.edu/caps_thes
+_all/366/.
+Eren, O., & Henderson, D. J. (2008). The impact of homework on student achievement.
+The Econometrics Journal, 11(2), 326–348.
+Eren, O., & Henderson, D. J. (2011). Are we wasting our children’s time by giving them
+more homework? Economics of Education Review, 30(5), 950–961.
+Fan, H., Xu, J., Cai, Z., He, J., & Fan, X. (2017). Homework and students’ achievement in
+math and science: A 30-year meta-analysis, 1986–2015. Educational Research Review,
+20, 35–54.
+Fernández-Alonso, R., Álvarez-Díaz, M., Suárez-Álvarez, J., & Muñiz, J. (2017). Students’
+achievement and homework assignment strategies. Frontiers in Psychology, 8, 1–11.
+Fernández-Alonso, R., Woitschach, P., Álvarez-Díaz, M., González-López, A. M.,
+Cuesta, M., & Muñiz, J. (2019). Homework and academic achievement in Latin
+America: A multilevel approach. Frontiers in Psychology, 10, 1–10.
+Fishbein, B., Foy, P., & Yin, L. (2021). TIMSS 2019 user guide for the international database
+(2nd ed.). Retrieved from Boston College, TIMSS & PIRLS International Study
+Center. website: https://timssandpirls.bc.edu/timss2019/international-database/.
+Flunger, B., Trautwein, U., Nagengast, B., Lüdtke, O., Niggli, A., & Schnyder, I. (2015).
+The janus-faced nature of time spent on homework: Using latent profile analyses to
+predict academic achievement over a school year. Learning and Instruction, 39,
+97–106.
+Foyle, H., Lyman, L., Tompkins, L., Perne, S., & Foyle, D. (1990). Homework and
+cooperative learning: A classroom field experiment. ERIC ED350285.
+
+This study investigated the impact of homework frequency and
+duration in both mathematics and science, employing a new modelling
+approach specifically designed to address the research questions of the
+paper. Our results demonstrate a clear positive effect of increasing
+homework frequency, but not homework duration. We therefore
+recommend that frequent homework assignments of short duration may
+be most effective for improving student outcomes. This strategy can help
+to promote academic achievement whilst avoiding the potential drawbacks associated with many hours spent on homework (Galloway et al.,
+2013; Zhao et al., 2024). Our second research finding was that students
+from disadvantaged socioeconomic backgrounds did not benefit less
+from homework than their peers. This has important implications for
+homework policy, as it challenges the suggestion from some researchers
+that homework may contribute to widening achievement gaps across
+socioeconomic groups. As a result, we also recommend that homework
+should continue to play an important role in the learning process, as we
+find no evidence of disparate impacts across socioeconomic groups.
+Finally, given our results pertain only eighth grade students studying
+mathematics and science in Ireland, we strongly advocate for additional
+studies focused on data from other countries, subjects, or grade levels.
+Disclosure statement
+The authors declare no conflict of interest.
+Funding
+This work has emanated from research conducted with the financial
+support of Science Foundation Ireland under grant number 18/CRT/
+6049. In addition Andrew Parnell’s work was supported by: a Science
+Foundation Ireland Career Development Award (17/CDA/4695) and SFI
+Research Centre award (12/RC/2289_P2). The opinions, findings and
+conclusions or recommendations expressed in this material are those of
+the author(s) and do not necessarily reflect the views of the Science
+10
+
+N. McJames et al.
+
+Learning and Instruction 93 (2024) 101968
+Pressman, R. M., Sugarman, D. B., Nemon, M. L., Desjarlais, J., Owens, J. A., & SchettiniEvans, A. (2015). Homework and family stress: With consideration of parents’ self
+confidence, educational level, and cultural background. American Journal of Family
+Therapy, 43(4), 297–313.
+Rønning, M. (2011). Who benefits from homework assignments? Economics of Education
+Review, 30(1), 55–64.
+Roschelle, J., Feng, M., Murphy, R. F., & Mason, C. A. (2016). Online mathematics
+homework increases student achievement. AERA Open, 2(4), 1–12.
+Sekhon, J. S. (2008). The Neyman-Rubin model of causal inference and estimation via
+matching methods. The Oxford Handbook of Political Methodology, 2, 1–32.
+Solomon, Y., Warin, J., & Lewis, C. (2002). Helping with homework? Homework as a site
+of tension for parents and teenagers. British Educational Research Journal, 28(4),
+603–622.
+Spanbauer, C., & Sparapani, R. (2021). Nonparametric machine learning for precision
+medicine with longitudinal clinical trials and Bayesian additive regression trees with
+mixed models. Statistics in Medicine, 40(11), 2665–2691.
+Splawa-Neyman, J., Dabrowska, D. M., & Speed, T. (1990). On the application of
+probability theory to agricultural experiments. Essay on principles. Statistical Science,
+5(4), 465–472.
+Stuart, E. A. (2010). Matching methods for causal inference: A review and a look
+forward. Statistical Science: A Review Journal of the Institute of Mathematical Statistics,
+25(1), 1–21.
+Suk, Y., Kim, J.-S., & Kang, H. (2021). Hybridizing machine learning methods and finite
+mixture models for estimating heterogeneous treatment effects in latent classes.
+Journal of Educational and Behavioral Statistics, 46(3), 323–347.
+Tan, C. Y., Lyu, M., & Peng, B. (2020). Academic benefits from parental involvement are
+stratified by parental socioeconomic status: A meta-analysis. Parenting, 20(4),
+241–287.
+TIMSS & PIRLS International Study Center. (2020). TIMSS 2019 context questionnaires.
+Retrieved from Boston College, TIMSS & PIRLS International Study Center website:
+https://timssandpirls.bc.edu/timss2019/questionnaires/ .
+Trautwein, U. (2007). The homework–achievement relation reconsidered:
+Differentiating homework time, homework frequency, and homework effort.
+Learning and Instruction, 17(3), 372–388.
+Trautwein, U., Köller, O., Schmitz, B., & Baumert, J. (2002). Do homework assignments
+enhance achievement? A multilevel analysis in 7th-grade mathematics.
+Contemporary Educational Psychology, 27(1), 26–50.
+Trautwein, U., & Lüdtke, O. (2009). Predicting homework motivation and homework
+effort in six school subjects: The role of person and family characteristics, classroom
+factors, and school track. Learning and Instruction, 19(3), 243–258.
+Viljaranta, J., Silinskas, G., Lerkkanen, M.-K., Hirvonen, R., Pakarinen, E., Poikkeus, A.M., & Nurmi, J.-E. (2018). Maternal homework assistance and children’s taskpersistent behavior in elementary school. Learning and Instruction, 56, 54–63.
+West, S. G., Duan, N., Pequegnat, W., Gaist, P., Des Jarlais, D. C., Holtgrave, D.,
+Szapocznik, J., Fishbein, M., Rapkin, B., Clatts, M., et al. (2008). Alternatives to the
+randomized controlled trial. American Journal of Public Health, 98(8), 1359–1366.
+Zhao, L., Yuan, H., & Wang, X. (2024). Impact of homework time on adolescent mental
+health: Evidence from China. International Journal of Educational Development, 107,
+Article 103051.
+Zhou, H., Liu, J., Shao, Y., & Yanyan, T. (2023). How much is too much time spent on
+homework: An exploratory study based on a bayesian multilevel piecewise model
+with a random change point. Educational Studies, 1–13.
+Zhu, Y., & Leung, F. K. S. (2012). Homework and mathematics achievement in Hong
+Kong: Evidence from the TIMSS 2003. International Journal of Science and
+Mathematics Education, 10, 907–925.
+
+Galloway, M., Conner, J., & Pope, D. (2013). Nonacademic effects of homework in
+privileged, high-performing high schools. The Journal of Experimental Education, 81
+(4), 490–510.
+Gonida, E. N., & Cortina, K. S. (2014). Parental involvement in homework: Relations with
+parent and student achievement-related motivational beliefs and achievement.
+British Journal of Educational Psychology, 84(3), 376–396.
+Greenland, S., Pearl, J., & Robins, J. M. (1999). Confounding and collapsibility in causal
+inference. Statistical Science, 14(1), 29–46.
+Grodner, A., & Rupp, N. G. (2013). The role of homework in student learning outcomes:
+Evidence from a field experiment. The Journal of Economic Education, 44(2), 93–109.
+Gustafsson, J.-E. (2013). Causal inference in educational effectiveness research: A
+comparison of three methods to investigate effects of homework on student
+achievement. School Effectiveness and School Improvement, 24(3), 275–295.
+Hahn, P. R., Murray, J. S., & Carvalho, C. M. (2020). Bayesian regression tree models for
+causal inference: Regularization, confounding, and heterogeneous effects (with
+discussion). Bayesian Analysis, 15(3), 965–1056.
+Hattie, J. (2008). Visible learning: A synthesis of over 800 meta-analyses relating to
+achievement. Routledge.
+Heppt, B., Olczyk, M., & Volodina, A. (2022). Number of books at home as an indicator of
+socioeconomic status: Examining its extensions and their incremental validity for
+academic achievement. Social Psychology of Education, 25(4), 903–928.
+Hill, J. L. (2011). Bayesian nonparametric modeling for causal inference. Journal of
+Computational & Graphical Statistics, 20(1), 217–240.
+Kang, S. H. (2016). Spaced repetition promotes efficient and effective learning: Policy
+implications for instruction. Policy Insights from the Behavioral and Brain Sciences, 3
+(1), 12–19.
+Keane, G., & Heinz, M. (2019). Differentiated homework: Impact on student engagement.
+Journal of Practitioner Research, 4(2), 1.
+Kohn, A. (2006). Abusing research: The study of homework and other examples. Phi Delta
+Kappan, 88(1), 9–22.
+Kraft, M. A. (2020). Interpreting effect sizes of education interventions. Educational
+Researcher, 49(4), 241–253.
+LeCroy, C. W., & Krysik, J. (2007). Understanding and interpreting effect size measures.
+Social Work Research, 31(4), 243–248.
+Lutz, A., & Jayaram, L. (2015). Getting the homework done: Social class and parents’
+relationship to homework. International Journal of Education and Social Sciences, 2(6),
+73–84.
+Martin, M. O., von Davier, M., & Mullis, I. V. (2020). Methods and Procedures: TIMSS 2019
+Technical Report. ERIC.
+Marzano, R. J., & Pickering, D. J. (2007). Special topic: The case for and against
+homework. Educational Leadership, 64(6), 74–79.
+Mayer, M. (2019). Package ‘missRanger’. Available at: https://cran.r-project.org
+/web/packages/missRanger/missRanger.pdf.
+McCrory Calarco, J., Horn, I. S., & Chen, G. A. (2022). “You need to be more
+responsible”: The myth of meritocracy and teachers’ accounts of homework
+inequalities. Educational Researcher, 51(8), 515–523.
+McJames, N., O’Shea, A., Goh, Y. C., & Parnell, A. (2024). Bayesian causal forests for
+multivariate outcomes: Application to Irish data from an international large scale
+education assessment. Journal of the Royal Statistical Society Series A: Statistics in
+Society.
+Mullis, I. V., Martin, M. O., Foy, P., Kelly, D. L., & Fishbein, B. (2020). TIMSS 2019
+international results in mathematics and science. Retrieved from Boston College,
+TIMSS & PIRLS International Study Center website: https://timssandpirls.bc.
+edu/timss2019/international-results .
+Palardy, J. M. (1988). The effect of homework policies on student achievement. NASSP
+Bulletin, 72(507), 14–17.
+Pan, W., & Bai, H. (2018). Propensity score methods for causal inference: An overview.
+Behaviormetrika, 45(2), 317–334.
+Patall, E. A., Cooper, H., & Robinson, J. C. (2008). Parent involvement in homework: A
+research synthesis. Review of Educational Research, 78(4), 1039–1101.
+Pierdzioch, C., Risse, M., & Rohloff, S. (2016). Are precious metals a hedge against
+exchange-rate movements? An empirical exploration using bayesian additive
+regression trees. The North American Journal of Economics and Finance, 38, 27–38.
+Prado, E. B., Moral, R. A., & Parnell, A. C. (2021). Bayesian additive regression trees with
+model trees. Statistics and Computing, 31, 1–13.
+Prendergast, M., & O’Meara, N. (2017). A profile of mathematics instruction time in Irish
+second level schools. Irish Educational Studies, 36(2), 133–150.
+
+Nathan McJames is a researcher in the Hamilton Institute and Department of Mathematics
+and Statistics, Maynooth University. His research interests lie in causal inference and
+education.
+Andrew Parnell is Hamilton Professor and Director of the Hamilton Institute at Maynooth
+University. His research is in statistics and machine learning.
+Ann O’Shea is a professor in the Department of Mathematics and Statistics at Maynooth
+University. Currently her research interests lie in Mathematics Education.
+
+11
+
+

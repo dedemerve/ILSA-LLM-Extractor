@@ -1,0 +1,2852 @@
+International Journal of Artificial Intelligence in Education (2025) 35:3128–3165
+https://doi.org/10.1007/s40593-025-00495-5
+ARTICLE
+
+Algorithmic Fairness in Automatic Short Answer Scoring
+Nico Andersen1
+
+· Julia Mang2
+
+· Frank Goldhammer1,3
+
+· Fabian Zehner1,3
+
+Accepted: 16 June 2025 / Published online: 24 July 2025
+© The Author(s) 2025
+
+Abstract
+Equal treatment of groups and individuals is crucial for fair assessment and demand
+unbiased scoring decisions. We examined algorithmic fairness focusing on demographic disparities between groups of different gender and language use based on
+automatic scoring ( n = 38,722 text responses). We tested various combinations of
+semantic representations and classification methods on responses to reading comprehension items from the 2015 German PISA assessment. Classifications from the
+most accurate method, namely a Support Vector Machine trained with RoBERTa
+embeddings, exhibited no discernible gender differences, but a minor significant
+bias in the automatic scoring of students based on their language background. Specifically, students speaking mainly a foreign language at home received significantly
+higher automatic scores than their actual performance warranted, thereby gaining
+a relative advantage from the machine scoring system. Lower performing groups
+with more incorrect responses tend to receive more correct scores because incorrect
+responses are generally less likely to be recognized. Differences are particularly evident at the item level, where we identified several factors that promote algorithmic
+unfairness such as scoring accuracy, student performance, linguistic diversity of text
+responses, and the psychometrically determined item difficulty.
+Keywords Algorithmic fairness · Automatic short answer grading · Scoring bias ·
+Responsible artificial intelligence · Educational large-scale assessment · Content
+scoring
+
+Nico Andersen
+n.andersen@dipf.de
+1
+
+DIPF| Leibniz Institute for Research and Information in Education, Frankfurt am Main,
+Germany
+
+2
+
+Goethe-Institut e.V., Munich, Germany
+
+3
+
+Centre for International Student Assessment (ZIB), Frankfurt am Main, Germany
+
+13
+
+International Journal of Artificial Intelligence in Education (2025) 35:3128–3165
+
+3129
+
+The automation of human work is becoming increasingly integrated into all areas of
+life. In the educational context, automatic systems for natural language processing
+(NLP) are often involved in decision-making processes (Chen et al., 2020). Various
+NLP-based methods have been developed, including systems for automatic essay
+scoring (Ramesh & Sanampudi, 2022), short answer scoring (see Burrows et al.,
+2015; Galhardi & Brancher, 2018; Haller et al., 2022), plagiarism detection (Foltýnek
+et al., 2019; Naik et al., 2015), or automatic feedback in tutoring systems (Gombert et
+al., 2024; Mousavinasab et al., 2021).
+Thus, the European Commission has published a white paper containing a framework for the application of artificial intelligence (European Commission, 2020) and
+passed the Artificial Intelligence Act 2024 (hereafter the EU AI Act) to implement the
+regulations on a legal level. The Act categorizes AI applications into various levels of
+risk, each accompanied by its own set of explicit requirements. For example, the use
+of automatic systems in high-stakes assessment, where the results have a significant
+impact on a student’s school/academic career, is classified as high-risk and requires
+‘high quality of the datasets feeding the system to minimize risks and discriminatory
+outcomes’ (Regulation [EU]2024/1689 of the European Parliament and of the Council of 13 June 2024 Laying down Harmonised Rules on Artificial Intelligence and
+Amending Regulations, 2024). Moreover, transparency and accuracy of the systems’
+decisions are considered critical to promote fairness.
+International large-scale assessments can produce vast quantities of data but, at
+present, text responses are scored manually by humans. The primary reason for this
+is the high scoring accuracy required for international comparisons and the lack of
+feasibility of automation in many languages. National policy decisions, particularly
+in education, rely heavily on these results (Prenzel et al., 2015). While the scoring of
+multiple-choice items is straightforward, the evaluation of open-ended responses still
+requires human scorers. In theory, automatic scoring of text responses can be applied
+to any assessment involving constructed responses and would be particularly valuable in international large-scale assessments. This could, for example, include the
+Programme for International Student Assessment (PISA; OECD, 2017), the Progress
+in International Literacy Study (PIRLS; Mullis & Martin, 2019), or the International
+Computer and Information Literacy Study (ICILS; Fraillon et al., 2019).
+A key of scoring open-ended text responses is the linguistic complexity and the
+requisite skills needed to read, interpret, and evaluate the texts with respect to a given
+coding guide. Machine learning and natural language processing are continuously
+improving automatic scoring results, making widespread use more attractive. Many
+different systems and methods for the automatic or semi-automatic scoring of text
+responses have already been developed for short answer scoring (Andersen et al.,
+2023; Basu et al., 2013; Camus & Filighera, 2020; Horbach & Pinkal, 2018; Zehner
+et al., 2016) and essays (e.g., Attali & Burstein, 2006; Burstein et al., 2004; Ludwig
+et al., 2021; see Ramesh & Sanampudi, 2022).
+Most machine learning classification research focuses on the machine learning
+models’ classification accuracy as a metric for evaluating the model’s quality; fairness, interpretability, and computational efficiency are largely neglected (Ruder,
+2022). Putting these methods into the educational sector requires considering all
+relevant perspectives and a detailed analysis of the decision-making process. For
+
+13
+
+3130
+
+International Journal of Artificial Intelligence in Education (2025) 35:3128–3165
+
+instance, when scoring a response, it is crucial to consider the potential impact of
+false scorings on a student’s assessment.
+For this reason, we test different machine learning systems and text-response representations to assess algorithmic fairness, more specifically the demographic disparity on students of different demographic subgroups, here, gender and language use at
+home. However, before examining fairness, we must first define it.
+
+Theory
+Fairness and Bias
+In assessment, “a fair test does not advantage or disadvantage some individuals
+because of characteristics irrelevant to the intended construct, […] including those
+associated with race, ethnicity, gender, age, socioeconomic status, or linguistic or cultural background” (American Educational Research Association et al., 2014, p. 50).
+When fair test results are systematically jeopardized by machine decisions, this issue
+is referred to as algorithmic unfairness (Hellman, 2020). The term fairness describes
+a broader concept (Loukina et al., 2019), while the term bias is more technical. Bias
+is generally employed to describe systematic statistical differences and is often used
+interchangeably with machine- or algorithmic bias. It is often associated with the
+training of a machine learning model (Hellström et al., 2020) which result in different outcomes for individuals based on sensitive attributes such as gender and cultural
+background. We use the term algorithmic bias to describe the difference between
+machine and human scoring, and compare these across demographic groups as a fairness indicator, referred to as demographic disparity.
+Biased Applications
+Bias in automatic systems is ubiquitous and can be found in various applications, for
+example image recognition systems (Schwemmer et al., 2020), health care (Obermeyer et al., 2019), or NLP applications—for example in word embeddings (Bolukbasi et al., 2016; Caliskan et al., 2017) or automatic transcription (Tatman, 2017).
+Given the pervasive impact that decisions can make on individuals’ lives and their
+potential to cause harm through errors or misjudgments, it is imperative to examine
+algorithmic bias not only from an ethical perspective but also from a legal standpoint
+(Ntoutsi et al., 2020).
+In terms of potential impact, high requirements are set for the operational use of
+automatic systems (Madnani & Cahill, 2018). Machine decisions should be accurate,
+transparent, and fair (European Commission, 2020). The quality of the automatic
+scoring systems is measured by the agreement between automatically generated
+codes and human ratings, while the agreement is compared to inter-rater reliability.
+Comparative evaluations of machine systems against human decision-making serve
+as a means of quality control by establishing a benchmark for performance in outcomes of interest. Notably, human decisions should be considered with caution as a
+gold standard since they can be biased (Zanga & De Gioannis, 2023).
+
+13
+
+International Journal of Artificial Intelligence in Education (2025) 35:3128–3165
+
+3131
+
+Human Fairness
+The obvious handicap of human raters is the limited capacity of certain cognitive
+processes such as perception and memory (Bejar, 2012; Suto, 2012), combined with
+a varying productivity and quality of ratings during longer sessions and between
+rating shift conditions (Ling et al., 2014) or simply due to rating being monotonous
+(Klein & El, 2003). In the context of schools, teachers’ grading practices are also
+susceptible to unconscious discrimination, e.g. when gender (Hofer, 2015) or anticipated origin (Bonefeld & Dickhauser, 2018) is known or believed, which has been
+demonstrated across several countries (Zanga & De Gioannis, 2023). In contrast,
+machines do not involve scoring-irrelevant demographic information, if they are not
+a part of the training process. They are unaffected by the duration of the operating
+scoring time and consistently produce the same decision (provided that no stochastic
+term is involved). These decisions hinge on the quality of the input data. The adage
+“garbage in, garbage out” aptly illustrates the relationship between input data quality and a model’s accuracy, suggesting that subpar training data will result in poor
+model decisions. This principle extends to bias as well: “Bias in, bias out” signifies
+that a trained system might disadvantage a specific group if trained on biased data.
+However, in the absence of better alternatives, human scoring remains crucial, not
+only from an operational standpoint but also for the production of training data. Additionally, the setup, evaluation, and deployment of automatic scoring models require
+human labor. Once the scoring model is deployed, the scoring process can benefit
+from machine efficiency.
+Algorithmic Fairness
+Machine-based decisions in this context typically refer to a decision resulting from a
+specific classifier, trained by machine learning on labeled input data and a statistical
+model. The algorithm is intended to be optimized to produce the most accurate result
+for new input data. For instance, a classification model could be trained to recognize patterns of correct/incorrect text responses (input) to determine whether a new
+unseen response aligns with those patterns and return a score (output). As previously
+highlighted, models and their results are susceptible to various bias sources, with
+certain stages of machine learning and the engineering process being susceptible to
+different biases (Hellström et al., 2020; Johnson et al., 2022; Mehrabi et al., 2021). To
+gain a deeper understanding of potential vulnerabilities in the process, we describe a
+machine learning pipeline for an automatic scoring task (Fig. 1), elucidating which
+steps are particularly susceptible to introducing biases.
+
+Fig. 1 Pipeline for classifications through machine learning
+
+13
+
+3132
+
+International Journal of Artificial Intelligence in Education (2025) 35:3128–3165
+
+1. Data Collection: Data are systematically collected from a sample, depending
+on the research question and the object of study. In educational assessment, the
+concern may be to test domain knowledge, problem solving skills, or reading
+literacy. To maintain quality, questionnaires and tests must satisfy criteria such
+as objectivity, reliability, and validity. Failure to do so compromises the extent
+to which constructs are adequately measured, leading to measurement bias (see
+Millsap & Everson, 1993). The representativeness of the sample in terms of
+demographic characteristics is a key criterion for generalizing results. Failing to
+achieve representativeness can challenge machine learning algorithms. Unequal
+representations can systematically discriminate against particular groups (representation bias). When group membership is the attribute to be classified, underrepresentation leads to a lower prior probability of predicting that group. Thus,
+machine learning models tend to favor the major class in classification problems (Guo et al., 2008). Additionally, a model may learn to discriminate better
+between instances in overrepresented groups due to a lack of variance in underrepresented groups.
+2. Scoring/Labeling: Scoring data, such as text responses, involves assigning labels
+to the collected observations. This is done by hand and involves human decision-making processes, which can be biased (annotation bias). To maximize
+objectivity of the scoring process, scoring guidelines are used. These specify the
+conditions under which a score is applied. For example, they define what information a text response must and, sometimes, must not contain to be considered
+correct. Improperly scored data can compromise not only model accuracy (Northcutt et al., 2021) but also introduce bias, which is ultimately human-induced.
+Biased scorings may occur when raters have access to demographic information
+or anticipate those about the individual being scored, such as the student’s migration background (Bonefeld & Dickhauser, 2018) or gender (Hofer, 2015).
+3. Preprocessing: Typically, data is normalized to remove irrelevant (e.g., linguistic) variance and optimize model learning. The choice of preprocessing steps
+is tailored and affects subsequent steps, including the model learning process.
+Preprocessing of diverse texts might prove beneficial. For instance, implementing spelling correction could reduce the impact of more frequent spelling errors
+made by foreign language speakers, thereby enhancing the scoring process.
+4. Feature Engineering: Features are extracted from the preprocessed data. The
+model uses these features to distinguish between the scoring of instances; that is,
+label A should be associated with different feature values than label B to ensure
+accurate classification. Ideally, the features should capture the data’s information
+as comprehensively as possible. If the features also distinguish between groups,
+because the labels correlate with group-specific characteristics, it is possible that
+individual groups could be unfairly associated with certain labels. For example,
+if an automatic scoring system is trained with features based on text length, boys
+might be disadvantaged because they tend to write shorter texts in reading comprehension tasks (see Zehner et al., 2018).
+5. Model Selection: A machine learning model is chosen based on characteristics of
+the data. The selected models can be probabilistic, deterministic, or an ensemble of the two, depending on the characteristics of the data. While probabilistic
+
+13
+
+International Journal of Artificial Intelligence in Education (2025) 35:3128–3165
+
+3133
+
+models, such as Naive Bayes, take the (prior) probabilities of different features
+as a basis for decision-making, deterministic models, such as decision trees, can
+create hierarchical rules to infer certain labels in the face of certain features.
+The models’ performance is contingent on the data, and they can yield biased
+decisions, as illustrated by the example of underrepresentation discussed earlier.
+Another point concerns the number of model-relevant parameters, which can be
+defined manually or through hyperparameter tuning, and may differently influence the model training and test output.
+6. Data Split: The overall data set is divided into training, testing, and, sometimes,
+validation sets. Typically, 60 to 80% of the data are used to train the model, and
+the remaining data are used to evaluate it. Testing the model independently of the
+training data reduces the risk that the model does not generalize well to new data,
+largely preventing mere memorization of the training data, known as overfitting.
+If the data are not stratified with respect to the sensitive class when being split,
+imbalances may result in the induction of a sampling bias.
+7. Model Training: The model iteratively learns patterns in the features associated
+with annotated labels. Models typically require predefined hyperparameters,
+which influence the feature separation process, the learning process of the model,
+and its outcomes. In the training phase, biases induced by the aforementioned
+steps are solidified. For example, an existing representation bias can be amplified
+or reduced through random data splitting, if groups are not represented equally in
+the training- and test data by chance.
+8. Model Evaluation: Finally, the model performance is evaluated using metrics,
+like accuracy, F1 score, or Cohen’s κ (Cohen, 1960). When evaluating the model,
+the agreement between the predicted scores and the human-labelled scores may
+vary according to the demographics of the student who wrote the corresponding
+text response. This discrepancy may be due to biases from earlier stages, such as
+sampling bias, or from unique characteristics of the student’s group that are not
+learned properly during the training process. As a result, the evaluation phase is
+when the bias finally appears, if it has not already been detected (and corrected)
+earlier through data screening or monitoring processes.
+The dependence on data is pervasive throughout the whole model construction process (e.g., the effects of underrepresentation). In summary, the decisions made at
+each step—how data are collected, what parameters are defined, and any biases that
+may result (even if only unconsciously)—are associated with human decisions. Statistical models can be very complex and it is sometimes difficult, sometimes impossible, to reconstruct and understand the machine’s decision, especially when a large
+number of interdependent parameters are involved (e.g., in deep learning). The best
+possible transparency in the development of methods and models is therefore essential. Models should, thus, be designed with this in mind. For this reason, data should
+be accurately collected and scored according to precise scoring guidelines, features
+should relate to construct-relevant information, and potential confounders should be
+considered.
+Algorithmic fairness for automatic content scoring, is largely unexplored, with a
+few exceptions. Johnson et al. (2022) identified demographic disparities in scoring
+
+13
+
+3134
+
+International Journal of Artificial Intelligence in Education (2025) 35:3128–3165
+
+outcomes among different ethnic groups completing a single reading task, whereas
+Erickson et al. (2021) confirmed fair conditions between genders when addressing
+math problems.
+More research on algorithmic fairness has been conducted in the eras of automatic
+essay scoring (see Burstein et al., 2004; Litman et al., 2021; Loukina et al., 2019),
+which has been in operational use for several decades to assess writing quality, and
+for which fairness has also been evaluated. For example, early versions of the e-rater
+(Burstein & Chodorow, 1999) found differences in the scoring of texts. In some
+cases, texts from people of different nationalities were scored with different levels
+of accuracy (Burstein et al., 2004; Burstein & Chodorow, 1999), for example, the
+system gave higher scores to people of Chinese nationality (Bridgeman et al., 2009).
+Group-Specific Characteristics
+Considering socio-demographic information can increase a machine-learning model’s accuracy. It can reveal correlations with student performance and, therefore, the
+impact of group-specific deviations in the label distribution. For example, there is
+evidence that girls outperform boys on reading-comprehension tasks for their first
+language (Hedges & Nowell, 1995; Hyde, 2005; White, 2007) and second language
+(Payne & Lynn, 2011). Including gender information to train a model that predicts a
+student’s performance might increase accuracy over using randomly generated outputs but would also lead to unfairness against boys, because the model associates
+correct responses more strongly with girls than with boys due to a higher prior probability that a girl’s answer is correct.
+Machine-based decisions should be made independently of sensitive attributes
+such as gender, race, or religion. Therefore, information beyond the target criteria,
+such as demographic details, should not be included as features in the training data.
+Thus, fairness under unawareness (Chen et al., 2020; Kusner et al., 2017) can be
+achieved by training a model that is blind to these sensitive attributes. This is particularly important in assessments with high stakes for individuals. Consequently,
+only text should be included in the automatic scoring process to provide an objective
+assessment.
+However, complete fairness cannot be expected by simply omitting sensitive information in features. This is because demographic variables are related with (linguistic)
+characteristics through proximal and distal relationships that may not be immediately
+apparent. For instance, handwritten texts can be recognized as written by females or
+males (Burr, 2002). Both humans (Burr, 2002) and machines (Argamon et al., 2003;
+Siddiqi et al., 2014) are significantly better at recognizing gender in handwriting
+than a random baseline, because boys and girls have different handwriting styles to
+some extent. While female handwriting is described positively, male handwriting is
+described negatively (Burr, 2002) and being less legible (Greifeneder et al., 2012),
+while essays with less legible handwriting are graded lower, regardless of gender
+(Greifeneder et al., 2012). Handwriting style (Spear, 1989) and writing competence
+(Petersen, 2018) are perceived differently between girls and boys. Girls’ handwriting
+is perceived as neat, while boys’ writing is perceived as untidy (Spear, 1989); boys’
+
+13
+
+International Journal of Artificial Intelligence in Education (2025) 35:3128–3165
+
+3135
+
+composition is also perceived to of lower quality due to more spelling errors (Adams
+& Simmons, 2019).
+These visual clues can be ignored in the context of computer-based assessments.
+Texts can be evaluated independently of their handwriting, although it remains to be
+seen whether there are group-specific linguistic features that may bias the machinelearning model, for example, if non-native speakers include more spelling mistakes in
+their responses (see Flor et al., 2015). The automatic scoring process may be affected
+if these group-specific characteristics, which are unrelated to the target construct, are
+included in the text responses.
+Gendered linguistic differences can be seen at the text and sentence level (Jones
+& Myhill, 2007). For example, when responding to German PISA reading comprehension tasks, girls tend to write more task-relevant information than boys (Zehner
+et al., 2018). At the word level, there is also a difference in the use of determiners,
+pronouns, prepositions, and negations between girls and boys (Koppel et al., 2002).
+Building on these gender differences, it is also important to consider the impact of
+linguistic background, especially when the language of assessment is not the examinee’s first language, which brings additional challenges. The process of writing in a
+second language (L2) is cognitively more demanding (Piolat et al., 2008), less effective (Silva, 1993), and less fluent (Palviainen et al., 2012; Silva, 1993), which may
+manifest in certain linguistic characteristics of the written texts. For example, texts
+written in a foreign language are characterized by different structures of argumentation and narration (Silva, 1993). Due to a lesser lexical knowledge (Malt & Sloman,
+2003), L2 texts exhibit lower lexical diversity. Also, Steinig and Betzel (2013) found
+that multilingual students in Germany produce more spelling errors. The number of
+spelling errors is also related to socio-economic status (SES), while the type of spelling errors further depends on the specific native language (Cook, 1997).
+Numerical Representation of Language and Text
+Texts are of qualitative character, and analyzing them requires various qualitative
+methods which can be considered “an iterative process […] making new significant
+distinctions resulting from getting closer to the phenomenon studied” (Aspers &
+Corte, 2019, p. 139). In order to process texts automatically, they must be represented
+numerically. This can be accomplished through different methods, each with varying
+levels of complexity. These methods are described in more detail below, in order of
+complexity.
+A very basic representation of responses is the number of words or characters that
+the response contains, resulting in a distribution of response lengths for all given
+labels (e.g., correct/incorrect). Adding another feature, such as the average word
+length, results in each response being represented by two features, which can be
+mapped into a 2-element vector. This rudimentary representation is of course superficial and does not capture any semantic information, hence the exploration of richer
+representations such as n-grams and word or sentence embeddings.
+
+13
+
+3136
+
+International Journal of Artificial Intelligence in Education (2025) 35:3128–3165
+
+n-grams
+When words are considered as a sequence of letters or characters, a text can be
+decomposed into its individual parts, which are called tokens (i.e. words and numbers). These can be combined to a sequence of compound token sequences, each of
+which contains n of the original tokens. While unigrams ( n = 1) comprise individual tokens, bigrams ( n = 2) comprise a token sequence of two tokens and, thus,
+contain more context. For example, the sentence ‘The dog barks’ can be represented
+by three unigrams ([The], [dog], [barks]), by two bigrams ([The dog], [dog barks])
+or one 3-gram ([The dog barks]). For appropriate choices of n, it becomes feasible
+to extract all n-grams from a set of responses and designate them as features in the
+feature space. Thus, n-grams can be represented as one-hot vectors, in which a binary
+value x ∈ {0,1} is assigned to the feature, corresponding to whether an n-gram
+occurs in a text or not, and all of the values combined form the feature vector.
+n-grams do not inherently carry semantic information. If synonyms are used for the
+same semantic concept, they will be assigned to different features, failing to recognize the semantic similarity between those words. However, considering the context
+in which an n-gram occurs can contribute to uncovering latent semantic information
+(Deerwester et al., 1990).
+Embeddings
+A word’s context is particularly considered in word embeddings, carrying semantic
+information to represent words in a multidimensional vector. Measuring the cosine
+distance between two word vectors can reveal their semantic similarity in numerical
+form (Mikolov et al., 2013; Pennington et al., 2014). Word embeddings are trained
+on a large corpus of text (e.g., all English Wikipedia articles). Under the assumption
+that similar words occur in similar contexts, a word’s relation to its context is captured, using word2vec (Mikolov et al., 2013), that examines a pre-defined window
+of words around a target word, using a neural net which represents words as vectors.
+Through iteration, a model can be trained on a large corpus to optimize the vector
+representation of a word in relation to other words. Similar words, such as synonyms,
+are therefore represented by similar vectors in the vector space, measurable by e.g.
+cosine similarity. The resulting language model contains all words from the corpus
+in the form of vectors, with the term embeddings used to denote those vectors that
+incorporate contextual information.
+Transformers are models that can more accurately represent context through selfattention mechanisms (Vaswani et al., 2017). They account for words with identical
+spelling but different meanings depending on the context that they appear in. This
+leads to a more precise vector representation of words and sentences (Devlin et al.,
+2019; Liu et al., 2019).
+Transformers do not operate strictly on a word-by-word basis. Their tokens, socalled subwords, are more granular, allowing the assignment of vectors to words
+with spelling errors. If a word, which is typically represented as a single token, is
+misspelled, it is tokenized into smaller units, considering syllables or individual characters rather than the entire word as a single token. Misspelled words can also be
+
+13
+
+International Journal of Artificial Intelligence in Education (2025) 35:3128–3165
+
+3137
+
+considered through n-grams. This is not typically possible using word embeddings,
+as those would require the word to be pre-trained in its misspelled form. Since corpora used for pre-training, such as Wikipedia texts, contain fewer misspelled words,
+this issue is less common.
+Group-specific Performance Indicator and Base Rates
+To understand the performance of automatic scoring and examine its fairness, groupspecific performance differences that lead to varying score distributions are pivotal.
+Thus, a group’s mean performance defines the prior probability of label assignment,
+which is relevant for the model output and, hence, for model evaluation.
+There is empirical evidence that some groups perform better than others in particular assessment domains. For example, it is consistently reported that girls outperform boys in reading comprehension tasks (Hedges & Nowell, 1995; Hyde, 2005;
+White, 2007), which can be attributed to various reasons. For one, motivational factors might play an important role, in particular a relationship between enjoyment of
+reading and performance in reading tasks (OECD, 2011). In the 2009 PISA study,
+girls were found to enjoy reading more than boys in all OECD countries, although
+both the level of enjoyment and the gender gap vary widely across OECD countries
+(Artelt et al., 2010). Boys have been shown to perform better on text comprehension
+tasks when they have a personal interest in the task (Oakhill & Petrides, 2007). Girls
+demonstrate better verbal skills than boys (Petersen, 2018; Weiss et al., 2003) and
+show higher literacy and writing performance (Petersen, 2018).
+Gender differences in language skills are also evident in foreign language writing.
+Girls tend to have superior second language skills compared to boys (Payne & Lynn,
+2011), demonstrating better scores on second language reading comprehension tasks
+and are more fluent in L2 writing (Arabic with L2 English), which is also mediated
+by greater language proficiency compared to boys (Al-Saadi, 2020).
+L2 language skills are particularly relevant in the context of immigration and
+testing in a foreign language, where untrained language skills can be a source of
+comprehension and writing difficulties. As a result, immigrant students score lower
+on literacy tests than native students (Entorf & Minoiu, 2005; Lopez-Agudo et al.,
+2021). Furthermore, socioeconomic status (SES) is a relevant predictor of reading
+performance for students with migratory background (Ibáñez-Alfonso et al., 2021).
+From an international perspective, it is also important to highlight that scores for
+immigrant groups differ depending on the country to which they immigrate. Entorf
+and Minoiu (2005) considered this fact in their study and found that the influence of
+SES on reading literacy performance in PISA varies across countries and their associated immigration policies, with the largest effect found in Germany.
+Groups of Interest
+Considering the various linguistic differences, our study aims to investigate fairness
+in automatic scoring of text responses between (a) boys and girls as well as (b) native
+and non-native language speakers. In PISA, students’ native language is not assessed
+directly. As a result, we rely on information about the main language spoken at home
+
+13
+
+3138
+
+International Journal of Artificial Intelligence in Education (2025) 35:3128–3165
+
+as a proxy for the individual’s language use and acquired language skills. Although
+this information does not provide details on language proficiency in the national language or in the language of the test, it is the best available indicator of these aspects.
+A study by Entorf and Minoiu (2005) found that the language spoken at home plays
+an important role in the reading achievement of immigrant students. In particular,
+those who practice the national language at home may even outperform native students (Entorf & Minoiu, 2005).
+Research Questions
+Students’ background characteristics, such as gender or their native language, can be
+associated with their text production outputs, as well as their performance in assessments. Since different conditions in training the model can bias the outputs from
+automatic scoring models, there is a risk of unfair scoring due to group-specific linguistic characteristics which may confound the written texts and, thus, the automatic
+scoring. We aim to test whether there is a group-specific bias in the automatic scoring
+of responses between boys and girls as well as between students who speak German
+or a foreign language at home by comparing differences between machine and human
+scoring on a group level. We compared different automatic scoring methods by investigating fairness using group-specific fairness indicators. We adopted an exploratory
+inductive approach by initially examining the data for potential bias or unfair outcomes. If conditions were identified as unfair, we scrutinized them in greater detail
+to determine which conditions may favor bias. In summary, our research examines
+two main areas: (1) whether there is variability in fairness across different methods
+for relevant groups, and (2) pinpointing the factors that might explain any detected
+variations in fairness.
+
+Method
+Data
+We analyzed constructed text responses from the German reading literacy assessment
+of the Programme for International Student Assessment (PISA) conducted in the year
+2015. The PISA study is administered triennially in schools to measure competencies in mathematical, scientific, and reading literacy. About a third of PISA items are
+administered in constructed-response format (OECD, 2024, p.489). A prototypical
+item may, for example, require students to read a short news article and to describe
+the purpose of the text or to repeat a specific piece of information from the text.
+Publicly released items can be found in OECD (2009). Alongside literacy estimates,
+the study gathers various demographic information including gender, socioeconomic
+status, and language, enabling comparisons between different groups, such as those
+defined by gender or language usage. The assessment is administered to 15-yearold students at school, and each student is given a set of items to answer. From a
+total of 43 reading literacy items, we selected 37 items with dichotomous scoring
+(correct/incorrect) for suitability of the employed analysis method. More detailed
+
+13
+
+International Journal of Artificial Intelligence in Education (2025) 35:3128–3165
+
+3139
+
+information about the scoring process can be found in OECD (2017b). Focusing on
+dichotomously scored items allows for a more accurate examination of potential false
+positives and negatives at the item level, as the (low number of) scores of the minor
+groups are less scattered across the confusion matrix. Considering the included 37
+items and due to a booklet design with randomized assignments, a student can only
+have responded to between one and 15 of these items. Other specific details, including tasks and text-responses, cannot be disclosed for reasons of confidentiality. Blank
+responses are not included in the analyses. According to the OECD (2017b, p. 258),
+the interrater agreement (proportion agreement) for reading literacy in Germany is
+94.8%.
+On average, there are 1055 responses per item, with a varying number of tokens
+(words and numbers) contained in the responses (Fig. 2). The texts were preprocessed only for the use of word embeddings and unigrams (lower case, removal of
+punctuation and separators), as transformers can treat texts in any form, including
+spelling errors and punctuations, through a tailored tokenizer.
+Sample
+The text responses were written by n = 4,060 students. For all students, binary
+information on their gender was available (49% girls), while information about the
+language usage at home contained missing values (78% German native, 11% foreign
+language, 11% missing). Whether language usage was reported by students or not
+depended significantly on gender χ 2 (1, N = 4016) = 17.32, p < .05, with more
+provided language information by girls. Among n = 3610 students who indicated
+their language use, 88% indicated German as the language spoken at home and 11%
+
+Fig. 2 Response lengths in tokens. Note The vertical axis is scaled logarithmically and items are sorted
+by difficulty, starting with the easiest. The red dot represents the arithmetic mean. More detailed item
+information can be found in the PISA 2015 Technical Report (OECD, 2017b)
+
+13
+
+3140
+
+International Journal of Artificial Intelligence in Education (2025) 35:3128–3165
+
+Table 1 Cross-Tabulation of student characteristics
+Gender
+Language Spoken at Home
+Native
+Foreign
+Missing
+Total
+Girls
+1569 (38.7%)
+212 (5.2%)
+191 (4.7%)
+1972 (48.6%)
+Boys
+1604 (39.5%)
+225 (5.5%)
+259 (6.4%)
+2088 (51.4%)
+Missing
+Total
+3173 (78.2%)
+437 (10.8%)
+450 (11.8%)
+4060 (100.0%)
+Note. Student characteristics were equally distributed across all items; for gender,
+χ 2 (36, N = 38,722) = 18.95, p = .991,
+and
+language
+spoken
+at
+home,
+χ 2 (36, N = 38,722) = 41.23, p = .253
+
+Table 2 Aggregated group
+performance aggregated at the
+Item-Level
+
+Gender
+
+Correct Responses in %
+
+Table 3 Confusion matrix
+
+Automatic Scores
+Correct
+Incorrect
+
+Girls
+73.6
+
+Boys
+68.4
+
+Manual Scores
+Correct
+True Positive (TP)
+False Negatives (FN)
+
+Language Spoken at
+Home
+Native
+Foreign
+72.7
+61.0
+
+Incorrect
+False Positive (FP)
+True Negative (TN)
+
+indicated another language as the one primarily spoken at home. Table 1 presents a
+cross-tabulation of the frequencies.
+Students’ performance differed depending on their group membership. Girls, and
+students reporting to speak German at home, tend to perform better (Table 2).
+Measuring Automatic Scoring Performance
+The performance of the scoring models was evaluated using various metrics. Automatic and human scoring are compared in a confusion matrix (Table 3), from which
+individual metrics can be read and calculated. Fairness indicators can also be derived
+directly from these individual metrics, which are defined below.
+In our use case, with dichotomous scoring (correct/incorrect), all correct responses
+can be considered as the positive class and all incorrect responses as the negative
+class.
+The accuracy of the model describes the relative proportion of correctly automatically scored responses, measured against the number of all scored responses, thus
+ACC = (TP + TN)/(TP + TN + FP + FN), in a range of 0 ≤ ACC ≤ 1 where
+accuracy ACC = 1 signifies a perfect correspondence with the human scoring.
+Interpreting accuracy can become a challenge with an uneven distribution of the
+target variable. Therefore, we also report the interrater agreement beyond chance
+between human and machine scoring, κ , as defined by Cohen (1960). κ ranges
+from − 1 to 1, with κ = 1 meaning perfect agreement, κ = 0 indicating random
+chance agreement with respect to the class distribution, and κ < 0 signaling prob-
+
+13
+
+International Journal of Artificial Intelligence in Education (2025) 35:3128–3165
+
+3141
+
+lems within the classifier. Values can be interpreted differently based on their levels
+(see Landis & Koch, 1977).
+Sensitivity, also known as recall or true positive rate (TPR), measures the number of correctly identified positives TP as a proportion to all positive responses
+P = TP + FN, i.e.
+TPR =
+
+TP
+.(1)
+P
+
+Equivalently, the ratio of the responses falsely classified as positives, FP, to all negative responses is N = FP + TN; this can be expressed as the false positive rate
+( FPR), i.e.,
+FPR =
+
+FP
+.(2)
+TN + FP
+
+The corresponding true negative rate can be easily calculated with TNR = 1 − FPR
+Measuring Fairness
+To ensure fairness, various metrics have been developed, depending on the context in
+which they are applied (see Hellman, 2020; Loukina et al., 2019). Fair machine learning methods should produce group-independent outputs and generate false negatives
+or false positives equally across groups (Hellman, 2020). This concept reflects group
+fairness in an ML classification scenario and is also referred to as statistical (dis)parity. We used student performance metrics to calculate a fairness metric, which serves
+as an indicator of whether groups are favored or disadvantaged in automatic scoring.
+The process can be thought of as creating and comparing group-specific confusion
+matrices. In order to achieve this, two types of metrics were calculated:
+1. automatic scoring bias; that is, the difference or residual between automatic and
+manual scoring.
+2. a difference measure comparing the biases between demographic groups.
+Automatic Scoring Bias
+A common measure of fairness is demographic disparity (also known as statistic
+disparity), which is based on the expectation that the relative proportion of positive outcomes should be equal between groups (Chen et al., 2019). A fair comparison assumes equal prior probabilities, which is not applicable in our case given the
+observed performance differences between the groups. Therefore, we first calculate
+group-specific scoring biases by accounting for each group’s performance, and then
+we compare these biases across groups to determine demographic disparity.
+The automatic scoring bias is operationalized by the mean difference D between
+the proportion of correct responses as per automatic scoring Y and the proportion
+
+13
+
+3142
+
+International Journal of Artificial Intelligence in Education (2025) 35:3128–3165
+
+of correct responses as per manual scoring Y , between two groups of a sensitive
+attribute g ∈ {a, b},
+Yg =
+Yg =
+
+TP + FP
+(3)
+TP + TN + FP + FN
+TP + FN
+(4)
+TP + TN + FP + FN
+Dg = Yg − Yg .(5)
+
+Within a 2 × 2 confusion matrix, Y represents the prevalence (actual positives),
+whereas Y represents the total number of all predicted positives. Their difference is
+constrained such that −1 ≤ D ≤ 1. A positive difference suggests an overestimation by automatic scoring, i.e., more incorrect responses are automatically scored as
+correct than by manual raters. A negative value suggests underestimation by automatic scoring, and a value near 0 represents an accurate estimation without automatic
+scoring bias. Overestimation shows more false positives; underestimation indicates a
+higher number of false negatives.
+Demographic Disparity
+The difference of the automatic scoring bias D between two groups of a sensitive
+attribute is measured to depict demographic disparity DD as fairness metric; this
+calculated by subtracting the automatic scoring bias of the lower-performing group
+Db from bias of the higher-performing group Da ,
+DD = Da − Db (6)
+
+DD lies in the range between − 2 and 2, where a positive value indicates a demographic disparity in the direction of group a. A negative value indicates a disparity
+in the direction of group b, and a value close to 0 indicates (nearly) identical scoring
+bias. As a relative value, DD does not reflect the direction of the scoring biases, only
+the difference between them, so the disparity can only be interpreted by considering
+the direction of the scoring biases of the groups being compared.
+Procedure
+Initially, various feature representations (n-grams, word and sentence embeddings)
+and different machine learning methods for classification were compared across all
+items for their scoring accuracy and fairness. The most accurate model was then
+employed for further item-level analyses.
+A deterministic method included in the study are Support Vector Machines (SVMs).
+This approach involves identifying optimal hyperplanes that separate instances based
+on their class while maximizing the margin of the planes (Cortes & Vapnik, 1995).
+Using Radial Basis Function kernel and its universal approximation (Park & Sand-
+
+13
+
+International Journal of Artificial Intelligence in Education (2025) 35:3128–3165
+
+3143
+
+berg, 1991), SVM can separate instances that may not be linearly separable in the
+original feature space.
+A second machine learning method included here uses hierarchical rules to train
+decision trees that can classify new data deterministically. Random forests extend
+this concept by bootstrapping, which entails constructing multiple decision trees for
+various subsamples of the training data. The final classification is probabilistically
+based on the individual decisions of all the trees.
+Given their common use to represent lexical features, n-grams were included in
+the present study. There is no theoretical upper limit for n. To keep the number of
+models manageable, we have only considered unigrams. We filtered the 300 mostfrequent unigrams for each item from the training dataset, and their occurrence was
+one-hot encoded, representing each text response as a 300-dimensional vector. We
+have limited the number of dimensions here to 300 in order to provide a similar
+amount of information as the word embeddings. In contrast to this lexical approach,
+a second set of features addressed response semantics. For this, tokens were mapped
+into a 300-dimensional word vector using the pre-trained German word embedding
+Wikipedia2vec (Yamada et al., 2020) with all matching tokens assigned corresponding vectors and aggregated into a response vector. Finally, as the third set of features, sentence embeddings were obtained from the base RoBERTa model (Liu et al.,
+2019) by passing tokenized input through the pre-trained model (without finetuning),
+extracting the last layer’s hidden states for each token, and performing mean pooling,
+encoding the responses into in 768-dimensional response vectors.
+In summary, we tested four different combinations of different language/response
+representations and machine learning methods: (1) unigrams with a decision tree,
+(2) unigrams with random forests, (3) word embeddings with SVM (RBF), and (4)
+sentence embeddings with SVM (RBF).
+The analyses were conducted in R (v. 4.3.1, R Core Team, 2020). Feature generation and embedding extraction were also performed in R using the reticulate package
+(v. 1.42.0) in a Python environment (v. 3.11.12), utilizing the transformers (v. 4.34.1)
+and torch (v. 2.6.0) libraries. The scoring models were trained using the e1071 package (v.1.7.16; Meyer et al., 2024).
+Models were trained and tested via cross-fold validation for each item, with data
+randomly split into five subsets, stratified by their representative score distribution.
+Each of the models were then trained on data from four of these subsets and tested on
+the remaining one; this process was conducted five times, with each iteration involving a different subset as the test data set. In this way, each response from the dataset
+was automatically scored independently of the training data. All scores were then
+used to calculate fairness metrics. This approach was applied to all machine learning methods and feature sets described in the previous section. Finally, results were
+compared between the groups of interest; that is, boys vs. girls as well as native vs.
+non-native speakers.
+Non-parametric tests were used to assess statistical significance of group differences. Bootstrapping was performed to generate 10,000 random and representative
+group affiliations, to create a random distribution of difference coefficients. This
+means that the number of group assignments of a given sensitive attribute (gender
+or language use) is equal and representative in each bootstrap. The resulting random
+
+13
+
+3144
+
+International Journal of Artificial Intelligence in Education (2025) 35:3128–3165
+
+distributions include whether and how often machine scores were correctly assigned
+between groups. These distributions were compared to the coefficient derived from
+the group of interest. If a measure fell outside the 2.5% percentile on either side, the
+difference was considered significant (i.e., α = .05).
+
+Results
+Linguistic Group Differences
+Different linguistic characteristics can be observed between the groups (Table 4).
+Girls produced more tokens than boys, in both correct and incorrect responses, while
+boys and non-native speakers’ responses contained a higher lexical diversity due to
+fewer tokens resulting in a higher ratio of unique tokens (i.e., types) to the total number of tokens (type–token ratio, TTR). Correct responses contained proportionally
+more out-of-vocabulary ( OOV) tokens i.e., words or numbers not covered by the
+German word embedding, across genders and language groups. This could be due,
+for example, to more words overall and thus a higher number of misspelled words.
+The word embedding used is pre-trained (Yamada et al., 2020) and contains 830,875
+tokens.
+Automatic Scoring Performance, Scoring Bias, and Group Differences (RQ1)
+The results showed varying performance between the used methods (Table 5) and
+between items. While the decision tree with unigrams ( κ = .28) showed the lowest
+performance, random forest with unigrams performed substantially better, with an
+agreement of κ = .78, and similar to the SVM with word embeddings ( κ = .76).
+The best fit was achieved using SVM with RoBERTa sentence embeddings ( κ = .82),
+tying for the highest average true positive rate alongside unigrams with random forest
+and word2vec with SVM, but offering a better average false positive rate compared
+to its closest competitors, except for the unigram with decision tree combination.
+Methods with higher performance detected correct responses better than incorrect
+responses.
+Table 4 Mean response characteristics
+Gender
+Language Spoken at Home
+Girls
+Boys
+Native
+Foreign
+1
+0
+1
+0
+1
+0
+1
+0
+Types
+14.90
+14.08
+12.78
+11.79
+14.01
+13.28
+12.81
+11.01
+Tokens
+16.71
+15.68
+14.24
+13.59
+15.65
+14.96
+14.35
+12.19
+TTR
+0.93
+0.94
+0.94
+0.95
+0.94
+0.95
+0.94
+0.95
+OOV Tokens
+0.09
+0.24
+0.11
+0.23
+0.08
+0.21
+0.20
+0.18
+Blank Responses
+0.17
+0.13
+0.18
+0.15
+0.17
+0.14
+0.18
+0.16
+Note. The table shows the arithmetic mean of all unique tokens in a response (types) and the average
+number of all tokens for either correct (1) or incorrect (0) responses. This gives the Type–Token Ratio
+(TTR). Additionally, the average number of tokens covered in the word embedding and the average
+number of blank responses are shown
+
+13
+
+International Journal of Artificial Intelligence in Education (2025) 35:3128–3165
+
+3145
+
+Table 5 Performance metrics, scoring bias, and demographic disparity between methods
+Feature
+Learning Method
+Model
+Scoring Bias
+Demographic
+Performance
+Disparity
+ACC
+TPR
+FPR
+DDG
+DDL
+κ
+D
+Unigram
+Decision Tree
+0.28
+0.60
+0.47
+0.09
+−0.35
+−0.030
+−0.062
+Unigram
+Random Forest
+0.78
+0.91
+0.96
+0.21
+0.03
+−0.001
+−0.025
+Word2vec SVM
+0.76
+0.90
+0.96
+0.22
+0.04
+−0.007
+−0.025
+RoBERTa SVM
+0.82
+0.93
+0.96
+0.16
+0.02
+−0.000
+−0.011
+Note. The table shows the automatic scoring results for all methods, evaluating all responses across all
+items, along with the respective response representations (features). Demographic disparity is shown
+between gender DDG and language spoken at home DDL . The best results for each of the metrics are
+shown in the table in bold type
+
+Table 6 Scoring bias and
+demographic disparity for
+RoBERTa-SVM
+
+Metric
+
+Gender
+(a) Girls
+0.76
+
+(b) Boys
+0.70
+
+Language Spoken at Home
+(a) Native
+(b) Foreign
+0.75
+0.64
+
+
+Y
+0.74
+0.68
+0.73
+0.61
+Y
+0.02
+0.02
+0.02
+0.03
+D
+0.000
+−0.011*
+DD
+0.97
+0.96
+0.96
+0.96
+TPR
+0.17
+0.15
+0.16
+0.13
+FPR
+Note. The table shows the proportion of correct responses ( Y ), the
+ , and their difference
+proportion of responses scored as correct Y
+( D), as well as the demographic disparity ( DD), the true positive
+rate ( TPR), and the false positive rate ( FPR). Statistical
+significances are only depicted for DD * p < .025
+
+Methods with a higher scoring accuracy showed a lower disparity. Thus, SVM
+with RoBERTa embeddings as the features showed a demographic disparity of
+DD = −.011 for native speakers, meaning that comparing the automatic scoring
+bias of both groups revealed a gap of 1.1% towards non-native speakers. For gender,
+this method did not show any demographic disparity, whereas the other methods
+resulted in substantially higher average demographic disparities for both grouping
+categories.
+We selected the method with the best performance, RoBERTa sentence embeddings with SVM, for the subsequent in-depth fairness analysis. Both the model performance and the automatic scoring bias between human and machine ( D), as well
+as their group differences ( DD), were compared across all items and between groups
+of a sensitive attribute (Table 6).
+According to human raters and in our subsample of dichotomously scored items,
+girls outperformed boys, with more correct responses on average ( Y = .74,) compared to boys ( Y = .68). For both groups, more responses are scored as correct by
+the machine than by humans, leading to an overestimation of correct responses with
+a positive automatic scoring bias of D = .02 for both groups and thus no groupspecific bias.
+Students from German-speaking households perform better ( Y = .73) than students who speak a foreign language at home ( Y = .61). Both groups are, again,
+
+13
+
+3146
+
+International Journal of Artificial Intelligence in Education (2025) 35:3128–3165
+
+overestimated by the automatic scoring system. Due to the differences for both native
+( D = .02) and foreign language speakers ( D = .03) and the resulting disparity of
+( DD = −.011), foreign language speakers receive around 1% more false positive
+scorings than native speakers.
+While the true positive rate ( TPR) is consistent across all groups, the results show
+a minor difference in the detection rate of incorrect responses. For those incorrect
+responses, the scoring model exhibits better detection rates for the lower performing
+groups (i.e., boys and non-native speakers). Due to the lower detection rate of incorrect responses compared to correct responses and the lower prevalence of correct
+responses for non-native speakers, this leads to a higher absolute number of false
+positives for non-native speakers compared to native speakers, despite the slightly
+better FPR. This difference is not reflected in the FPR metric because it does not
+consider the differing group-specific distribution of (in-)correct responses.
+Automatic Scoring Bias and Group Differences at the Item Level (RQ2)
+To gain a more detailed insight, we further examined the results at the item level.
+These are illustrated for gender (Fig. 3) and for language spoken at home (Fig. 4).
+Concerning gender, there were four items with a significant demographic disparity.
+Two items favored girls and two favored boys. There were two items for which the
+scoring difference was positive for both groups; that is, both groups’ performances
+were overestimated. For the remaining two items, the scoring bias diverged, overestimating performance for one group and underestimating it for the other.
+Concerning language spoken at home, results showed a similar pattern. Two items
+with significant demographic disparity favored foreign speakers. Three disparities
+arose with a common significant negative bias, meaning that both groups were overestimated but in a higher degree for non-native speakers than for native speakers,
+because of the larger prevalence of incorrect responses.
+Significant gender differences were distributed across items of intermediate and
+low difficulty, not indicating a direct influence of item difficulty on scoring bias and
+disparity. There was a somewhat more consistent profile of significant differences
+across language groups, centered around easier items, with similar TPR and FPR
+across groups.
+More detailed metrics on the item level are displayed in Table A1 and A2 in the
+appendix, where the group statistics are given numerically, including TPR and
+FPR. Particularly striking were the metrics for the significant item R219Q02—with
+TPRR219Q02 = 1 and FPRR219Q02 = .85—for which the classifier recognized
+all correct responses as such but recognized almost no incorrect ones and, accordingly, falsely scored them as positives. For this item, scoring accuracy was identical for both groups, but incorrect responses were substantially more frequent for
+boys ( YR219Q02,Girls = .90, YR219Q02,Boys = .82), which means they were favored
+more by the high FPR than girls. This led to an overestimation of performance in
+both groups, but substantially higher in boys. Other items also showed similar figures between the groups, making the dominant impact of varying class distributions
+across groups particularly clear.
+
+13
+
+International Journal of Artificial Intelligence in Education (2025) 35:3128–3165
+
+3147
+
+Fig. 3 Scoring bias and demographic disparity at the item level (gender). Note. The plots show the differences in the number of responses scored as correct between human raters and the automatic scoring
+system and their bias for each group per item. The demographic disparity indicates whether the automatic scorings and their deviations from the human scoring favored one of the groups
+
+Automatic scoring showed a lower FPR for item R456Q06, which was identical for both groups, while there were differences in the true positive rate. For girls
+( TPRR456Q06, Girls = .98), 3% more correct responses were recognized than for
+boys ( TPRR456Q06, Boys = .94). Regarding false negative classifications in both
+groups, it is noteworthy that these either contained many spelling errors or colloquial
+language, with this tendency appearing to be more pronounced in the responses from
+boys due to the use of certain lexical terms. This item required students to articulate
+what the story’s protagonist might say to another person, inherently eliciting the use
+of more colloquial language, seemingly especially among boys.
+The effect of performance differences across groups on demographic disparity,
+hampering scoring fairness, can also be seen in the group comparisons of language
+use at home, where this led to an overestimation of foreign language speakers.
+Due to particularly high false positive rates for two particular items, specifically
+FPRR219Q02,Foreign = .81 and FPRR453Q06,Foreign = .81, foreign-speaking students benefited as they had substantially more wrong responses which were classified
+as correct in 81% of the cases.
+
+13
+
+3148
+
+International Journal of Artificial Intelligence in Education (2025) 35:3128–3165
+
+Fig. 4 Scoring bias and demographic disparity at the item level (language spoken at home). Note. The
+plots show the differences in the number of responses scored as correct between human raters and the
+automatic scoring system and their bias for each group per item. The demographic disparity indicates
+whether the automatic scorings and their deviations from the human scoring favored one of the groups
+
+Contrary to the just-described items, for items R442Q03 and R442Q02, FPR
+also was identical between groups, while TPR differed greatly, leading to a positive demographic disparity. This implies that the performance of students who speak
+a foreign language was underestimated, as a larger number of true responses were
+consequently misclassified as incorrect for foreign language speakers, but not for
+native speakers. The responses from foreign language speakers falsely classified as
+incorrect typically featured basic colloquial expressions and are often short, simply
+constructed sentences.
+Automatic Scoring Bias at the Student Level (RQ2)
+Fairness in scoring is a critical issue because of the risk of discriminating against
+groups as well as individuals who are members of these groups. As illustrated above,
+the specific item characteristics may affect the fairness differently, but on average,
+they disappear due to the symmetric disparities towards both groups, considering all
+items in the assessment. Due to the assessment design in PISA, students are presented
+with different items, which requires a more detailed analysis at the student level.
+
+13
+
+International Journal of Artificial Intelligence in Education (2025) 35:3128–3165
+
+3149
+
+Fig. 5 Human and machine coding comparison. Note. The figure shows the relationships between machine and human scoring for each student. The different numbers of completed items (between 1 and
+15) are displayed via different saturations, with the majority of datapoints overlapping. The dashed line
+indicates the linear fit by regression, which deviates slightly from the diagonal
+
+Figure 5 shows the relationship between average human and machine scores for
+each of the n = 4060 students who specified their gender and the 3572 students who
+specified their spoken language at home. Each student answered one to fifteen items.
+For a clearer comparison in the graph, each student’s group membership is shown
+as an individual graph, although the students each belong to two of the four studied
+groups. The median number of responses differed between groups. While girls and
+native speakers responded to 11 items, boys responded to ten items and non-native
+speakers responded to nine items (median).
+Students’ performance differed depending on their group membership. Girls performed better than boys with an average of
+71.1% correct responses ( Mdn = 0.75)
+versus 65.0% for boys
+(Mdn = 0.714). A Mann–Whitney-U test revealed a significant difference between the
+groups, z (NGirls = 1972, N Boys = 2088) = −7.051; p < . 001; r = .111. A similar difference can be observed between students who speak German at home, with 70.1%
+correct responses on average ( M dn = 0.75), and students speaking a foreign language
+at home, with 56.4% correct responses ( Mdn = 0.60), showing a significant difference, z (NN ative = 1972, N F oreign = 2088) = −10.323; p < .001; r = 0.172.
+Considering all individuals, most of the estimated performances (57.7%) corresponded accurately to the actual performance, depicted on the diagonal. Among the
+students who answered at least 10 items ( n = 2313), there were nine students for
+whom the system produced an overestimation of D ≥ .3, meaning that three out of
+ten incorrect responses were falsely classified as positives, and one student with an
+underestimation of D ≤ −.3. The student who benefited the most from automatic
+scoring was a girl, who indicated speaking the native language at home, who received
+five false positives out of eleven responses. Although the direct impact of these char-
+
+13
+
+3150
+
+International Journal of Artificial Intelligence in Education (2025) 35:3128–3165
+
+Fig. 6 Machine scoring bias distribution at the student level. Note. The two histograms show the distributions of the scoring bias in the two groups of a sensitive attribute, including the group mean (dashed
+lines) and standard deviations
+
+acteristics remains uncertain, the students’ texts are characterized by spelling errors,
+grammatical deficiencies, the lack of punctuation and inconsistent capitalization.
+We found strong linear relationships between the average human and machine
+scorings for boys, r (1970) = .90, p < .001, and girls r (2086) = .91, p < .001
+meaning that, within a small error, student performance could be accurately predicted across completed items for both groups with significant differences between
+the correlation coefficients with Z = −2.490, p < .01. The same was found for
+native language speakers r (3148) = .90, p < .001 and non-native language speakers r (420) = .92, p < .001 with significant differences Z = −2.326, p < .05. The
+systematic overestimation of non-natives can be seen clearly in the different regression lines (Fig. 5) and the mean differences in Fig. 6.
+Although native speakers completed more responses, they allow for a more
+nuanced analysis of scoring bias. If a student completes only one response and this is
+automatically scored incorrectly, the student will end up with a maximum scoring bias
+of -1 or 1, whereas with 15 completed responses it is unlikely that all 15 responses
+will be scored incorrectly. This could, for example, explain the higher standard deviation for non-native speakers. At the same time, non-native speakers show on average
+a greater scoring bias, but also a stronger correlation, which can be explained by the
+fact that the linear relationship between human and machine scores is stronger, but
+asymmetrically distributed towards overestimation, whereas the residuals for native
+speakers are more scattered around zero.
+
+Discussion
+We have shown that an automatic scoring system can be very accurate, but biases
+can emerge due to inaccurate scoring systems, mainly at the item level, leading to
+advantages for certain groups (RQ1). One of the main factors contributing to scoring
+bias is the automated scoring methodology and its ability to detect correct and incorrect responses.
+Inaccurate scoring systems tend to yield a higher number of false-positive classifications. Combined with the different average ability of certain student groups to
+correctly answer items, this can lead to unfair scoring. That is because groups that
+
+13
+
+International Journal of Artificial Intelligence in Education (2025) 35:3128–3165
+
+3151
+
+generally provide more incorrect responses are disproportionally affected, receiving
+a greater absolute number of false positive classifications. As a result, the lowerability group is overestimated more than the higher-ability group and thus receives
+a minor advantage. If it were more difficult to detect correct answers, we anticipate
+that the opposite effect on disparity would occur if there is an existing performance
+gap between the groups.
+No gender bias was found at the aggregate level across all items. However, a small
+bias toward students speaking a foreign language at home was found, due to a higher
+false-positive rate of the scoring system which overestimates their performance.
+At the item level, this difference is particularly pronounced for certain items, with
+minor biases revealed in language related groups. Due to substantial disparities and
+systematic struggling to identify incorrect responses, there is a systematic overestimation of performance for weaker groups and students. Both groups are overestimated by the system, with students speaking a foreign language at home experiencing
+greater overestimation than their counterparts speaking German at home. When
+examining scoring biases between genders and language uses, the findings present a
+less systematic pattern. Based on these results, we identified various factors contributing to scoring biases and (un-)fairness in automatic response scoring.
+Fairness Factors (RQ2)
+Scoring Accuracy
+In general, models with higher scoring accuracy potentially contribute to fairer
+scoring practices, as the increased accuracy minimizes the discrepancies between
+manual and automatic scoring, leaving less room for scoring differences among various groups. This could, for example, be demonstrated within the models used in the
+study. However, if responses contain group-specific linguistic features, bias could be
+inadvertently introduced into machine decisions, particularly if the model overfits to
+these linguistic characteristics. Therefore, while increased scoring accuracy generally tends toward a higher fairness, it can also heighten the risk of capturing and
+perpetuating existing linguistic biases in the data (see Hofmann et al., 2024).
+Linguistic Variance
+Linguistic variance has a direct impact on scoring accuracy (Shin et al., 2024) and
+may thereby contribute to scoring bias. Challenges arise when attempting to optimally separate correct from incorrect responses based on the distribution of information within a set of responses to a particular item.
+The challenge to detect incorrect responses is more due to general linguistic properties between correct and incorrect responses. Incorrect responses tend to be more
+heterogeneous and exhibit greater linguistic variance (see Shin et al., 2024) than
+
+13
+
+3152
+
+International Journal of Artificial Intelligence in Education (2025) 35:3128–3165
+
+correct responses, making them more difficult for the system to learn. In particular,
+incorrect responses often contain partially correct semantic content, as students may
+have identified some key elements but not enough to produce a fully correct response.
+In addition, the proportion of correct information in incorrect responses varies. As a
+result, incorrect responses are more heterogeneous than correct ones.
+This is particularly the case for more difficult items, where the number of incorrect responses is higher than the number of correct responses. When partial credit or
+multiple scoring schemes are applied, the requirement for class separation escalates,
+potentially leading to a reduction in scoring accuracy and thus introducing a systematic scoring bias.
+Thus, response length can be a significant variable; shorter responses show less
+linguistic variance, a circumstance mainly attributable to students who are not
+native speakers of the test language. Due to potential limitations in writing L2, their
+responses may be simpler but also more variable in terms of grammar and spelling
+(mistakes). The precise impact of these elements would need to be assessed under
+more controlled conditions with balanced class distributions as imbalanced classes or
+different prior probabilities could be another source of bias.
+Unequal Distribution of Student Performance
+We identified an imbalanced distribution of group performances as a critical factor
+contributing to unfair automatically generated scores. This issue manifests particularly in the misclassification of incorrect responses due to an elevated false positive
+rate. Consequently, in such cases, responses are predominantly scored as correct,
+disproportionally benefiting students who demonstrate weaker performance and produce more incorrect responses. The automatic scoring process thus leads to a minor
+systematic overestimation of performance and preferential treatment of lower-performing students and student groups.
+Unequal Distribution of Item Design and Test Difficulty
+Test items must exhibit varying levels of difficulty to accurately measure the
+abilities of heterogeneous test takers. This directly impacts the distribution of
+scores for training the scoring model: obviously, easier items receive more correct responses than incorrect ones. Optimal item difficulty distribution is essential for psychometric estimation but is not necessarily ideal for training a machine
+learning model, as an imbalanced prior probability could affect classification. In
+the context of binary classification (correct/incorrect), an optimal distribution
+for machine learning models would be a 50% balance, corresponding to an item
+correctly answered by half of the test-takers. Moreover, the item design may
+contribute to potential false positives due to a ceiling effect, resulting in a lack of
+linguistic variance within the smaller number of incorrect responses. This allows
+
+13
+
+International Journal of Artificial Intelligence in Education (2025) 35:3128–3165
+
+3153
+
+for better discrimination among correct responses, while there may be insufficient training instances for incorrect responses. The effect could be similarly
+influenced by floor effects. Upon examining the bias between true and estimated
+performance, it can be observed that this bias is related to item difficulty, albeit
+only minimally affecting the disparity between groups. Therefore, the distribution of item difficulty presents a complex interplay of factors that must be carefully managed to ensure fair and accurate automated scoring.
+Interaction of Factors
+As evident from the descriptions, these characteristics (scoring accuracy, linguistic variance, different student performances, and test difficulties) are not standalone
+but interact in a complex manner due to the intricate nature of the text data and the
+machine learning models employed for automatic scoring. The interaction of various
+factors, such as item and student characteristics, on linguistic variance was demonstrated, for example, by (Shin et al., 2024), who showed that items with higher
+linguistic variance in the responses are associated with lower automatic scoring performance. In this study, item difficulty also played a crucial role in explaining linguistic variance (Shin et al., 2024).
+Item difficulty dictates the content and complexity required for responses to be
+deemed correct, influencing the linguistic homogeneity of all responses. Concurrently, difficulty modulates the distribution of scores, which is further contingent
+on the performance of the students tackling these tasks. These factors shape the
+accuracy with which patterns for correct and incorrect responses are represented
+and recognized for automatic scoring. Some items often incorporate partial credits, thereby introducing multiple scoring schemes among which the model must
+discriminate.
+Another issue that arises is the small size of minority groups. If 1,000 responses
+are collected from a simple item with a 90% correct response rate, and 10% of
+the responses belong to a specific group with a representative proportion of correct answers, only 10 incorrect responses would come from the minority group
+in the dataset. In this case, it would require a false positive rate of 10% (which
+is considerable) to score a response from the group as a false positive. With
+such a small number of responses, it becomes challenging to identify linguistic
+patterns that could provide insights into the method, which, as demonstrated,
+is also dependent on the item. These factors may interact due to differences in
+group performance and item difficulty, which makes analyzing them even more
+challenging.
+Approaches to Reduce Bias
+This section proposes a number of approaches for identifying sources of bias and
+handling it accordingly. Essentially, the identified influencing factors form a multi-
+
+13
+
+3154
+
+International Journal of Artificial Intelligence in Education (2025) 35:3128–3165
+
+faceted landscape that requires a nuanced approach to model training and evaluation.
+To defuse these interwoven sources of bias and promote fairer automatic scoring, it
+may be advantageous to conduct sensitivity analyses to better understand the impact
+of individual factors. For this, larger datasets may be needed to cover incorrectly
+scored responses in minority groups by ensuring a minimum number of responses, or
+alternatively, by generating synthetic text responses with specific linguistic features,
+using generative language models (see Dai et al., 2023). Considering sensitive attributes during model learning may also increase fairness, especially in scenarios such
+as Haeri and Zweig (2020) show for racial bias. Although this approach is contrary
+to the fairness-through-ignorance approach presented earlier, the intentional use of
+information about sensitive attributes is highly dependent on the data and method
+used. Additionally, manipulation at the linguistic level can be tested through preprocessing (Ntoutsi et al., 2020) to normalize texts, for example, by adding automatic
+spelling correction to the classifier pipeline.
+Limitations
+Even a reduction of the measured bias towards zero does not promise to prevent
+unfair scoring. Perfect scoring agreement between the scores of humans and machines
+would merely decimate the visible bias. There is a further possibility that human rater
+biases will be learnt by the system, which is not measurable if they are trained and
+evaluated on the scores of the same rater.
+For the investigation of fairness, and specifically the extent of scoring differences
+considering false positives and false negatives, only PISA items with dichotomous
+scoring were examined. The impact of items with polytomous scoring remains
+unclear. However, it is expected that the differences in estimated and actual performance will replicate, depending on the item and how well false responses can be
+discriminated from partial credit responses and partial credit responses from correct responses. The datasets used, each containing over 900 responses per item, are
+relatively large; however, examining the responses from minority groups such as
+language speakers in conjunction with items of marginal difficulty poses challenges
+due to a small resulting subset of responses. This is because there are comparatively
+few responses to examine, and thus generalization is not feasible.
+Language use could be measured only by the main language spoken at home,
+which does not directly indicate the student’s native language. However, it can be
+assumed that the level of language proficiency influences the text production (Cumming, 1989) and thus the automatic scoring. For international use, the impact on the
+different test and national languages to be learnt should also be investigated, although
+there may also be an effect between contrasting L1s and L2s (Lowie & Verspoor,
+2008). As the results are rather general, it is also to be expected that the highest dis-
+
+13
+
+International Journal of Artificial Intelligence in Education (2025) 35:3128–3165
+
+3155
+
+parities will be found in countries with larger performance differences between native
+and non-native speakers.
+
+Conclusion
+We demonstrated that the tested scoring models in this study are more accurate in
+identifying correct responses than incorrect ones. This leads to a higher true positive
+rate and a higher false positive rate. Individuals who answer more responses incorrectly over the course of the assessment are consequently assigned more correct scorings than their performance warrants.
+It is debatable whether favoring one group automatically disadvantages another.
+This question can assuredly be answered in the affirmative if direct comparisons
+between groups are the focal point. In PISA studies, the major focus is on country
+comparisons. Observing the effect that this has on demographic disparities, it can be
+inferred that this effect might also apply at the country level. This suggests that countries exhibiting lower performance might benefit from such disparities. Additional
+linguistic characteristics among languages also may play a significant role and must
+continue to be thoroughly examined.
+In the realm of individual evaluation, such bias would also impair the interpretability of test results, as from a psychometric standpoint, the validity of the instrument becomes compromised. By systematically favoring weaker performers, the
+performance distribution among test-takers will skew, minimizing the performance
+gap to stronger test-takers. This undermines the validity and interpretability of the
+test results. Such issues should be scrutinized when integrating automated scoring
+systems into high-stakes assessments and adaptive testing.
+In addition, methods and their decision processes can vary in terms of their explainability (Burkart & Huber, 2021) and thus their acceptability (Schlippe et al., 2023).
+Decisions derived from models with higher explainability are more understandable,
+which is, among others, pivotal for accountability. Moreover, explainability is relevant for the identification of induced biases.
+Revisiting the objectives, important insights have been gained concerning the
+impact of automatic scoring, which pinpoint the significance of evaluating algorithmic fairness in assessments. The paper also highlights the differences between manual and automatic scoring and their respective influences. Concurrently, the findings
+open up new avenues for further research on fairness to capture influences in a more
+controlled manner and to test possible approaches for minimizing disparities.
+
+13
+
+ACCGirls
+
+0.98
+0.99
+0.98
+0.99
+0.97
+0.95
+0.92
+1.00
+0.98
+0.91
+0.91
+0.94
+0.97
+0.92
+0.91
+0.92
+0.99
+0.87
+0.92
+0.94
+0.99
+0.94
+0.95
+0.95
+0.93
+0.86
+
+Item
+
+R219Q01C
+R219Q01B
+R219Q01D
+R219Q01A
+R420Q02
+R456Q02
+R453Q06
+R432Q01
+R227Q06
+R219Q02
+R219Q01E
+R406Q05
+R446Q06
+R406Q01
+R432Q05
+R055Q05
+R455Q03
+R453Q04
+R442Q03
+R456Q06
+R420Q09
+R442Q02
+R227Q03
+R460Q01
+R466Q02
+R055Q02
+
+0.98
+0.99
+0.97
+0.96
+0.90
+0.93
+0.88
+0.90
+0.89
+0.90
+0.85
+0.87
+0.83
+0.88
+0.76
+0.84
+0.85
+0.80
+0.79
+0.81
+0.77
+0.78
+0.80
+0.74
+0.74
+0.66
+
+YGirls
+
+1.00
+0.99
+0.98
+0.95
+0.92
+0.97
+0.95
+0.89
+0.89
+0.98
+0.92
+0.91
+0.87
+0.91
+0.79
+0.91
+0.85
+0.86
+0.80
+0.83
+0.76
+0.77
+0.82
+0.76
+0.77
+0.73
+
+ Girls
+Y
+
+Appendix A: Results on Item Level
+
+0.01
+0.01
+0.01
+− 0.01
+0.03
+0.04
+0.07
+0.00
+0.00
+0.09
+0.07
+0.04
+0.03
+0.04
+0.03
+0.06
+0.00
+0.06
+0.01
+0.02
+0.00
+− 0.01
+0.02
+0.02
+0.03
+0.07
+
+DGirls
+1.00
+1.00
+1.00
+0.99
+1.00
+1.00
+0.99
+1.00
+0.99
+1.00
+0.98
+0.99
+1.00
+0.97
+0.96
+0.99
+0.99
+0.96
+0.96
+0.98
+0.99
+0.95
+0.98
+0.98
+0.97
+0.94
+
+TPRGirls
+1.00
+0.71
+0.56
+0.00
+0.30
+0.59
+0.63
+0.00
+0.09
+0.85
+0.54
+0.38
+0.20
+0.45
+0.24
+0.47
+0.04
+0.47
+0.21
+0.20
+0.00
+0.12
+0.18
+0.13
+0.19
+0.32
+
+FPRGirls
+0.98
+0.99
+0.98
+0.99
+0.97
+0.95
+0.92
+1.00
+0.98
+0.91
+0.91
+0.94
+0.97
+0.92
+0.91
+0.92
+0.99
+0.87
+0.92
+0.94
+0.99
+0.94
+0.95
+0.95
+0.93
+0.86
+
+ACCBoys
+0.98
+0.97
+0.97
+0.95
+0.90
+0.86
+0.87
+0.86
+0.83
+0.82
+0.85
+0.79
+0.79
+0.74
+0.70
+0.74
+0.74
+0.75
+0.75
+0.72
+0.72
+0.71
+0.68
+0.64
+0.60
+0.64
+
+YBoys
+1.00
+0.99
+0.99
+0.95
+0.92
+0.90
+0.92
+0.86
+0.85
+0.97
+0.91
+0.83
+0.81
+0.79
+0.74
+0.79
+0.73
+0.84
+0.75
+0.70
+0.71
+0.75
+0.72
+0.66
+0.66
+0.68
+
+ Boys
+Y
+0.02
+0.02
+0.02
+0.00
+0.02
+0.05
+0.05
+0.00
+0.01
+0.14
+0.06
+0.04
+0.02
+0.05
+0.04
+0.05
+0.00
+0.09
+0.00
+− 0.02
+− 0.01
+0.04
+0.04
+0.02
+0.06
+0.04
+
+DBoys
+1.00
+1.00
+1.00
+1.00
+0.99
+0.99
+0.99
+1.00
+0.99
+1.00
+0.98
+0.98
+0.99
+0.97
+0.96
+0.97
+0.99
+0.97
+0.95
+0.94
+0.98
+0.97
+0.98
+0.94
+0.97
+0.94
+
+TPRBoys
+1.00
+0.71
+0.56
+0.00
+0.30
+0.59
+0.63
+0.00
+0.09
+0.85
+0.54
+0.38
+0.20
+0.45
+0.24
+0.47
+0.04
+0.47
+0.21
+0.20
+0.00
+0.12
+0.18
+0.13
+0.19
+0.32
+
+FPRBoys
+
+− 0.005
+− 0.014
+− 0.005
+− 0.010
+0.009
+− 0.005
+0.018
+− 0.002
+− 0.011
+− 0.056
+0.010
+0.001
+0.008
+− 0.017
+− 0.008
+0.015
+0.003
+− 0.025
+0.012
+0.043
+0.005
+− 0.055
+− 0.019
+− 0.001
+− 0.034
+0.032
+
+DD
+
+3156
+International Journal of Artificial Intelligence in Education (2025) 35:3128–3165
+
+13
+
+0.66
+0.47
+0.60
+0.48
+0.48
+0.42
+0.38
+0.32
+0.31
+0.34
+0.17
+
+R404Q10A
+R420Q06
+R404Q10B
+R102Q04
+R412Q08
+R102Q05
+R442Q05
+R455Q02
+R442Q06
+R406Q02
+R437Q07
+
+0.87
+0.82
+0.81
+0.97
+0.84
+0.99
+0.92
+0.90
+0.87
+0.79
+0.84
+
+YGirls
+
+Table (continued)
+Item
+ACCGirls
+
+0.74
+0.53
+0.63
+0.48
+0.46
+0.42
+0.38
+0.25
+0.32
+0.23
+0.04
+
+ Girls
+Y
+
+0.09
+0.06
+0.03
+0.01
+− 0.02
+− 0.01
+− 0.01
+− 0.07
+0.02
+− 0.12
+− 0.13
+
+DGirls
+0.97
+0.87
+0.87
+0.97
+0.82
+0.98
+0.88
+0.72
+0.82
+0.53
+0.15
+
+TPRGirls
+0.32
+0.23
+0.27
+0.04
+0.13
+0.00
+0.06
+0.02
+0.10
+0.07
+0.01
+
+FPRGirls
+0.87
+0.82
+0.81
+0.97
+0.84
+0.99
+0.92
+0.90
+0.87
+0.79
+0.84
+
+ACCBoys
+0.60
+0.50
+0.54
+0.49
+0.41
+0.34
+0.37
+0.28
+0.28
+0.22
+0.14
+
+YBoys
+0.63
+0.52
+0.59
+0.50
+0.41
+0.34
+0.35
+0.21
+0.24
+0.14
+0.04
+
+ Boys
+Y
+0.04
+0.02
+0.05
+0.01
+0.00
+0.00
+− 0.02
+− 0.07
+− 0.03
+− 0.09
+− 0.10
+
+DBoys
+0.94
+0.88
+0.89
+0.98
+0.87
+1.00
+0.83
+0.68
+0.71
+0.51
+0.29
+
+TPRBoys
+
+0.32
+0.23
+0.27
+0.04
+0.13
+0.00
+0.06
+0.02
+0.10
+0.07
+0.01
+
+FPRBoys
+
+0.052
+0.040
+− 0.019
+− 0.004
+− 0.023
+− 0.009
+0.012
+− 0.005
+0.049
+− 0.030
+− 0.034
+
+DD
+
+International Journal of Artificial Intelligence in Education (2025) 35:3128–3165
+3157
+
+13
+
+ACCNative
+
+0.99
+0.99
+0.98
+0.99
+0.97
+0.95
+0.94
+1.00
+0.98
+0.89
+0.92
+0.94
+0.97
+0.91
+0.92
+0.91
+0.99
+0.87
+0.93
+0.95
+0.99
+0.93
+0.94
+0.92
+0.91
+0.87
+0.88
+0.84
+
+Item
+
+R219Q01C
+R219Q01B
+R219Q01D
+R219Q01A
+R420Q02
+R456Q02
+R453Q06
+R432Q01
+R227Q06
+R219Q02
+R219Q01E
+R406Q05
+R446Q06
+R406Q01
+R432Q05
+R055Q05
+R455Q03
+R453Q04
+R442Q03
+R456Q06
+R420Q09
+R442Q02
+R227Q03
+R460Q01
+R466Q02
+R055Q02
+R404Q10A
+R420Q06
+
+0.99
+0.98
+0.97
+0.97
+0.91
+0.92
+0.90
+0.91
+0.89
+0.86
+0.87
+0.85
+0.84
+0.81
+0.76
+0.82
+0.83
+0.79
+0.78
+0.80
+0.77
+0.76
+0.77
+0.70
+0.67
+0.68
+0.65
+0.51
+
+YNative
+
+ Native
+Y
+1.00
+0.99
+0.99
+0.96
+0.93
+0.95
+0.95
+0.91
+0.90
+0.97
+0.93
+0.88
+0.86
+0.85
+0.79
+0.87
+0.82
+0.86
+0.80
+0.80
+0.76
+0.78
+0.80
+0.72
+0.72
+0.73
+0.71
+0.55
+
+0.01
+0.01
+0.01
+− 0.01
+0.02
+0.04
+0.05
+0.00
+0.01
+0.11
+0.06
+0.04
+0.02
+0.04
+0.03
+0.05
+0.00
+0.07
+0.02
+0.00
+− 0.01
+0.02
+0.03
+0.02
+0.04
+0.05
+0.06
+0.04
+
+DNative
+1.00
+1.00
+1.00
+0.99
+1.00
+0.99
+0.99
+1.00
+0.99
+1.00
+0.99
+0.99
+0.99
+0.97
+0.96
+0.98
+0.99
+0.96
+0.97
+0.96
+0.99
+0.97
+0.98
+0.96
+0.97
+0.94
+0.96
+0.89
+
+TPRNative
+1.00
+0.67
+0.61
+0.00
+0.29
+0.51
+0.54
+0.01
+0.14
+0.81
+0.55
+0.31
+0.16
+0.34
+0.24
+0.39
+0.02
+0.47
+0.20
+0.13
+0.00
+0.18
+0.20
+0.17
+0.20
+0.28
+0.26
+0.20
+
+FPRNative
+0.99
+0.99
+0.98
+0.99
+0.97
+0.95
+0.94
+1.00
+0.98
+0.89
+0.92
+0.94
+0.97
+0.91
+0.92
+0.91
+0.99
+0.87
+0.93
+0.95
+0.99
+0.93
+0.94
+0.92
+0.91
+0.87
+0.88
+0.84
+
+ACCForeign
+0.96
+0.96
+0.96
+0.91
+0.85
+0.78
+0.75
+0.74
+0.72
+0.81
+0.76
+0.77
+0.60
+0.72
+0.55
+0.65
+0.61
+0.71
+0.68
+0.61
+0.64
+0.63
+0.58
+0.58
+0.61
+0.47
+0.51
+0.35
+
+YForeign
+
+ Foreign
+Y
+1.00
+0.99
+0.99
+0.89
+0.88
+0.87
+0.85
+0.74
+0.72
+0.98
+0.86
+0.84
+0.69
+0.79
+0.59
+0.73
+0.61
+0.83
+0.65
+0.64
+0.64
+0.60
+0.62
+0.60
+0.68
+0.54
+0.55
+0.38
+0.04
+0.03
+0.03
+− 0.02
+0.04
+0.08
+0.10
+0.00
+0.00
+0.17
+0.10
+0.07
+0.08
+0.07
+0.04
+0.07
+0.00
+0.12
+− 0.03
+0.03
+0.00
+− 0.03
+0.04
+0.02
+0.07
+0.08
+0.04
+0.03
+
+DForeign
+1.00
+1.00
+1.00
+0.98
+0.99
+0.99
+0.99
+1.00
+0.99
+1.00
+0.97
+1.00
+1.00
+0.99
+0.94
+1.00
+0.99
+0.97
+0.88
+0.97
+1.00
+0.92
+1.00
+1.00
+1.00
+0.90
+0.96
+0.80
+
+TPRForeign
+1.00
+0.67
+0.61
+0.00
+0.29
+0.51
+0.54
+0.01
+0.14
+0.81
+0.55
+0.31
+0.16
+0.34
+0.24
+0.39
+0.02
+0.47
+0.20
+0.13
+0.00
+0.18
+0.20
+0.17
+0.20
+0.28
+0.26
+0.20
+
+FPRForeign
+− 0.026
+− 0.020
+− 0.015
+0.014
+− 0.011
+− 0.046
+− 0.057
+− 0.001
+0.010
+− 0.063
+− 0.041
+− 0.036
+− 0.065
+− 0.030
+− 0.008
+− 0.020
+− 0.002
+− 0.048
+0.052
+− 0.027
+− 0.009
+0.050
+− 0.005
+− 0.000
+− 0.030
+− 0.029
+0.020
+0.019
+
+DD
+
+3158
+
+13
+
+International Journal of Artificial Intelligence in Education (2025) 35:3128–3165
+
+0.60
+0.49
+0.47
+0.40
+0.39
+0.33
+0.30
+0.30
+0.17
+
+R404Q10B
+R102Q04
+R412Q08
+R102Q05
+R442Q05
+R455Q02
+R442Q06
+R406Q02
+R437Q07
+
+0.82
+0.97
+0.86
+0.99
+0.90
+0.89
+0.88
+0.82
+0.86
+
+YNative
+
+Table (continued)
+Item
+ACCNative
+
+ Native
+Y
+0.64
+0.50
+0.46
+0.39
+0.38
+0.26
+0.30
+0.20
+0.04
+
+0.04
+0.01
+− 0.01
+0.00
+− 0.01
+− 0.07
+0.00
+− 0.11
+− 0.13
+
+DNative
+0.88
+0.98
+0.84
+0.99
+0.86
+0.72
+0.79
+0.52
+0.20
+
+TPRNative
+0.26
+0.04
+0.13
+0.00
+0.07
+0.03
+0.09
+0.06
+0.01
+
+FPRNative
+0.82
+0.97
+0.86
+0.99
+0.90
+0.89
+0.88
+0.82
+0.86
+
+ACCForeign
+0.42
+0.43
+0.35
+0.27
+0.31
+0.18
+0.21
+0.15
+0.14
+
+YForeign
+
+ Foreign
+Y
+0.52
+0.43
+0.31
+0.27
+0.26
+0.12
+0.18
+0.09
+0.05
+0.09
+0.00
+− 0.05
+0.00
+− 0.05
+− 0.06
+− 0.03
+− 0.06
+− 0.09
+
+DForeign
+
+0.97
+1.00
+0.82
+1.00
+0.77
+0.55
+0.71
+0.50
+0.27
+
+TPRForeign
+
+0.26
+0.04
+0.13
+0.00
+0.07
+0.03
+0.09
+0.06
+0.01
+
+FPRForeign
+
+− 0.057
+0.007
+0.042
+− 0.003
+0.039
+− 0.009
+0.027
+− 0.044
+− 0.043
+
+DD
+
+International Journal of Artificial Intelligence in Education (2025) 35:3128–3165
+3159
+
+13
+
+3160
+
+International Journal of Artificial Intelligence in Education (2025) 35:3128–3165
+
+Author Contributions N.A. was responsible for conducting the study and preparing the manuscript. J.M.
+was involved in collecting and managing the dataset. F.G. and F.Z. provided subject matter expertise and
+supervision. All authors reviewed the manuscript.
+Funding Open Access funding enabled and organized by Projekt DEAL.
+Data Availability The data we used for the analysis is confidential.
+
+Declarations
+Competing Interests The authors declare no competing interests.
+Open Access This article is licensed under a Creative Commons Attribution 4.0 International License,
+which permits use, sharing, adaptation, distribution and reproduction in any medium or format, as long
+as you give appropriate credit to the original author(s) and the source, provide a link to the Creative
+Commons licence, and indicate if changes were made. The images or other third party material in this
+article are included in the article’s Creative Commons licence, unless indicated otherwise in a credit line
+to the material. If material is not included in the article’s Creative Commons licence and your intended use
+is not permitted by statutory regulation or exceeds the permitted use, you will need to obtain permission
+directly from the copyright holder. To view a copy of this licence, visit ​h​t​t​p​:​/​/​c​r​e​a​t​i​v​e​c​o​m​m​o​n​s​.​o​r​g​/​l​i​c​e​n​
+s​e​s​/​b​y​/​4​.​0​/​​​​.​​
+
+References
+Adams, A. M., & Simmons, F. R. (2019). Exploring individual and gender differences in early writing
+performance. Reading and Writing, 32(2), 235–263. https://doi.org/10.1007/s11145-018-9859-0
+Al-Saadi, Z. (2020). Gender differences in writing: The mediating effect of language proficiency and writing fluency in text quality. Cogent Education, 7(1). ​h​t​t​p​s​:​​/​/​d​o​i​​.​o​r​g​/​1​​0​.​1​0​​8​0​/​2​3​​3​1​1​8​6​​X​.​2​0​2​0​​.​1​7​7​​0​9​2​
+3. Article 1770923.
+American educational research association, American psychological association, & National council on
+measurement in. (2014). In education (Ed.), Standards for educational and psychological testing.
+American Educational Research Association. ​h​t​t​p​s​:​​/​/​w​w​w​​.​a​p​a​.​o​​r​g​/​s​​c​i​e​n​c​​e​/​p​r​o​​g​r​a​m​s​/​​t​e​s​t​​i​n​g​/​s​t​a​n​d​a​r​
+d​s
+Andersen, N., Zehner, F., & Goldhammer, F. (2023). Semi-automatic coding of open-ended text responses
+in large-scale assessments. Journal of Computer Assisted Learning, 39(3), 841–854. ​h​t​t​p​s​:​/​/​d​o​i​.​o​r​g​
+/​1​0​.​1​1​1​1​/​j​c​a​l​.​1​2​7​1​7​​​​
+Argamon, S., Fine, J., & Shimoni, A. (2003). Gender, genre, and writing style in formal written texts. Text
+& Talk, 23(3), 321–346. https://doi.org/10.1515/text.2003.014
+Artelt, C., Naumann, J., & Schneider, J. (2010). Lesemotivation und Lernstrategien. In E. Klieme, C.
+Artelt, J. Hartig, N. Jude, O. Köller, M. Prenzel, W. Schneider, & P. Stanat (Eds.), Lesemotivation und
+Lernstrategien (pp. 73–112). Waxmann. https://www.doi.org/0.25656/01:3531.
+Aspers, P., & Corte, U. (2019). What is qualitative in qualitative research. Qualitative Sociology, 42(2),
+139–160. https://doi.org/10.1007/s11133-019-9413-7
+Attali, Y., & Burstein, J. (2006). Automated essay scoring with e-rater® V.2. The Journal of Technology
+Learning and Assessment, 4(3), Article3. ​h​t​t​p​s​:​​/​/​w​w​w​​.​e​j​o​u​r​​n​a​l​s​​.​b​c​.​e​​d​u​/​i​n​​d​e​x​.​p​h​​p​/​j​t​​l​a​/​a​r​t​i​c​l​e​/​v​i​e​w​/​
+1​6​5​0
+Basu, S., Jacobs, C., & Vanderwende, L. (2013). Powergrading: A clustering approach to amplify human
+effort for short answer grading. Transactions of the Association for Computational Linguistics, 1,
+391–402. https://doi.org/10.1162/tacl_a_00236
+Bejar, I. I. (2012). Rater cognition: Implications for validity. Educational Measurement: Issues and Practice, 31(3), 2–9. ​h​t​t​p​s​:​​/​/​d​o​i​​.​o​r​g​/​1​​0​.​1​1​​1​1​/​j​.​​1​7​4​5​-​​3​9​9​2​.​2​​0​1​2​.​​0​0​2​3​8​.​x
+
+13
+
+International Journal of Artificial Intelligence in Education (2025) 35:3128–3165
+
+3161
+
+Bolukbasi, T., Chang, K. W., Zou, J. Y., Saligrama, V., & Kalai, A. T. (2016). Man is to computer programmer as woman is to homemaker? debiasing word embeddings. In D. D. Lee, R. Garnett, U. von Luxburg, R. Garnett, M. Sugiyama, & I. Guyon (Eds.), NIPS’16: Proceedings of the 30th International
+Conference on Neural Information Processing Systems (Vol. 29, pp. 1–9). Curran Associates, Inc. ​h​
+t​t​p​s​:​​/​/​p​a​p​​e​r​s​.​n​i​​p​s​.​c​​c​/​p​a​p​​e​r​_​f​i​​l​e​s​/​p​a​​p​e​r​/​​2​0​1​6​/​​h​a​s​h​/​​a​4​8​6​c​d​​0​7​e​4​​a​c​3​d​2​​7​0​5​7​1​​6​2​2​f​4​f​​3​1​6​e​​c​5​-​A​b​s​t​r​a​c​t​.​h​t​
+m​l
+Bonefeld, M., & Dickhauser, O. (2018). (Biased) Grading of students’ performance: students’ names,
+performance level, and implicit attitudes. Frontiers in Psychology, 9, Article 481. ​h​t​t​p​s​:​/​/​d​o​i​.​o​r​g​/​1​0​
+.​3​3​8​9​/​f​p​s​y​g​.​2​0​1​8​.​0​0​4​8​1​​​​
+Bridgeman, B., Trapani, C., & Attali, Y. (2009, April 13). Considering fairness and validity in evaluating
+automated scoring [Paper presentation]. National Council on Measurement in Education (NCME),
+San Diego, CA.
+Burkart, N., & Huber, M. F. (2021). A survey on the explainability of supervised machine learning. Journal
+of Artificial Intelligence Research, 70, 245–317. https://doi.org/10.1613/jair.1.12228
+Burr, V. (2002). Judging gender from samples of adult handwriting: Accuracy and use of cues. The Journal
+of Social Psychology, 142(6), 691–700. https://doi.org/10.1080/00224540209603929
+Burrows, S., Gurevych, I., & Stein, B. (2015). The eras and trends of automatic short answer grading.
+International Journal of Artificial Intelligence in Education, 25(1), 60–117. ​h​t​t​p​s​:​/​/​d​o​i​.​o​r​g​/​1​0​.​1​0​0​7​
+/​s​4​0​5​9​3​-​0​1​4​-​0​0​2​6​-​8​​​​
+Burstein, J., & Chodorow, M. (1999). Automated essay scoring for nonnative english speakers. In marl
+broman olsen (Ed.), Computer Mediated Language Assessment and Evaluation in Natural Language
+Processing (pp. 68–75). https://aclanthology.org/W99-0411
+Burstein, J., Chodorow, M., & Leacock, C. (2004). Automated essay evaluation: The criterion online writing service. AI Magazine, 25(3), 27–27. https://doi.org/10.1609/aimag.v25i3.1774
+Caliskan, A., Bryson, J. J., & Narayanan, A. (2017). Semantics derived automatically from Language
+corpora contain human-like biases. Science, 356(6334), 183–186. ​h​t​t​p​s​:​/​/​d​o​i​.​o​r​g​/​1​0​.​1​1​2​6​/​s​c​i​e​n​c​e​.​
+a​a​l​4​2​3​0​​​​
+Camus, L., & Filighera, A. (2020). Investigating transformers for automatic short answer grading. In I. I.
+Bittencourt, M. Cukurova, K. Muldner, R. Luckin, & E. Millán (Eds.), Artificial Intelligence in Education (Vol. 12164, pp. 43–48). Springer. https://doi.org/10.1007/978-3-030-52240-7_8
+Chen, J., Kallus, N., Mao, X., Svacha, G., & Udell, M. (2019). Fairness under unawareness: assessing disparity when protected class is unobserved. Proceedings of the Conference on Fairness Accountability
+and Transparency, 339-348. https://doi.org/10.1145/3287560.3287594
+Chen, L., Chen, P., & Lin, Z. (2020). Artificial intelligence in education: a review. IEEE Access, 8, 75264–
+75278. IEEE Access. https://doi.org/10.1109/ACCESS.2020.2988510
+Cohen, J. (1960). A coefficient of agreement for nominal scales. Educational and Psychological Measurement, 20(1), 37–46. https://doi.org/10.1177/001316446002000104
+Cook, V. J. (1997). L2 users and english spelling. Journal of Multilingual and Multicultural Development,
+18(6), 474–488. https://doi.org/10.1080/01434639708666335
+Cortes, C., & Vapnik, V. (1995). Support-vector networks. Machine Learning, 20(3), 273–297. ​h​t​t​p​s​:​/​/​d​o​
+i​.​o​r​g​/​1​0​.​1​0​0​7​/​B​F​0​0​9​9​4​0​1​8​​​​
+Cumming, A. (1989). Writing expertise and Second-Language proficiency. Language Learning, 39(1),
+81–135. ​h​t​t​p​s​:​​/​/​d​o​i​​.​o​r​g​/​1​​0​.​1​1​​1​1​/​j​.​​1​4​6​7​-​​1​7​7​0​.​1​​9​8​9​.​​t​b​0​0​5​9​2​.​x
+Dai, H., Liu, Z., Liao, W., Huang, X., Cao, Y., Wu, Z., Zhao, L., Xu, S., Liu, W., Liu, N., Li, S., Zhu, D.,
+Cai, H., Sun, L., Li, Q., Shen, D., Liu, T., & Li, X. (2023). AugGPT: Leveraging ChatGPT for text
+data augmentation. ArXiv. https://doi.org/10.48550/ArXiv.2302.13007
+Deerwester, S., Dumais, S. T., Furnas, G. W., & Landauer, T. K. (1990). Indexing by latent semantic analysis. Journal of the American Society for Information Science, 41, 391–407. ​h​t​t​p​s​:​​/​/​d​o​i​​.​o​r​g​/​1​​0​.​1​0​​0​2​/​(​
+S​I​C​I​)​1​0​9​7​-​4​5​7​1​(​1​9​9​0​0​9​)​4​1​:​6​5​%​3​C​3​9​1​:​:​A​I​D​-​A​S​I​1​%​3​E​3​.​0​.​C​O​;​2​-​9
+Devlin, J., Chang, M. W., Lee, K., & Toutanova, K. (2019). BERT: Pre-training of deep bidirectional transformers for language understanding. In J. Burstein, C. Doran, & T. Solorio (Eds.), Proceedings of the
+2019 Conference of the North American Chapter of the Association for Computational Linguistics:
+Human Language Technologies, Volume 1 (Long and Short Papers) (Vol. 1, pp. 4171–4186). Association for Computational Linguistics. https://doi.org/10.18653/v1/N19-1423
+Entorf, H., & Minoiu, N. (2005). What a difference immigration policy makes: A comparison of PISA
+scores in Europe and traditional countries of immigration. German Economic Review, 6(3), 355–376.​
+h​t​t​p​s​:​​/​/​d​o​i​​.​o​r​g​/​1​​0​.​1​1​​1​1​/​j​.​​1​4​6​8​-​​0​4​7​5​.​2​​0​0​5​.​​0​0​1​3​7​.​x
+
+13
+
+3162
+
+International Journal of Artificial Intelligence in Education (2025) 35:3128–3165
+
+Erickson, J. A., Botelho, A. F., Peng, Z., Huang, R., Kasal, M. V., & Heffernan, N. (2021). Is It fair? automated open response grading. In Proceedings of the 14th Educational Data Mining conference. Educational Data Mining. ​h​t​t​p​s​:​​/​/​e​d​u​​c​a​t​i​o​n​​a​l​d​a​​t​a​m​i​n​​i​n​g​.​o​​r​g​/​E​D​M​​2​0​2​1​​/​v​i​r​t​​u​a​l​/​p​​o​s​t​e​r​_​​p​a​p​e​​r​2​1​4​.​h​t​m​l
+European Commission (2020). WHITE PAPER On Artificial Intelligence—A European approach to excellence and trust. ​h​t​t​p​s​:​​/​/​e​u​r​​-​l​e​x​.​e​​u​r​o​p​​a​.​e​u​/​​l​e​g​a​l​​-​c​o​n​t​e​​n​t​/​E​​N​/​A​L​L​​/​?​u​r​i​​=​C​E​L​E​X​​:​5​2​0​​2​0​D​C​0​0​6​5
+Flor, M., Futagi, Y., Lopez, M., & Mulholland, M. (2015). Patterns of misspellings in L2 and L1 english:
+A view from the ETS spelling Corpus. Bergen Language and Linguistics Studies, 6. ​h​t​t​p​s​:​/​/​d​o​i​.​o​r​g​/​
+1​0​.​1​5​8​4​5​/​b​e​l​l​s​.​v​6​i​0​.​8​1​1​​​​
+Foltýnek, T., Meuschke, N., & Gipp, B. (2019). Academic plagiarism detection: A systematic literature
+review. ACM Computing Surveys, 52(6), 112. https://doi.org/10.1145/3345317
+Fraillon, J., Ainley, J., Schulz, W., Duckworth, D., & Friedman, T. (2019). Computer and information
+literacy framework. In J. Fraillon, J. Ainley, W. Schulz, D. Duckworth, & T. Friedman (Eds.), IEA
+International Computer and Information Literacy Study 2018 Assessment Framework (pp. 13–23).
+Springer International Publishing. https://doi.org/10.1007/978-3-030-19389-8_2
+Galhardi, L. B., & Brancher, J. D. (2018). Machine learning approach for automatic short answer grading:
+A systematic review. In G. R. Simari, E. Fermé, F. Gutiérrez Segura, & J. A. Rodríguez Melquiades
+(Eds.), Advances in Artificial Intelligence—IBERAMIA 2018 (pp. 380–391). Springer International
+Publishing. https://doi.org/10.1007/978-3-030-03928-8_31
+Gombert, S., Fink, A., Giorgashvili, T., Jivet, I., Di Mitri, D., Yau, J., Frey, A., & Drachsler, H. (2024).
+From the automated assessment of student essay content to highly informative feedback: A case
+study. International Journal of Artificial Intelligence in Education. ​h​t​t​p​s​:​/​/​d​o​i​.​o​r​g​/​1​0​.​1​0​0​7​/​s​4​0​5​9​3​-​0​
+2​3​-​0​0​3​8​7​-​6​​​​
+Greifeneder, R., Zelt, S., Seele, T., Bottenberg, K., & Alt, A. (2012). Towards a better understanding of the
+legibility bias in performance assessments: The case of gender-based inferences. British Journal of
+Educational Psychology, 82(3), 361–374. ​h​t​t​p​s​:​​/​/​d​o​i​​.​o​r​g​/​1​​0​.​1​1​​1​1​/​j​.​​2​0​4​4​-​​8​2​7​9​.​2​​0​1​1​.​​0​2​0​2​9​.​x
+Guo, X., Yin, Y., Dong, C., Yang, G., & Zhou, G. (2008). On the class imbalance problem. In Maozu Guo,
+Liang Zhao, & Lipo Wang (Eds.), 2008 Fourth International Conference on Natural Computation
+(Vol. 4, pp. 192–201). IEEE. https://doi.org/10.1109/ICNC.2008.871
+Haeri, M. A., & Zweig, K. A. (2020). The crucial role of sensitive attributes in fair classification. 2020
+IEEE Symposium Series on Computational Intelligence (SSCI), 2993–3002. ​h​t​t​p​s​:​​/​/​d​o​i​​.​o​r​g​/​1​​0​.​1​1​​0​9​
+/​S​S​​C​I​4​7​8​​0​3​.​2​0​2​​0​.​9​3​​0​8​5​8​5
+Haller, S., Aldea, A., Seifert, C., & Strisciuglio, N. (2022). Survey on automated short answer grading
+with deep learning: From word embeddings to Transformers. ArXiv. ​h​t​t​p​s​:​/​/​d​o​i​.​o​r​g​/​1​0​.​4​8​5​5​0​/​A​r​X​
+i​v​.​2​2​0​4​.​0​3​5​0​3​​​​
+Hedges, L. V., & Nowell, A. (1995). Sex differences in mental test scores, variability, and numbers of
+High-Scoring individuals. Science, 269(5220), 41–45. https://doi.org/10.1126/science.7604277
+Hellman, D. (2020). Measuring algorithmic fairness. Virginia Law Review, 106(4), 811–866.
+Hellström, T., Dignum, V., & Bensch, S. (2020). In L. Serafini, & Paul Lukowicz (Eds.), Bias in machine
+learning—What is it good for? (pp. 3–10). Alessandro Saffiotti. ​h​t​t​p​s​:​/​/​c​e​u​r​-​w​s​.​o​r​g​/​V​o​l​-​2​6​5​9​/​h​e​l​l​s​t​r​
+o​m​.​p​d​f​​​​ CEUR-WS.
+Hofer, S. I. (2015). Studying gender Bias in physics grading: The role of teaching experience and country.
+International Journal of Science Education, 37(17), 2879–2905. ​h​t​t​p​s​:​​/​/​d​o​i​​.​o​r​g​/​1​​0​.​1​0​​8​0​/​0​9​​5​0​0​6​9​​3​.​
+2​0​1​5​​.​1​1​1​​4​1​9​0
+Hofmann, V., Kalluri, P. R., Jurafsky, D., & King, S. (2024). Dialect prejudice predicts AI decisions about
+people’s character, employability, and criminality. ArXiv. https://doi.org/10.48550/ArXiv.2403.00742
+Horbach, A., & Pinkal, M. (2018). Semi-supervised clustering for short answer scoring. In N. Calzolari, K.
+Choukri, C. Cieri, T. Declerck, S. Goggi, K. Hasida, H. Isahara, B. Maegaard, J. Mariani, H. Mazo,
+A. Moreno, J. Odijk, S. Piperidis, & T. Tokunaga (Eds.), Proceedings of the Eleventh International
+Conference on Language Resources and Evaluation (LREC 2018) (pp. 4065–4071). European Language Resources Association (ELRA). https://aclanthology.org/L18-1641.
+Hyde, J. S. (2005). The gender similarities hypothesis. American Psychologist, 60(6), 581–592. ​h​t​t​p​s​:​/​/​d​o​
+i​.​o​r​g​/​1​0​.​1​0​3​7​/​0​0​0​3​-​0​6​6​X​.​6​0​.​6​.​5​8​1​​​​
+Ibáñez-Alfonso, J. A., Hernández-Cabrera, J. A., Duñabeitia, J. A., Estévez, A., Macizo, P., Bajo, M. T.,
+Fuentes, L. J., & Saldaña, D. (2021). Socioeconomic status, culture, and reading comprehension in
+immigrant students. Frontiers in Psychology, 12, 752273. https://doi.org/10.3389/fpsyg.2021.752273
+Johnson, M. S., Liu, X., & McCaffrey, D. F. (2022). Psychometric methods to evaluate measurement
+and algorithmic Bias in automated scoring. Journal of Educational Measurement, 59(3), 338–361.
+https://doi.org/10.1111/jedm.12335
+
+13
+
+International Journal of Artificial Intelligence in Education (2025) 35:3128–3165
+
+3163
+
+Jones, S., & Myhill, D. (2007). Discourses of difference? Examining gender differences in linguistic characteristics of writing. Canadian Journal of Education, 30(2), 456–482. ​h​t​t​p​s​:​/​/​d​o​i​.​o​r​g​/​1​0​.​2​3​0​7​/​2​0​4​
+6​6​6​4​6​​​
+Klein, J., & El, L. P. (2003). Impairment of teacher efficiency during extended sessions of test correction. European Journal of Teacher Education, 26(3), 379–392. https://doi.org/10.1080/0261976032000128201
+Koppel, M., Argamon, S., & Shimoni, A. R. (2002). Automatically categorizing written texts by author
+gender. Literary and Linguistic Computing, 7(4), 401–412. https://doi.org/10.1093/llc/17.4.401
+Kusner, M., Loftus, J., Russell, C., & Silva, R. (2017). Counterfactual fairness. In Ulrike von Luxburg,
+Isabelle Guyon, Samy Bengio, Hanna Wallach, & Rob Fergus (Eds.), Proceedings of the 31st International Conference on Neural Information Processing Systems (pp. 4069–4079). Curran Associates
+Inc. https://doi.org/10.5555/3294996.3295162
+Landis, J. R., & Koch, G. G. (1977). The measurement of observer agreement for categorical data. Biometrics, 33, 159–174.
+Legislative Resolution on the proposal for a regulation of the european parliament and of the council on
+laying down harmonised rules on Artificial Intelligence (Artificial Intelligence Act) and Amending
+Certain Union Legislative Acts (2021/0106(COD); P9_TA(2024)0138), 2021/0106(COD), European
+Parliament, P9_TA (2024). 0138 (2024). ​h​t​t​p​s​:​​/​/​w​w​w​​.​e​u​r​o​p​​a​r​l​.​​e​u​r​o​p​​a​.​e​u​/​​d​o​c​e​o​/​​d​o​c​u​​m​e​n​t​/​​T​A​-​9​-​​2​0​
+2​4​-​0​​1​3​8​_​​E​N​.​p​d​f
+Ling, G., Mollaun, P., & Xi, X. (2014). A study on the impact of fatigue on human raters when scoring
+speaking responses. Language Testing, 31(4), 479–499. https://doi.org/10.1177/0265532214530699
+Litman, D., Zhang, H., Correnti, R., Matsumura, L. C., & Wang, E. (2021). A fairness evaluation of automated methods for scoring text evidence usage in writing. Artificial Intelligence in Education: 22nd
+International Conference, AIED 2021, Utrecht, The Netherlands, June 14–18, 2021, Proceedings,
+Part I, 255–267. https://doi.org/10.1007/978-3-030-78292-4_21
+Liu, Y., Ott, M., Goyal, N., Du, J., Joshi, M., Chen, D., Levy, O., Lewis, M., Zettlemoyer, L., & Stoyanov,
+V. (2019). RoBERTa: A Robustly Optimized BERT Pretraining Approach (No. arXiv:1907.11692).
+arXiv. http://arxiv.org/abs/1907.11692
+Lopez-Agudo, L. A., González-Betancor, S. M., & Marcenaro-Gutierrez, O. D. (2021). Language at home
+and academic performance: The case of Spain. Economic Analysis and Policy, 69, 16–33. ​h​t​t​p​s​:​/​/​d​o​
+i​.​o​r​g​/​1​0​.​1​0​1​6​/​j​.​e​a​p​.​2​0​2​0​.​1​1​.​0​0​3​​​​
+Loukina, A., Madnani, N., & Zechner, K. (2019). The many dimensions of algorithmic fairness in educational applications. In H. Yannakoudakis, E. Kochmar, C. Leacock, N. Madnani, I. Pilán, & T. Zesch
+(Eds.), Proceedings of the Fourteenth Workshop on Innovative Use of NLP for Building Educational
+Applications (pp. 1–10). Association for Computational Linguistics. ​h​t​t​p​s​:​/​/​d​o​i​.​o​r​g​/​1​0​.​1​8​6​5​3​/​v​1​/​W​
+1​9​-​4​4​0​1​​​​
+Lowie, W., & Verspoor, M. (2008). Input versus transfer? - the role of frequency and similarity in the
+acquisition of L2 prepositions. In michel achard & susanne niemeier (Eds.), Cognitive Linguistics,
+Second Language Acquisition, and Foreign Language Teaching (Vol. 18, pp. 77–94). De Gruyter
+Mouton. https://doi.org/10.1515/9783110199857.77
+Ludwig, S., Mayer, C., Hansen, C., Eilers, K., & Brandt, S. (2021). Automated essay scoring using transformer models. Psych, 3(4), 897–915. https://doi.org/10.3390/psych3040056
+Madnani, N., & Cahill, A. (2018). Automated scoring: Beyond natural language processing. In E. M.
+Bender, L. Derczynski, & P. Isabelle (Eds.), Proceedings of the 27th International Conference on
+Computational Linguistics (pp. 1099–1109). Association for Computational Linguistics. ​h​t​t​p​s​:​/​/​a​c​l​a​
+n​t​h​o​l​o​g​y​.​o​r​g​/​C​1​8​-​1​0​9​4​​​​.​​​
+Malt, B. C., & Sloman, S. A. (2003). Linguistic diversity and object naming by non-native speakers of
+english. Bilingualism: Language and Cognition, 6(1), 47–67. ​h​t​t​p​s​:​/​/​d​o​i​.​o​r​g​/​1​0​.​1​0​1​7​/​S​1​3​6​6​7​2​8​9​0​3​
+0​0​1​0​2​0​​​
+Mehrabi, N., Morstatter, F., Saxena, N., Lerman, K., & Galstyan, A. (2021). A survey on bias and fairness in
+machine learning. ACM Computing Survey (CSUR), 54(6). https://doi.org/10.1145/3457607. Article 115.
+Meyer, D., Dimitriadou, E., Hornik, K., Weingessel, A., & Leisch, F. (2024). e1071: Misc Functions of the
+Department of Statistics, Probability Theory Group (Formerly: E1071), TU Wien (Version 1.7–16)
+[Computer software]. ​h​t​t​p​s​:​​/​/​c​r​a​​n​.​r​-​p​r​​o​j​e​c​​t​.​o​r​g​​/​w​e​b​/​​p​a​c​k​a​g​​e​s​/​e​​1​0​7​1​/​i​n​d​e​x​.​h​t​m​l
+Mikolov, T., Sutskever, I., Chen, K., Corrado, G. S., & Dean, J. (2013). Distributed representations of
+words and phrases and their compositionality. In C. J. C. Burges, L. Bottou, M. Welling, Z. Ghahramani, & K. Q. Weinberger (Eds.), Proceedings of the 26th International Conference on Neural
+Information Processing Systems—Volume 2 (Vol. 26, pp. 3111–3119). Curran Associates Inc. ​h​t​t​p​s​
+:​​/​/​p​a​p​​e​r​s​.​n​i​​p​s​.​c​​c​/​p​a​p​​e​r​_​f​i​​l​e​s​/​p​a​​p​e​r​/​​2​0​1​3​/​​h​a​s​h​/​​9​a​a​4​2​b​​3​1​8​8​​2​e​c​0​3​​9​9​6​5​f​​3​c​4​9​2​3​​c​e​9​0​​1​b​-​A​b​s​t​r​a​c​t​.​h​t​m​l
+
+13
+
+3164
+
+International Journal of Artificial Intelligence in Education (2025) 35:3128–3165
+
+Millsap, R. E., & Everson, H. T. (1993). Methodology review: Statistical approaches for assessing measurement Bias. Applied Psychological Measurement, 17(4), 297–334. ​h​t​t​p​s​:​/​/​d​o​i​.​o​r​g​/​1​0​.​1​1​7​7​/​0​1​4​6​6​
+2​1​6​9​3​0​1​7​0​0​4​0​1​​​
+Mousavinasab, E., Zarifsanaiey, N., Niakan Kalhori, R., Rakhshan, S., Keikha, M., L., & Ghazi Saeedi, M.
+(2021). Intelligent tutoring systems: A systematic review of characteristics, applications, and evaluation methods. Interactive Learning Environments, 29(1), 142–163. ​h​t​t​p​s​:​​/​/​d​o​i​​.​o​r​g​/​1​​0​.​1​0​​8​0​/​1​0​​4​9​4​8​
+2​​0​.​2​0​1​8​​.​1​5​5​​8​2​5​7
+Mullis, I. V. S., & Martin, M. O. (Eds.). (2019). Pirls 2021 assessment frameworks. TIMSS & PIRLS.
+Naik, R. R., Landge, M. B., & Mahender, C. N. (2015). A review on plagiarism detection tools. International Journal of Computer Applications, 125(11), 16–22.
+Northcutt, C. G., Athalye, A., & Mueller, J. (2021). Pervasive Label Errors in Test Sets Destabilize
+Machine Learning Benchmarks. arXiv. https://doi.org/10.48550/arXiv.2103.14749
+Ntoutsi, E., Fafalios, P., Gadiraju, U., Iosifidis, V., Nejdl, W., Vidal, M. E., Ruggieri, S., Turini, F., Papadopoulos, S., Krasanakis, E., Kompatsiaris, I., Kinder-Kurlanda, K., Wagner, C., Karimi, F., Fernandez,
+M., Alani, H., Berendt, B., Kruegel, T., Heinze, C., & Staab, S. (2020). Bias in data-driven artificial intelligence systems—An introductory survey. WIREs Data Mining and Knowledge Discovery,
+10(3). https://doi.org/10.1002/widm.1356. Article e1356.
+Oakhill, J. V., & Petrides, A. (2007). Sex differences in the effects of interest on boys’ and girls’ reading
+comprehension. British Journal of Psychology, 98(2), 223–235. ​h​t​t​p​s​:​/​/​d​o​i​.​o​r​g​/​1​0​.​1​3​4​8​/​0​0​0​7​1​2​6​0​6​
+X​1​1​7​6​4​9​​​​
+Obermeyer, Z., Powers, B., Vogeli, C., & Mullainathan, S. (2019). Dissecting racial bias in an algorithm
+used to manage the health of populations. Science, 366(6464), 447–453. ​h​t​t​p​s​:​/​/​d​o​i​.​o​r​g​/​1​0​.​1​1​2​6​/​s​c​i​
+e​n​c​e​.​a​a​x​2​3​4​2​​​​
+OECD. (2009). Take the test: Sample questions from oecd’s PISA assessments. OECD Publishing. ​h​t​t​p​s​:​
+/​/​d​o​i​.​o​r​g​/​1​0​.​1​7​8​7​/​1​9​9​6​3​7​7​7​​​​
+OECD. (2017a). PISA 2015 assessment and analytical framework: Science, reading, mathematic, financial literacy and collaborative problem solving. OECD Publishing.
+OECD. (2024). PISA 2022 technical report. OECD Publishing. ​h​t​t​p​s​:​​/​/​w​w​w​​.​o​e​c​d​-​​i​l​i​b​​r​a​r​y​.​​o​r​g​/​e​​d​u​c​a​t​i​​o​n​/​p​​
+i​s​a​-​2​​0​2​2​-​t​​e​c​h​n​i​c​​a​l​-​r​​e​p​o​r​t​_​0​1​8​2​0​d​6​d​-​e​n
+OECD (2011). Education at a Glance 2011: OECD Indicators. OECD Publishing. ​h​t​t​p​s​:​/​/​d​o​i​.​o​r​g​/​1​0​.​1​7​8​
+7​/​e​a​g​-​2​0​1​1​-​e​n​​​​
+Pisa 2015 Technical Report. OECD OECD, & Publishing (2017b). ​h​t​t​p​s​:​​/​/​w​w​w​​.​o​e​c​d​.​​o​r​g​/​​c​o​n​t​e​​n​t​/​d​a​​m​/​o​e​c​
+d​​/​e​n​/​​a​b​o​u​t​​/​p​r​o​g​​r​a​m​m​e​s​​/​e​d​u​​/​p​i​s​a​​/​p​u​b​l​​i​c​a​t​i​o​​n​s​/​t​​e​c​h​n​i​​c​a​l​-​r​​e​p​o​r​t​/​​P​I​S​A​​2​0​1​5​_​T​e​c​h​R​e​p​_​F​i​n​a​l​.​p​d​f
+Palviainen, Å., Kalaja, P., & Mäntylä, K. (2012). Development of L2 writing: Fluency and proficiency. In
+L. Meriläinen, L. Kolehmainen, & T. Nieminen (Eds.), AFinLA-e Soveltavan kielitieteen tutkimuksia
+2012 (Vol. 4, pp. 47–59). AFinLA. https://journal.fi/afinla/article/view/7037
+Park, J., & Sandberg, I. W. (1991). Universal approximation using radial-basis-function networks. Neural
+Computation, 3(2), 246–257. https://doi.org/10.1162/neco.1991.3.2.246
+Payne, T. W., & Lynn, R. (2011). Sex differences in second Language comprehension. Personality and
+Individual Differences, 50(3), 434–436. https://doi.org/10.1016/j.paid.2010.10.026
+Pennington, J., Socher, R., & Manning, C. (2014). GloVe: global vectors for word representation. In A.
+Moschitti, B. Pang, & W. Daelemans (Eds.), Proceedings of the 2014 Conference on Empirical Methods in Natural Language Processing (EMNLP) (pp. 1532–1543). Association for Computational Linguistics. https://doi.org/10.3115/v1/D14-1162
+Petersen, J. (2018). Gender difference in verbal performance: A meta-analysis of united states state performance assessments. Educational Psychology Review, 30(4), 1269–1281. ​h​t​t​p​s​:​/​/​d​o​i​.​o​r​g​/​1​0​.​1​0​0​7​
+/​s​1​0​6​4​8​-​0​1​8​-​9​4​5​0​-​x​​​​
+Piolat, A., Barbier, M. L., & Roussey, J. Y. (2008). Fluency and cognitive effort during first- and secondlanguage notetaking and writing by undergraduate students. European Psychologist, 13(2), 114–125.
+https://doi.org/10.1027/1016-9040.13.2.114
+Prenzel, M., Blum, W., & Klieme, E. (2015). The impact of PISA on mathematics teaching and learning in
+Germany. In K. Stacey & R. Turner (Eds.), Assessing Mathematical Literacy: The PISA Experience
+(pp. 239–248). Springer International Publishing. https://doi.org/10.1007/978-3-319-10121-7_12
+R Core Team (2020). R: A language and environment for statistical computing [Computer software].
+Ramesh, D., & Sanampudi, S. K. (2022). An automated essay scoring systems: A systematic literature review.
+Artificial Intelligence Review, 55(3), 2495–2527. https://doi.org/10.1007/s10462-021-10068-2
+
+13
+
+International Journal of Artificial Intelligence in Education (2025) 35:3128–3165
+
+3165
+
+Regulation, E. U. (2024/1689). of the European Parliament and of the Council of 13 June 2024 Laying
+down Harmonised Rules on Artificial Intelligence and Amending Regulations, 2024/1689 (2024). ​h​t​
+t​p​s​:​​/​/​e​u​r​​-​l​e​x​.​e​​u​r​o​p​​a​.​e​u​/​​l​e​g​a​l​​-​c​o​n​t​e​​n​t​/​E​​N​/​T​X​T​​/​?​u​r​i​​=​C​E​L​E​X​​:​3​2​0​​2​4​R​1​6​8​9
+Ruder, S. (2022). Square one Bias in NLP: Towards a multi-dimensional exploration of the research manifold. In P. Smaranda Muresan, Nakov, & A. Villavicencio (Eds.), Findings of the association for
+computational linguistics: ACL 2022. Association for Computational Linguistics.
+Schlippe, T., Stierstorfer, Q., Koppel, M., & Libbrecht, P. (2023). Explainability in automatic short answer
+grading. In E. C. K. Cheng, T. Wang, T. Schlippe, & G. N. Beligiannis (Eds.), Artificial Intelligence in
+Education Technologies: New Development and Innovative Practices (pp. 69–87). Springer Nature.
+https://doi.org/10.1007/978-981-19-8040-4_5
+Schwemmer, C., Knight, C., Bello-Pardo, E. D., Oklobdzija, S., Schoonvelde, M., & Lockhart, J. W.
+(2020). Diagnosing gender bias in image recognition systems. Socius, 6, 1–17. ​h​t​t​p​s​:​/​/​d​o​i​.​o​r​g​/​1​0​.​1​1​
+7​7​/​2​3​7​8​0​2​3​1​2​0​9​6​7​1​7​1​​​​
+Shin, H. J., Andersen, N., Horbach, A., Kim, E., Baik, J., & Zehner, F. (2024). Operational Automatic
+Scoring of Text Responses in 2016 ePIRLS: Performance and Linguistic Variance. ​h​t​t​p​s​:​​/​/​w​w​w​​.​i​e​a​.​n​​l​
+/​s​i​​t​e​s​/​d​​e​f​a​u​l​​t​/​f​i​l​e​​s​/​2​0​​2​4​-​0​4​​/​O​p​e​r​​a​t​i​o​n​a​​l​-​A​u​​t​o​m​a​t​​i​c​-​S​c​​o​r​i​n​g​-​​o​f​-​T​​e​x​t​-​R​e​s​p​o​n​s​e​s​-​e​P​I​R​L​S​.​p​d​f
+Siddiqi, I., Djeddi, C., Raza, A., & Souici-meslati, L. (2014). Automatic analysis of handwriting for gender
+classification. Pattern Analysis and Applications, 18(4), 887–899. ​h​t​t​p​s​:​/​/​d​o​i​.​o​r​g​/​1​0​.​1​0​0​7​/​s​1​0​0​4​4​-​0​
+1​4​-​0​3​7​1​-​0​​​​
+Silva, T. (1993). Toward an Understanding of the distinct nature of L2 writing: The ESL research and its
+implications. TESOL Quarterly, 27(4), 657–677. https://doi.org/10.2307/3587400
+Spear, M. G. (1989). Differences between the written work of boys and girls. British Educational Research
+Journal, 15(3), 271–277.
+Steinig, W., & Betzel, D. (2013). Schreiben Grundschüler heute schlechter als vor 40 Jahren? Texte von
+Viertklässlern aus den Jahren 1972, 2002 und 2012. Sprachverfall? Dynamik - Wandel - Variation,
+353–371. https://doi.org/10.1515/9783110343007.353
+Suto, I. (2012). A critical review of some qualitative research methods used to explore rater cognition.
+Educational Measurement: Issues and Practice, 31(3), 21–30. ​h​t​t​p​s​:​​/​/​d​o​i​​.​o​r​g​/​1​​0​.​1​1​​1​1​/​j​.​​1​7​4​5​-​​3​9​9​2​
+.​2​​0​1​2​.​​0​0​2​4​0​.​x
+Tatman, R. (2017). Gender and Dialect Bias in YouTube’s Automatic Captions (pp. 53–59). ​h​t​t​p​s​:​/​/​d​o​i​.​o​r​
+g​/​1​0​.​1​8​6​5​3​/​v​1​/​W​1​7​-​1​6​0​6​​​​
+Vaswani, A., Shazeer, N., Parmar, N., Uszkoreit, J., Jones, L., Gomez, A. N., Kaiser, Ł., & Polosukhin, I.
+(2017). Attention is all you need. In U. von Luxburg, I. Guyon, S. Bengio, H. Wallach, & R. Fergus
+(Eds.), Proceedings of the 31st International Conference on Neural Information Processing Systems
+(pp. 6000–6010). Curran Associates Inc.
+Weiss, E. M., Kemmler, G., Deisenhammer, E. A., Fleischhacker, W. W., & Delazer, M. (2003). Sex differences in cognitive functions. Personality and Individual Differences, 35(4), 863–875. ​h​t​t​p​s​:​​/​/​d​o​i​​.​
+o​r​g​/​1​​0​.​1​0​​1​6​/​S​0​1​9​1​-​8​8​6​9​(​0​2​)​0​0​2​8​8​-​X
+White, B. (2007). Are girls better readers than boys? Which boys? Which girls? Canadian Journal of
+Education, 30(2), 554–581. https://doi.org/10.2307/20466650
+Yamada, I., Asai, A., Sakuma, J., Shindo, H., Takeda, H., Takefuji, Y., & Matsumoto, Y. (2020). Wikipedia2Vec: An efficient toolkit for learning and visualizing the embeddings of words and entities
+from wikipedia. In Q. Liu & D. Schlangen (Eds.), Proceedings of the 2020 Conference on Empirical Methods in Natural Language Processing: System Demonstrations (pp. 23–30). Association for
+Computational Linguistics. ​h​t​t​p​s​:​​/​/​d​o​i​​.​o​r​g​/​1​​0​.​1​8​​6​5​3​/​v​​1​/​2​0​2​​0​.​e​m​n​l​​p​-​d​e​​m​o​s​.​4
+Zanga, G., & De Gioannis, E. (2023). Discrimination in grading: A scoping review of studies on teachers’
+discrimination in school. Studies in Educational Evaluation, 78., Article 101284. ​h​t​t​p​s​:​​​/​​/​d​o​​i​.​o​r​​g​/​​1​0​.​​
+1​0​​1​​6​​/​j​.​s​t​u​​e​​d​u​c​.​​​2​0​2​​3​.​1​0​1​2​8​4
+Zehner, F., Sälzer, C., & Goldhammer, F. (2016). Automatic coding of short text responses via clustering
+in educational assessment. Educational and Psychological Measurement, 76(2), 280–303. ​h​t​t​p​s​:​/​/​d​o​
+i​.​o​r​g​/​1​0​.​1​1​7​7​/​0​0​1​3​1​6​4​4​1​5​5​9​0​0​2​2​​​​
+Zehner, F., Goldhammer, F., & Sälzer, C. (2018). Automatically analyzing text responses for exploring
+gender-specific cognitions in PISA reading. Large-Scale Assessments in Education, 6(1). ​h​t​t​p​s​:​/​/​d​o​i​.​
+o​r​g​/​1​0​.​1​1​8​6​/​s​4​0​5​3​6​-​0​1​8​-​0​0​6​0​-​3​​​​. Article 7.
+Publisher’s Note Springer Nature remains neutral with regard to jurisdictional claims in published maps
+and institutional affiliations.
+
+13
+
+

@@ -1,0 +1,1220 @@
+Education and Information Technologies (2024) 29:18257–18285
+https://doi.org/10.1007/s10639-024-12580-8
+
+Machine learning investigation of optimal
+psychoemotional well-being factors for students’ reading
+literacy
+Xuetan Zhai1
+
+· Wei Yuan1,2 · Tianyu Liu1 · Qiang Wang1
+
+Received: 18 September 2023 / Accepted: 7 February 2024 / Published online: 8 March 2024
+© The Author(s), under exclusive licence to Springer Science+Business Media, LLC, part of Springer Nature 2024
+
+Abstract
+Psychoemotional well-being factors have been recognized to have a significant
+impact on students’ reading literacy. However, identifying which key psychoemotional well-being factors most significantly influence students’ reading performance
+is still not fully explored. This research examines the psychoemotional well-being
+factors that distinguish the reading literacy of high-level students from low-level
+ones using machine learning methods in four regions of China, including Beijing,
+Shanghai, Jiangsu, and Zhejiang. In total, 3497 samples were drawn from the public database of the PISA 2018, including 2935 high-level students (with proficiency
+level at or above Level 5) and 562 low-achieving students (at Level 2 or below). By
+applying Recursive Feature Elimination with Cross-Validation feature selection and
+Support Vector Machine classifiers approach, this study successfully identifies 15
+key factors (e.g., students’ socioeconomic status and learning goals) from the total
+25 psychoemotional well-being factors that synergistically distinguish high-level
+students from low-level students with a high accuracy score (0.905). Further, using
+the Shapley Additive exPlanations method, the feature importance of the features
+set is shown, and 10 factors relevant to the psychoemotional well-being show the
+feature importance of reading literacy of high-level students. This study provides
+important insights into the factors of psychoemotional well-being that influence students’ reading literacy development.
+Keywords Students’ reading literacy · Psychoemotional well-being · Machine
+learning · Shapley Additive exPlanations (SHAP) · PISA 2018
+
+1 Introduction
+Reading literacy is critical for students to keep pace in the 4.0 industrial age (Fauzan
+et al., 2023). Extensive discussion and research have focused on identifying the various factors influencing students’ reading literacy (Hu & Dong, 2019; Xiao & Hu,
+Extended author information available on the last page of the article
+Vol.:(0123456789)
+1
+3
+
+18258
+
+Education and Information Technologies (2024) 29:18257–18285
+
+2019). For example, there has been research and analysis focusing on the social factors that influence students’ reading habits, including the education field, academic
+performance, availability of leisure time, parents’ educational level, and the number
+of children in the family (Davidovitch, 2023). However, it has been found that most
+of the studies contribute to investigating the contextual factors of students’ reading
+performance.
+Research has found that a variety of social and emotional non-cognitive factors
+influence students’ reading literacy (Kovess-Masfety et al., 2022). Psychological
+well-being is associated with students’ academic achievement in reading (PorterOwens, 2022). Psychological well-being is generally associated with positive mental
+health (Miguel et al., 2012). For example, the influence of psychological factors on
+the reading performance of seventh-grade students was investigated using a one-way
+analysis of the variance (ANOVA) approach (Porter-Owens, 2022). Emotional states
+do play a significant role in student’s reading literacy (Benner et al., 2023; Leseman
+& De Jong, 1998). Research has demonstrated that positive emotions significantly
+improve how actively students engage in their learning experiences, while negative
+emotions may interfere with the learning experience (Siouli et al., 2020).
+Although previous studies have identified some psychoemotional well-being factors affecting students’ reading literacy, certain limitations do exist. The utilization
+of traditional statistical methods in previous research imposes specific requirements
+on the sample. For example, binary logistic regression requires the fulfillment of
+certain assumptions (Chapman, 2018), including the absence of strong correlations
+among explanatory variables and the existence of a clear linear relationship between
+these variables and the response variable. Consequently, there is a need to explore
+alternative research methodologies to overcome inherent issues associated with traditional statistical approaches, i.e., small survey sample sizes and a limited number
+of psychoemotional factors.
+The Programme for International Student Assessment (PISA) evaluates the educational performance of students in reading through questionnaires distributed to
+students, parents, school principals, and teachers (OECD, 2018). Based on the conceptual framework of PISA, our research framework integrates insights from PISA’s
+psychological dimension and school climate in combination with findings from previous studies examining factors related to psychoemotional well-being.
+On the one hand, machine learning (ML) technologies demonstrate excellent performance in classification and clustering (Xing et al., 2022a, b). For example, the
+article DCRLS-based structures achieve excellent performance on classification and
+clustering (Xiao et al., 2023). On the other hand, machine learning methods have the
+advantage of mitigating the issues of multicollinearity and highly correlated effects
+that can arise from a large number of variables (Senaviratna & Cooray, 2019). For
+example, research has been conducted by using artificial intelligence techniques
+to assess variations in learning styles across different age groups of students (Wei
+et al., 2018). This research focuses on identifying key psychoemotional well-being
+factors and assessing their impact on differentiating high-level from low-level reading literacy among students employing ML methods in Beijing, Shanghai, Jiangsu,
+and Zhejiang (China) (hereafter “B-S-J-Z [China])”.
+
+13
+
+Education and Information Technologies (2024) 29:18257–18285
+
+18259
+
+In this study, we utilized a combination of Recursive Feature Elimination with CrossValidation (RFE-CV) feature selection and Support Vector Machine (SVM) classifiers
+based on machine learning to identify optimal psychoemotional well-being factors. These
+factors are key in differentiating students with high reading literacy from those with low
+reading literacy. In terms of methodology, we devised a three-stage data analysis framework. During the Training phase, our objective was to identify the most suitable algorithm for the dataset, leading us to evaluate six common machine learning algorithms.
+Moving into the Modeling phase, we employed the SVM-RFE-CV method, diverging
+from conventional 5-fold or 10-fold cross-validation approaches (Hu & Dong, 2019), by
+incorporating an extended range of cross-validation folds (5 to 15) to optimize the identification of the most accurate feature set. Subsequently, in the Prediction phase, departing
+from conventional research practices (Hu et al., 2023), we conducted a model interpretability analysis using SHAP’s feature importance values and SHAP summary plots.
+This study is motivated to explore the essential psychoemotional well-being factors on students’ reading literacy, with a specific focus on distinguishing the literacy
+levels between high-achieving and low-achieving students by utilizing ML techniques in B-S-J-Z (China).
+To achieve this, the research will address three key research questions:
+(1) What ML algorithm is best for identifying the difference in reading literacy
+levels among students in B-S-J-Z (China)?
+(2) Can psychoemotional well-being factors accurately differentiate secondary
+school students with high-level reading literacy from those with low-level reading literacy?
+(3) Which combination of psychoemotional well-being factors has the most significant impact on high-level reading literacy among students?
+
+2 Literature review
+2.1 Relationship between psychoemotional well‑being and reading literacy
+Psychological well-being refers to the existence of positive emotions, satisfaction with life, and absence of negative emotions (Mayer & Salovey, 1993; Pimple,
+2023). There is a strong correlation and reciprocal influence between the concepts
+of psychological well-being and emotional state (Telef & Furlong, 2017; Wu, 2023).
+Previous studies often use the term “psychoemotional” to emphasize the interplay
+between psychological well-being and emotional states (Stepanyan et al., 2010).
+The correlation between students’ psychoemotional well-being and their academic
+performance has been a significant research subject in the field of education. There
+have been studies exploring the psychoemotional factors influencing students’ mathematical literacy (Molina-Muñoz et al., 2023).
+Reading is a multifaceted activity that involves various factors in cognition, ecology, and psychology (Liu et al., 2023). According to PISA 2018, reading literacy is
+defined as “understanding, using, evaluating, reflecting on and engaging with texts
+
+13
+
+18260
+
+Education and Information Technologies (2024) 29:18257–18285
+
+to achieve one’s goals, to develop one’s knowledge and potential, and to participate
+in society” (OECD, 2019a).
+There have been numerous studies examining the relationship between students’
+psychoemotional well-being and reading literacy. It has been found that participants
+experienced short-term enhancement in their psychological well-being following
+their involvement in a guided reading circle (Pettersson, 2018). Another study was
+carried out to examine the psychological and educational research elements related
+to reading culture (Pečjak, 2021). The literature on various educational stages has
+extensively documented the correlation between students’ psychological and emotional states and reading performance (Xiao & Hew, 2022). These results indicate
+that the psychoemotional well-being of students is crucial for their reading literacy.
+Consequently, it is essential to identify the influences of psychoemotional well-being
+factors on students’ high-level reading literacy.
+2.2 Psychoemotional well‑being factors
+Psychological well-being and emotional states are integral components of well-being
+(Lippman et al., 2009), including three main dimensions: self, school environment,
+and out-of-school environment (OECD, 2019c). The overlap between psychological
+well-being and certain aspects of well-being is evident in psychological functioning
+(Huebner, 1991). Other studies have argued that the components of students’ mental-emotional health can be categorized as personal and relational (Molina-Muñoz
+et al., 2023). Another study has shown that adolescents’ perceptions of their school
+performance and their competency are correlated with higher perceived psychological well-being (Suldo et al., 2014).
+According to the theory of the dynamic model of educational effectiveness
+(Creemers & Kyriakides, 2007), the psychoemotional well-being factors are influenced by various levels: the student, family, classroom, and school. The structure
+of psychoemotional well-being factors in PISA 2018 primarily consists of three
+aspects: psychological well-being, emotional states, and school climate. According
+to research, gender and socioeconomic status have been found to have an impact on
+students’ psychological well-being (Alivernini et al., 2020). Thus, these two factors
+became integral components in evaluating student backgrounds. The influence of the
+psychoemotional factors on students’ reading literacy was investigated by conducting a thorough review of the relevant literature.
+2.2.1 Psychological well‑being
+Psychological well-being can be represented by multiple measures (Ryff, 1995). It
+encompasses students’ subjective evaluations and perspectives on various aspects
+of their lives, including their level of engagement in school, their aspirations, and
+objectives for the future (OECD, 2019b). Psychological functioning includes a range
+of factors, such as competence, autonomy, meaning/purpose, optimism, self-acceptance, positive relations with others, personal growth, purpose in life, environmental mastery, and autonomy (OECD, 2013; Ryff, 1995). According to the findings
+
+13
+
+Education and Information Technologies (2024) 29:18257–18285
+
+18261
+
+of PISA 2018, the psychological dimension is a constituent of student well-being,
+encompassing students’ life satisfaction and meaning in life, students’ feelings,
+self-efficacy, and fear of failure (OECD, 2019b). There are additional studies that
+have reported self-efficacy as a crucial factor in promoting psychological wellbeing (Costa et al., 2013). Meaning in life is a preventive factor against engaging
+in risky health behaviors and developing poor psychological health (Brassai et al.,
+2011). Student’s life satisfaction is an indicator of psychological well-being assessment (Kalonia et al., 2023). Several studies have indicated a correlation between the
+fear of failure and psychological well-being (Gustafsson et al., 2017). Therefore, the
+dimensions of psychological well-being include Students’ Life Satisfaction, Meaning in Life, Students’ Positive Feelings, Students’ Self-efficacy, and Fear of Failure.
+2.2.2 School climate
+Research findings indicated a significant correlation between the school climate
+and the psychoemotional well-being of individuals (Aldridge et al., 2018; Maxwell
+et al., 2017; Rustamov et al., 2023). Research has shown that a positive school climate predicts academic achievement (Demirtas-Zorbaz et al., 2021).
+The primary features of school climate are safety, interpersonal relationships,
+learning, and teaching, as well as environmental structure (Salle et al., 2015). The
+PISA 2018 survey questionnaires explore nine specific aspects within three major
+domains: student disruptive behavior (bullying, disciplinary climate, and student
+truancy and lateness), teaching and learning (teacher enthusiasm, teachers’ support,
+and teaching practices, teacher behavior, and student learning), and school community (student cooperation and competition, sense of belonging at school, parental
+involvement in school activities) (OECD, 2019b).
+The study revealed that students’ positive psychological well-being was associated with support from family, friends, and significant others (Khan & Husain, 2010).
+We can obtain four variables, namely Student Cooperation, Teacher support, Teacher
+feedback, and Parents’ emotional support from PISA 2018. Experiencing bullying
+adversely affects the mental well-being of students. Existing literature indicates a clear
+link between a sense of belonging and psychological well-being (Seijo et al., 2023).
+Studies have demonstrated a significant relationship between the value of school and
+student performance on the PISA assessments (Yalcin & Tavsancil, 2014).
+2.2.3 Emotional states
+According to Cognitive Appraisal Theory, emotional states are an individual’s
+response to situations that they perceive as either harmful or beneficial (Lazarus,
+1970). Emotions can typically be categorized as either positive or negative. Positive emotions exhibit positive psychological traits (Kang et al., 2021), in contrast to
+negative emotions which are characterized by negative psychological characteristics
+(Fredrickson et al., 2003). The direct impact of emotional intelligence on psychological well-being has been reported to be statistically significant (Kamboj & Garg,
+2021). Several studies have examined factors associated with emotional states, such
+as Mastery motivation, Motivation to master tasks, Learning goals, Attitudes toward
+
+13
+
+18262
+
+Education and Information Technologies (2024) 29:18257–18285
+
+competition, and Parents’ emotional support in the PISA 2018 (Sparks et al., 2012;
+Attiat, 2023). The variables constructed in the emotional states dimension of this
+study were Motivation to master tasks, Learning goals, Attitudes toward competition, and Parents’ emotional support.
+
+2.3 Conceptual framework of the study
+In this section, we introduce the conceptual framework that serves as the foundation of our study. The framework not only establishes a theoretical base but also
+guides the collection of research data. According to the theory of the dynamic
+model of educational effectiveness, the evaluative framework of psychoemotional well-being was developed based on PISA 2018. This conceptual framework
+includes psychological well-being, emotional states, school climate, and student
+backgrounds (Fig. 1). First, psychological well-being comprises Students’ life satisfaction, Meaning in life, Students’ positive feelings, Students’ self-efficacy, and
+Fear of failure. Second, school climate encompasses Student disruptive behavior,
+Teaching and learning, and School community. Third, emotional states include
+Motivation to master tasks, learning goals, Attitudes towards competition, and
+Parents’ emotional support. Finally, Student backgrounds include socioeconomic
+status (ESCS) and gender. Utilizing the conceptual framework, a variety of psychological well-being factors associated with reading literacy have been discovered. This research employs ML methods to investigate the factors influencing the
+psychoemotional well-being that differentiate students with high-level and lowlevel reading literacy across four regions in B-S-J-Z (China).
+
+Fig. 1  Conceptual framework of the study
+
+13
+
+Education and Information Technologies (2024) 29:18257–18285
+
+18263
+
+3 Materials and methods
+3.1 Datasets
+The Programme for International Student Assessment (PISA), conducted by the
+Organization for Economic Co-operation and Development (OECD), is a recurring
+global assessment that evaluates the educational performance of 15-year-old students in reading, mathematics, and science (OECD, 2018). These assessments take
+place every three years.
+The sample was extracted from the latest public dataset of the PISA 2018 (https://​
+webfs.​oecd.​org/​pisa2​018/​SPSS_​STU_​QQQ.​zip ). The B-S-J-Z (China) sample was
+chosen for two main reasons. Firstly, these students demonstrated outstanding performance in reading literacy and attained the highest average scores (555) among
+students from 79 countries and economies participating in PISA 2018 (OECD,
+2019a). This aspect makes it a suitable sample for investigating psychoemotional
+well-being factors associated with reading literacy. Secondly, the sample includes
+a higher proportion of high-level students, which enhances its representativeness.
+By incorporating a significant number of these students, the sample more accurately
+reflects the states of students in B-S-J-Z (China), allowing for a comprehensive analysis of the psychoemotional well-being factors associated with reading literacy.
+According to the PISA 2018 dataset, 10 plausible values were used to represent student reading literacy. “There are no significant differences between using
+one plausible value or five plausible values, due to the large number of the samples” (OECD, 2009). Therefore, the first plausible value 1 in reading was randomly
+selected to represent each student’s reading literacy. In the PISA 2018 assessment,
+the cut-off score for performance below level 2 was 407.47 in reading, while the
+cut-off score for performance at level 5 and above was 625.61 in reading (Pons &
+Houldsworth, 2020). To enhance the clarity of differentiation, students at Level 5
+and above are categorized as high-level, while those at Level 2 are classified as lowlevel (Chen et al., 2019; Lezhnina & Kismihók, 2022). This categorization aids in
+the interpretation and comparison of study findings. A total of 12058 students from
+B-S-J-Z (China) participated in the PISA 2018 test. Following the exclusion of missing values or invalid data, 3497 students (2935 high-level students and 562 low-level
+students) were chosen as the sample to identify psychoemotional well-being factors
+of students’ reading literacy.
+
+3.2 Measures
+Common methods for identifying effective factors in large datasets include Hierarchical
+Linear Model (Kyriakides et al., 2019), Structural Equation Modeling (Sammons et al.,
+2013), and Multiple Linear Regression (Xiao et al., 2019). Due to the complex relationship between predictor variables and multiple variables, traditional analytical methods
+may encounter difficulties in interpreting and estimating data regarding different variables (Strobl et al., 2009). In recent years, there has been a growing trend of integrating
+
+13
+
+18264
+
+Education and Information Technologies (2024) 29:18257–18285
+
+ML approaches in the domain of education (Badal & Sungkur, 2023; Hu & Xie, 2022).
+ML algorithms are adept at effectively handling large datasets with intricate, nonlinear
+relationships between variables (Babu & Malathi, 2022). In this study, we utilize ML
+algorithms to explore the optimal psychoemotional well-being factors for students’ reading literacy. This approach enables us to gain a more profound understanding of how
+psychoemotional factors impact students’ reading literacy.
+The SVM algorithm is famous for its ability to efficiently classify patterns by
+creating a hyperplane in a transformative feature space, making it highly effective
+for binary classification (Cervantes et al., 2020). According to Fig. 2, this process
+involves constructing a hyperplane with the equation
+
+wT x + b = 0
+
+(1)
+
+where w is the weight vector determining the direction of the hyperplane, and b is
+the bias that determines the distance between the hyperplane and the origin (Noble,
+2006). The hyperplane is strategically positioned by maximizing the margin,
+
+𝛾=
+
+2
+∥w∥
+
+(2)
+
+and support vectors are data points that influence its orientation. 2
+The optimization problem in SVM focuses on minimizing ∥w∥
+while ensuring
+2
+that
+
+yi(wT xi + b) ≥ 1
+
+(3)
+
+for each data point (xi, yi). This framework has proven to be effective in various
+applications within the field of educational research (Hu et al., 2023; Hu & Dong,
+2019; Xiao & Hu, 2019). This study combines RFE-CV feature selection and SVM
+classifiers to identify optimal psychoemotional well-being factors. These factors are
+
+Fig. 2  The support vector
+machine principles
+
+13
+
+Education and Information Technologies (2024) 29:18257–18285
+
+18265
+
+key in differentiating students with high reading literacy from those with low reading literacy.
+Researchers have employed various methods to demonstrate outcomes that
+endorse their findings about evaluation metrics. Common evaluation metrics are
+Accuracy, Precision, Recall, and F-measure. Accuracy is defined as the proportion
+of accurate predictions to the overall number of input samples. Assessing the accuracy serves as the main indicator of the model’s performance. The specific formula
+is as follows:
+
+Accuracy =
+
+TP + TN
+TP + TN + FP + FN
+
+(4)
+
+The four common indicators in the formulae are explained as follows (Michelucci,
+2019):
+TP (True positive): Test that shows correct prediction.
+TN (True negative): Test that correctly predicts not belonging to a class.
+FP (False positive): Test that predicts a particular class but actually it is not.
+FN (False negative): Test that predicts as not belonging to a particular class
+whereas in fact it is.
+3.3 Analysis procedure
+In this study, reading scores were categorized using dummy variables as dependent
+variables: scores at or above 625.61 were assigned ‘1’ to high-level reading literacy,
+and scores below 407.47 were assigned ‘0’ to low-level reading literacy. Missing
+values were addressed using Stata 17.0, employing the ‘drop if’ command with the
+‘missing ()’ function to identify and eliminate rows with missing data.
+According to the conceptual framework of our study, psychoemotional wellbeing factors were derived from the PISA dataset, serving as independent variables. These variables originate from numerical data modeled by PISA officials.
+For example, ‘Teacher Feedback’ has a mean of 0.39, a standard deviation of
+1.01, and its values range from − 1.64 to 2.02. A higher value indicates more
+frequent teacher feedback. To ascertain the validity of our findings, we selected
+pertinent items from the PISA 2018 student and school questionnaires. This
+selection was followed by a comprehensive series of statistical analyses including reliability testing and confirmatory factor analysis. For example, the construct
+of ‘Teacher Feedback’ was operationalized via three items from the PISA 2018
+survey: How often the teacher gives me feedback on my strengths in this subject?
+How often the teacher tells me in which areas I can still improve? How often the
+teacher tells me how I can improve my performance? Confirmatory factor analysis substantiated the construct’s one-dimensionality, with substantial item loadings on a singular factor: 0.689, 0.870, and 0.883, correspondingly. The scale’s
+internal consistency was validated with a standardized Cronbach’s alpha of 0.853,
+indicating excellent reliability. The construct also demonstrated satisfactory
+convergent validity, as evidenced by a composite reliability (CR) of 0.858 and
+
+13
+
+18266
+
+Education and Information Technologies (2024) 29:18257–18285
+
+an average variance extracted (AVE) of 0.671, which are well above the recommended benchmarks, thus confirming the ‘Teacher Feedback’ measure as both
+valid and reliable (Tabri & Elliott, 2012).
+The process of data analysis is divided into three phases: Training, Modeling,
+and Prediction, as shown in Fig. 3.
+Training The initial phase of data analysis involved performing data preprocessing,
+including cleaning, imputation, integration, and normalization (Kamiri & Mariga,
+2021). This study employed Python 3.10 to preprocess the data and handle missing
+values. Categorical variables were transformed into binary form using one-hot coding. The data was normalized using Min-Max Scaling. After preprocessing the data,
+it is partitioned into 80% training and 20% testing sets using the ‘train_test_split’
+function from the ‘scikit-learn’ library. Specifically, the ‘test_size’ parameter is set
+to 0.2, and the ‘random_state’ parameter is set to a fixed value. This ensures a consistent and reproducible methodology for dividing our dataset during model training and evaluation. Subsequently, various algorithms, including Logistic Regression
+(LR), Perceptron (PER), Classification and Regression Tree (CART), Random Forest (RF), Gradient Boosting Machine (GBM), and Support Vector Machines (SVM),
+are employed for model training.
+Modeling K-fold cross-validation is the main method used for identifying the fitting hyper-parameters to ensure the accuracy of the SVM model (Li et al., 2013).
+The study using 5-fold cross-validation proved to be effective in predicting outcomes (Sejuti & Islam, 2023). To find out the suitable cross-validation multiplicity, this study looped through the training dataset ranging from 5 folds to 15 folds
+and recorded the accuracy accordingly. The best accuracy value is the most suitable
+number of folds. To examine the ability to generalize a model to an independent
+dataset, the SVM-recursive feature elimination cross-validation (SVM-RFE-CV)
+can be used to find the best hyper-parameters (Chen et al., 2019). In the study, the
+RFE-CV feature selection and SVM classifiers approach to determine the optimal
+accuracy and corresponding number of features based on the folding number. Subsequently, the optimal feature set was generated as the final output.
+
+Fig. 3  Process of data analysis
+
+13
+
+Education and Information Technologies (2024) 29:18257–18285
+
+18267
+
+Prediction The Shapley Additive exPlanations (SHAP) combined with ML algorithms can assign a specific contribution value to each feature in the prediction models (Marcílio & Eler, 2020). Thus, we may assess the contribution of each feature by
+calculating its SHAP value. A global feature importance map is derived by employing a SHAP bar chart, while a SHAP summary plot is utilized to present the overall
+impact of these features in terms of different samples.
+Algorithm 1 is the pseudo-code for the SVM-RFE-CV algorithm, describing the
+process of selecting the optimal feature selection set.
+The detailed experimental procedure and parameter settings are as follows: the
+input includes 24 features related to psychoemotional well-being, and the target variable is a binary variable of students’ reading literacy. When initializing the SVM
+model, the Radial Basis Function (RBF) kernel is selected for its excellent versatility
+and adaptability in handling various types of datasets (Oluchi Anyanwu et al., 2023).
+For RFECV, it is initialized with a series of cross-validation folds (ranging from 5 to
+15), where the model’s performance evaluation metric refers to accuracy. RFECV_
+model.fit (X, Y) indicates training the RFECV model with the dataset. Xopt is the
+optimal feature set selected by RFECV. SVMmodel.fit (Xopt, Y) indicates retraining
+the SVM model with the selected optimal features.
+Algorithm1  procedure for selecting the optimal feature selection set
+
+4 Results
+4.1 Comparison of model
+In this study, we applied various machine learning algorithms, including LR, PER,
+CART, RF, GBM, and SVM, to the Psychoemotional well-being dataset to assess
+their predictive abilities and computational efficiency. This dataset comprises 3497
+samples, each with 25 features. The analysis of computational complexity revealed
+
+13
+
+18268
+
+Education and Information Technologies (2024) 29:18257–18285
+
+varying theoretical complexities that were reflected in the actual training times. The
+ensemble learning techniques, Random Forest and Gradient Boosting, exhibited
+higher theoretical complexity (Friedman, 2001), which was evident in their longer
+training times of 42.639 and 53.322 s, respectively. In contrast, Logistic Regression
+and Perceptron, as linear models, demonstrated faster training speeds due to their
+lower computational complexity (James et al., 2013), with average training times
+of 4.975 s and 1.018 s. These models also showed commendable predictive performance with average training accuracies of 0.846 and 0.836, respectively. While the
+SVM algorithm is recognized for its high computational complexity with large datasets, it demonstrates greater efficiency when applied to smaller datasets (Cervantes
+et al., 2020). In our experiments, using the RBF kernel and considering the data feature distribution, the SVM algorithm had an average training time of 1.288 s.
+Compared to other models, the SVM algorithm emerged as the optimal choice
+for its superior accuracy, achieving 0.90 on the training set and 0.871 on the test
+set, along with its suitable computational complexity. According to recent findings,
+SVM algorithm classifiers demonstrate excellent recognition accuracy compared
+to other classification methods (Hu et al., 2022). The basic idea of the SVM algorithm is to plot data in an n-dimensional space with n number of features and apply
+a hyperplane to distinguish the classes that are used for classification and regression
+(Kalaiselvi & Thirumurthi, 2020). SVM algorithm constructs a statistical model of
+data to explore the relationships between training data and target data, aiming to
+identify the relations between variables (Chen et al., 2019). The high accuracy suggests that the selected psychoemotional well-being features effectively differentiate between high and low students’ reading literacy (Fig. 4). As a result, it can be
+inferred that the SVM model demonstrates excellent predictive performance for this
+dataset. Therefore, we will employ the SVM as the primary predictive model for
+further analysis.
+
+Fig. 4  Comparison of model accuracy
+
+13
+
+Education and Information Technologies (2024) 29:18257–18285
+
+18269
+
+4.2 Optimal sets
+According to Fig. 5, the cross-validation of the dataset was conducted using a
+range of folds, from 5 to 15. The SVM model demonstrated the highest accuracy
+of 0.891 during cross-validation when utilizing either 10 folds or 13 folds. Previous studies have commonly used 10-fold cross-validation to enhance the performance of ML methods (Malakouti et al., 2023). Therefore, the optimal set for
+this dataset can be determined through either 10-fold or 13-fold cross-validation.
+Recursive feature elimination (RFE) selects features recursively by considering smaller and smaller sets of features. Previous studies were done by identifying key features of resilient students in digital reading from 105 contextual features (Zheng et al., 2023). RFECV improves RFE within a cross-validation loop
+to identify the optimal number of features. Considering the specific features of
+our dataset, the utilization of RFECV is particularly advantageous for our study.
+To evaluate the significance of the optimal psychoemotional well-being factors in distinguishing between high and low levels of students’ reading literacy,
+RFECV was used to automatically select the appropriate number of features that
+yielded the highest average score. The accuracy score reached its peak at 0.905
+when the number of features was set to 15 in Fig. 6, along with the output of the
+optimal set. Therefore, these 15 features represent the optimal set with the highest accuracy score while minimizing the number of features required.
+The 15 features of psychoemotional well-being contributed most to the categorization task for the high-level and low-level of students’ reading literacy.
+
+Fig. 5  Number of fold cross-validation
+
+13
+
+18270
+
+Education and Information Technologies (2024) 29:18257–18285
+
+Fig. 6  The accuracy values of different feature sets by SVM-RFE-CV
+
+These features, included in the optimal set with high accuracy and minimal features, effectively differentiated between students with high and low achievement
+in reading literacy (Appendix Table 1).
+4.3 Prediction
+We have employed SHAP to describe the expected results to understand the influence of each factor. Firstly, we examined the feature importance values obtained
+from the SHAP analysis for each model. Subsequently, we referred to the SHAP
+summary plots to visualize the influence of individual feature values on the model
+predictions.
+To determine the feature importance, the global feature importance was obtained
+using the SHAP bar chart. We calculate the average of the absolute Shapley values for each feature and arrange them in descending order based on their values.
+According to Fig. 7, the feature importance of the SVM model indicates that the
+feature ESCS (1.83) has the highest importance, followed by EUDMO (1.34) and
+MASTGOAL (1.07) with the second-highest and third-highest, respectively.
+The SHAP method was utilized to evaluate the effects of each feature on students’ reading literacy to ascertain the direction of their influence. The SHAP summary plot in Fig. 8 shows the top 15 features generated by the SVM algorithm based
+on the descending order of all predicted SHAP values. Notably, gender, which was
+encoded using one-hot coding and split into Male and Female, revealed either positive or negative associations with the corresponding features. Each point on the
+
+13
+
+Education and Information Technologies (2024) 29:18257–18285
+
+18271
+
+Fig. 7  Feature importance for SVM algorithm
+
+graph corresponds to a feature of a student, and the horizontal axis represents the
+SHAP value across objects for a given feature, which reflects the magnitude of the
+SHAP value from low (blue) to high (red) (Hu et al., 2023). It is evident that several
+factors contribute to high scores in students’ reading literacy. High values in ESCS,
+MASTGOAL, DISCLIMA, STIMREAD, EMOSUPS, ATTLNACT, COMPETE,
+BELONG, female, and TEACHSUP can be interpreted as the influencing factors for
+the high scoring arrays. Conversely, high values in STULS, EUDMO, DIRINS, and
+SBHL can be interpreted as the influencing factors for the low scoring arrays.
+
+5 Discussion
+This study investigates the psychoemotional well-being factors that distinguish
+between students with high-level and low-level reading literacy employing ML algorithms across B-S-J-Z (China). Through analysis, our study has successfully determined 15 significant factors that have a strong correlation with the psychoemotional
+well-being of students. The findings enrich the theory of dynamic models of educational effectiveness from the perspective of psychoemotional well-being.
+
+13
+
+18272
+
+Education and Information Technologies (2024) 29:18257–18285
+
+Fig. 8  SHAP values and influencing directions for features in the model
+
+5.1 Student backgrounds
+Factors influencing students’ reading literacy are related to students’ demographic
+characteristics, including gender (gender) and socioeconomic status (ESCS).
+Gender is a significant factor in students’ reading performance, with females having a particularly positive impact on the performance of high-level students. This phenomenon was also found in previous studies (Torppa et al., 2018). It is important to
+emphasize that ESCS stands out as the most influential factor of high-level students
+among the selected 15 features. In the PISA 2018, ESCS consisted of three variables:
+parents’ highest level of education, highest occupational status, and home possessions
+(OECD, 2019b). Socioeconomic and sociocultural factors have the greatest impact on
+performance in reading, mathematics, and science literacy (Pehlivan & Aslan, 2023).
+The study revealed a stronger relationship between ESCS and reading achievement as
+opposed to science and math achievement (Liu et al., 2020).
+5.2 School climate
+Factors influencing students’ reading literacy at school climate include Teacher
+Support (TEACHSUP), Teacher-directed Instruction (DIRINS), Teacher Feedback
+
+13
+
+Education and Information Technologies (2024) 29:18257–18285
+
+18273
+
+(PERFEED), Teachers’ Stimulation of Reading Engagement (STIMREAD), sense
+of belonging (BELONG), Value of school (ATTLNACT), Disciplinary Climate
+(DISCLIMA), and student behavior hindering learning (SBHL).
+Teachers’ instructional behaviors play an important role in enhancing students’ academic performance (Hanushek, 2011). The key factors of teacher
+instructional behaviors include teacher support, teacher-directed instruction,
+teacher feedback, and teachers’ stimulation of reading engagement. Among
+these factors, both teacher support and teachers’ stimulation of reading engagement have an influential impact on high-level students. Existing evidence suggests a strong link between teacher support and academic achievement (Roderick & Engel, 2001).
+The study found a positive association between teachers’ stimulation of reading
+engagement and students’ reading literacy. In contrast to the findings of the previous
+study, which indicated that teacher-directed learning environments were negatively
+predictive of reading achievement (Meng et al., 2023).
+Both the sense of belonging and the value of school have a positive effect
+on reading literacy for high-level students. Previous studies have demonstrated
+that sense of belonging plays a crucial role in enhancing academic performance
+(Roeser et al., 1996). Both Competitive learning environment and achievement
+goals positively predict reading achievement (Meng et al., 2023). Schools are
+typically evaluated by looking at aggregated academic results or easily countable measures related to academic results (Mishra & Close, 2020). There is a
+direct correlation between the academic performance of students and the value
+of the school.
+Disciplinary climate positively affects high-level reading students. The study
+found that school climate affects achievement (Rizzotto & França, 2022). In contrast, student behavior hindering learning includes behaviors such as skipping
+school, skipping classes, and being late to school, which have a negative impact on
+academic performance.
+It’s worth noting that Student Behavior Hindering Learning and Teacherdirected Instruction are factors affecting the reading performance of low-scoring students. The category of Student Behavior Hindering Learning involves
+distractions, negative classroom participation, and student behavioral issues
+(Blank & Shavit, 2016). Distractions lead to difficulties in understanding reading materials, affecting cognitive development and reading comprehension
+skills (Rance et al., 2023). Research has found that classroom participation and
+behavioral problems could make an impact on students’ reading abilities (Tang
+& Dai, 2021), potentially leading to a loss of interest in reading as well as a
+loss of reading habits.
+Teacher-directed instruction can enhance students’ academic performance in
+some cases (Werang et al., 2022), but it might also restrict students’ autonomy and
+creativity. For instance, studies have shown that teacher-directed learning can create
+fear of learning and teachers among students, which is detrimental to their motivation to learn (Wang & Wen, 2023). It might restrict students’ autonomy and creativity, thus affecting their reading literacy.
+
+13
+
+18274
+
+Education and Information Technologies (2024) 29:18257–18285
+
+5.3 Psychological well‑being
+Factors influencing students’ reading literacy at psychological well-being include
+students’ life satisfaction (STULS) and meaning in life (EUDMO).
+The variables of students’ life satisfaction and meaning in life are important features that impact students’ performance. However, they have a positive effect on
+predicting low-level students. This observation aligns with findings from previous research indicating a modest yet statistically significant negative relationship
+between mathematics and students’ perception of meaning in life (Memisevic &
+Biscevic, 2022).
+According to the PISA 2018 results, a non-linear connection exists between
+students’ life satisfaction, meaning in life, and reading performance. The data
+indicates that students with high life satisfaction and meaning in life show a
+tendency to have worse reading performance than the average students (OECD,
+2019b). The research suggests that while extremely high levels of life satisfaction are essential for developing personal social relationships, moderate
+satisfaction is often more beneficial for academic success (Antaramian, 2017).
+The Accumulated Local Effects (ALE) method reveals how slight variations in
+predictor variables can influence a model’s predictions across the entire distribution of feature values (Apley & Zhu, 2020). This study employs ALE to
+delve into the correlation trends between students’ life satisfaction, meaning in
+life, and reading performance, with the analytical findings presented in a supplementary document. The analysis shows that when specific thresholds of life
+satisfaction and meaning in life are reached, higher levels of these aspects are
+related to a tendency towards lower reading literacy.
+Students who feel satisfied and happy in life may be more engaged in extracurricular social and hobby-related activities. Although these activities provide
+opportunities for socializing, building self-confidence, and developing socioemotional learning skills (Philippe et al., 2023), it is important to consider the
+impact of these activities on academic performance. Prioritizing these activities
+excessively can hinder students’ learning (Nyorere et al., 2022). This is because
+it can divert their attention from academics (Pertegal & Oliva, 2017), affecting their reading literacy to some extent. The research indicates that participation in extracurricular activities can increase students’ life satisfaction, but
+it may also lead to a decline in academic performance. Moreover, while life
+satisfaction and meaning in life positively impact students’ overall well-being,
+it is crucial to understand the balance between extracurricular engagement and
+academic focus. The study suggests that moderate engagement in extracurricular activities, when well-aligned with academic goals, can foster a conducive
+learning environment, thereby enhancing reading literacy (Coulangeon, 2018).
+Therefore, it is crucial for students to maintain a moderate level of life satisfaction and meaning in life to enhance their reading literacy.
+
+13
+
+Education and Information Technologies (2024) 29:18257–18285
+
+18275
+
+5.4 Emotional states
+Factors influencing students’ reading literacy at the student level include learning
+goals (MASTGOAL), attitudes towards competition (COMPETE), and parents’
+emotional support (EMOSUPS).
+Learning goals, attitudes towards competition, and parents’ emotional support
+positively impact the reading literacy of high-level students. Learning goals have
+been determined to exert a considerable influence on academic achievement (Senko,
+2019). Competitive learning environments and achievement goals positively predict
+reading achievement (Meng et al., 2023). The research suggested that family support
+had a positive influence on science achievement (Atasoy et al., 2022).
+
+6 Conclusion and implications
+This study explored the utilization of ML techniques to determine how psychoemotional well-being factors effectively differentiate students with high-level and
+low-level reading literacy in B-S-J-Z (China). The results identified 15 important
+features to differentiate students with high and low levels of reading literacy. Ten
+of these features comprised the most influential set of features affecting students’
+high level of reading literacy. The discovery of this optimal feature set highlights
+the importance of these factors in determining the reading literacy of high-level students. This research provides valuable perspectives on the psychoemotional wellbeing factors that influence the development of students’ reading literacy.
+Our study offers innovations and contributions to students’ reading literacy across
+three key aspects. Firstly, this study focused on psychoemotional well-being factors, offering a fresh perspective compared to previous studies that mainly considered contextual factors (Xiao & Hu, 2019). Secondly, our study adopts a distinct
+approach from traditional statistical analysis (Molina-Muñoz et al., 2023) by utilizing machine learning algorithms. This method adeptly addresses multicollinearity and elucidates intricate interactions among variables in high-dimensional data
+(Alivernini & Manganelli, 2015). After evaluating various ML classification algorithms, we find that SVM algorithms are the optimal algorithm for constructing the
+model for the dataset. Researchers usually choose either 5-fold or 10-fold cross-validation based on their expertise in previous studies. However, we utilized the RFECV feature selection and SVM classifiers approach, incorporating a broader set of
+cross-validation folds ranging from 5 to 15, to identify the most accurate feature
+set. Thirdly, the SHAP technique was employed to interpret the outputs of the SVM
+model, providing a more comprehensive understanding of its workings. Fourthly,
+our study specifically focuses on B-S-J-Z (China) used as our sample to explore the
+psychoemotional well-being factors and their impact on Chinese students’ reading
+literacy.
+
+13
+
+18276
+
+Education and Information Technologies (2024) 29:18257–18285
+
+In terms of practical implications, teachers’ teaching behavior plays a crucial
+role in enhancing students’ learning (Hanushek, 2011). Teachers should offer
+teaching assistance to students, thereby enabling them to perceive the teachers’
+active engagement in the learning process (Klem & Connell, 2004). In addition,
+it is crucial for teachers to offer teaching feedback and foster student involvement in reading. This refers to the information that teachers provide regarding
+students’ performance and understanding (Hattie & Timperley, 2007). Teachers
+should take into account not only the gender but also the economic, social, and
+cultural backgrounds of their students. To cater to the multiple needs and capabilities of the students, teachers can utilize differentiated instruction to meet
+the diverse requirements (Reis et al., 2011).
+To reduce disruptive behavior that hinders students’ learning, school administrators should reinforce a disciplinary climate and foster a strong sense of
+belonging. To enhance their academic achievements, it is essential for students
+to establish clear learning goals (Litvinova, 2022). Moreover, fostering a competitive learning attitude among students can serve as a motivation for them
+to pursue academic excellence (Baumann & Harvey, 2021). In addition, the
+involvement of parents plays a crucial role in ensuring their child’s emotional
+well-being. They can provide emotional support by actively engaging in their
+child’s education journey (Liu et al., 2022).
+
+7 Limitations
+This study has several limitations. Firstly, the sample size of low-achieving students in B-S-J-Z (China) was limited, which could potentially impact the generalizability of the research findings. To enhance the representativeness, future
+studies should consider including a larger number of countries and regions to
+minimize the disparities between high-level and low-level student groups. Secondly, the 25 factors associated with psychological and emotional well-being
+were exclusively derived from surveys conducted among students, schools,
+and families. It is recognized that these factors may not provide a comprehensive understanding. Therefore, future research will endeavor to incorporate
+additional factors to thoroughly explore the impact of psychoemotional wellbeing on students’ reading literacy. Thirdly, the RFE-CV feature selection and
+SVM classifiers approach offers significant advantages in identifying relevant
+features. SVM-RFE-CV progressively removes features to identify the optimal feature set, a process that necessitates multiple runs of the SVM model,
+thereby substantially increasing the overall computational burden (Ding &
+Wilkins, 2006). Furthermore, this complexity intensifies when applied to largescale datasets and high-dimensional data, leading to a marked increase in the
+required computational time and resources.
+
+13
+
+School climate
+
+School Community
+
+Teaching and Learning
+
+Student Disruptive Behavior
+
+The higher the value, the student valued -2.54~1.08
+schooling to a greater extent
+
+Value of school (ATTLNACT)
+
+-3.26~2.76
+
+The higher the value, the stronger students’ sense of belonging at school
+
+-2.30~2.09
+
+Teachers’ Stimulation of Reading Engagement (STIMREAD)
+Sense of Belonging (BELONG)
+
+-1.64~2.02
+
+Teacher Feedback (PERFEED)
+
+-2.94~1.82
+The higher the value, the more frequently teacher-directed instruction,
+adaptive instruction, teacher feedback
+and cognitive stimulation students
+perceived
+
+Teacher-directed Instruction (DIRINS)
+
+-2.71~1.031
+
+The higher the value, the stronger
+teacher support students perceived
+
+The higher the value, the student behav- 1~9
+iors hinder learning to a greater degree
+
+Student Behavior Hindering Learning
+(SBHL)
+Teacher Support (TEACHSUP)
+
+The higher the value, the better discipli- -2.71~2.03
+nary climate
+
+0.19(0.91)
+
+-0.15(0.92)
+
+0.77(1.02)
+
+0.39(1.01)
+
+0.47(0.99)
+
+0.43(0.86)
+
+1.15(0.37)
+
+0.97(0.98)
+
+1.52(0.49)
+0.00(1.07)
+
+1~2
+-5.08~3.04
+
+Value Range M(SD)
+(Min. ~ max.)
+
+Disciplinary Climate (DISCLIMA)
+
+Categorical Variable Female-1 Male-2
+Higher scores mean better socioeconomic and cultural status of the
+student’s family.
+
+Gender (Gender)
+ESCS(ESCS)
+
+Student Backgrounds
+
+Scoring Formula
+
+Variables/ Features
+
+Dimensions
+
+Table 1  Variables / factors
+
+Appendix
+
+Education and Information Technologies (2024) 29:18257–18285
+18277
+
+13
+
+13
+0.42(0.81)
+0.09(0.93)
+
+The higher the value, the bigger ambitious learning goals
+
+The higher the value, the higher favora- -2.35~2.01
+ble attitudes towards competition
+-2.45~1.03
+The higher the value, the greater
+levels of emotional support from their
+parents
+
+Learning goals (MASTGOAL)
+Attitudes towards competition (COMPETE)
+Parents’ emotional support (EMOSUPS)
+
+Emotional states
+
+The higher the value, the greater meaning in life
+-2.53~1.85
+
+-2.15~1.74
+
+0.11(0.88)
+
+0.02(0.93)
+
+6.64(2.45)
+
+Meaning in life (EUDMO)
+
+0~10
+
+Range 0-10 (not at all satisfied, completely satisfied), step = 1
+
+Students’ life satisfaction (STULS)
+
+Value Range M(SD)
+(Min. ~ max.)
+
+Psychological well-being
+
+Scoring Formula
+
+Variables/ Features
+
+Dimensions
+
+Table 1  (continued)
+
+18278
+Education and Information Technologies (2024) 29:18257–18285
+
+Education and Information Technologies (2024) 29:18257–18285
+
+18279
+
+Supplementary Information The online version contains supplementary material available at https://​doi.​
+org/​10.​1007/​s10639-​024-​12580-8.
+Acknowledgements This study was supported by the 2023 priority research topic for Beijing Education
+Science Planning, focused on the “Current Status and Comparative Study of Science Education in Beijing’s Primary and Secondary Schools” (Grant number: 3059-0012). I would like to declare on behalf of
+my co-authors that the work described was original research that has not been published previously, and
+not under consideration for publication elsewhere, in whole or in part. We are grateful to the editors and
+reviewers for their contribution to the peer review of this work.
+Data availability Publicly available datasets were analyzed in this study. The data that support the findings of this study are openly available at https://​webfs.​oecd.​org/​pisa2​018/​SPSS_​STU_​QQQ.​zip.
+Materials and/or code availability The datasets generated during and/or analyzed during the current
+study are available from the corresponding author on reasonable request.
+
+Declarations
+Ethics approval Our study utilizes publicly available survey data. Ethics approval is not applicable in this
+case.
+Consent Our study utilized publicly available survey data. Consent is not applicable in this case.
+Competing interests No conflict of interest exists in the submission of this manuscript, and the manuscript
+is approved by all authors for publication.
+
+References
+Aldridge, J., McChesney, K., & Afari, E. (2018). Relationships between school climate, bullying and
+delinquent behaviours. Learning Environments Research, 21, 1–20. https://​doi.​org/​10.​1007/​
+s10984-​017-​9249-6
+Alivernini, F., & Manganelli, S. (2015). Country, school and students factors associated with extreme
+levels of science literacy across 25 countries. International Journal of Science Education, 37(12),
+1992–2012. https://​doi.​org/​10.​1080/​09500​693.​2015.​10606​48
+Alivernini, F., Cavicchiolo, E., Manganelli, S., Chirico, A., & Lucidi, F. (2020). Students’ psychological well-being and its multilevel relationship with immigrant background, gender, socioeconomic
+status, achievement, and class size. School Effectiveness and School Improvement, 31(2), 172–191.
+https://​doi.​org/​10.​1080/​09243​453.​2019.​16422​14
+Antaramian, S. (2017). The importance of very high life satisfaction for students’ academic success.
+Cogent Education, 4(1), 1307622. https://​doi.​org/​10.​1080/​23311​86X.​2017.​13076​22
+Apley, D. W., & Zhu, J. (2020). Visualizing the effects of predictor variables in black box supervised
+learning models. Journal of the Royal Statistical Society Series B: Statistical Methodology, 82(4),
+1059–1086. https://​doi.​org/​10.​1111/​rssb.​12377
+Atasoy, R., Çoban, Ö., & Yatağan, M. (2022). Effect of ICT use, parental support and student hindering
+on science achievement: Evidence from PISA 2018. Journal of Learning and Teaching in Digital
+Age, 7, 127–140. https://​doi.​org/​10.​53850/​jolti​da.​945869
+Attiat, M. (2023). Psycholsocial and social components predicting student self-efficacy: A study 2018.
+Jordan participation in the international student assessment program PISA 2018. Jordan Journal of
+Educational Sciences, 18, 203–216. https://​doi.​org/​10.​47015/​18.4.1
+Babu, V. D., & Malathi, K. (2022). Dynamic deep learning algorithm (DDLA) for processing of complex and large datasets. 2022 Second International Conference on Artificial Intelligence and Smart
+Energy (ICAIS) (pp. 336–342). https://​doi.​org/​10.​1109/​ICAIS​53314.​2022.​97430​13
+Badal, Y. T., & Sungkur, R. K. (2023). Predictive modelling and analytics of students’ grades using
+machine learning algorithms. Education and Information Technologies, 28(3), 3027–3057. https://​
+doi.​org/​10.​1007/​s10639-​022-​11299-8
+
+13
+
+18280
+
+Education and Information Technologies (2024) 29:18257–18285
+
+Baumann, C., & Harvey, M. (2021). What is unique about high performing students? Exploring personality, motivation and competitiveness. Assessment & Evaluation in Higher Education, 46, 1–13.
+https://​doi.​org/​10.​1080/​02602​938.​2020.​18709​30
+Benner, G. J., Filderman, M. J., Barnard-Brak, L., Pennefather, J., Smith, J. L. M., & Strycker, L. A.
+(2023). Evidence of efficacy of the integrated literacy study group professional learning program
+to enhance reading instruction for students with emotional and behavioral disorders. Psychology in
+the Schools, 60(1), 182–198. https://​doi.​org/​10.​1002/​pits.​22773
+Blank, C., & Shavit, Y. (2016). The association between student reports of classmates’ disruptive behavior and student achievement. AERA Open, 2(3), 233285841665392. https://​doi.​org/​10.​1177/​23328​
+58416​653921
+Brassai, L., Piko, B. F., & Steger, M. F. (2011). Meaning in life: Is it a protective factor for adolescents’
+psychological health? International Journal of Behavioral Medicine, 18(1), 44–51. https://​doi.​org/​
+10.​1007/​s12529-​010-​9089-6
+Cervantes, J., Garcia-Lamont, F., Rodríguez-Mazahua, L., & Lopez, A. (2020). A comprehensive survey
+on support vector machine classification: Applications, challenges and trends. Neurocomputing,
+408, 189–215. https://​doi.​org/​10.​1016/j.​neucom.​2019.​10.​118
+Chapman, S. J. (2018). Review of discovering statistics using IBM SPSS statistics, 4th edition. Journal
+of Political Science Education, 14(1), 145–147. https://​doi.​org/​10.​1080/​15512​169.​2017.​13663​28
+Chen, J., Zhang, Y., Wei, Y., & Hu, J. (2019). Discrimination of the contextual features of top performers
+in scientific literacy using a machine learning approach. Research in Science Education, 51(S1),
+129–158. https://​doi.​org/​10.​1007/​s11165-​019-​9835-y
+Costa, H., Ripoll, P., Sanchez, M., & Carvalho, C. (2013). Emotional intelligence and self-efficacy:
+Effects on psychological well-being in college students. Spanish Journal of Psychology, 16, e50.
+https://​doi.​org/​10.​1017/​sjp.​2013.​39
+Coulangeon, P. (2018). The impact of participation in extracurricular activities on school achievement of
+French middle school students: Human capital and cultural capital revisited. Social Forces, 97(1),
+55–90. https://​doi.​org/​10.​1093/​sf/​soy016
+Creemers, B., Kyriakides, L. (2007). The dynamics of educational effectiveness: A contribution to policy,
+practice and theory in contemporary schools. Routledge. https://​doi.​org/​10.​4324/​97802​03939​185
+Davidovitch, N. (2023). Social factors influencing students’ reading habits. African Educational Research
+Journal, 11, 351–359. https://​doi.​org/​10.​30918/​AERJ.​113.​23.​057
+Demirtas-Zorbaz, S., Akin-Arikan, C., & Terzi, R. (2021). Does school climate that includes students’
+views deliver academic achievement? A multilevel meta-analysis. School Effectiveness and School
+Improvement, 32(4), 543–563. https://​doi.​org/​10.​1080/​09243​453.​2021.​19204​32
+Ding, Y., & Wilkins, D. (2006). Improving the performance of SVM-RFE to select genes in microarray
+data. BMC Bioinformatics, 7(S2), S12. https://​doi.​org/​10.​1186/​1471-​2105-7-​S2-​S12
+Fauzan, F., Eriyanti, R., & Asih, R. (2023). Misconception of reading literacy and its impacts on literacy
+acculturation in school. Jurnal Cakrawala Pendidikan, 42, 208–219. https://​doi.​org/​10.​21831/​cp.​
+v42i1.​53041
+Fredrickson, B. L., Tugade, M. M., Waugh, C. E., & Larkin, G. R. (2003). What good are positive emotions in crisis? A prospective study of resilience and emotions following the terrorist attacks on
+the United States on September 11th, 2001. Journal of Personality and Social Psychology, 84(2),
+365–376. https://​doi.​org/​10.​1037/​0022-​3514.​84.2.​365
+Friedman, J. H. (2001). Greedy function approximation: A gradient boosting machine. The Annals of Statistics, 29(5), 1189–1232. https://​doi.​org/​10.​1214/​aos/​10132​03451
+Gustafsson, H., Sagar, S. S., & Stenling, A. (2017). Fear of failure, psychological stress, and burnout
+among adolescent athletes competing in high level sport. Scandinavian Journal of Medicine & Science in Sports, 27(12), 2091–2102. https://​doi.​org/​10.​1111/​sms.​12797
+Hanushek, E. A. (2011). The economic value of higher teacher quality. Economics of Education Review,
+30(3), 466–479. https://​doi.​org/​10.​1016/j.​econe​durev.​2010.​12.​006
+Hattie, J., & Timperley, H. (2007). The power of feedback. Review of Educational Research, 77(1),
+81–112. https://​doi.​org/​10.​3102/​00346​54302​98487
+Hu, J., & Dong, X. (2019). An exploration of impact factors influencing students’ reading literacy in
+Singapore with machine learning approaches. International Journal of English Linguistics, 9, 52.
+https://​doi.​org/​10.​5539/​ijel.​v9n5p​52
+Hu, J., & Xie, Q. (2022). Assessing students’ digital reading performance: An educational data mining
+approach. Routledge. https://​doi.​org/​10.​4324/​97810​03351​108
+
+13
+
+Education and Information Technologies (2024) 29:18257–18285
+
+18281
+
+Hu, J., Dong, X., & Peng, Y. (2022). Discovery of the key contextual factors relevant to the reading
+performance of elementary school students from 61 countries/regions: Insight from a machine
+learning-based approach. Reading and Writing, 35(1), 93–127. https://​doi.​org/​10.​1007/​
+s11145-​021-​10176-z
+Hu, J., Peng, Y., & Chen, X. (2023). Decoding contextual factors differentiating adolescents’ high, average and low digital reading performance through machine learning methods. IEEE Transactions on
+Learning Technologies, 1–13. https://​doi.​org/​10.​1109/​TLT.​2023.​32810​56
+Huebner, E. S. (1991). Initial development of the student’s life satisfaction scale. School Psychology
+International, 12, 231–240. https://​doi.​org/​10.​1177/​01430​34391​123010
+James, G., Witten, D., Hastie, T., & Tibshirani, R. (2013). An introduction to statistical learning.
+Springer. https://​doi.​org/​10.​1007/​978-1-​4614-​7138-7_2
+Kalaiselvi, K., & Thirumurthi, R. A. (2020). Big data analytics and intelligence: A perspective for health
+care (pp. 1–16). Emerald Publishing Limited. https://​doi.​org/​10.​1108/​978-1-​83909-​099-​82020​
+1005
+Kalonia, N., Garhwal, K., & Singh, V. (2023). Life satisfaction and resilience as a predictor of psychological well-being among youth. The International Journal of Indian Psychology, 10, 1004–1010.
+https://​doi.​org/​10.​25215/​1004.​098
+Kamboj, K. P., & Garg, P. (2021). Teachers’ psychological well-being role of emotional intelligence
+and resilient character traits in determining the psychological well-being of Indian school teachers. International Journal of Educational Management, 35(4), 768–788. https://​doi.​org/​10.​
+1108/​IJEM-​08-​2019-​0278
+Kamiri, J., & Mariga, G. (2021). Research methods in machine learning: A content analysis. International Journal of Computer and Information Technology, 10, 2279–0764. https://​doi.​org/​10.​
+24203/​ijcit.​v10i2.​79
+Kang, N., Wang, E., Yu, Y., & Duan, Z. (2021). Valuing recreational services of the national forest parks using a tourist satisfaction method. Forests, 12(1688), 1688. https://​doi.​org/​10.​3390/​
+f1212​1688
+Khan, A., & Husain, A. (2010). Social Support as a moderator of positive psychological strengths
+and subjective well-being. Psychological Reports, 106, 534–538. https://​doi.​org/​10.​2466/​PR0.​
+106.2.​534-​538
+Klem, A. M., & Connell, J. P. (2004). Relationships matter: Linking teacher support to student
+engagement and achievement. Journal of School Health, 74(7), 262–273. https://​doi.​org/​10.​
+1111/j.​1746-​1561.​2004.​tb082​83.x
+Kovess-Masfety, V., Ester, W. A., Wild, K., Bitfoi, A., Goelitz, D., Lesinskiene, S., Mihova, Z., Otten,
+R., & Husky, M. M. (2022). Mental health problems, low birthweight and academic achievement in mathematics and reading. Current Psychology, 41(5), 2810–2820. https://​doi.​org/​10.​
+1007/​s12144-​020-​00674-8
+Kyriakides, L., Creemers, B. P. M., & Charalambous, E. (2019). Searching for differential teacher and
+school effectiveness in terms of student socioeconomic status and gender: Implications for promoting equity. School Effectiveness and School Improvement, 30(3), 286–308. https://​doi.​org/​
+10.​1080/​09243​453.​2018.​15116​03
+Lazarus, R. S. (1970). Cognitive and personality factors underlying threat and coping. Social Stress,
+10(3), 143–164. Routledge. https://​doi.​org/​10.​4324/​97813​15129​808-8
+Leseman, P. P. M., & De Jong, P. F. (1998). Home literacy: Opportunity, instruction, cooperation and
+social-emotional quality predicting early reading achievement. Reading Research Quarterly,
+33(3), 294–318. https://​doi.​org/​10.​1598/​RRQ.​33.3.3
+Lezhnina, O., & Kismihók, G. (2022). Combining statistical and machine learning methods to explore
+German students’ attitudes towards ICT in PISA. International Journal of Research & Method
+in Education, 45(2), 180–199. https://​doi.​org/​10.​1080/​17437​27X.​2021.​19632​26
+Li, Q., Salman, R., Test, E., Strack, R., & Kecman, V. (2013). Parallel multitask cross validation
+for support vector machine using GPU. Journal of Parallel and Distributed Computing, 73,
+293–302. https://​doi.​org/​10.​1016/j.​jpdc.​2012.​02.​011
+Lippman, L., Moore, K., & Mcintosh, H. (2009). Positive indicators of child well-being: A conceptual
+framework, measures, and methodological issues. UNICEF Innocenti Research Centre, Innocenti Working Papers, 6. https://​doi.​org/​10.​1007/​s11482-​011-​9138-6
+Litvinova, A. (2022). Goal-setting among students with different levels of academic achievement.
+Integration of Education, 26, 708–721. https://​doi.​org/​10.​15507/​1991-​9468.​109.​026.​202204.​
+708-​721
+
+13
+
+18282
+
+Education and Information Technologies (2024) 29:18257–18285
+
+Liu, J., Peng, P., & Luo, L. (2020). The relation between family socioeconomic status and academic
+achievement in China: A meta-analysis. Educational Psychology Review, 32(1), 49–76. https://​doi.​
+org/​10.​1007/​s10648-​019-​09494-0
+Liu, Y. B., Hou, X. Y., & Chen, B. B. (2022). Links between Chinese vocational school students’ perception of parents’ emotional support and school cooperation climate and their academic performance:
+The mediating role of school belonging. Frontiers in Psychology, 13, 952001. https://​doi.​org/​10.​
+3389/​fpsyg.​2022.​952001
+Liu, D., Wang, L., Xu, Z., Li, M., Joshi, R. M., Li, N., & Zhang, X. (2023). Understanding Chinese children’s word reading by considering the factors from cognitive, psychological and ecological factors. Contemporary Educational Psychology, 73, 102163. https://​doi.​org/​10.​1016/j.​cedps​ych.​2023.​
+102163
+Malakouti, S., Menhaj, M., & Suratgar, A. (2023). The usage of 10-fold cross-validation and grid search
+to enhance ML methods performance in solar farm power generation prediction. Cleaner Engineering and Technology, 15, 100664. https://​doi.​org/​10.​1016/j.​clet.​2023.​100664
+Marcílio, W. E., & Eler, D. M. (2020). From explanations to feature selection: Assessing SHAP values as
+feature selection mechanism. 2020 33rd SIBGRAPI Conference on Graphics, Patterns and Images
+(SIBGRAPI) (pp. 340–347). https://​doi.​org/​10.​1109/​SIBGR​API51​738.​2020.​00053
+Maxwell, S., Reynolds, K. J., Lee, E., Subasic, E., & Bromhead, D. (2017). The impact of school climate
+and school identification on academic achievement: Multilevel modeling with student and teacher
+data. Frontiers in Psychology, 8, 2069. https://​doi.​org/​10.​3389/​fpsyg.​2017.​02069
+Mayer, J. D., & Salovey, P. (1993). The intelligence of emotional intelligence. Intelligence, 17(4), 433–
+442. https://​doi.​org/​10.​1016/​0160-​2896(93)​90010-3
+Memisevic, H., & Biscevic, I. (2022). Mathematics, gender and the meaning in life: The results of PISA
+testing in Bosnia and Herzegovina. European Journal of Mathematics and Science Education,
+3(2), 171–179. https://​doi.​org/​10.​12973/​ejmse.3.​2.​171
+Meng, L., Qiu, C., Liu, X., & Kong, M. (2023). The structural relations among learning environment,
+achievement goals and reading achievement in China: Evidence from PISA 2018. Asia Pacific
+Journal of Education. https://​doi.​org/​10.​1080/​02188​791.​2023.​22337​04
+Michelucci, U. (2019). Advanced applied deep learning: Convolutional neural networks and object
+detection. Apress L. P. https://​doi.​org/​10.​1007/​978-1-​4842-​4976-5
+Miguel, H., Vasconcelos-Raposo, J., & Brust, R. (2012). Factors associated with positive mental health
+in a Portuguese community sample: A look through the lens of Ryff’s psychological well-being
+model (V. Olisah). InTech. https://​doi.​org/​10.​5772/​36907
+Mishra, P., & Close, K. (2020). The value of school. ECNU Review of Education, 3(3), 576–583. https://​
+doi.​org/​10.​1177/​20965​31120​926687
+Molina-Muñoz, D., Contreras-García, J., & Molina-Portillo, E. (2023). Does the psychoemotional wellbeing of Spanish students influence their mathematical literacy? Evidence from PISA 2018. Frontiers in Psychology, 14, 1196529. https://​doi.​org/​10.​3389/​fpsyg.​2023.​11965​29
+Noble, W. S. (2006). What is a support vector machine? Nature Biotechnology, 24(12), 1565–1567.
+https://​doi.​org/​10.​1038/​nbt12​06-​1565
+Nyorere, O. I., James, I. O., & Patricia, Y. I. (2022). Social activities and academic self-concept of secondary school students in Uyo local education committee. International Journal of Interdisciplinary Research Methods, 9(1), 27–37. https://​doi.​org/​10.​37745/​ijirm.​14/​vol9n​1pp27​37
+OECD. (2009). PISA data analysis manual: SPSS (2nd ed.). OECD. https://​doi.​org/​10.​1787/​97892​64056​
+275-​en
+OECD. (2013). OECD guidelines on measuring subjective well-being. Organisation for Economic Cooperation and Development: OECD. https://​doi.​org/​10.​1787/​97892​64191​655-​en
+OECD. (2018). PISA for development assessment and analytical framework: Reading, mathematics and
+science. Organisation for Economic Co-operation and Development. https://​doi.​org/​10.​1787/​
+97892​64305​274-​en
+OECD. (2019a). PISA 2018 Results (Volume I): What students know and can do. Organisation for Economic Co-operation and Development. https://​doi.​org/​10.​1787/​5f07c​754-​en
+OECD. (2019b). PISA 2018 Results (Volume III): What school life means for students’ lives. OECD.
+https://​doi.​org/​10.​1787/​acd78​851-​en
+OECD. (2019c). PISA 2018 Well-being framework (pp. 257–298). OECD. https://​doi.​org/​10.​1787/​38a34​353-​en
+Oluchi Anyanwu, G., Nwakanma, C. I., Lee, J.-M., & Kim, D.-S. (2023). Optimization of RBF-SVM kernel using grid search algorithm for DDoS attack detection in SDN-based VANET. IEEE Internet of
+Things Journal, 10(10), 8477–8490. https://​doi.​org/​10.​1109/​JIOT.​2022.​31997​12
+
+13
+
+Education and Information Technologies (2024) 29:18257–18285
+
+18283
+
+Pečjak, S. (2021). Reading culture from the psychological and educational perspectives. Revija Za Elementarno Izobraževanje, 4, 461–483. https://​doi.​org/​10.​18690/​rei.​14.4.​461-​483.​2021
+Pehlivan, O., & Aslan, G. (2023). Investigation of sociocultural and socioeconomic factors affecting
+the academic achievement: PISA 2018 Turkey sample. Kastamonu Eğitim Dergisi, 31, 367–377.
+https://​doi.​org/​10.​24106/​2021-​0041
+Pertegal, M., & Oliva, A. (2017). A model on the contribution of school assets to the achievement of
+adolescents’ well-being and academic performance. The Spanish Journal of Psychology, 20, E44.
+https://​doi.​org/​10.​1017/​sjp.​2017.​47
+Pettersson, C. (2018). Psychological well-being, improved self-confidence, and social capacity: Bibliotherapy from a user perspective. Journal of Poetry Therapy, 31(2), 124–134. https://​doi.​org/​10.​
+1080/​08893​675.​2018.​14489​55
+Philippe, F. L., Gingras, M. P., Ghassemi-Bakhtiari, N., Poulin, F., Robitaille, J., Denault, A. S., Dandeneau, S., & Geoffroy, M. C. (2023). Organized Civic and non-civic activities as predictors of
+academic GPA in high school students. Applied Developmental Science, 27(2), 189–204. https://​
+doi.​org/​10.​1080/​10888​691.​2022.​20531​27
+Pimple, J. (2023). Correlational analysis of emotional intelligence and psychological well-being. Indian
+Journal of Positive Psychology, 14, 39–42.
+Pons, A., & Houldsworth, L. (2020). Insights and interpretations. OECD. https://​doi.​org/​10.​1787/​
+d0f4a​644-​en
+Porter-Owens, N. (2022). How do psychological factors interact with reading performance? Order No.
+30246030 dissertation. Concordia University Chicago, United States. https://​doi.​org/​10.​2316/​
+Journ​al.​201.​2018.3.​201-​2979. Accessed 23 Aug 2023.
+Rance, G., Dowell, R. C., & Tomlin, D. (2023). The effect of classroom environment on literacy
+development. Npj Science of Learning, 8(1), 9. https://​doi.​org/​10.​1038/​s41539-​023-​00157-y
+Reis, S., Mccoach, D. B., Little, C., Muller, L., & Kaniskan, R. (2011). The effects of differentiated
+instruction and enrichment pedagogy on reading achievement in five elementary schools. American Educational Research Journal, 48, 462–501. https://​doi.​org/​10.​3102/​00028​31210​382891
+Rizzotto, J. S., & França, M. T. A. (2022). Indiscipline: The school climate of Brazilian schools and
+the impact on student performance. International Journal of Educational Development, 94,
+102657. https://​doi.​org/​10.​1016/j.​ijedu​dev.​2022.​102657
+Roderick, M., & Engel, M. (2001). The Grasshopper and the Ant: Motivational responses of lowachieving students to high-stakes testing. Educational Evaluation and Policy Analysis, 23(3),
+197–227. https://​doi.​org/​10.​3102/​01623​73702​30031​97
+Roeser, R. W., Midgley, C., & Urdan, T. C. (1996). Perceptions of the school psychological environment and early adolescents’ psychological and behavioral functioning in school: The mediating
+role of goals and belonging. Journal of Educational Psychology, 88(3), 408–422. https://​doi.​
+org/​10.​1037/​0022-​0663.​88.3.​40
+Rustamov, E., Aliyeva, M., Rustamova, N., & Zalova-Nuriyeva, U. (2023). Adaptation of the school
+climate questionnaire: Its association with psychological distress, academic self-efficacy, and
+mental wellbeing in Azerbaijan. Problems of Education in the 21st Century, 81, 517–530.
+https://​doi.​org/​10.​33225/​pec/​23.​81.​517
+Ryff, C. D. (1995). Psychological well-being in adult life. Current Directions in Psychological Science, 4(4), 99–104. https://​doi.​org/​10.​1111/​1467-​8721.​ep107​72395
+Salle, T. P. L., Meyers, J., Varjas, K., & Roach, A. (2015). A cultural-ecological model of school
+climate. International Journal of School & Educational Psychology, 3(3), 157–166. https://​doi.​
+org/​10.​1080/​21683​603.​2015.​10475​50
+Sammons, P., Hall, J., Sylva, K., Melhuish, E., Siraj-Blatchford, I., & Taggart, B. (2013). Protecting
+the development of 5–11-year-olds from the impacts of early disadvantage: The role of primary
+school academic effectiveness. School Effectiveness and School Improvement, 24(2), 251–268.
+https://​doi.​org/​10.​1080/​09243​453.​2012.​749797
+Seijo, D., Vazquez, M., Novo, M., & Fariña, F. (2023). Studying the effects of sense of belonging to
+virtual communities in psychological well-being and adjustment to academic setting. Educación
+XX1, 26, 229–247. https://​doi.​org/​10.​5944/​educx​x1.​31818
+Sejuti, Z., & Islam, M. (2023). A hybrid CNN–KNN approach for identification of COVID-19 with
+5-fold cross validation. Sensors International, 4, 100229. https://​doi.​org/​10.​1016/j.​sintl.​2023.​
+100229
+Senaviratna, N., & Cooray, T. (2019). Diagnosing multicollinearity of logistic regression model.
+Asian Journal of Probability and Statistics, 1–9. https://​doi.​org/​10.​9734/​ajpas/​2019/​v5i23​0132
+
+13
+
+18284
+
+Education and Information Technologies (2024) 29:18257–18285
+
+Senko, C. (2019). When do mastery and performance goals facilitate academic achievement? Contemporary Educational Psychology, 59, 101795. https://​doi.​org/​10.​1016/j.​cedps​ych.​2019.​101795
+Siouli, S., Makris, S., Romanopoulou, E., & Bamidis, P. P. D. (2020). Living with learning difficulties:
+Two case studies exploring the relationship between emotion and performance in students with
+learning difficulties (pp. 131–143). Springer International Publishing. https://​doi.​org/​10.​1007/​
+978-3-​030-​57717-9_​10
+Sparks, T. A., Hunter, S. K., Backman, T. L., Morgan, G. A., & Ross, R. G. (2012). Maternal parenting stress and mothers’ reports of their infants’ mastery motivation. Infant Behavior and Development, 35(1), 167–173. https://​doi.​org/​10.​1016/j.​infbeh.​2011.​07.​002
+Stepanyan, L. S., Yu, S. A., & Grigoryan, V. H. (2010). Psychophysiological correlates of influence of
+different gameplay on teenagers’ psychoemotional state. International Journal of Psychophysiology, 77(3), 278. https://​doi.​org/​10.​1016/j.​ijpsy​cho.​2010.​06.​132
+Strobl, C., Malley, J., & Tutz, G. (2009). An introduction to recursive partitioning: Rationale, application, and characteristics of classification and regression trees, bagging, and random forests.
+Psychological Methods, 14(4), 323–348. https://​doi.​org/​10.​1037/​a0016​973
+Suldo, S., Frank, M., Chappel, A., Albers, M., & Bateman, L. (2014). American high school students’
+perceptions of determinants of life satisfaction. Social Indicators Research, 118, 485–514. https://​
+doi.​org/​10.​1007/​s11205-​013-​0436-2
+Tabri, N., & Elliott, C. M. (2012). Principles and practice of structural equation modeling. Canadian
+Graduate Journal of Sociology and Criminology, 1(1), 59–60. https://​doi.​org/​10.​15353/​cgjsc.​v1i1.​
+3787
+Tang, X., & Dai, T. (2021). How do classroom behaviors predict longitudinal reading achievement? A
+conditional autoregressive latent growth analysis. Early Childhood Research Quarterly, 54, 239–
+251. https://​doi.​org/​10.​1016/j.​ecresq.​2020.​09.​007
+Telef, B. B., & Furlong, M. J. (2017). Social and emotional psychological factors associated with subjective well-being: A comparison of Turkish and California adolescents. Cross-Cultural Research,
+51(5), 491–520. https://​doi.​org/​10.​1177/​10693​97117​694815
+Torppa, M., Eklund, K., Sulkunen, S., Niemi, P., & Ahonen, T. (2018). Why do boys and girls perform
+differently on PISA Reading in Finland? The effects of reading fluency, achievement behaviour,
+leisure reading and homework activity. Journal of Research in Reading, 41(1), 122–139. https://​
+doi.​org/​10.​1111/​1467-​9817.​12103
+Wang, T., & Wen, J. (2023). Experiential teaching is more conducive to student learning than traditional
+teaching. Journal of Education and Culture Studies, 7(1), 100. https://​doi.​org/​10.​22158/​jecs.​v7n1p​100
+Wei, Y., Yang, Q., Chen, J., & Hu, J. (2018). The exploration of a machine learning approach for the
+assessment of learning styles changes. Mechatronic Systems and Control, 46(1), 121–126. https://​
+doi.​org/​10.​2316/​Journ​al.​201.​2018.3.​201-​2979
+Werang, B. R., Jampel, I. N., Agung, A. A. G., Putri, H. W. S., & Asaloei, S. I. (2022). Teacher teaching
+performance, students’ learning motivation and academic achievement. Cypriot Journal of Educational Sciences, 17(12), 4672–4682. https://​doi.​org/​10.​18844/​cjes.​v17i12.​7586
+Wu, Y. (2023). The mediating effect of emotional self-regulation on the relationship of perceived benefits
+of dance exercises/physical activity and psychological well -being. International Journal of Education and Humanities, 8, 103–108. https://​doi.​org/​10.​54097/​ijeh.​v8i3.​8395
+Xiao, Y., & Hew, K. F. (2022). The relationships among ICT-Related psychological factors, school contextual factors and secondary students’ reading performance: A multilevel analysis across 47 economies. Journal of Educational Computing Research, 60(5), 1166–1196. https://​doi.​org/​10.​1177/​
+07356​33121​10709​75
+Xiao, Y., & Hu, J. (2019). Assessment of optimal pedagogical factors for Canadian ESL learners’ reading
+literacy through artificial intelligence algorithms. International Journal of English Linguistics, 9,
+1. https://​doi.​org/​10.​5539/​ijel.​v9n4p1
+Xiao, Y., Liu, Y., & Hu, J. (2019). Regression analysis of ICT impact factors on early adolescents’ reading proficiency in five high-performing countries. Frontiers in Psychology, 10, 457763. https://​doi.​
+org/​10.​3389/​fpsyg.​2019.​01646
+Xiao, Z., Xing, H., Zhao, B., Qu, R., Luo, S., Dai, P., Li, K., & Zhu, Z. (2023). Deep contrastive representation learning with self-distillation. IEEE Transactions on Emerging Topics in Computational
+Intelligence, 1–13. https://​doi.​org/​10.​1109/​TETCI.​2023.​33049​48
+Xing, H., Xiao, Z., Qu, R., Zhu, Z., & Zhao, B. (2022a). An efficient federated distillation learning system for multitask time series classification. IEEE Transactions on Instrumentation and Measurement, 71, 1–12. https://​doi.​org/​10.​1109/​TIM.​2022.​32012​03
+
+13
+
+Education and Information Technologies (2024) 29:18257–18285
+
+18285
+
+Xing, H., Xiao, Z., Zhan, D., Luo, S., Dai, P., & Li, K. (2022b). SelfMatch: Robust semisupervised timeseries classification with self-distillation. International Journal of Intelligent Systems, 37(11),
+8583–8610. https://​doi.​org/​10.​1002/​int.​22957
+Yalcin, S., & Tavsancil, E. (2014). The comparison of Turkish students’ PISA achievement levels by year
+via data envelopment analysis. Educational Sciences Theory & Practice, 14(3), 961–968.
+Zheng, J. Q., Cheung, K., & Sit, P. S. (2023). Identifying key features of resilient students in digital reading: Insights from a machine learning approach. Education and Information Technologies. https://​
+doi.​org/​10.​1007/​s10639-​023-​11908-0
+Publisher’s Note Springer Nature remains neutral with regard to jurisdictional claims in published maps
+and institutional affiliations.
+Springer Nature or its licensor (e.g. a society or other partner) holds exclusive rights to this article under
+a publishing agreement with the author(s) or other rightsholder(s); author self-archiving of the accepted
+manuscript version of this article is solely governed by the terms of such publishing agreement and
+applicable law.
+
+Authors and Affiliations
+Xuetan Zhai1
+
+· Wei Yuan1,2 · Tianyu Liu1 · Qiang Wang1
+
+* Qiang Wang
+qwchem@gmail.com
+Xuetan Zhai
+zhaixuetan@cnu.edu.cn
+Wei Yuan
+yw_hongyan@163.com
+Tianyu Liu
+tyliu95@126.com
+1
+
+College of Education and College of Elementary Education, Capital Normal University, 105
+West 3rd Ring North Road, Beijing, China
+
+2
+
+Department of Chemistry, Capital Normal University, 105 West 3rd Ring North Road, Beijing,
+China
+
+13
+
+

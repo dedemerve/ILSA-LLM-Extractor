@@ -1,0 +1,38 @@
+{
+  "created_utc": "2026-10-25T15:30:27.814517+00:00",
+  "experiment": "Temporal pilot of literature-weighted PISA covariate correction to TimesFM 2.5 zero-shot",
+  "primary_target_cycle": 2022,
+  "baseline_predictions_source": "outputs/pisa_timesfm25_ils_adapter_v1/all_models_historical_predictions.csv",
+  "baseline_model": "TimesFM2_5_zero_shot",
+  "knowledge_features": [
+    "lag_ESCS",
+    "lag_HOMEPOS"
+  ],
+  "corpus_feature_weights": {
+    "lag_ESCS": 1.0,
+    "lag_HOMEPOS": 0.7175
+  },
+  "training_rule": "Within domain, only earlier target cycles with complete lagged covariates; correct prior TimesFM forecast errors.",
+  "test_rule": "2022 target cycle, common complete-case country/domain rows for all methods.",
+  "target_alignment_check": "Every stored forecast target score was matched against the PISA source panel with tolerance 1e-6.",
+  "control_models": [
+    "TimesFM2_5_zero_shot",
+    "M0_bias_correction",
+    "M1_unweighted_covariate_correction",
+    "M2_literature_weighted_correction"
+  ],
+  "xreg_relationship": "XReg-like residual correction around saved TimesFM forecasts; not native forecast_with_covariates() because the official PyTorch checkpoint is not locally cached and network access is unavailable.",
+  "feature_semantics": "lag_ESCS and lag_HOMEPOS in the target-cycle row represent the previous PISA cycle, per scripts/run_loco_forecasting.py.",
+  "uncertainty": "Paired bootstrap resampling country clusters; domains remain nested within country.",
+  "limitations": [
+    "Only one held-out target cycle (2022).",
+    "Historical feature completeness restricts calibration training to earlier complete rows; inspect fit_diagnostics.json.",
+    "Not evidence of a causal effect or performance across all ILSA programs/domains."
+  ],
+  "inputs": {
+    "outputs/pisa_timesfm25_ils_adapter_v1/all_models_historical_predictions.csv": "6af4fbdda36a2529547e66d32e92bfdc3faebfed010ec59589f2e2f7fb8b4c07",
+    "outputs/stage5/pisa_forecasting_panel_v2.csv": "91f44322fe036f9aa44dfc5a39c3387495879ff2e381a3a823374e4f2a3fc7f9",
+    "outputs/stage5/predictor_weights_v2.csv": "9a890cc74cba4ffaad0a38138291b83b2b3a40e0d65e37d457443b3c76d3a35e"
+  },
+  "python": "3.14.5"
+}

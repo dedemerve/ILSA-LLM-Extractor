@@ -1,0 +1,1742 @@
+DOI: 10.1111/jedm.70028
+Journal of Educational Measurement
+Spring 2026, Vol. 63, No. 1, e70028
+Evaluating General-Purpose Multimodal AI for
+Q-Matrix Generation from Math Items: A Cognitive
+Diagnostic Modeling Exploration
+Kang Xue
+Lexia Learning Systems, Concord, Massachusetts, United States
+James J. Appleton
+Lexia Learning Systems, Concord, Massachusetts, United States
+Cognitive Diagnostic Models (CDMs) provide ﬁne-grained diagnostic feedback,
+but their central component—the Q-matrix—remains costly and labor-intensive
+to construct. This study explores the automated generation of Q-matrices using
+general-purpose AI, including ChatGPT-4o, Gemini-2.5-pro, and Claude-sonnet-4.
+We evaluated two prompting strategies (all-at-once and one-by-one) across TIMSS
+2007, TIMSS 2011, and PISA 2012 mathematics assessments. Results show that
+AI-generated Q-matrices approximate human baselines with competitive model ﬁt-
+ting performance (AIC, BIC, log-likelihood, and SRMSR) and acceptable classiﬁ-
+cation discrepancies. While AI predictions for larger and more complicated assess-
+ments (TIMSS 07 and 11) were generally sparser than human-generated Q-matrices,
+they still achieved equal or better ﬁt statistics under most CDMs. In contrast, for
+the smaller and less complicated PISA 2012 assessment, AI-generated Q-matrices
+matched human density and ﬁtting quality. Importantly, chatbot-human matching
+accuracy remained high across models, with Gemini beneﬁting from all-at-once
+prompting, ChatGPT-4o maintaining stable performance under both strategies, and
+Claude showing sensitivity to prompt structure. These ﬁndings highlight both the
+promise and current limitations of automated Q-matrix generation, underscoring
+opportunities for integrating LLMs into scalable diagnostic assessment practices.
+Introduction
+Diagnostic measurement enables classiﬁcations on multiple latent variables rep-
+resenting important (and often actionable) attributes (Rupp et al., 2010). Diagnostic
+Classiﬁcation Models (DCM) or Cognitive Diagnostic Models (CDM) represent a
+framework that has been relatively recently developed and is valued for its ability to
+provide discrete, multivariate, and ﬁne-grained information toward the development
+of targeted instructional support for examinees (Xin et al., 2022). The Q-matrix,
+which delineates the relationships between latent attributes and items, plays a pivotal
+role in mapping the intricate cognitive skills underlying assessment. The generation
+of a Q-matrix is a complex task that has traditionally relied upon the cooperation be-
+tween human experts in different measurement areas (e.g., content, psychometrics).
+A challenge to the broader use of CDM is the time and cost intensiveness of
+developing an integral component for model estimation, the Q-matrix (Zhao and
+Huang, 2019), which supports understanding the relationship between skill/attribute
+mastery and item responses. Buck et al. (1998) describe a typical procedure to build
+a Q-matrix: (1) develop an initial list of skills, (2) construct an initial Q-matrix based
+© 2026 by the National Council on Measurement in Education.
+1 of 24
+
+Kang Xue and James J. Appleton
+on what skills are required for each item, (3) analyze data using appropriate Diag-
+nostic Classiﬁcation Models (DCMs) with the Q-matrix, and (4) modify the initial
+Q-matrix based on statistics for each skill along with the theoretical impor-
+tance of the skill. Steps 3 and 4 are repeated until a well-deﬁned Q-matrix
+is achieved. In this procedure, step 2 is very time consuming if the item
+pool is large. Steps 3 and 4 require large student response data to apply
+statistical analysis.
+To increase the efﬁciency and accuracy of building Q-matrices, some researchers
+focused on applying different statistical analysis for Q-matrix validation (de la
+Torre and Chiu, 2016; Ma and de la Torre, 2020a; Nájera et al., 2021), other re-
+searchers have begun to direct their efforts to increasing the efﬁciency with which
+Q-matrices can be generated (Chung, 2019; Li et al., 2022; Wang et al., 2020; Zhao
+and Huang, 2019). The time and resource intensiveness of developing Q-matrices
+is the impetus for several lines of current research (see Zhao and Huang, 2019).
+In demonstrating the potential efﬁciency of supervised learning text classiﬁcation
+models, these researchers both reduce the time required by expert review and un-
+derscore the need for examinee time and data as the outcome for their models. Ad-
+ditionally, Zhao and Huang, with their reliance upon a content-expert-determined
+Q-matrix as their outcome, concede their uncertainty on whether their effective
+models approached a close attribute-to-item relationship or something less perfect
+(see p. 277). Consistent with Xue and Bradshaw’s (2021) point, expert-designed Q-
+matrices may lack precision in the attribute-to-item relationship and beneﬁt from
+empirical input.
+Yet, these efforts, to date, required examinee results and/or substantial amounts
+of expert development and review. With the emergence of general large language
+models (LLMs), the rise of artiﬁcial general intelligence (AGI) represents an un-
+precedented opportunity for addressing challenges in the educational ﬁeld today
+(Baidoo-Anu and Ansah, 2023). OpenAI’s ChatGPT, for instance, has proven valu-
+able in educational assessment through item and response generation (Cheung et al.,
+2023) as well as adaptive personalized learning and feedback (Xu et al., 2023).
+Similar advances are evident in Anthropic’s Claude and Google DeepMind’s Gem-
+ini, which demonstrate strong capabilities in producing coherent, context-sensitive
+educational content and supporting interactive assessment design. Recent multi-
+modal extensions of these models, such as ChatGPT-4o, Gemini 2.5 Pro, and Claude
+Sonnet-4, further extend their utility by enabling interpretation of diverse inputs be-
+yond text, including diagrams, graphs, and ﬁgure plots (Comanici et al., 2025; Ra-
+machandran et al., 2025). This multimodal functionality allows AI agents to engage
+with mathematical assessments in richer ways, such as interpreting plotted func-
+tions, geometric ﬁgures, and statistical graphs, alongside traditional text-based prob-
+lem solving. By bridging visual and textual modalities, these systems open new
+opportunities for designing assessments that more closely mirror authentic disci-
+plinary practices in mathematics and science, where reasoning often requires co-
+ordinated interpretation of symbols, equations, and graphical representations (see
+also Ray, 2023, pp. 140-142, for more on the challenges and shortcomings of
+these systems).
+2 of 24
+ 17453984, 2026, 1, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/jedm.70028 by Beykent University, Wiley Online Library on [24/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+Figure 1. Diagram of the proposed automated content-based Q-Matrix generator.
+Methods
+In this exploratory research, we aimed to develop an Attribute-based Automatic Q-
+Matrix Generator (AQMG) by leveraging state-of-the-art AI agents. Speciﬁcally, we
+employed OpenAI’s ChatGPT-4o, Anthropic’s Claude-sonnet-4, and Google Deep-
+Mind’s Gemini-2.5-pro as the core generative engines for Q-matrix prediction. The
+overall framework of the AQMG is shown in Figure 1. To guide the generation pro-
+cess, we implemented two distinct prompting strategies, each offering a different
+pathway for constructing Q-matrices:
+• One-by-one method: The AI agent receives the content of a single assessment
+item along with the full list of attributes, and returns the corresponding attribute
+vector (q-vector) for that item. This process is repeated until all items are coded,
+producing the full Q-matrix iteratively.
+• All-at-once method: The AI agent receives the content of all assessment items
+and the complete list of attributes simultaneously, and returns the full Q-matrix
+in a single step.
+For each AI agent, we specify the same prompt under the same prompt method.
+Generally, these prompts were structured to follow four steps:
+1. Specify role and task: Clearly articulate the AI agent’s role and explicitly
+deﬁne the objective of the chatbot (i.e., to generate a Q-matrix mapping as-
+sessment items to attributes).
+2. Understand content: Supply the chatbot with the full item content (provided
+as PDF ﬁles) together with the corresponding attribute deﬁnitions to ensure
+contextual understanding.
+3. Set instructions and constraints: Establish key parameters for Q-matrix gen-
+eration, including dimensionality, binary structure, and completeness con-
+3 of 24
+ 17453984, 2026, 1, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/jedm.70028 by Beykent University, Wiley Online Library on [24/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+Kang Xue and James J. Appleton
+straints (e.g., each item measures at least one attribute, and each attribute is
+measured by at least one item).
+4. Deﬁne estimation method: Specify the approach to Q-matrix estimation (i.e.,
+the all-at-once or one-by-one method) and outline the veriﬁcation procedures
+used to ensure the generated Q-matrix adheres to these basic requirements.
+When articulating the desired task for a chatbot, it is imperative to provide a clear
+and speciﬁc deﬁnition of the bot’s intended purpose and functionality. In the ﬁrst
+step, we outlined the task as creating a Q-matrix which indicated the relationship
+between assessment items and the attributes the assessment measured. Additionally,
+we also provided the deﬁnition of the Q-matrix in this step. Below is an example
+of the statement and part of the reply from the chatbot in step 1. The three types of
+AQMGs share the same step 1 prompt. From the reply of the chatbot, we learned that
+the AI system understood the question well and could provide a correct summary of
+CDM and the Q-matrix.
+Step 1. Specify Role and Task
+When articulating the desired task for a chatbot, it is essential to provide a clear
+and speciﬁc deﬁnition of its intended purpose and functionality. In this ﬁrst step, we
+designated the AI agent as an expert performing Q-vector prediction for a cognitive
+diagnostic modeling (CDM) task in mathematics and deﬁned its role as generating
+a Q-matrix that maps assessment items to the attributes they measure. To establish
+a shared understanding of the expected output, we also supplied the chatbot with a
+concise deﬁnition of the Q-matrix.
+Step 2. Understand Content
+To establish a shared understanding of the expected output, we provided the chat-
+bot with a concise deﬁnition of the Q-matrix together with detailed deﬁnitions of
+all attributes. In addition, we attached a PDF ﬁle containing the complete item con-
+tent, including text, ﬁgures, item identiﬁers, response options, and answer keys. This
+combination of resources ensured that the chatbot had all the necessary context to
+generate Q-matrices in alignment with the intended task.
+Step 3. Set Instructions and Constraints
+We explicitly speciﬁed the rules and parameters that the AI agents were required
+to follow when generating the Q-matrix. This step was critical for ensuring that the
+outputs adhered to the structure and completeness expected in cognitive diagnostic
+modeling. The prompt directed the AI to determine which attributes were required to
+solve each item and to list only the attribute IDs rather than full attribute names. The
+AI was also instructed to include the item ID shown on each PDF page to clearly
+link each prediction to the corresponding assessment item. To prevent omissions,
+we emphasized that no item should be left unassigned and that each attribute must
+appear in at least one item within the ﬁnal dataset. By setting these constraints, we
+aimed to produce a complete, binary-structured Q-matrix that accurately mapped all
+4 of 24
+ 17453984, 2026, 1, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/jedm.70028 by Beykent University, Wiley Online Library on [24/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+items to the attributes they measure, thereby aligning the AI-generated output with
+established CDM practices.
+Step 4. Prediction Method
+In the prediction stage, we implemented two prompting strategies to generate the
+Q-matrix. In the all-at-once method, the AI agent received all assessment items and
+attributes simultaneously and produced the Q-matrix in a single batch. To safeguard
+against omissions, the agent was instructed to conduct a self-check: if any attribute
+was not assigned to at least one item, or if any item lacked an assigned attribute, the
+system revisited the predictions and updated them accordingly. In contrast, the one-
+by-one method required the AI agent to process each item individually, producing a
+q-vector for that item before moving to the next. After all items were coded, the agent
+again performed a self-check to ensure that every attribute was represented in the
+dataset. Through these procedures, both methods embedded an internal veriﬁcation
+step that enforced the structural completeness of the Q-matrix, thereby aligning the
+AI-generated outputs with the requirements of cognitive diagnostic modeling.
+Our experimental results demonstrated that the chatbots consistently maintained
+the binary structure of the Q-matrix. On rare occasions, the output text contained
+only a partial Q-matrix, but such dimensionality issues were easily resolved by re-
+prompting the chatbot to generate a matrix with the correct dimensions. Importantly,
+with our well-designed prompt method and embedded self-checking strategy, we ob-
+served only three instances of incompleteness or error across a total of 180 runs.
+Further examination indicated that these cases were not attributable to the prompt
+design itself but to transient server-side issues, as the identical prompts successfully
+produced complete Q-matrices on subsequent attempts. Thus, while earlier exper-
+iments highlighted challenges with completeness, our revised approach effectively
+ensured that the AI agents generated Q-matrices fully meeting the structural require-
+ments of cognitive diagnostic modeling.
+Voting Classiﬁcation
+To enhance the robustness and consistency of the AI-generated Q-matrices, we
+introduced a voting classiﬁcation procedure. Each prompt method (one-by-one and
+all-at-once) was run multiple times (10 iterations in this study), and the ﬁnal Q-
+matrix estimate was obtained by averaging the predictions across runs and applying a
+majority-vote rule (over 50%) for each cell. Given the time cost and lower efﬁciency
+of the one-by-one approach, voting classiﬁcation was applied primarily to the all-at-
+once method. This procedure led to more stable and higher-quality Q-matrix outputs,
+improved handling of ambiguity, and reduced bias in the AI agents’ predictions in a
+single output.
+To evaluate the effectiveness of these methods, we compared the Q-matrices gen-
+erated by the AI agents with those produced by human experts, examining both
+model ﬁtting statistics under different cognitive diagnostic models and the degree
+of similarity between them.
+5 of 24
+ 17453984, 2026, 1, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/jedm.70028 by Beykent University, Wiley Online Library on [24/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+Kang Xue and James J. Appleton
+Experimental Results
+The Trends in Mathematics and Science Study (TIMSS) is an international as-
+sessment of the trends in mathematics and science achievements, which is run by
+the International Association for the Evaluation of Educational Achievement. Many
+studies have applied the CDMs to the TIMSS datasets (Foy et al., 2013; Lee et al.,
+2011; Martin, 2008). In the experiment, we chose the TIMSS 07 and 11 data. The
+dataset comprised 25 items for TIMSS 07 and 26 items for TIMSS 11, each item
+contained both the item stem and response options. The entire item content was
+sourced from TIMSS technical reports (Foy et al., 2013; Williams et al., 2007). The
+Q-matrices were speciﬁed in the previous research (Evran, 2019; Lee et al., 2011).
+The response data was from the “CDM” R package (v8.2-6, Robitzsch et al., 2020),
+which included a total of 698 students for TIMSS 07 and 1,010 students for TIMSS
+11. In TIMSS 07 (Lee et al., 2011), the matrix was utilized as the true value, while
+for TIMSS 11, we considered 4 Q-matrices (Evran, 2019) as the true candidates. The
+15 attributes measured by items are listed in Table 1.
+In addition to TIMSS 07 and 11 data, we also introduce the Programme for In-
+ternational Student Assessment (PISA), a large-scale international assessment of 15-
+year-old students’ competencies in reading, mathematics, and science, coordinated
+by the Organisation for Economic Co-operation and Development (OECD). In this
+study, we focused on the PISA 2012 mathematics dataset. Following prior research,
+we used a set of 12 publicly released mathematics items administered across re-
+gions including Shanghai, Hong Kong, Macau, and Taiwan. Each item included a
+full problem statement, response options, and in some cases accompanying ﬁgures.
+The Q-matrix for these items was generated through expert calibration as described
+in Zhang et al. (2025), which deﬁned six key mathematical competencies as the at-
+tributes to be measured. The six attributes are listed in Table 2. The expert-based
+Q-matrix was developed through a calibration process by a panel including middle
+school teachers, mathematics teaching and research staff, mathematics education ex-
+perts and doctoral students. The attribute with more than 50% proportion in experts’
+calibration was determined as selected and was calibrated. For validation, we em-
+ployed the student response data comprising 6,561 students across the four regions
+(Shanghai: 1,763; Hong Kong: 1,376; Macau: 1,602; Taiwan: 1,820).
+The expert-generated Q-matrices in both TIMSS and PISA served as the bench-
+mark standard against which we compared the Q-matrices predicted by the AI agents.
+In our revised method, we employed state-of-the-art chatbots—OpenAI’s Chat-
+GPT, Anthropic’s Claude, and Google DeepMind’s Gemini—rather than relying
+solely on Python API calls. This change reﬂects the rapid development and acces-
+sibility of these applications in recent months. A key advantage of using chatbots
+is their user-friendly interface: ﬁles containing assessment items can be attached di-
+rectly, allowing educators and researchers to interact with the models without requir-
+ing knowledge of Python or other programming languages. This makes the approach
+more practical for adoption in educational contexts. In addition, modern chatbots
+provide several technical advantages. They support multimodal inputs, enabling the
+integration of text, images, and even audio in the assessment process; they offer im-
+mediate interaction and iterative reﬁnement of outputs; and they beneﬁt from contin-
+6 of 24
+ 17453984, 2026, 1, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/jedm.70028 by Beykent University, Wiley Online Library on [24/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+Table 1
+The 15 Attributes Measured by the Group of Items in TIMSS 07 and 11
+Domain
+Attribute
+Description
+Number
+1
+Representing, comparing, and ordering whole numbers as well
+as demonstrating knowledge of place value
+2
+Recognize multiples, computing with whole numbers using the
+four operations, and estimating computations
+3
+Solve problems, including those set in real life contexts(for
+example, measurement and money problems)
+4
+Solve problems involving proportions
+5
+Recognize, represent, and understand fractions and decimals as
+parts of a whole and their equivalents
+6
+Solve problems involving simple fractions and decimals
+including their addition and subtraction
+7
+Find the missing number or operation and model simple
+situations in number sentence or expressions
+8
+Describe relationships in patterns and their extensions; generate
+pairs of whole numbers by a given rule and identify a rule for
+every relationship given pairs of whole numbers
+Geometric shape
+and
+measurement
+9
+Measure, estimate, and understand properties of lines and
+angles and be able to draw them
+10
+Classify, compare, and recognize geometric ﬁgure sand shapes
+and their relationships and elementary properties
+11
+Calculate and estimate perimeters, area, and volume
+12
+Locate points in a coordinate to recognize and draw ﬁgures and
+their movement
+Data and display
+13
+Read data from tables, pictographs, bar graphs, and pie charts
+14
+Comparing and understanding how to use information from
+data
+15
+Understanding different representations and organizing data
+using tables, pictographs, and bar graphs
+uous optimization for efﬁciency and accuracy. Together, these features make chatbots
+powerful and accessible tools for generating Q-matrices in cognitive diagnostic mod-
+eling. Table 3 summarizes the distinctions between three AI agents that were central
+to this study.
+We began by comparing the statistics of the number of items per attribute and the
+number of attributes per item, as measured by the Q-matrices generated by AI agents
+and by human experts. The results are summarized in Table 4. We observed a clear
+distinction between the performance of AI agents on larger versus smaller assess-
+ment datasets. In the TIMSS datasets, which included 12 attributes and 25 (TIMSS
+07) or 26 items (TIMSS 11), the Q-matrices generated by AI agents were consis-
+tently sparser than those produced by human experts. For example, in TIMSS 07
+the human-generated Q-matrix averaged 4.67 items per attribute and 2.80 attributes
+per item, while ChatGPT-4o (one-by-one) produced only 2.53 items per attribute
+7 of 24
+ 17453984, 2026, 1, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/jedm.70028 by Beykent University, Wiley Online Library on [24/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+Table 2
+The Six Attributes Measured by the PISA 2012 Mathematics Items
+Full Name of
+Attribute
+Attribute ID
+Description
+Mathematical
+abstraction
+MA
+The thinking process of extracting common and
+essential attributes or features of a similar
+mathematical object and discarding other
+non-essential attributes or features.
+Logical reasoning
+LR
+The process of arriving at speciﬁc statements or
+individual conclusions from general premises
+through derivation or deduction.
+Mathematical
+modeling
+MM
+Establishing a mathematical model based on the actual
+problem, solving the problem through the model,
+and interpreting the results in relation to the original
+problem.
+Intuitive
+imagination
+II
+The process of perceiving the form and change of
+things by means of geometric intuition and spatial
+imagination, and understanding and solving
+mathematical problems through graphical reasoning.
+Mathematical
+operation
+MO
+The accomplishment of solving mathematical problems
+according to operational rules on the basis of clear
+operation object.
+Data analysis
+DA
+Acquiring data, using appropriate methods to organize,
+characterize, analyze, and infer from the data, and
+ultimately achieving understanding of the research
+object.
+Table 3
+Comparison between ChatGPT-4o, Claude-sonnet-4, and Gemini-2.5-pro
+AI Agent
+Context Window Input Token
+Limits
+Context Window Output Token
+Limits
+ChatGPT-4o
+128,000 tokens
+16,384 tokens
+Claude-sonnet-4
+200,000 tokens
+128,000 tokens
+Gemini-2.5-pro
+1,048,576 tokens
+65,536 tokens
+and 1.52 attributes per item. A similar trend appeared in TIMSS 11, where the four
+human baselines ranged from 3.47 to 4.93 items per attribute and 2.00 to 2.85 at-
+tributes per item, compared to ChatGPT-4o (one-by-one) with just 2.40 items per
+attribute and 1.38 attributes per item. In contrast, for the smaller PISA 2012 dataset,
+which contained 6 attributes and 12 items, the density of AI-generated Q-matrices
+closely matched the human baseline. The human Q-matrix averaged 4.33 items per
+attribute and 2.17 attributes per item, while Gemini-2.5-pro (all-at-once) produced
+4.50 items per attribute and 2.25 attributes per item, and ChatGPT-4o (one-by-one)
+yielded 4.17 items per attribute and 2.08 attributes per item. These ﬁndings indicate
+8 of 24
+ 17453984, 2026, 1, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/jedm.70028 by Beykent University, Wiley Online Library on [24/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+Table 4
+The Q-Matrix Statistics Table of TIMSS 07, TIMSS 11, and PISA 2012
+Avg # Items
+Avg # Attributes
+Method
+per Attribute (SD)
+per Item (SD)
+TIMSS 07
+Human
+4.667 (3.976)
+2.80 (1.225)
+Gemini-2.5-pro all-at-once
+2.600 (1.454)
+1.56 (0.583)
+ChatGPT-4o all-at-once
+2.800 (1.781)
+1.68 (0.690)
+Claude-sonnet-4 all-at-once
+2.333 (1.543)
+1.40 (0.577)
+Gemini-2.5-pro one-by-one
+2.133 (1.060)
+1.28 (0.458)
+ChatGPT-4o one-by-one
+2.533 (1.685)
+1.52 (0.714)
+Claude-sonnet-4 one-by-one
+2.600 (1.844)
+1.56 (0.712)
+TIMSS 11
+Human 1
+4.533 (2.669)
+2.62 (1.023)
+Human 2
+3.467 (1.922)
+2.00 (0.748)
+Human 3
+4.933 (2.631)
+2.85 (0.925)
+Human 4
+3.867 (1.922)
+2.23 (0.815)
+Gemini-2.5-pro all-at-once
+2.200 (1.146)
+1.27 (0.534)
+ChatGPT-4o all-at-once
+2.733 (1.335)
+1.58 (0.809)
+Claude-sonnet-4 all-at-once
+2.067 (1.223)
+1.19 (0.402)
+Gemini-2.5-pro one-by-one
+2.333 (1.291)
+1.35 (0.562)
+ChatGPT-4o one-by-one
+2.400 (1.352)
+1.38 (0.637)
+Claude-sonnet-4 one-by-one
+2.133 (1.302)
+1.23 (0.430)
+PISA 2012
+Human
+4.333 (2.422)
+2.17 (0.937)
+Gemini-2.5-pro all-at-once
+4.500 (2.429)
+2.25 (0.866)
+ChatGPT-4o all-at-once
+4.500 (1.871)
+2.25 (1.138)
+Claude-sonnet-4 all-at-once
+4.333 (2.338)
+2.17 (0.718)
+Gemini-2.5-pro one-by-one
+4.333 (3.077)
+2.17 (0.835)
+ChatGPT-4o one-by-one
+4.167 (1.722)
+2.08 (1.165)
+Claude-sonnet-4 one-by-one
+5.333 (2.251)
+2.67 (0.651)
+that as the number of attributes and items increases, AI agents tend to under-assign
+item-attribute relationships, generating sparser Q-matrices than humans. However,
+in smaller assessments, AI predictions achieve a density much closer to human-
+generated results.
+To evaluate the performance of the AQMGs, we designed three types of
+experiments:
+1. Chatbot-human matching accuracy: by viewing the Q-matrix generation as
+unsupervised learning with true labels, we compared the estimated Q-matrix
+with the ones created by human experts. The goal of this experiment was to
+evaluate the closeness of the matrices generated by AI and humans.
+2. Exploratory analysis: by viewing the Q-matrix generation as exploratory
+analysis, we compared the estimated Q-matrix model ﬁtting performance
+(e.g., AIC, BIC) with ones created by human experts by applying them in ﬁve
+9 of 24
+ 17453984, 2026, 1, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/jedm.70028 by Beykent University, Wiley Online Library on [24/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+Kang Xue and James J. Appleton
+different diagnostic classiﬁcation models (i.e., DINA, DINO, RRUM, GDINA,
+and LLM). The goal of this experiment was to evaluate the model ﬁtting using
+the AI generated Q-matrices.
+3. Grouping discrepancy analysis: Since the primary objective of CDMs is to
+group students based on their latent attributes, we performed a comparison of
+grouping discrepancies between human-to-human and human-to-AI using the
+TIMSS 2011 data under four different CDMs. The goal of this analysis is to
+assess the degree of alignment and consistency in student grouping between
+the two Q-matrix sources (human and AI).
+Chatbot-Human Matching Accuracy
+In this experiment, we approached the AQMGs as an unsupervised clustering
+task in machine learning. Given that the Q-matrix was sparse, the classiﬁcation task
+was inherently imbalanced, characterized by a higher prevalence of 0s compared
+to 1s in the Q-matrix. AUC is one good metric to evaluate the imbalanced cluster-
+ing method, but in the research, the chatbot cannot provide the predicted probabil-
+ity. Instead, we introduced precision, F1-score, and geometric mean (G-mean) to
+evaluate the classiﬁcation accuracy. In diagnostic classiﬁcation, because high false-
+positive rates result in the oversight of instances where true nonmastery exists, poten-
+tially leading to the administration of unnecessary treatments, precision (true posi-
+tive/(true positive + false positive)) is a good metric to indicate the false-positive rate
+(i.e., a high precision indicates low false positive). The F1 score is a metric com-
+monly used in binary classiﬁcation tasks, combining both precision and recall into
+a single value. It is particularly useful in situations where there is an imbalance be-
+tween the number of instances in each class. The G-mean is the root of the product
+of class-wise sensitivity. This measure tries to maximize the accuracy on each of the
+classes while keeping these accuracies balanced. For binary classiﬁcation, G-mean
+is the squared root of the product of the sensitivity and speciﬁcity. In addition to
+Precision, F1-score, and G-mean, we also show the chatbot-human matching rate to
+show the intuitive similarity between the Q-matrix generated by chatbot and human.
+Noting that, in TIMSS 11 data, since we have four candidate true Q-matrices, we
+use average chatbot-human matching rate, precision, average F1-score, and average
+G-mean to measure the performance of AQMGs.
+As shown in Table 5, we can observe that:
+1. Across the three datasets, the results in Table 5 show that ChatGPT-4o, Claude-
+sonnet-4, and Gemini-2.5-pro all achieved strong chatbot-human matching
+performance, with notable differences depending on dataset size and prompt
+method. In TIMSS 2007, all three models reached high matching rates (above
+0.85) and performed comparably across precision, F1-score, and G-mean, with
+Gemini-2.5-pro (all-at-once) demonstrating the best overall balance. In TIMSS
+2011, where four human expert Q-matrices were available as benchmarks,
+ChatGPT-4o (one-by-one) slightly outperformed the others, achieving the high-
+est matching rate (0.905) along with competitive F1-score and G-mean. In the
+smaller PISA 2012 dataset, all three chatbots performed well, with Claude-
+sonnet-4 (all-at-once) attaining the highest precision (0.846) and overall bal-
+10 of 24
+ 17453984, 2026, 1, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/jedm.70028 by Beykent University, Wiley Online Library on [24/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+Table 5
+Chatbot-Human Matching Accuracy for TIMSS 07, TIMSS 11, and PISA 2012
+Dataset
+Method
+Matching Rate
+Precision
+F1-Score
+G-Mean
+TIMSS 07
+Claude-sonnet-4 all-at-once
+0.875
+0.829
+0.552
+0.637
+Gemini-2.5-pro all-at-once
+0.891
+0.872
+0.624
+0.691
+ChatGPT-4o all-at-once
+0.856
+0.690
+0.518
+0.630
+Claude-sonnet-4 one-by-one
+0.885
+0.846
+0.606
+0.680
+Gemini-2.5-pro one-by-one
+0.877
+0.875
+0.549
+0.628
+ChatGPT-4o one-by-one
+0.867
+0.763
+0.537
+0.634
+TIMSS 11
+Claude-sonnet-4 all-at-once
+0.897 (0.013)
+0.871 (0.000)
+0.579 (0.031)
+0.655 (0.026)
+Gemini-2.5-pro all-at-once
+0.892 (0.013)
+0.818 (0.000)
+0.567 (0.029)
+0.653 (0.026)
+ChatGPT-4o all-at-once
+0.897 (0.011)
+0.780 (0.010)
+0.619 (0.022)
+0.707 (0.024)
+Claude-sonnet-4 one-by-one
+0.799 (0.010)
+0.301 (0.012)
+0.231 (0.004)
+0.415 (0.009)
+Gemini-2.5-pro one-by-one
+0.895 (0.011)
+0.814 (0.008)
+0.585 (0.024)
+0.670 (0.023)
+ChatGPT-4o one-by-one
+0.905 (0.011)
+0.861 (0.011)
+0.630 (0.024)
+0.700 (0.023)
+PISA 2012
+Claude-sonnet-4 all-at-once
+0.889
+0.846
+0.846
+0.879
+Gemini-2.5-pro all-at-once
+0.875
+0.815
+0.830
+0.868
+ChatGPT-4o all-at-once
+0.819
+0.741
+0.755
+0.808
+Claude-sonnet-4 one-by-one
+0.806
+0.688
+0.759
+0.814
+Gemini-2.5-pro one-by-one
+0.833
+0.769
+0.769
+0.818
+ChatGPT-4o one-by-one
+0.819
+0.760
+0.745
+0.797
+Note: For TIMSS 11, values are reported as mean (SE) since four human expert Q-matrices were available as benchmarks.
+11 of 24
+ 17453984, 2026, 1, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/jedm.70028 by Beykent University, Wiley Online Library on [24/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+Table 6
+Proportion of Q-Matrix Cells with Voting Results in the Range [0.4, 0.6] across Datasets
+under the Voting Classiﬁcation
+Model and Prompt
+TIMSS 07
+TIMSS 11
+PISA 2012
+ChatGPT-4o (all-at-once)
+1.1%
+4.1%
+12.5%
+ChatGPT-4o (one-by-one)
+2.7%
+2.6%
+6.9%
+Claude Sonnet 4 (all-at-once)
+0.3%
+1.3%
+4.2%
+Claude Sonnet 4 (one-by-one)
+4.0%
+1.0%
+22.2%
+Gemini 2.5 Pro (all-at-once)
+4.3%
+0.5%
+8.3%
+Gemini 2.5 Pro (one-by-one)
+1.6%
+1.3%
+11.1%
+ance, while Gemini-2.5-pro maintained consistently strong accuracy across
+both prompt methods. Taken together, these ﬁndings suggest that the latest mul-
+timodal LLMs are capable of producing Q-matrices that align with human ex-
+perts, with ChatGPT-4o under the all-at-once strategy performing the best on
+larger and more complex item sets (i.e., highest F1-score on TIMSS 11), and
+Claude and Gemini (but really all models) closely aligned in smaller assess-
+ments.
+2. Secondly, the results show that there is no substantial difference between
+the all-at-once and one-by-one prompt methods across different AI agents
+and datasets, with both approaches generally achieving comparable levels of
+chatbot-human matching accuracy. For ChatGPT-4o, the performance of the
+two methods was nearly identical across TIMSS 07, TIMSS 11, and PISA
+2012, suggesting that its strong instruction-following and contextual reasoning
+capabilities enable consistent quality whether items are processed collectively
+or individually. By contrast, Gemini-2.5-pro performed slightly better with the
+all-at-once approach, likely reﬂecting its architecture, which is optimized for
+efﬁciency and batch reasoning: processing all items together enables it to ex-
+ploit global context more effectively, whereas item-by-item predictions may
+underutilize its strengths, particularly given its large input token capacity. A
+notable exception was observed with Claude-sonnet-4 on TIMSS 11, where the
+one-by-one method underperformed markedly compared to other approaches.
+This may reﬂect Claude’s sensitivity to prompt design in large and complex
+assessments: when items are handled individually, it may struggle to maintain
+consistency across predictions, whereas the all-at-once method leverages its
+strength in managing long context windows and sustaining coherence across
+the full Q-matrix. Taken together, these ﬁndings suggest that while both meth-
+ods are generally reliable, the optimal choice can depend on model-speciﬁc
+architectures and dataset complexity.
+We also examined the consistency of AQMG outputs in Table 6 by introducing
+the cell-level standard deviation (SD) as an indicator of agreement among Q-matrix
+candidates in the voting classiﬁcation. A lower SD reﬂects stronger consensus among
+AQMG predictions. The table reports the proportion of voting results falling between
+12 of 24
+ 17453984, 2026, 1, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/jedm.70028 by Beykent University, Wiley Online Library on [24/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+Kang Xue and James J. Appleton
+0.4 and 0.6 across three datasets. Notably, the PISA 2012 Q-matrix contains a much
+higher density of “1” entries than the TIMSS 07 and TIMSS 11 matrices, which
+are considerably sparser. This greater density in PISA produces higher variability
+across AI agents and prompt methods, whereas the TIMSS datasets yield more stable
+outputs when the Q-matrix is sparse (i.e., dominated by 0s). These ﬁndings suggest
+that AI agents achieve stronger agreement on true negatives (no relationship between
+item and attribute) than on positive links.
+Exploratory Analysis Performance
+We used the exploratory analysis performance to compare different Q-matrices
+and validate the most appropriate Q-matrix for the TIMSS 07 and TIMSS 11 data
+based on cognitive diagnostic model ﬁt results. In this experiment, we chose ﬁve
+diagnostic classiﬁcation models (DCMs; i.e., DINA, DINO, RRUM, GDINA, LLM).
+The model ﬁt results for all models were evaluated by AIC, BIC, loglikelihood and
+Standardized Root Mean Square Residual (SRMSR) statistics. All models were ﬁtted
+using the “GDINA” R package (Ma and de la Torre, 2020b). The results are shown
+in Tables 7-9.
+The model ﬁtting results for TIMSS 07 and TIMSS 11 show nuanced differences
+between human- and AI-generated Q-matrices (Tables 7 and 8). In most cases, the
+AI-generated Q-matrices achieved better model ﬁtting statistics than their human-
+generated counterparts, with improvements observed in AIC, BIC, log-likelihood,
+and SRMSR values across several diagnostic classiﬁcation models. One notable ex-
+ception arises with ChatGPT-4o: due to its smaller token size limit, the generated
+Q-matrices are generally sparser than those produced by humans. This sparsity oc-
+casionally leads to higher AIC and BIC values and lower log-likelihood estimates
+than the human-generated Q-matrices, suggesting that while structurally valid, the
+AI-produced matrices may capture less information about item-attribute relation-
+ships in larger assessments. These results highlight how input constraints can shape
+the efﬁciency of model ﬁt indices, even when the outputs are otherwise coherent.
+Despite these differences, the SRMSR results consistently indicate strong model-
+data alignment across all AI agents. Both human- and AI-generated Q-matrices
+achieved SRMSR values within acceptable thresholds, conﬁrming that residual-
+based ﬁt remained adequate. This demonstrates that, although AIC and BIC values
+reﬂect efﬁciency limitations in some AI-generated matrices, the underlying ability
+of these Q-matrices to reproduce observed student response patterns is not compro-
+mised. In other words, the AI-generated Q-matrices may not always be the most
+parsimonious representations, but they nonetheless provide satisfactory data ﬁtting
+for cognitive diagnostic modeling.
+The model ﬁtting results for PISA 2012 (shown in Table 9) present a different pat-
+tern compared to TIMSS 07 and TIMSS 11. Unlike the TIMSS datasets, where AI-
+generated Q-matrices were typically sparser than those of human experts, the density
+of Q-matrices produced by the AI agents in PISA 2012 was much more comparable
+to human-generated ones. As a result, the ﬁtting statistics across AIC, BIC, and log-
+likelihood showed less divergence between human and AI results. In many cases,
+Gemini-2.5-pro and Claude-sonnet-4 achieved AIC and BIC values on par with or
+13 of 24
+ 17453984, 2026, 1, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/jedm.70028 by Beykent University, Wiley Online Library on [24/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+Table 7
+Model Fitting Comparison in TIMSS 07
+DCMs
+Method
+AIC
+BIC
+Log
+Likelihood
+SRMSR
+DINA
+Human
+78289.28
+227548.19
+−6327.64
+0.0739
+Gemini-2.5-pro all-at-once
+77711.83
+226970.74
+−5903.91
+0.0662
+ChatGPT-4o all-at-once
+78392.48
+227651.39
+−6364.24
+0.0783
+Claude-sonnet-4 all-at-once
+77989.78
+227248.69
+−6152.89
+0.0737
+Gemini-2.5-pro one-by-one
+77634.65
+226893.56
+−5860.32
+0.0707
+ChatGPT-4o one-by-one
+78413.44
+227672.35
+−6375.72
+0.0772
+Claude-sonnet-4 one-by-one
+77999.28
+227258.19
+−6157.64
+0.0762
+DINO
+Human
+78371.53
+227630.43
+−6368.76
+0.0853
+Gemini-2.5-pro all-at-once
+77722.83
+226981.74
+−5910.42
+0.0674
+ChatGPT-4o all-at-once
+78389.44
+227648.34
+−6362.72
+0.0807
+Claude-sonnet-4 all-at-once
+77988.36
+227247.27
+−6152.18
+0.0729
+Gemini-2.5-pro one-by-one
+77628.88
+226887.79
+−5857.44
+0.0728
+ChatGPT-4o one-by-one
+78421.62
+227680.52
+−6379.81
+0.0779
+Claude-sonnet-4 one-by-one
+77989.36
+227248.27
+−6152.68
+0.0760
+RRUM
+Human
+77371.27
+226834.85
+−5823.63
+0.0601
+Gemini-2.5-pro all-at-once
+76749.12
+226174.48
+−5512.56
+0.0615
+ChatGPT-4o all-at-once
+77491.78
+227054.49
+−5880.89
+0.0744
+Claude-sonnet-4 all-at-once
+77055.41
+226480.77
+−5665.71
+0.0627
+Gemini-2.5-pro one-by-one
+76676.82
+226102.18
+−5476.41
+0.0643
+ChatGPT-4o one-by-one
+77522.62
+227085.33
+−5896.31
+0.0750
+Claude-sonnet-4 one-by-one
+77078.74
+226504.10
+−5677.37
+0.0659
+GDINA
+Human
+78017.33
+228240.46
+−5979.67
+0.0552
+Gemini-2.5-pro all-at-once
+77054.64
+226449.99
+−5680.32
+0.0708
+ChatGPT-4o all-at-once
+77999.11
+227439.94
+−6142.55
+0.0717
+Claude-sonnet-4 all-at-once
+77714.83
+227073.80
+−6018.42
+0.0730
+Gemini-2.5-pro one-by-one
+77719.76
+227042.34
+−6028.88
+0.0783
+ChatGPT-4o one-by-one
+78013.29
+227417.74
+−6157.65
+0.0853
+Claude-sonnet-4 one-by-one
+77753.32
+227175.96
+−6023.66
+0.0804
+LLM
+Human
+77250.39
+226782.64
+−5721.19
+0.0620
+Gemini-2.5-pro all-at-once
+76892.54
+226310.17
+−5562.27
+0.0593
+ChatGPT-4o all-at-once
+77215.46
+226745.82
+−5702.73
+0.0684
+Claude-sonnet-4 all-at-once
+77003.82
+226421.39
+−5632.91
+0.0605
+Gemini-2.5-pro one-by-one
+76751.28
+226198.74
+−5502.64
+0.0611
+ChatGPT-4o one-by-one
+77308.17
+226839.24
+−5745.08
+0.0712
+Claude-sonnet-4 one-by-one
+77112.55
+226530.67
+−5678.28
+0.0649
+Note: Results are reported for human expert Q-matrix (baseline) and for LLM-generated Q-matrices using
+all-at-once and one-by-one prompts.
+even slightly better than the human baseline, while ChatGPT-4o’s results remained
+competitive despite its smaller token input capacity. Importantly, the SRMSR val-
+ues for all AI-generated Q-matrices were consistently low and well within accept-
+able thresholds, conﬁrming that residual-based ﬁt to student response data remained
+strong. These ﬁndings suggest that when the assessment involves a smaller number
+14 of 24
+ 17453984, 2026, 1, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/jedm.70028 by Beykent University, Wiley Online Library on [24/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+Table 8
+Model Fitting Comparison in TIMSS 11
+DCMs
+Method
+AIC
+BIC
+Log
+Likelihood
+SRMSR
+DINA
+Human 1
+74665.55
+199743.38
+−4513.77
+0.0793
+Human 2
+74480.55
+199558.38
+−4421.27
+0.0922
+Human 3
+74698.07
+199775.91
+−4530.04
+0.0719
+Human 4
+74568.17
+199646.01
+−4465.09
+0.0794
+Gemini-2.5-pro all-at-once
+74380.11
+199441.77
+−4391.05
+0.0761
+ChatGPT-4o all-at-once
+74497.97
+199575.81
+−4429.99
+0.0804
+Claude-sonnet-4 all-at-once
+74412.28
+199500.22
+−4400.14
+0.0816
+Gemini-2.5-pro one-by-one
+74399.66
+199471.33
+−4394.83
+0.0799
+ChatGPT-4o one-by-one
+74538.28
+199521.04
+−4442.14
+0.0841
+Claude-sonnet-4 one-by-one
+74468.22
+199498.29
+−4412.11
+0.0884
+DINO
+Human 1
+74753.28
+199831.12
+−4557.64
+0.0688
+Human 2
+74605.47
+199683.30
+−4483.73
+0.0806
+Human 3
+74788.24
+199866.08
+−4575.12
+0.0669
+Human 4
+74694.87
+199772.71
+−4528.44
+0.0804
+Gemini-2.5-pro all-at-once
+74401.66
+199471.83
+−4396.83
+0.0729
+ChatGPT-4o all-at-once
+74718.97
+199796.81
+−4540.49
+0.0740
+Claude-sonnet-4 all-at-once
+74523.42
+199632.11
+−4450.71
+0.0717
+Gemini-2.5-pro one-by-one
+74489.22
+199583.16
+−4433.61
+0.0772
+ChatGPT-4o one-by-one
+74650.37
+199726.29
+−4511.18
+0.0785
+Claude-sonnet-4 one-by-one
+74580.14
+199642.77
+−4485.07
+0.0828
+RRUM
+Human 1
+73623.78
+198861.69
+−3950.89
+0.0680
+Human 2
+74082.63
+199259.56
+−4196.32
+0.0811
+Human 3
+74003.54
+199264.31
+−4134.77
+0.0757
+Human 4
+73629.67
+198829.47
+−3963.84
+0.0690
+Gemini-2.5-pro all-at-once
+73398.21
+198492.67
+−3860.11
+0.0666
+ChatGPT-4o all-at-once
+73278.18
+198455.11
+−3794.09
+0.0808
+Claude-sonnet-4 all-at-once
+73412.43
+198515.36
+−3870.22
+0.0731
+Gemini-2.5-pro one-by-one
+73392.77
+198476.31
+−3857.39
+0.0694
+ChatGPT-4o one-by-one
+73458.56
+198597.42
+−3883.28
+0.0775
+Claude-sonnet-4 one-by-one
+73407.18
+198511.06
+−3868.59
+0.0762
+GDINA
+Human 1
+84059.99
+246191.83
+−9060.99
+0.0521
+Human 2
+84057.32
+245776.07
+−9143.66
+0.0620
+Human 3
+84047.26
+246306.96
+−9028.63
+0.0507
+Human 4
+83952.72
+245799.33
+−9065.36
+0.0497
+Gemini-2.5-pro all-at-once
+83628.93
+245101.79
+−8979.46
+0.0721
+ChatGPT-4o all-at-once
+83999.77
+246265.43
+−9042.89
+0.0665
+Claude-sonnet-4 all-at-once
+83789.51
+245632.17
+−8994.75
+0.0602
+Gemini-2.5-pro one-by-one
+83712.65
+245433.41
+−8956.33
+0.0653
+ChatGPT-4o one-by-one
+83918.38
+246021.47
+−9021.19
+0.0684
+Claude-sonnet-4 one-by-one
+83801.24
+245677.88
+−8985.62
+0.0717
+LLM
+Human 1
+73740.56
+198890.61
+−4012.28
+0.0612
+Human 2
+73758.47
+198926.45
+−4022.24
+0.0673
+Human 3
+73729.91
+198901.72
+−4007.95
+0.0629
+(Continued)
+15 of 24
+ 17453984, 2026, 1, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/jedm.70028 by Beykent University, Wiley Online Library on [24/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+Table 8
+(Continued)
+DCMs
+Method
+AIC
+BIC
+Log
+Likelihood
+SRMSR
+Human 4
+73746.12
+198918.83
+−4016.06
+0.0641
+Gemini-2.5-pro all-at-once
+73498.67
+198549.26
+−3881.34
+0.0595
+ChatGPT-4o all-at-once
+73619.28
+198778.39
+−3946.64
+0.0667
+Claude-sonnet-4 all-at-once
+73547.33
+198629.42
+−3903.66
+0.0607
+Gemini-2.5-pro one-by-one
+73511.56
+198563.29
+−3888.78
+0.0612
+ChatGPT-4o one-by-one
+73607.43
+198765.38
+−3940.72
+0.0702
+Claude-sonnet-4 one-by-one
+73560.78
+198644.29
+−3910.39
+0.0655
+Note: Results are reported for four human expert Q-matrices (Human 1-4) and for LLM-generated Q-
+matrices using all-at-once and one-by-one prompts.
+of items and attributes, as in PISA 2012, AI-generated Q-matrices can match human
+experts not only in density but also in statistical model ﬁtting quality, strengthening
+their utility for practical applications in educational measurement.
+Grouping Discrepancy Analysis
+To conduct this comparison in the TIMSS 11 dataset, which includes 4 differ-
+ent human experts generated Q-matrices, we selected one of the human-generated
+Q-matrices as a reference point. We then compared the classiﬁcation results of the
+other three human-generated Q-matrices to this reference, as well as the classiﬁcation
+results of the chatbot-generated Q-matrices, all within the same Diagnostic Classi-
+ﬁcation Models (DCMs). For instance, under the DINA model, we ﬁrst chose one
+human-generated Q-matrix as the reference classiﬁcation result. Next, we calculated
+the classiﬁcation matching rates of the remaining human-generated Q-matrices (Hu-
+man 2-4) and all AI-generated Q-matrices relative to this reference. This process was
+repeated four times under the DINA model, with each of the four human-generated
+Q-matrices (Human 1-4) being used as the reference in turn. This approach allowed
+us to evaluate the classiﬁcation discrepancies both among the human-generated Q-
+matrices and between the human-generated and AI-generated Q-matrices.
+Figure 2 illustrates the classiﬁcation discrepancy of Q-matrices across ﬁve di-
+agnostic classiﬁcation models (DINA, DINO, GDINA, LLM, and RRUM). The
+horizontal axis shows the discrepancy values, while the vertical axis lists the Q-
+matrix sources, including four human experts (Human 1-4) and three AI agents
+(Gemini-2.5-pro, Claude-sonnet-4, and ChatGPT-4o) under both all-at-once and
+one-by-one prompting strategies.
+A clear pattern emerges: the discrepancy values among human experts (Human
+1-4) are consistently lower than those between humans and AI-generated Q-matrices,
+indicating stronger agreement within human experts compared to human-AI align-
+ment. Nevertheless, the discrepancy values for AI agents remain within a compa-
+rable range, suggesting that the generated Q-matrices still capture attribute-item
+relationships at a reasonable level of ﬁdelity. Differences between the all-at-once
+16 of 24
+ 17453984, 2026, 1, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/jedm.70028 by Beykent University, Wiley Online Library on [24/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+Table 9
+Model Fitting Comparison in PISA 2012
+DCMs
+Method
+AIC
+BIC
+Log
+Likelihood
+SRMSR
+DINA
+Human
+74812.22
+75612.55
+−37281.11
+0.0213
+Gemini-2.5-pro all-at-once
+74645.77
+75462.18
+−37180.89
+0.0154
+ChatGPT-4o all-at-once
+75056.33
+75934.12
+−37378.17
+0.0275
+Claude-sonnet-4 all-at-once
+74622.99
+75480.33
+−37189.49
+0.0129
+Gemini-2.5-pro one-by-one
+74680.44
+75512.34
+−37202.22
+0.0158
+ChatGPT-4o one-by-one
+75128.77
+76019.62
+−37422.39
+0.0248
+Claude-sonnet-4 one-by-one
+74688.91
+75520.88
+−37212.45
+0.0134
+DINO
+Human
+74805.99
+75607.72
+−37278.00
+0.0210
+Gemini-2.5-pro all-at-once
+74640.32
+75458.19
+−37177.16
+0.0150
+ChatGPT-4o all-at-once
+75049.87
+75929.28
+−37374.93
+0.0278
+Claude-sonnet-4 all-at-once
+74619.55
+75477.22
+−37188.77
+0.0126
+Gemini-2.5-pro one-by-one
+74674.21
+75508.13
+−37199.11
+0.0155
+ChatGPT-4o one-by-one
+75120.22
+76012.07
+−37418.11
+0.0246
+Claude-sonnet-4 one-by-one
+74680.00
+75516.33
+−37210.00
+0.0132
+RRUM
+Human
+74799.44
+75605.31
+−37275.72
+0.0205
+Gemini-2.5-pro all-at-once
+74630.28
+75454.37
+−37172.14
+0.0147
+ChatGPT-4o all-at-once
+75041.55
+75925.74
+−37370.78
+0.0272
+Claude-sonnet-4 all-at-once
+74615.77
+75475.44
+−37187.89
+0.0123
+Gemini-2.5-pro one-by-one
+74666.11
+75504.78
+−37196.06
+0.0153
+ChatGPT-4o one-by-one
+75110.33
+76006.11
+−37415.16
+0.0243
+Claude-sonnet-4 one-by-one
+74675.44
+75514.11
+−37208.22
+0.0130
+GDINA
+Human
+74762.34
+75624.53
+−37254.17
+0.0208
+Gemini-2.5-pro all-at-once
+74553.14
+75442.49
+−37145.57
+0.0143
+ChatGPT-4o all-at-once
+75001.37
+75945.03
+−37361.69
+0.0288
+Claude-sonnet-4 all-at-once
+74511.00
+75346.03
+−37132.50
+0.0120
+Gemini-2.5-pro one-by-one
+74573.55
+75435.74
+−37159.78
+0.0143
+ChatGPT-4o one-by-one
+75123.12
+76011.58
+−37420.56
+0.0251
+Claude-sonnet-4 one-by-one
+74622.88
+75481.22
+−37189.44
+0.0137
+LLM
+Human
+74792.66
+75602.19
+−37272.33
+0.0201
+Gemini-2.5-pro all-at-once
+74622.44
+75451.28
+−37168.22
+0.0144
+ChatGPT-4o all-at-once
+75034.11
+75922.17
+−37367.06
+0.0270
+Claude-sonnet-4 all-at-once
+74611.22
+75473.66
+−37186.61
+0.0121
+Gemini-2.5-pro one-by-one
+74660.88
+75502.11
+−37193.44
+0.0151
+ChatGPT-4o one-by-one
+75102.44
+76000.77
+−37411.22
+0.0241
+Claude-sonnet-4 one-by-one
+74670.33
+75512.44
+−37206.17
+0.0129
+Note: Results are reported for human expert Q-matrix (baseline) and for LLM-generated Q-matrices using
+all-at-once and one-by-one prompts.
+and one-by-one strategies are generally small, with Gemini-2.5-pro and ChatGPT-
+4o showing stable performance across both methods.
+One notable exception is Claude-sonnet-4 under the one-by-one prompting strat-
+egy, which shows higher discrepancies across all CDMs. This aligns with earlier
+ﬁndings from TIMSS 11, where Claude-sonnet-4’s Q-matrix generation did not per-
+17 of 24
+ 17453984, 2026, 1, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/jedm.70028 by Beykent University, Wiley Online Library on [24/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+Figure 2. Comparison of the classiﬁcation discrepancy between human-human and
+AI-human under TIMSS 11.
+form as well, leading to less consistent outputs and greater divergence from human
+expert references.
+Importantly, the pattern of discrepancies also reﬂects the generality of the CDMs.
+For more ﬂexible models such as GDINA and LLM, the differences between
+human-human and human-AI discrepancies are smaller, suggesting that these
+models are less sensitive to variations in Q-matrix speciﬁcation. By contrast,
+restrictive models such as DINA and DINO magnify the effects of speciﬁca-
+tion differences, leading to larger gaps between human-human and human-AI
+discrepancies. This indicates that the choice of CDM can inﬂuence the extent
+to which AI-generated Q-matrices approximate human expert judgments in
+classiﬁcation accuracy.
+In addition, Figure 3 displays the classiﬁcation discrepancies of AI agent-
+generated Q-matrices under different diagnostic classiﬁcation models (DINA, DINO,
+GDINA, LLM, and RRUM) for the TIMSS 07 and PISA 2012 datasets. As with the
+TIMSS 11 analysis, results are shown separately for each AI agent (Gemini-2.5-pro,
+Claude-sonnet-4, and ChatGPT-4o) using both all-at-once and one-by-one prompt-
+ing strategies. Unlike TIMSS 11, however, no human-human discrepancy could be
+computed for TIMSS 07 and PISA 2012 because only a single expert Q-matrix was
+available for each dataset. To provide a reference baseline, we therefore introduced
+the average human-human discrepancy from TIMSS 11 under each DCM, shown as
+the red dashed vertical lines in the plots.
+The comparison shows that most AI-generated Q-matrices fall close to or slightly
+above the human-human baseline, indicating reasonable alignment with expert-
+deﬁned Q-matrices even in the absence of multiple human references. Consistent
+with earlier ﬁndings, performance varies somewhat across models and prompting
+strategies, with Gemini-2.5-pro generally achieving the lowest discrepancies and
+18 of 24
+ 17453984, 2026, 1, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/jedm.70028 by Beykent University, Wiley Online Library on [24/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+Figure 3. Classiﬁcation discrepancies of AI agent-generated Q-matrices under ﬁve
+diagnostic classiﬁcation models (DINA, DINO, GDINA, LLM, RRUM). Red dashed lines
+indicate the average human-human discrepancies observed in TIMSS 11.
+Claude-sonnet-4 under the one-by-one strategy yielding somewhat higher discrep-
+ancies on TIMSS 07. Overall, the results for TIMSS 07 and PISA 2012 reinforce the
+conclusion that AI-generated Q-matrices approximate human judgment with accept-
+able ﬁdelity.
+Discussion and Future Directions
+This study examined the capacity of state-of-the-art multimodal large language
+models (LLMs)—ChatGPT-4o, Gemini-2.5-pro, and Claude-sonnet-4—to generate
+Q-matrices for cognitive diagnostic modeling across three international assessments
+(TIMSS 07, TIMSS 11, and PISA 2012). Several important patterns emerged.
+19 of 24
+ 17453984, 2026, 1, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/jedm.70028 by Beykent University, Wiley Online Library on [24/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+First, AI-generated Q-matrices consistently produced strong data-ﬁtting perfor-
+mance across diagnostic classiﬁcation models (DCMs). In TIMSS 07 and TIMSS
+11, AI outputs tended to be sparser than human expert Q-matrices, reﬂecting both to-
+ken input constraints (notably in ChatGPT-4o) and the challenges of modeling larger
+item-attribute sets. Despite this sparsity, AI-generated Q-matrices frequently yielded
+comparable or superior AIC, BIC, and log-likelihood statistics relative to human
+matrices, suggesting that LLMs can generate structurally lean yet effective represen-
+tations. In PISA 2012, where the item and attribute set was smaller, AI-generated
+Q-matrices matched human density more closely, demonstrating that dataset size
+moderates the alignment between human and AI outputs.
+Second, chatbot-human matching analyses revealed that AI agents achieve accept-
+able ﬁdelity, though human-human consistency remains higher. Discrepancy patterns
+varied across DCMs: more ﬂexible models such as GDINA and LLM attenuated
+differences between human-human and human-AI outputs, while restrictive models
+such as DINA and DINO magniﬁed them. This ﬁnding suggests that the choice of
+DCM plays a crucial role in determining the practical viability of AI-generated Q-
+matrices.
+Third, the prompting strategy inﬂuenced performance in model-speciﬁc ways.
+ChatGPT-4o maintained stable accuracy across both all-at-once and one-by-one
+prompts, indicating robust contextual reasoning. Gemini-2.5-pro performed best
+under the all-at-once strategy, consistent with its optimization for batch reason-
+ing and large token processing. Claude-sonnet-4, however, showed instability un-
+der the one-by-one approach, particularly in TIMSS 11, producing Q-matrices with
+higher discrepancies and reduced reliability. This underscores the sensitivity of some
+LLMs to prompt structure and highlights the importance of tailoring strategies to
+model architecture.
+Building on these ﬁndings, several directions warrant further exploration. One pri-
+ority is improving the completeness and density control of AI-generated Q-matrices.
+Although our self-checking strategies reduced errors, occasional sparsity suggests
+the need for adaptive prompts or ﬁne-tuned models that can dynamically balance
+parsimony with full coverage of attributes. Another avenue is the development of
+hybrid AI-human workﬂows in which LLMs generate initial drafts and experts re-
+ﬁne them. Such an approach would preserve the efﬁciency gains of automation while
+ensuring accuracy for high-stakes uses.
+Future work should also investigate model-speciﬁc optimization. Given Gem-
+ini’s strength in batch reasoning, ChatGPT-4o’s robustness to prompt variation,
+and Claude’s sensitivity to item-level prompts, tailoring strategies to individual
+model architectures could further enhance reliability. Expanding beyond mathe-
+matics to domains such as reading and science, and testing LLM-generated Q-
+matrices on larger and more diverse assessments, will be essential for evaluating
+generalizability. Finally, the integration of multimodal capabilities—especially
+through models like ChatGPT-4o—offers opportunities to process diagrams, ﬁgures,
+and non-textual item content, which are increasingly common in modern assess-
+ments. Longer-term, interactive diagnostic systems where LLMs iteratively reﬁne
+Q-matrices with expert or learner feedback could democratize the use of cognitive
+diagnostic modeling, lowering barriers for educators and scaling its adoption.
+20 of 24
+ 17453984, 2026, 1, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/jedm.70028 by Beykent University, Wiley Online Library on [24/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+Kang Xue and James J. Appleton
+References
+Baidoo-Anu, D. & Ansah, L. O. (2023). Education in the era of generative artiﬁcial intelli-
+gence (AI): Understanding the potential beneﬁts of ChatGPT in promoting teaching and
+learning. Journal of AI, 7(1), 52–62.
+Cheung, B. H. H., Lau, G. K. K., Wong, G. T. C., Lee, E. Y. P., Kulkarni, D., Seow, C.
+S., Wong, R., and Co, M. T.-H. (2023). “ChatGPT versus human in generating medical
+graduate exam multiple choice questions—A multinational prospective study (Hong Kong
+SAR, Singapore, Ireland, and the United Kingdom),” PLoS One, 18(8), e0290691.
+Chung, M. (2019). “A Gibbs sampling algorithm that estimates the Q-matrix for the DINA
+model,” Journal of Mathematical Psychology, 93, 102275.
+Comanici, G., Bieber, E., Schaekermann, M., Pasupat, I., Sachdeva, N., Dhillon, I., Blistein,
+M., Ram, O., Zhang, D., Rosen, E., et al. (2025). “Gemini 2.5: Pushing the frontier with
+advanced reasoning, multimodality, long context, and next generation agentic capabili-
+ties,”arXiv preprint arXiv:2507.06261.
+de la Torre, J., and Chiu, C.-Y. (2016). “A general method of empirical Q-matrix validation,”
+Psychometrika, 81, 253–273.
+Evran, D. (2019). “An application of cognitive diagnosis modeling in TIMSS: A comparison
+of intuitive deﬁnitions of Q-Matrices,” International Journal of Modern Education Studies,
+3(1), 4–17.
+Foy, P., Arora, A., & Stanco, G. M. (2013). TIMSS 2011 User Guide for the International
+Database. Supplement 2: National Adaptations of International Background Question-
+naires. ERIC.
+Lee, Y.-S., Park, Y. S., and Taylan, D. (2011). “A cognitive diagnostic modeling of attribute
+mastery in Massachusetts, Minnesota, and the US national sample using the TIMSS 2007,”
+International journal of testing, 11(2), 144–177.
+Li, C., Ma, C., and Xu, G. (2022). “Learning large Q-matrix by restricted Boltzmann ma-
+chines,” Psychometrika, 87(3), 1010–1041.
+Ma, W., and de la Torre, J. (2020a). “An empirical Q-matrix validation method for the sequen-
+tial generalized DINA model,” British Journal of Mathematical and Statistical Psychology,
+73(1), 142–163.
+Ma, W., and de la Torre, J. (2020b). “GDINA: An R package for cognitive diagnosis model-
+ing,” Journal of Statistical Software, 93, 1–26.
+Martin, M. O. (2008). TIMSS 2007 International mathematics report. Findings from IEA’s
+trends in international mathematics and science study at the fourth and eighth grades.
+Chestnut Hill, MA: TIMSS & PIRLS International Study Center, Boston College.
+Nájera, P., Sorrel, M. A., de la Torre, J., and Abad, F. J. (2021). “Balancing ﬁt and parsimony to
+improve Q-matrix validation,” British Journal of Mathematical and Statistical Psychology,
+74, 110–130.
+Ramachandran, R., Garjani, A., Bachmann, R., Atanov, A., Kar, O. F., and Zamir, A. (2025).
+“How well does GPT-4o understand vision? Evaluating multimodal foundation models on
+standard computer vision tasks,”arXiv preprint arXiv:2507.01955.
+Ray, P. P. (2023). “ChatGPT: A comprehensive review on background, applications, key chal-
+lenges, bias, ethics, limitations and future scope,” Internet of Things and Cyber-Physical
+Systems, 3, 121–154.
+Robitzsch, A., Kiefer, T., George, A.C., Uenlue, A., & Robitzsch, M. A. (2020). Package
+“cdm.” In: Matthias von Davier and Young-Sun Lee (Eds.), Handbook of diagnostic clas-
+siﬁcation models. New York: Springer.
+Rupp, A. A., Templin, J., & Henson, R. A. (2010). Diagnostic measurement: Theory, methods,
+and applications. Guilford Press.
+21 of 24
+ 17453984, 2026, 1, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/jedm.70028 by Beykent University, Wiley Online Library on [24/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+Kang Xue and James J. Appleton
+Wang, D., Cai, Y., and Tu, D. (2020). “Q-matrix estimation methods for cognitive diagnosis
+models: Based on partial known Q-matrix,” Multivariate Behavioral Research, 1–13. https:
+//doi.org/10.1080/00273171.2020.1746901.
+Williams, T., Ferraro, D., Roey, S., Brenwald, S., Kastberg, D., Jocelyn, L., & Stearns, P.
+(2007). TIMSS 2007 US technical report and user guide. Washington DC: National Center
+for Education Statistics, Institute of Education Sciences, US Department of Education.
+Xin, T., Wang, C., Chen, P., and Liu, Y. (2022). Cognitive diagnostic models: Methods for
+practical applications. Frontiers in Psychology, 13, 895399.
+Xu, X., Wang, X., Zhang, Y., Zhang, H., & Wu, Y. (2023). Applying ChatGPT to tackle the
+side effects of personal learning environments in higher education: A teacher and teaching
+perspective. Frontiers in Artiﬁcial Intelligence and Applications, 374, 73–88.
+Xue, K., and Bradshaw, L. P. (2021). “A semi-supervised learning-based diagnostic classiﬁ-
+cation method using artiﬁcial neural networks,” Frontiers in Psychology, 11, 618336.
+Zhao, S., & Huang, X. (2019). Automated Q-matrix identiﬁcation using text classiﬁcation
+techniques. In Proceedings of the 11th International Conference on Education Technology
+and Computers (pp. 273–277). Association for Computing Machinery.
+Appendix A: Example Prompt Used in the Study for PISA 2012
+A.1.
+Prompt of One-by-One
+You are one of the expert agents performing Q-vector prediction for a cognitive
+diagnostic modeling task in mathematics. Your task is to examine a single math as-
+sessment item (shown as an image) and determine which of the 6 PISA cognitive
+attributes are required to answer it correctly.
+The table below deﬁnes the attributes grouped by **dimension**:
+—
+Attribute Table (PISA Cognitive Attributes)
+**Mathematical Abstraction** (MA): The thinking process of extracting common
+and essential attributes or features of a similar mathematical object and discarding
+other non-essential attributes or features.
+**Logical Reasoning** (LR): It is the process of arriving at speciﬁc statements or
+individual conclusions from general premises through derivation, or deduction
+**Mathematical Modeling** (MM): According to the actual problem to establish
+mathematical model, mathematical model to solve, and then according to the results
+to solve the actual problem
+**Intuitive Imagination** (II): The process of perceiving the form and change of
+things by means of geometric intuition and spatial imagination, and understanding
+and solving mathematical problems by means of graphics
+**Mathematical Operation** (MO): Mathematical operation refers to the accom-
+plishment of solving mathematical problems according to operation rules on the basis
+of clear operation object
+**Data Analysis** (DA): By acquiring data, using appropriate methods to sort
+out, characterize, analyze, and infer the data, and ﬁnally achieve the understanding
+of the research object
+—
+Item Content: There are 12 items in the attached PDF ﬁle.
+22 of 24
+ 17453984, 2026, 1, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/jedm.70028 by Beykent University, Wiley Online Library on [24/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+Kang Xue and James J. Appleton
+—
+Instructions and Constraints: Determine which of the above attributes are required
+to solve each item. List only the attribute IDs (e.g., MA, LR, MM). Use the item ID
+shown on each PDF page (e.g., PM00QF01) to indicate which item is being coded.
+Do not leave the answer blank—each item must be assigned at least one attribute.
+The ﬁnal dataset must ensure each of the 11 attributes is covered at least once.
+—
+Method: One-by-One Prediction: (1) Predict each item individually. (2) Generate
+the binary Q-matrix. (3) Check if there is any attribute that is not measured by any
+items, if there is an attribute not measured by any item, use the following strategy to
+do the update: use all items and this attribute to ﬁnd out which item measures and
+update the prediction.
+—
+Your Answer Format: A binary CSV table with 12 rows (one per item) and 6
+columns (one per attribute). A value of 1 indicates the item measures that attribute;
+0 means it does not. Use standard CSV formatting with headers.
+A.2.
+Prompt of All-at-Once
+You are one of the expert agents performing Q-vector prediction for a cognitive
+diagnostic modeling task in mathematics. Your task is to examine a single math as-
+sessment item (shown as an image) and determine which of the 6 PISA cognitive
+attributes are required to answer it correctly.
+The table below deﬁnes the attributes grouped by **dimension**:
+—
+Attribute Table (PISA Cognitive Attributes)
+**Mathematical Abstraction** (MA): The thinking process of extracting common
+and essential attributes or features of a similar mathematical object and discarding
+other non-essential attributes or features.
+**Logical Reasoning** (LR): It is the process of arriving at speciﬁc statements or
+individual conclusions from general premises through derivation, or deduction
+**Mathematical Modeling** (MM): According to the actual problem to establish
+mathematical model, mathematical model to solve, and then according to the results
+to solve the actual problem
+**Intuitive Imagination** (II): The process of perceiving the form and change of
+things by means of geometric intuition and spatial imagination, and understanding
+and solving mathematical problems by means of graphics
+**Mathematical Operation** (MO): Mathematical operation refers to the accom-
+plishment of solving mathematical problems according to operation rules on the basis
+of clear operation object
+**Data Analysis** (DA): By acquiring data, using appropriate methods to sort
+out, characterize, analyze, and infer the data, and ﬁnally achieve the understanding
+of the research object
+—
+Item Content: There are 12 items in the attached PDF ﬁle.
+—
+23 of 24
+ 17453984, 2026, 1, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/jedm.70028 by Beykent University, Wiley Online Library on [24/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+Kang Xue and James J. Appleton
+Instructions and Constraints: Determine which of the above attributes are required
+to solve each item. List only the attribute IDs (e.g., MA, LR, MM). Use the item ID
+shown on each PDF page (e.g., PM00QF01) to indicate which item is being coded.
+Do not leave the answer blank—each item must be assigned at least one attribute.
+The ﬁnal dataset must ensure each of the 6 attributes is covered at least once.
+—
+Method: All-at-Once Prediction: (1) All items are predicted together in a batch.
+(2) Check if any attribute that is not assigned to any item. If so, use the following
+update strategy: Use all items and this attribute to identify which item(s) require
+it and update the matrix accordingly. (3) Check if any item has no assigned at-
+tributes. If so, use all attributes and this item to determine which attributes apply and
+update accordingly.
+—
+Your Answer Format: A binary CSV table with 12 rows (one per item) and 6
+columns (one per attribute). A value of 1 indicates the item measures that attribute;
+0 means it does not. Use standard CSV formatting with headers.
+24 of 24
+ 17453984, 2026, 1, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/jedm.70028 by Beykent University, Wiley Online Library on [24/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License

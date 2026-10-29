@@ -1,0 +1,2773 @@
+Received: 22 June 2022 | Accepted: 13 December 2023
+DOI: 10.1111/bjep.12657
+
+ARTICLE
+
+Using machine learning to predict UK and Japanese
+secondary students' life satisfaction in PISA 2018
+Zexuan Pan1
+
+| Maria Cutumisu2
+
+1
+Marsal Family School of Education and
+Department of Psychology, University of
+Michigan, Ann Arbor, Michigan, USA
+2
+Department of Educational and Counselling
+Psychology, Faculty of Education, McGill
+University, Montreal, Quebec, Canada
+
+Correspondence
+Maria Cutumisu, Department of Educational and
+Counselling Psychology, Faculty of Education,
+McGill University, 530 Education Bldg., 3700
+McTavish St., Montreal, QC H3A 1Y2, Canada.
+Email: maria.cutumisu@mcgill.ca
+Funding information
+Alberta Innovates; Government of Canada
+CanCode, Grant/Award Number: RES0059331;
+NSERC, Grant/Award Number: RES0043209;
+Social Sciences and Humanities Research Council
+of Canada, Grant/Award Number: RES0062310
+and RES0048110
+
+Abstract
+Background: Life satisfaction is a key component of students' subjective well-­being due to its impact on academic
+achievement and lifelong health. Although previous studies
+have investigated life satisfaction through different lenses,
+few of them employed machine learning (ML) approaches.
+Objective: Using ML algorithms, the current study predicts
+secondary students' life satisfaction from individual-­level
+variables.
+Method: Two supervised ML models, random forest (RF)
+and k-­nearest neighbours (KNN), were developed based on
+the UK data and the Japan data in PISA 2018.
+Results: Findings show that (1) both models yielded better
+performance on the UK data than on the Japanese data; (2)
+the RF model outperformed the KNN model in predicting students' life satisfaction; (3) meaning in life, student
+competition, teacher support, exposure to bullying and ICT
+resources at home and at school played important roles in
+predicting students' life satisfaction.
+Conclusions: Theoretically, this study highlights the multi-dimensional nature of life satisfaction and identifies several
+key predictors. Methodologically, this study is the first to use
+ML to explore the predictors of life satisfaction. Practically,
+it serves as a reference for improving secondary students'
+life satisfaction.
+K EY WOR DS
+k-­nearest neighbours, life satisfaction, machine learning, PISA, random
+forest
+
+This is an open access article under the terms of the Creative Commons Attribution License, which permits use, distribution and reproduction
+in any medium, provided the original work is properly cited.
+© 2023 The Authors. British Journal of Educational Psycholog y published by John Wiley & Sons Ltd on behalf of British Psychological Society.
+474
+
+| wileyonlinelibrary.com/journal/bjep
+	﻿
+
+Br J Educ Psychol. 2024;94:474–498.
+
+  
+
+| 475
+
+I N T RODUC T ION
+Well-­being and life satisfaction
+The multi-d imensional construct of subjective well-being (Llamas-Díaz et al., 2022; Steinmayr
+et al., 2022) encapsulates the extent to which individuals perceive their lives as desirable, fulfilling,
+and rewarding (Diener, 1984; Diener et al., 2003). A key component of subjective well-­being across
+countries and cultures is life satisfaction, which represents individuals' overall evaluation of their lives
+(Antaramian et al., 2008; Diener, 2006).
+
+Importance of well-­being
+The reason researchers have examined well-­being is because life satisfaction serves as an important
+indicator of individuals' functioning across academic achievement, interpersonal connectedness, and
+physical health. First, the positive relationship between life satisfaction and health outcomes has been
+supported by empirical evidence. For example, a 20-­year prospective study of Finnish individuals aged
+between 18 and 64 years revealed a significant correlation between life satisfaction and all-­cause mortality (Koivumaa-­Honkanen, 2000). In a cross-­cultural study sampling 17,246 young adults aged between
+17 and 30 years, the association between life satisfaction and health-­promoting behaviours appeared to
+be bidirectional, partly accounting for the relationship between positive subjective well-­being and good
+health (Grant et al., 2009). Robust and reciprocal associations were also found between life satisfaction and a series of mental health problems, such as depression, anxiety disorder, suicidality, alcohol
+dependence, and substance dependence in a study involving individuals aged 18–35 years (Fergusson
+et al., 2015).
+
+Well-­being and secondary students: Academic achievement
+The subjective well-­being of secondary school students is particularly crucial to delve into, as this
+stage is characterized by significant change and flexibility in human development (Steinberg, 2005).
+Specifically, secondary students' subjective well-­being not only shapes their academic outcomes but
+also has far-­reaching implications for their long-­term health trajectories (Ng & Huebner, 2015; Patton
+et al., 2011). Additionally, the secondary school period serves as a pivotal phase in terms of subjective well-­being, as this period witnesses the emergence of half of all lifetime mental health problems
+(Belfer, 2008).
+Life satisfaction is a robust predictor of the presence or absence of clinical symptoms and comorbidity. For instance, in secondary students aged around 12.68 years, a significant reciprocal relationship between life satisfaction and cognitive engagement has been evidenced longitudinally (Heffner
+& Antaramian, 2016). This finding is further corroborated by a study conducted by Lewis et al. (2011),
+where participants with an average age of 12.64 years demonstrated similar trends. Additionally, life
+satisfaction has been shown to influence the cumulative Grade Point Average (GPA) and assessment
+centre exercise ratings of students with a mean age of 20.7 years, even when considering typical predictors of academic achievement like gender and cognitive aptitude (Rode et al., 2005). Furthermore,
+research with participants aged around 13.07 years underscores that students' life satisfaction is not only
+intertwined with their academic achievement but also has lasting implications for their health in later
+life (Ng & Huebner, 2015). This connection was also identified in a study with students aged between
+12 and 14 years (Patton et al., 2011).
+Most of the previous work regarding the relationship between life satisfaction and variables related
+to academic outcomes has been based on small and medium sample sizes and looked at a small subset
+
+20448279, 2024, 2, Downloaded from https://bpspsychub.onlinelibrary.wiley.com/doi/10.1111/bjep.12657 by Beykent University, Wiley Online Library on [23/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+USING MACHINE LEARNING TO PREDICT UK AND JAPANESE
+SECONDARY STUDENTS' LIFE SATISFACTION IN PISA 2018
+
+|   
+
+PAN and CUTUMISU
+
+of variables. In the current study, we used a larger data set and a large subset of variables that require
+techniques that are scalable and yet provide both prediction and explanation of the results. This way, the
+results could be used to inform both research and practice.
+
+Machine learning techniques: Prediction versus explanation
+Integrating predictive and explanatory approaches to scientific inquiry has always been a concern in
+social science and educational research (Hofman et al., 2021). Historically, most researchers in these
+fields preferred explanatory methods over predictive methods that focus on forecasting (Yarkoni &
+Westfall, 2017). In recent years, the application of machine learning (ML) techniques has allowed researchers to focus more on the predictive power of algorithms, while, in some cases, maintaining the
+explanatory capability of such algorithms. Although the potential of ML for prediction has been unlocked, explaining its operational processes and results in specific domain knowledge contexts remains
+a challenge. ML is a subfield of artificial intelligence that enables computers to learn automatically from
+large quantities of data without being explicitly programmed (Kersting, 2018). In the presence of unlimited data, ML algorithms are typically trained and tested on different, large datasets. However, given
+the typically small sample size employed in most social science and educational studies, ML techniques
+train different algorithms on a larger partition of the original dataset and compare their predictive
+performance on a different, smaller partition of the same original dataset. Most ML studies have compared the performance of different algorithms, but few have considered the effect of dataset selection
+on prediction results.
+
+Statement of purpose
+The purpose of this study is to predict secondary students' life satisfaction from individual-­level variables using ML algorithms. Specifically, a tree-­based model (i.e., random forest) and an instance-­based
+model (i.e., k-­nearest neighbours) are developed to predict students' life satisfaction based on data from
+two countries. The predictive performance of the ML models is explained based on domain knowledge
+from two perspectives: the operational processes of the algorithms and the characteristics of the datasets. The study poses the following research questions:
+1. How well can the two ML models predict secondary students' life satisfaction from individual-level variables?
+2. Does the feature importance of predictive variables vary across the countries examined?
+
+C ONC EP T UA L F R A M E WOR K
+Theory-­based approach to life satisfaction
+In PISA 2018, life satisfaction is defined as an overall evaluation of one's perceived quality of life
+(Marquez & Long, 2021; Shin & Johnson, 1978). In this regard, life satisfaction serves as a cognitive
+component of subjective well-­being as well as a self-­avowal of happiness (Chen et al., 2020; Diener, 1984;
+Proctor et al., 2009). The bottom-­up and top-­down approaches have traditionally been the two theoretical approaches to study life satisfaction (Busseri & Mise, 2020; Lance et al., 1989). The bottom-­up
+approach implies that individuals' life satisfaction is dependent upon their experiences and situations in
+various life domains, whereas the top-­down approach regards life satisfaction as an individual difference which is shaped by one's personality (Headey et al., 1991; Steel et al., 2008).
+
+20448279, 2024, 2, Downloaded from https://bpspsychub.onlinelibrary.wiley.com/doi/10.1111/bjep.12657 by Beykent University, Wiley Online Library on [23/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+476
+
+  
+
+| 477
+
+Data-­Driven approach to life satisfaction
+This study adopted a data-­driven approach, which examines students' life satisfaction based on the
+patterns and relationships emerging from the data. Specifically, the individual-­level variables considered include factors related to material resources, social relations, and psychological factors. Following
+Maslow's hierarchy of needs (Maslow, 1943), material resources are postulated to meet students' physiological and safety needs, social relations cater to their needs for love and belonging, and psychological
+factors fulfil their needs for esteem and self-­actualization. It is important to note that these categories
+are used solely for organizing and presenting the included individual-­level variables in a structured manner, and the analysis is driven by the data rather than preconceived hypotheses or assumptions.
+
+L I T ER AT U R E R E V I E W
+Life satisfaction
+Previous research has identified a variety of factors influencing life satisfaction, which span across
+diverse areas of an individual's life, as highlighted in this section. While the relationship between material resources, including socio-­economic and ICT resources, and life satisfaction may seem equivocal
+(Gilman & Huebner, 1997; Huebner, 1991), certain studies suggest that students with more resources
+tend to report higher life satisfaction (Ash & Huebner, 2001; Neto, 1993). Notably, ICT resources contribute to positive emotional experiences and support goal pursuit, subsequently leading to higher life
+satisfaction (Kushlev, 2018).
+Social relations, or interactions between individuals, also significantly affect life satisfaction. The
+quality of relationships with parents, teachers, and peers plays a crucial role in shaping students' life
+satisfaction. Students with supportive parents and teachers, as well as those experiencing a sense of belonging within their classrooms, often report higher life satisfaction (Dunleavy & Burke, 2019; Gilman
+et al., 2006; Ortman, 1988). However, it is important to note that negative experiences, such as peer
+victimization, can considerably decrease life satisfaction (Huang, 2020).
+Psychological dispositions, which denote relatively stable inner states, form another significant component that influences life satisfaction. The presence of positive feelings and a sense of meaning in
+life are tightly connected to higher life satisfaction (Govorova et al., 2020). Moreover, life satisfaction
+associates with a range of psychological characteristics such as self-­efficacy, motivation, achievement
+goals, attitudes towards competition, and fear (Diseth et al., 2012; Grasseni & Origo, 2018; Moksnes
+et al., 2019; Salinas-­Jiménez et al., 2010; Yılmaz, 2018). For instance, growth mindset interventions
+could improve life satisfaction among perfectionist students, suggesting a positive relationship between
+growth mindset and life satisfaction (Chan, 2012).
+As mentioned before, relevant studies only examined small or medium samples, with a reduced set of
+possible predictors of life satisfaction. However, the current study is based on a large publicly available
+data set with a wide range of variables that have not been examined before in relation with life satisfaction. This required more robust methods that could examine at once a large number of records and a
+large number of variables, without the theoretical and technical barriers encountered by conventional
+statistics.
+
+Machine learning
+As a subfield of artificial intelligence, machine learning (ML) enables computers to learn automatically from data without being explicitly programmed (Kersting, 2018). ML models are generally more
+data-­driven and unbiased than more classical statistics approaches (Gorostiaga & Rojo-­Á lvarez, 2016),
+and they can usually handle missing data without further customization. Supervised ML models make
+
+20448279, 2024, 2, Downloaded from https://bpspsychub.onlinelibrary.wiley.com/doi/10.1111/bjep.12657 by Beykent University, Wiley Online Library on [23/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+USING MACHINE LEARNING TO PREDICT UK AND JAPANESE
+SECONDARY STUDENTS' LIFE SATISFACTION IN PISA 2018
+
+|   
+
+PAN and CUTUMISU
+
+predictions based on labelled data. In recent years, ML models, especially supervised models, have attracted attention in social science and educational research for two main reasons.
+First, ML algorithms can achieve high predictive performance, especially when working with
+large-­scale and high-­d imensional datasets. For example, Saarela et al. (2016) used an ML approach to
+predict students' mathematics performance on the Programme for International Student Assessment
+(PISA) 2012 data. Through training supervised learning models with 53 initial features, their algorithm
+achieved a classification accuracy of over 95% in identifying the top performers (Saarela et al., 2016).
+With regard to social cognition, regression-­based supervised models exhibited higher accuracy and
+validity in predicting the personality of 17,622 participants compared to human judgements (Youyou
+et al., 2015).
+Second, some supervised models can also provide information regarding the importance of their
+input features (i.e., independent or predictor variables) in predicting the response (i.e., dependent) variable. Using sparse regression models, Brow (2019) successfully identified the significant predictors
+of mathematical literacy for six countries in PISA 2012. Through boosted regression trees, Gabriel
+et al. (2018) investigated the educational effects of mathematical dispositions using data from the
+Australian subset of PISA 2012; they further ranked the input features by their relative importance and
+identified the self-­efficacy item as the most influential predictor.
+Although ML models have shown great potential in predicting students' cognitive and affective outcomes, most of the existing studies focused on students' academic achievement and career choice, with
+little attention to their subjective well-­being (Dong & Hu, 2019; Mandalapu & Gong, 2019; Puah, 2021;
+Yeung & Yeung, 2019). Although several studies paid attention to subjective well-­being, few of them investigated the effects of student-­related variables, such as the teacher support and learning goals (Kaiser
+et al., 2021; Morrone et al., 2019; You, 2021). Typically, studies sampling students focused on a few specific
+factors without examining their synergetic effect on well-­being (Jaques et al., 2015; Sahdra et al., 2021).
+To address this gap, the present study employs ML techniques to investigate the synergetic effect of
+individual-­level variables on students' life satisfaction. The term “synergetic effect” denotes the combined
+impact of two or more variables on an outcome that differs from the sum of their separate impacts. For
+instance, the combined influence of high self-­efficacy and a growth mindset might exceed their separate
+effects on life satisfaction, suggesting a potential reinforcing interaction between the two variables.
+
+M E T HOD S
+Dataset
+The Programme for International Student Assessment (PISA) is a triennial survey of 15-­year-­old students around the world (OECD, 2019) aiming to evaluate students' academic achievement. It also collects extensive data regarding students' demographics, social life, and psychological well-­being. The
+PISA 2018 assessment (2018) includes a well-­being questionnaire administered to students for the first
+time as part of the student questionnaire (OECD, 2019).
+
+Participants
+Students from the United Kingdom and Japan were selected as samples of interest for the following
+reasons. First, the United Kingdom and Japan are geographically different, representing two distinct
+global regions. The inherent cultural and social differences offered by these separate regions provide a
+rich comparative backdrop for our analyses. Second, an examination of country-­level indices reveals a
+convergence between the United Kingdom and Japan on several dimensions. As shown in Table 1, some
+key metrics related to student life and economic development—namely students' academic performance
+scores, Human Development Index (HDI), and Gross Domestic Product (GDP) per capita—exhibit
+
+20448279, 2024, 2, Downloaded from https://bpspsychub.onlinelibrary.wiley.com/doi/10.1111/bjep.12657 by Beykent University, Wiley Online Library on [23/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+478
+
+TA BL E 1
+
+  
+
+| 479
+
+Basic information for the United Kingdom and Japan.
+
+Index
+
+UK
+
+Japan
+
+Country Abbreviation in PISA
+
+GBR
+
+JPN
+
+Average of Students' Academic Test Scores
+
+504
+
+504
+
+Human Development Index (HDI)
+
+0.93
+
+0.92
+
+Gross Domestic Product (GDP) per Capita (in US Dollars)
+
+40,285
+
+39,539
+
+similar averages in both nations. This similarity in fundamental indices, coupled with the geographical
+and cultural diversity, enhances the analytical potential of the current study. Hence, the selection of
+these two countries as samples of interest not only enriches the scope of the study but also bolsters the
+robustness of the analyses and subsequent findings.
+As no significant relationship was found between the missingness of the data and any values, it was
+assumed that the missing values in the sample occurred randomly. In the present study, missing data
+(<10%) were handled by imputing the series mean. Overall, 13,818 students from the United Kingdom
+and 6109 students from Japan were included in the analysis. Additional information regarding the missing patterns (Table A1) can be found in Appendix A.
+
+Variables
+Life satisfaction
+The response variable (i.e., dependent variable) was Life Satisfaction derived from the PISA 2018 student
+questionnaire (OECD, 2018a), representing students' overall evaluation of their perceived quality of life.
+In PISA 2018, its value was determined by students' self-­reported scores ranging from 0 to 10 on the life
+satisfaction scale (sample item: overall, how satisfied are you with your life as a whole these days?).
+
+Individual-­level features
+The features (i.e., independent variables) were 26 individual-­level variables extracted from the PISA
+2018 student questionnaire (OECD, 2018a) and well-­being questionnaire (OECD, 2018b). Information
+regarding the included variables is displayed in Table 2. A comprehensive description of these variables,
+complemented by basic statistics, is available in Tables A2 and A3 in Appendix A.
+Although this study emphasizes modelling students' life satisfaction using individual-­level variables
+(i.e., different scores for different students) and there was no explicit intention to prioritize variables
+associated with either school life or family life during the variable selection phase, it was found that most
+variables included in this study are pertinent to students' experiences within the school environment.
+This unintentional concentration on school-­related variables resonates with the extensive literature on
+educational outcomes, frequently highlighting the profound influence of school and district-­level factors on student well-­being and achievement (e.g., Downey & Condron, 2016).
+
+ML algorithms
+Random forest
+Random forest (RF) is a non-­linear, non-­parametric supervised learning technique that utilizes ensemble learning methods to make predictions (Breiman, 1996; Ho, 1995). In brief, the ensemble learning
+
+20448279, 2024, 2, Downloaded from https://bpspsychub.onlinelibrary.wiley.com/doi/10.1111/bjep.12657 by Beykent University, Wiley Online Library on [23/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+USING MACHINE LEARNING TO PREDICT UK AND JAPANESE
+SECONDARY STUDENTS' LIFE SATISFACTION IN PISA 2018
+
+|   
+
+TA BL E 2
+
+PAN and CUTUMISU
+
+Overview of the included variables.
+
+Variable name
+
+Description
+
+Dependent variable
+ST016Q01NA
+
+Life satisfaction
+
+Independent variables
+AGE
+
+Age
+
+ST004D01T
+
+Gender
+
+ESCS
+
+Index of economic, social, and cultural status
+
+ICTRES
+
+ICT resources at home and at school
+
+BEINGBULLIED
+
+Exposure to bullying
+
+EMOSUPS
+
+Parents' emotional support
+
+TEACHSUP
+
+Teacher support
+
+ADAPTIVITY
+
+Adaptation of instruction
+
+BELONG
+
+Sense of belonging
+
+PERFEED
+
+Perceived feedback
+
+TEACHINT
+
+Perceived teacher's interest
+
+PERCOOP
+
+Student cooperation
+
+PERCOMP
+
+Student competition
+
+COMPETE
+
+Attitudes towards competition
+
+ST185Q01HA
+
+Growth mindset
+
+MASTGOAL
+
+Learning goals
+
+WORKMAST
+
+Motivation to master tasks
+
+ATTLNACT
+
+Attitudes towards learning
+
+JOYREAD
+
+Joy/Like reading
+
+RESILIENCE
+
+Self-­efficacy
+
+GFOFAIL
+
+Fear of failure
+
+EUDMO
+
+Meaning in life
+
+SWBP
+
+Positive feelings
+
+DISCLIMA
+
+Disciplinary climate
+
+DIRINS
+
+Teacher-­d irected instruction
+
+STIMREAD
+
+Teacher's stimulation of reading engagement
+perceived by student
+
+approach combines the outcomes from several ML algorithms to generate a better prediction. The
+random forest not only outperforms a single decision tree in terms of prediction metrics but also provides information about the feature importance (Grömping, 2009; Sathyadevan & Nair, 2015). The
+random forest regression algorithm (1) constructs randomized decision trees (i.e., regression trees, as
+the response variable is continuous) based on the training data; (2) aggregates the performances of a
+multitude of decision trees (i.e., it takes the average of the individual predictions); and (3) outputs the
+optimal decision.
+
+K-­nearest neighbours
+K-­nearest neighbours (KNN) is an instance-­based learning model that makes predictions based on the
+similarity measure (Fix & Hodges, 1989). It is also non-­linear and non-­parametric, and it usually yields
+
+20448279, 2024, 2, Downloaded from https://bpspsychub.onlinelibrary.wiley.com/doi/10.1111/bjep.12657 by Beykent University, Wiley Online Library on [23/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+480
+
+  
+
+| 481
+
+good predictive performances (Rajaguru & Chakravarthy, 2019). As a supervised learning algorithm,
+the KNN regression stores the training instances verbatim and averages the values of k-­nearest neighbours (Altman, 1992). It is easy to implement and requires no training time. In this study, KNN is used
+to solve a regression task (i.e., predicting a continuous response variable).
+
+Rationale behind utilizing two different ML approaches
+The two ML approaches in this study, RF and KNN, represent two different non-­linear and non-parametric algorithms to predict life satisfaction. RF is an ensemble learning method that combines multiple decision trees. It takes into account complex interactions between variables, making
+it suitable for capturing the interplay of various factors influencing life satisfaction. Additionally,
+RF provides measures of feature importance, enabling the identification of key predictors and
+facilitating result interpretation. On the other hand, KNN excels at capturing localized patterns
+and is conceptually based on similarity. While it does not explicitly consider interactions between
+variables, it still offers valuable insights into the similarities among students and their shared
+characteristics.
+In the fields of education and psychology, interpretability plays a significant role when selecting
+ML algorithms. RF and KNN provide more interpretability compared to other algorithms like neural
+networks, which are often considered black-­box approaches. RF offers interpretability by providing
+measures of feature importance. This allows researchers to identify the key predictors that contribute to
+students' life satisfaction. Understanding the relative importance of different variables can help inform
+decision-­making and intervention strategies. KNN offers a straightforward visual interpretation based
+on similarity. By identifying groups of students with similar individual-­level features, researchers may
+have a better idea of the homogeneity within the dataset, which may further inform targeted interventions and support systems for students. Comparing the two methods allows for an exploration of their
+respective strengths and weaknesses in capturing the complexity of students' life satisfaction. While
+prediction accuracy is important, the interpretability of the algorithms allows researchers to look beyond predictions and gain insights into the mechanisms and processes underlying students' well-­being.
+It aligns with the goals of advancing knowledge in the specific domain and improving the transparency
+of ML studies.
+
+Data preparation
+The data preparation procedure was conducted using the IBM SPSS (Version 27) software (2020).
+First, the student questionnaire data file was downloaded from the PISA 2018 database (OECD, 2019).
+Second, the data for the UK and Japanese samples were extracted from the SPSS file. Third, the scores
+for the variables of interest were normalized and the instances with missing values were imputed using
+series mean. Data normalization is only required by KNN, but both algorithms are trained and tested
+on the same data; thus, this step needs to be performed on the entire dataset before model training.
+Then, the pre-­processed dataset was exported as comma-­separated values (CSV) file and placed in the
+working directory.
+
+Model development
+Both the RF and KNN algorithms were implemented using the scikit-­learn package (Pedregosa
+et al., 2011) in Python (Van Rossum & Drake Jr, 1995).
+
+20448279, 2024, 2, Downloaded from https://bpspsychub.onlinelibrary.wiley.com/doi/10.1111/bjep.12657 by Beykent University, Wiley Online Library on [23/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+USING MACHINE LEARNING TO PREDICT UK AND JAPANESE
+SECONDARY STUDENTS' LIFE SATISFACTION IN PISA 2018
+
+|   
+
+PAN and CUTUMISU
+
+Performance metrics
+The Mean Squared Error (MSE), Root Mean Squared Error (RMSE), Mean Absolute Error (MAE), and
+coefficient of determination (R 2) were used as the performance metrics.
+
+Hyperparameter tuning
+Hyperparameter tuning is a process of determining the optimal values of parameters that define the
+model architecture. In this study, a grid search was used as the hyperparameter tuning method. Grid
+search is one of the most widely used strategies for hyperparameter tuning (Sanchez et al., 2021). A grid
+of hyperparameter values was created followed by a series of iterations over each possible combination
+of specified hyperparameters to build models for the two algorithms. The summaries of the hyperparameters included in the grid search are shown in Tables 3.1 and 3.2.
+
+Feature importance
+For RF models, every node in a decision tree represents a condition that tests a particular feature, with
+the goal of splitting the dataset into two groups with comparable response values. Impurity, a measure
+of variance, is the criterion by which the optimal split is determined. Thus, it is possible to calculate
+how much each feature reduces the weighted impurity in a tree while training the model. In a random
+forest with multiple decision trees, the impurity decrease from each feature is averaged and the feature
+importance is ranked according to this metric. In this study, the feature importance for each individual-level variable was computed and ranked from high to low. For KNN, all the features are assumed to
+contribute equally to the prediction.
+
+Nested cross-­validation
+Nested cross-­validation is an enhanced technique utilized in the ML domain to evaluate the model's
+performance in a more robust manner, particularly when hyperparameter tuning is involved. Cross-validation ensures that the performance evaluation is not biased by the model's exposure to the test
+data during the tuning process (Kohavi & John, 1995). In a typical k-­fold cross-­validation procedure,
+the dataset is partitioned into k equal-­sized subsets. One subset is held out as the test set, while the
+model is trained on the remaining k-­1 subsets. This process is repeated k times, ensuring each subset
+serves as the test set once. The performance measures from these k iterations are then averaged to
+derive a more comprehensive evaluation of the model's performance. However, when hyperparameter tuning is involved, the k-­fold cross-­validation approach may inadvertently introduce bias as
+the hyperparameters may overfit the validation set (Varma & Simon, 2006). To avoid the potential overfitting, nested cross-­validation, which involves an outer cross-­validation loop for model
+evaluation and an inner cross-­validation loop for hyperparameter tuning, is introduced (Cawley &
+Talbot, 2010).
+TA BL E 3.1
+
+Summary of the hyperparameters and their range of values for RF.
+
+Hyperparameter
+
+Description
+
+Values
+
+n_estimators
+
+The number of trees in the forest
+
+10, 50, 100
+
+max_depth
+
+The maximum depth of the tree
+
+None, 10, 20
+
+min_samples_split
+
+The minimum number of samples required to split an internal node
+
+2, 5, 10
+
+20448279, 2024, 2, Downloaded from https://bpspsychub.onlinelibrary.wiley.com/doi/10.1111/bjep.12657 by Beykent University, Wiley Online Library on [23/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+482
+
+TA BL E 3. 2
+
+  
+
+| 483
+
+Summary of the hyperparameters and their range of values for KNN.
+
+Hyperparameter
+
+Description
+
+Values
+
+n_neighbors
+
+The number of neighbours
+
+3, 5, 7, 9, 11
+
+weights
+
+The weight given to each neighbour
+
+‘uniform’, ‘distance’
+
+p
+
+The power parameter for the Minkowski metric
+
+1: equivalent to using the Manhattan distance
+2: equivalent to using the
+Euclidean distance
+
+In this study, a nested cross-­validation with five outer folds and five inner folds was employed. First,
+the dataset is split into five outer folds. Subsequently, one of these outer folds is held out as a test set.
+The inner cross-­validation is a standard five-­fold cross-­validation on the combined remaining four outer
+folds. This involves partitioning the combined four outer folds into five inner folds, training models on
+four of these inner folds, and validating the model on the remaining one inner fold. This inner loop is
+repeated five times, with each inner fold serving as the validation set once. The average performance of
+these five iterations serves as a performance indicator for a specific set of hyperparameters. This process is conducted iteratively for varying hyperparameter configurations to identify the optimal set that
+maximizes the model's performance.
+Upon determination of the optimal hyperparameters, the model is trained with these settings on all
+four outer training folds and subsequently validated on the outer test fold that was initially held out.
+This entire process, encapsulating the inner loop for hyperparameter tuning and the outer loop for
+model evaluation, is repeated five times, once for each outer fold. The performance measures are then
+averaged to obtain a more robust estimation of the model's predictive performance. The supporting
+information including data and code can be found in our Github Code repository.
+
+R E SU LT S
+Model prediction
+Random forest (RF)
+The results obtained from the RF regression are presented in this section. The mean validation and
+mean test performance across all five outer folds are reported in Table 4.
+
+K-­nearest neighbours (KNN)
+The results obtained from the KNN are presented in this section. The mean validation and mean test
+performance across all five outer folds are reported in Table 5.
+In summary, based on the obtained metrics, the results suggest that both the RF regression model
+and the KNN regression model performed slightly better on the UK dataset compared to the Japan
+dataset. However, in both cases, there is room for improving the model's ability to account for the variance in the dependent variable. The nested cross-­validation process was beneficial in providing a more
+robust estimation of the model's performance and helped in identifying optimal hyperparameters for
+the model. A more detailed comparison of the model performances on the data from the two countries
+can be found in Tables A4 and A5 in Appendix A.
+
+20448279, 2024, 2, Downloaded from https://bpspsychub.onlinelibrary.wiley.com/doi/10.1111/bjep.12657 by Beykent University, Wiley Online Library on [23/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+USING MACHINE LEARNING TO PREDICT UK AND JAPANESE
+SECONDARY STUDENTS' LIFE SATISFACTION IN PISA 2018
+
+|   
+
+TA BL E 4
+
+PAN and CUTUMISU
+
+Mean validation and test performance across five outer folds (RF).
+
+Metrics
+
+Validation
+
+Test
+
+UK
+Outer
+
+1
+
+2
+
+3
+
+4
+
+5
+
+Mean
+
+MSE
+
+0.203
+
+0.205
+
+0.203
+
+0.202
+
+0.203
+
+0.203
+
+RMSE
+
+0.450
+
+0.452
+
+0.451
+
+0.450
+
+0.450
+
+0.451
+
+MAE
+
+0.408
+
+0.411
+
+0.409
+
+0.407
+
+0.409
+
+0.408
+
+R2
+
+0.189
+
+0.181
+
+0.186
+
+0.190
+
+0.188
+
+0.187
+Mean
+
+Japan
+Outer
+
+1
+
+2
+
+3
+
+4
+
+5
+
+MSE
+
+0.213
+
+0.215
+
+0.215
+
+0.215
+
+0.212
+
+0.215
+
+RMSE
+
+0.461
+
+0.463
+
+0.463
+
+0.463
+
+0.461
+
+0.464
+
+MAE
+
+0.430
+
+0.433
+
+0.433
+
+0.434
+
+0.431
+
+0.434
+
+R2
+
+0.148
+
+0.140
+
+0.141
+
+0.140
+
+0.150
+
+0.138
+
+TA BL E 5
+
+Mean validation and test performance across five outer folds (KNN).
+
+Metrics
+
+Validation
+
+Test
+
+UK
+Outer
+
+1
+
+2
+
+3
+
+4
+
+5
+
+Mean
+
+MSE
+
+0.225
+
+0.227
+
+0.225
+
+0.223
+
+0.225
+
+0.224
+
+RMSE
+
+0.474
+
+0.477
+
+0.474
+
+0.473
+
+0.474
+
+0.474
+
+MAE
+
+0.433
+
+0.437
+
+0.433
+
+0.431
+
+0.433
+
+0.433
+
+2
+
+0.101
+
+0.091
+
+0.101
+
+0.106
+
+0.100
+
+0.103
+
+Outer
+
+1
+
+2
+
+3
+
+4
+
+5
+
+Mean
+
+MSE
+
+0.232
+
+0.234
+
+0.237
+
+0.240
+
+0.233
+
+0.236
+
+RMSE
+
+0.481
+
+0.483
+
+0.486
+
+0.490
+
+0.483
+
+0.486
+
+MAE
+
+0.446
+
+0.448
+
+0.450
+
+0.456
+
+0.447
+
+0.451
+
+2
+
+0.072
+
+0.064
+
+0.053
+
+0.039
+
+0.066
+
+0.055
+
+R
+
+Japan
+
+R
+
+Feature importance
+Table 6 displays the top 10 most important features in the United Kingdom and Japan. The highlighted
+variables, including meaning in life, student competition, ICT resources at home and at school, exposure to bullying, and teacher support, represent shared key features in both countries. Graphical illustrations of the ranking for feature importance are shown in Appendix A (see Figure A1 for the United
+Kingdom and Figure A2 for Japan).
+
+DIS C US SION
+Model prediction
+The current study adopted supervised ML techniques to examine the effect of individual-­level variables in predicting secondary students' life satisfaction in the United Kingdom and Japan. Compared
+with the RF model, the KNN model performed worse on the samples from both countries. In
+
+20448279, 2024, 2, Downloaded from https://bpspsychub.onlinelibrary.wiley.com/doi/10.1111/bjep.12657 by Beykent University, Wiley Online Library on [23/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+484
+
+ICT resources at home and at school
+Learning goals
+Exposure to bullying
+
+Sense of belonging
+Teacher support
+
+ICTRES
+
+MASTGOAL
+
+BEINGBULLIED
+
+PERFEED
+
+GFOFAIL
+
+BELONG
+
+TEACHSUP
+
+4
+
+5
+
+6
+
+7
+
+8
+
+9
+
+10
+
+BEINGBULLIED
+
+EMOSUPS
+
+Exposure to bullying
+
+Parents' emotional support
+
+Disciplinary climate
+
+Teacher's stimulation of reading
+engagement perceived by student
+
+DISCLIMA
+
+ICT resources at home and at school
+
+STIMREAD
+
+Teacher support
+
+TEACHSUP
+ICTRES
+
+Student competition
+
+Meaning in life
+
+Self-­efficacy
+
+PERCOMP
+
+EUDMO
+
+Student cooperation
+
+Description
+
+  
+
+| 485
+
+20448279, 2024, 2, Downloaded from https://bpspsychub.onlinelibrary.wiley.com/doi/10.1111/bjep.12657 by Beykent University, Wiley Online Library on [23/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+Note: Shared key features in both countries are highlighted in light grey. The text marked in bold denotes the top 10 most important features for both countries.
+
+Fear of failure
+
+Perceived feedback
+
+Student competition
+
+PERCOMP
+
+3
+
+RESILIENCE
+
+PERCOOP
+
+Motivation to master tasks
+
+WORKMAST
+
+Meaning in life
+
+EUDMO
+
+2
+
+Variable
+
+1
+
+Description
+Japan
+
+Variable
+
+Top 10 most important features.
+
+UK
+
+Rank
+
+TA BL E 6
+
+USING MACHINE LEARNING TO PREDICT UK AND JAPANESE
+SECONDARY STUDENTS' LIFE SATISFACTION IN PISA 2018
+
+|   
+
+PAN and CUTUMISU
+
+summary, the RF model outperformed the KNN model in predicting secondary students' life
+satisfaction.
+There are several possible explanations. First, the RF model involved a procedure of feature
+weighting, whereas the KNN model weighed each feature equally when making the prediction.
+It is always the case that different features contribute differently to the final output. For instance,
+through investigating the effects of 40 developmental variables, Soares et al. (2019) identified nine
+significant predictors of life satisfaction in a sample of 503 Portuguese students, within which the
+overall self-­esteem made the largest contribution. In the current study, the RF model calculated
+feature importance as the mean and standard deviation of impurity reduction accumulating inside
+each tree. For a particular feature, the higher the feature importance score, the greater the predictive
+power. In contrast, the KNN model assumed all the features were equally important, which was
+inconsistent with reality. When making a prediction using the KNN algorithm, the contribution of
+some of the most important features such as student cooperation and self-­efficacy may be underestimated, whereas the contribution of some of the least important features such as age and attitudes
+towards competition may likely be overestimated. As a result, the KNN model performed worse
+than the RF model.
+Another difference in the two types of models was that the RF model considered the interaction
+between predictive features, whereas the KNN model treated each feature independently. Students'
+life satisfaction can be influenced by either a single factor or a combination of several factors (Eid
+et al., 2008). For example, Aldridge et al. (2020) reported resilience and bullying as mediating factors
+in the association between school climate and life satisfaction among 6120 Australian students. As the
+tree-­based RF model considered the features sequentially, it is likely to capture some important interactions between features (Denisko & Hoffman, 2018). In contrast, the KNN model computed the similarity measure with all the input features concomitantly, without accounting for the potential interactions
+between features, consequently leading to lower performance.
+In this study, separate ML models were developed based on the data from the United Kingdom and
+Japan, respectively. Both models performed better on the UK data than on the Japan data, suggesting
+that the life satisfaction of the UK students may be explained by their individual-­level variables to a
+larger extent than the life satisfaction of the Japanese students.
+Cultural orientation may serve as a possible explanation for the difference in prediction performance.
+Although the concept of cultural orientation is difficult to define precisely, it is often regarded as a
+critical factor that shapes the content and distribution of individuals' values, beliefs, and behaviours
+(Gelfand et al., 2007; Schwartz, 2009) and it is intertwined with recurring situations and experiences
+in human society (Oyserman, 2011). The manifestation of cultural orientation usually takes the form
+of cognitive orientation or tendency. Among the components of cultural orientation, the most prominent dimension is individualism versus collectivism (Hamamura, 2012). By definition, individualism
+highlights independence and personal achievement, whereas collectivism emphasizes interdependence
+and group goals (Triandis, 1995). According to a country-­level survey conducted by Hofstede (1980),
+Western countries (e.g., the United Kingdom, Canada, and Finland) are generally considered more individualistic than Eastern countries (e.g., Japan, China, and Thailand).
+Cultural orientation is likely to influence students' life satisfaction in several ways. First, students
+with different cultural orientations may have different mental representations of life satisfaction. Once
+students adopt an analytic view towards life satisfaction, they focus more on their unique situations and
+experiences (Suh, 2000). Therefore, the predictive power of individual-­level variables may be stronger
+for students with an individualistic orientation. Second, culture may influence how students value aspects of their lives when evaluating their overall satisfaction. Students with an individualistic orientation
+place more importance on personal feelings and goals, whereas students with a collectivistic focus pay
+more attention to the support system and social norms (Diener & Diener, 1995; Suh et al., 1998). As
+individuals with different cultural orientations were likely to have different attribution and reasoning
+styles (Markus & Kitayama, 1991; Nisbett et al., 2001), students from the United Kingdom may pay
+
+20448279, 2024, 2, Downloaded from https://bpspsychub.onlinelibrary.wiley.com/doi/10.1111/bjep.12657 by Beykent University, Wiley Online Library on [23/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+486
+
+  
+
+| 487
+
+more attention to the features related to their own lives, whereas students from Japan may think more
+about the macro-­level variables when evaluating their life satisfaction.
+An alternative explanation was that there were more available instances in the UK sample than in the
+Japanese sample. The predictive performance of ML models has shown to be influenced by the sample
+size (García et al., 2020; Ng et al., 2020). With a larger sample size, the model may be more likely to
+capture the complex patterns embedded in data. Therefore, the ML models developed from the UK data
+outperformed those developed from the Japanese data.
+
+Feature importance
+This study revealed that the feature importance of predictive variables varied across the countries examined. The difference in the patterns of feature importance has several potential explanations. First,
+individuals may view life satisfaction differently according to their cultural orientations. In PISA 2018,
+life satisfaction was defined as individuals' overall evaluation of the perceived quality of life based on
+their chosen criteria (Shin & Johnson, 1978). In this sense, the conceptualization of life satisfaction may
+vary across different cultural contexts. For example, the UK students may consider life satisfaction as a
+state, which was decided by multiple aspects of one's life, whereas the Japanese students may regard life
+satisfaction as a dimension of mental health (Haybron, 2007; Maddux, 2018). As a result, the features
+vary in terms of relative importance, consequently influencing the structure and performance of the
+regression models.
+Second, individuals with different cultural orientations may emphasize different aspects of their lives
+when evaluating the overall satisfaction. For example, students with an individualistic cultural orientation may give more importance on personal initiative, whereas students with a collectivistic cultural
+orientation may focus more on environment and adaptivity (Diener & Diener, 1995; Suh et al., 1998). As
+a consequence, some self-­oriented features, such as meaning in life and motivation to master tasks, were
+more predictive in the UK data. In contrast, some environmental-­oriented features, such as student
+cooperation and teacher support, were more predictive in the Japanese data.
+Third, individuals' sensitivity to specific features may vary across different cultural orientations.
+According to the self-­determination theory (Ryan & Deci, 2000), students' life satisfaction would be
+enhanced by fulfilling three major needs: competence, autonomy, and relatedness. Given that individualism highlighted independence and collectivism emphasized interdependence (Triandis, 1995), the
+UK students may be more sensitive to their needs of autonomy, whereas the Japanese students may be
+more sensitive to their needs of relatedness. As a result, the UK students weighed meaning in life and
+motivation to master tasks more, whereas the Japanese students attached more importance to student
+cooperation and competition.
+
+Limitations
+The inability to account for racial and ethnic diversity in the United Kingdom and Japan presents a
+limitation in this study. Given the lack of such information in the dataset, the findings may not uniformly apply to all racial and ethnic groups within these countries. Therefore, the generalizability of
+the results may be compromised. Future research should consider incorporating demographic data,
+such as race and ethnicity, to enhance the depth and applicability of the findings. Additionally, this
+study examined individual-­level variables, which were included in the PISA 2018 survey, without considering the school-­level and country-­level factors. To gain a comprehensive understanding of students'
+life satisfaction, future studies could include more types of variables. Another significant limitation of
+this study arises from its cross-­sectional design, which precludes the inference of causal relationships.
+Although this study identifies several predictors of life satisfaction using ML models, it is important to
+note that these models illustrate correlations, not cause-­and-­effect relationships. Moreover, all the data
+
+20448279, 2024, 2, Downloaded from https://bpspsychub.onlinelibrary.wiley.com/doi/10.1111/bjep.12657 by Beykent University, Wiley Online Library on [23/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+USING MACHINE LEARNING TO PREDICT UK AND JAPANESE
+SECONDARY STUDENTS' LIFE SATISFACTION IN PISA 2018
+
+|   
+
+PAN and CUTUMISU
+
+used in this study were collected through questionnaire surveys. Therefore, self-­reported measures may
+be prone to social desirability bias and response bias (Demetriou et al., 2015), consequently impairing
+the reliability and validity of data. Thus, future research could focus on more diverse populations and
+employ complementary measures to provide convergent evidence.
+
+Contributions and implications
+The current study offers insights into educational psychology research from a theoretical, methodological, and practical perspective.
+From a theoretical perspective, this study contributes to the research on students' subjective well-being, expanding knowledge and enhancing the understanding of life satisfaction among secondary students through the use of ML methodologies. Using ML models has underscored the multi-­d imensional
+nature of life satisfaction, demonstrating that it is influenced by a wide range of individual-­level factors
+such as meaning in life, ICT resources, and teacher support. Therefore, future theoretical models of life
+satisfaction among secondary students could be enriched by incorporating these diverse factors for a
+holistic understanding of the subject. Specifically, this study acknowledges the role of culture as a vital
+lens for interpreting life satisfaction (Oishi, 2006; Oishi et al., 2009). Although empirical research has
+brought to light substantial differences in life satisfaction across cultures ( Jebb et al., 2020; Senik, 2014;
+Suh & Choi, 2018), these studies have predominantly focused on adult participants and macro-­level
+factors such as national income level (Diener & Biswas-­Diener, 2002). In contrast, while individual-level variables associated with students' life satisfaction have been explored (Gilman & Huebner, 2003;
+Proctor et al., 2009), these studies seldom consider the potential interactions among these variables. This
+study samples students in secondary school, which is a crucial phase for establishing the foundations
+of lifelong well-­being (Salmela-­A ro & Tynkkynen, 2010), and it investigates the impact and interplay of
+various individual-­level variables on students' life satisfaction. In particular, this study emphasizes the
+importance of diversity among students in ML research.
+From a methodological perspective, this study highlights a gap in the literature and it is the first to
+use ML methods to investigate students' life satisfaction. The use of ML models in this study represents
+a significant shift towards more data-­driven methods in the field of psychological research. This study
+shifts the focus of ML-­based prediction from academic achievement to subjective well-­being, which
+is a critical antecedent of individuals' lifelong health and career success. This approach allows for a
+richer understanding of the intricate patterns in the relationship between predictors and the response
+variable, life satisfaction. As such, the study compares and contrasts two ML models aiming to predict
+secondary students' life satisfaction using two different datasets of PISA 2018. In addition, it examines
+the predictive performance of two ML models based on domain knowledge from two perspectives: the
+operational processes of algorithms and the characteristics of datasets. These models have the potential
+to illuminate the importance of different predictors and their complex interrelationships, thus paving
+the way for more nuanced and complex analyses. In addition, the use of both RF and KNN regression
+models allows for the comparison of different ML algorithms, contributing to the ongoing methodological dialogue in the field. Thus, this innovative approach not only deepens our understanding of
+students' life satisfaction but also offers a valuable demonstration of how to incorporate ML models into
+subjective well-­being research.
+From a practical perspective, the findings from this study provide useful insights for practitioners
+working in fields related to students' subjective well-­being. The identified predictors of life satisfaction could guide school administrations in observing and nurturing students' subjective well-­being.
+Additionally, understanding the key predictors of life satisfaction can inform the design of targeted
+interventions and programmes. For instance, initiatives that focus on enhancing individuals' sense of
+meaning in life, improving ICT resources, or facilitating teacher support could potentially enhance life
+satisfaction. During this process, some social–psychological interventions can be conducted according
+to the actual needs of students (Brady et al., 2018; Cohen, 2006; Kizilcec & Cohen, 2017).
+
+20448279, 2024, 2, Downloaded from https://bpspsychub.onlinelibrary.wiley.com/doi/10.1111/bjep.12657 by Beykent University, Wiley Online Library on [23/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+488
+
+  
+
+| 489
+
+Furthermore, the insights gained from this research could inform educational policies that aim to
+create a more conducive learning environment to enhance students' life satisfaction.
+
+C ONC LUSIONS
+This study showed that both ML models yielded better performance on the UK data than on the Japan
+data, with RF outperforming KNN for both countries. Notably, several factors were identified as significant predictors of secondary students' life satisfaction, including meaning in life, student competition, teacher support, exposure to bullying, and ICT resources. Using ML techniques, the findings of
+this study contribute to the understanding of life satisfaction, providing practical insights for improving
+secondary students' subjective well-­being.
+AU T HOR C ON T R I BU T ION S
+EP contributed to the conceptualization, investigation, methodology, data analyses, software, writing
+original draft, and writing—critical review and editing; MC contributed to the conceptualization, funding acquisition, supervision, investigation, methodology, and writing—critical review and editing.
+AC K NO​W L E​D G E​M E N T S
+We would like to thank the editor and the anonymous reviewers. We are also grateful to Alberta
+Innovates, the Social Sciences and Humanities Research Council of Canada – Insight Development
+Grant (SSHRC IDG) RES0062310, the Social Sciences and Humanities Research Council of Canada
+– Insight Grant (SSHRC IG) RES0048110, the Natural Sciences and Engineering Research Council
+Discovery Grant (NSERC DG) RES0043209, and the Government of Canada CanCode Callysto Grant
+RES0059331 for supporting this research.
+C ON F L IC T OF I N T E R E S T S TAT E M E N T
+The authors have no conflict of interest to report.
+DATA AVA I L A BI L I T Y S TAT E M E N T
+The data that support the findings of this study are openly available in PISA 2018 database at https://​
+www.​oecd.​org/​pisa/​data/​2018d​ataba​se/​. The code can be found in a GitHub repository at https://​
+github.​com/​echoz​pan/​Using​-­​M L-­​to-­​Predi​ct-­​L ife-­​Satis​faction (2023).
+ORC I D
+Zexuan Pan https://orcid.org/0000-0002-2450-5121
+Maria Cutumisu https://orcid.org/0000-0003-2475-9647
+R EF ER ENCES
+Aldridge, J. M., McChesney, K., & Afari, E. (2020). Associations between school climate and student life satisfaction: Resilience
+and bullying as mediating factors. Learning Environments Research, 23(1), 129–150. https://​doi.​org/​10.​1007/​s1098​4 -­​019-­​
+09296​-­​9
+Altman, N. S. (1992). An introduction to kernel and nearest-­neighbor nonparametric regression. The American Statistician, 46(3),
+175–185. https://​doi.​org/​10.​1080/​0 0031​305.​1992.​10475879
+Antaramian, S. P., Huebner, E. S., & Valois, R. F. (2008). Adolescent life satisfaction. Applied Psycholog y, 57(s1), 112–126. https://​
+doi.​org/​10.​1111/j.​1464-­​0597.​2 008.​0 0357.​x
+Ash, C., & Huebner, E. S. (2001). Environmental events and life satisfaction reports of adolescents. School Psycholog y International,
+22, 20–36.
+Belfer, M. L. (2008). Child and adolescent mental disorders: The magnitude of the problem across the globe. Journal of Child
+Psycholog y and Psychiatry, 49(3), 226–236. https://​doi.​org/​10.​1111/j.​1469-­​7610.​2 007.​01855.​x
+Brady, L. M., Fryberg, S. A., & Shoda, Y. (2018). Expanding the interpretive power of psychological science by attending to
+culture. Proceedings of the National Academy of Sciences, 115(45), 11406–11413. https://​doi.​org/​10.​1073/​pnas.​18035​26115​
+Breiman, L. (1996). Bagging predictors. Machine Learning, 24(2), 123–140. https://​doi.​org/​10.​1007/​BF000​58655​
+
+20448279, 2024, 2, Downloaded from https://bpspsychub.onlinelibrary.wiley.com/doi/10.1111/bjep.12657 by Beykent University, Wiley Online Library on [23/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+USING MACHINE LEARNING TO PREDICT UK AND JAPANESE
+SECONDARY STUDENTS' LIFE SATISFACTION IN PISA 2018
+
+|   
+
+PAN and CUTUMISU
+
+Brow, M. V. (2019). Significant predictors of mathematical literacy for top-­t iered countries/economies, Canada, and the United
+States on PISA 2012: Case for the sparse regression model. British Journal of Educational Psycholog y, 89(4), 726–749. https://​
+doi.​org/​10.​1111/​bjep.​12254​
+Busseri, M. A., & Mise, T. (2020). Bottom-­up or top-­down? Examining global and domain-­specific evaluations of how one's life
+is unfolding over time. Journal of Personality, 88(2), 391–410. https://​doi.​org/​10.​1111/​jopy.​12499​
+Cawley, G. C., & Talbot, N. L. (2010). On over-­f itting in model selection and subsequent selection bias in performance evaluation. The Journal of Machine Learning Research, 11, 2079–2107.
+Chan, D. W. (2012). Life satisfaction, happiness, and the growth mindset of healthy and unhealthy perfectionists among Hong
+Kong Chinese gifted students. Roeper Review, 34(4), 224–233. https://​doi.​org/​10.​1080/​02783​193.​2 012.​715333
+Chen, X., Cai, Z., He, J., & Fan, X. (2020). Gender differences in life satisfaction among children and adolescents: A meta-analysis. Journal of Happiness Studies, 21(6), 2279–2307. https://​doi.​org/​10.​1007/​s1090​2 -­​019-­​0 0169​-­​9
+Cohen, G. L. (2006). Reducing the racial achievement gap: A social-­psychological intervention. Science, 313(5791), 1307–1310.
+https://​doi.​org/​10.​1126/​scien​ce.​1128317
+Demetriou, C., Ozer, B. U., & Essau, C. A. (2015). Self-­report questionnaires. In R. L. Cautin & S. O. Lilienfeld (Eds.), The
+encyclopedia of clinical psycholog y (pp. 1–6). John Wiley & Sons, Inc. https://​doi.​org/​10.​1002/​97811​18625​392.​wbecp507
+Denisko, D., & Hoffman, M. M. (2018). Classification and interaction in random forests. Proceedings of the National Academy of
+Sciences, 115(8), 1690–1692. https://​doi.​org/​10.​1073/​pnas.​18002​56115​
+Diener, E. (1984). Subjective well-­being. Psychological Bulletin, 95(3), 542–575. https://​doi.​org/​10.​1037/​0 033-­​2909.​95.3.​542
+Diener, E. (2006). Guidelines for national indicators of subjective well-­being and ill-­being. Journal of Happiness Studies, 7(4),
+397–404. https://​doi.​org/​10.​1007/​s1090​2 -­​0 06-­​9000-­​y
+Diener, E., & Biswas-­Diener, R. (2002). Will money increase subjective well-­being? Social Indicators Research, 57(2), 119–169.
+https://​doi.​org/​10.​1023/A:​10144​11319119
+Diener, E., & Diener, M. (1995). Cross-­cultural correlates of life satisfaction and self-­esteem. Journal of Personality and Social
+Psycholog y, 68(4), 653–663. https://​doi.​org/​10.​1037/​0 022-­​3514.​68.4.​653
+Diener, E., Oishi, S., & Lucas, R. E. (2003). Personality, culture, and subjective well-­being: Emotional and cognitive evaluations
+of life. Annual Review of Psycholog y, 54(1), 403–425. https://​doi.​org/​10.​1146/​a nnur​ev.​psych.​54.​101601.​145056
+Diseth, Å., Danielsen, A. G., & Samdal, O. (2012). A path analysis of basic need support, self-­efficacy, achievement goals,
+life satisfaction and academic achievement level among secondary school students. Educational Psycholog y, 32(3), 335–354.
+https://​doi.​org/​10.​1080/​01443​410.​2 012.​657159
+Dong, X., & Hu, J. (2019). An exploration of impact factors influencing students' reading literacy in Singapore with machine
+learning approaches. International Journal of English Linguistics, 9(5), 52–65. https://​doi.​org/​10.​5539/​ijel.​v 9n5p52
+Downey, D. B., & Condron, D. J. (2016). Fifty years since the Coleman report: Rethinking the relationship between schools and
+inequality. Sociolog y of Education, 89(3), 207–220. https://​doi.​org/​10.​1177/​0 0380​4 0716​651676
+Dunleavy, G., & Burke, J. (2019). Fostering a sense of belonging at an international school in France: An experimental study.
+Educational and Child Psycholog y, 36(4), 12.
+Eid, M., Larsen, R. J., & Guilford Press. (2008). The science of subjective well-­being. The Guilford Press.
+Fergusson, D. M., McLeod, G. F. H., Horwood, L. J., Swain, N. R., Chapple, S., & Poulton, R. (2015). Life satisfaction and
+mental health problems (18 to 35 years). Psychological Medicine, 45(11), 2427–2436. https://​doi.​org/​10.​1017/​S 0033​2 9171​
+5000422
+Fix, E., & Hodges, J. L. (1989). Discriminatory analysis: Nonparametric discrimination, consistency properties. International
+Statistical Review, 57(3), 238. https://​doi.​org/​10.​2307/​1403797
+Gabriel, F., Signolet, J., & Westwell, M. (2018). A machine learning approach to investigating the effects of mathematics dispositions on mathematical literacy. International Journal of Research & Method in Education, 41(3), 306–327. https://​doi.​org/​10.​
+1080/​17437​27X.​2 017.​1301916
+García, R., Aguilar, J., Toro, M., Pinto, A., & Rodríguez, P. (2020). A systematic literature review on the use of machine learning
+in precision livestock farming. Computers and Electronics in Agriculture, 179, 105826. https://​doi.​org/​10.​1016/j.​compag.​2 020.​
+105826
+Gelfand, M. J., Erez, M., & Aycan, Z. (2007). Cross-­cultural organizational behavior. Annual Review of Psycholog y, 58(1), 479–514.
+https://​doi.​org/​10.​1146/​a nnur​ev.​psych.​58.​110405.​085559
+Gilman, R., Dooley, J., & Florell, D. (2006). Relative levels of hope and their relationship with academic and psychological
+indicators among adolescents. Journal of Social and Clinical Psycholog y, 25(2), 166–178. https://​doi.​org/​10.​1521/​jscp.​2 006.​
+25.2.​166
+Gilman, R., & Huebner, E. S. (1997). Children's reports of their life satisfaction: Convergence across raters, time and response
+formats. School Psycholog y International, 18(3), 229–243. https://​doi.​org/​10.​1177/​01430​34397​183004
+Gilman, R., & Huebner, S. (2003). A review of life satisfaction research with children and adolescents. School Psycholog y Quarterly,
+18(2), 192–205. https://​doi.​org/​10.​1521/​scpq.​18.2.​192.​21858​
+Github Code. (2023). Using-­M L-­to-­predict-­life-­satisfaction [source code]. GitHub. https://​g ithub.​com/​echoz​pan/​Using​-­​M L-­​
+to-­​Predi​ct-­​L ife- ­​Satis​faction
+Gorostiaga, A., & Rojo-­Á lvarez, J. L. (2016). On the use of conventional and statistical-­learning techniques for the analysis of
+PISA results in Spain. Neurocomputing, 171, 625–637. https://​doi.​org/​10.​1016/j.​neucom.​2 015.​07.​0 01
+
+20448279, 2024, 2, Downloaded from https://bpspsychub.onlinelibrary.wiley.com/doi/10.1111/bjep.12657 by Beykent University, Wiley Online Library on [23/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+490
+
+  
+
+| 491
+
+Govorova, E., Benítez, I., & Muñiz, J. (2020). Predicting student well-­being: Network analysis based on PISA 2018. International
+Journal of Environmental Research and Public Health, 17(11), 4014. https://​doi.​org/​10.​3390/​ijerp​h1711​4 014
+Grant, N., Wardle, J., & Steptoe, A. (2009). The relationship between life satisfaction and health behavior: A cross-­c ultural
+analysis of young adults. International Journal of Behavioral Medicine, 16(3), 259–268. https://​doi.​org/​10.​1007/​s1252​
+9- ­​0 09-­​9 032-­​x
+Grasseni, M., & Origo, F. (2018). Competing for happiness: Attitudes to competition, positional concerns and wellbeing. Journal
+of Happiness Studies, 19(7), 1981–2008. https://​doi.​org/​10.​1007/​s1090​2 -­​017-­​9906-­​6
+Grömping, U. (2009). Variable importance assessment in regression: Linear regression versus random forest. The American
+Statistician, 63(4), 308–319. https://​doi.​org/​10.​1198/​tast.​2 009.​08199​
+Hamamura, T. (2012). Are cultures becoming individualistic? A cross-­t emporal comparison of individualism–collectivism
+in the United States and Japan. Personality and Social Psycholog y Review, 16(1), 3–24. https://​doi.​org/​10.​1177/​10888​68311​
+411587
+Haybron, D. (2007). Life satisfaction, ethical reflection, and the science of happiness. Journal of Happiness Studies, 8(1), 99–138.
+https://​doi.​org/​10.​1007/​s1090​2 -­​0 06-­​9006-­​5
+Headey, B., Veenhoven, R., & Wearing, A. (1991). Top-­down versus bottom-­up theories of subjective well-­being. Social Indicators
+Research, 24(1), 81–100. https://​doi.​org/​10.​1007/​BF002​92652​
+Heffner, A. L., & Antaramian, S. P. (2016). The role of life satisfaction in predicting student engagement and achievement.
+Journal of Happiness Studies, 17(4), 1681–1701. https://​doi.​org/​10.​1007/​s1090​2 -­​015-­​9665-­​1
+Ho, T. K. (1995). Random decision forests. Proceedings of 3rd international conference on document analysis and recognition,
+1, 278–282. https://​doi.​org/​10.​1109/​ICDAR.​1995.​598994
+Hofman, J. M., Watts, D. J., Athey, S., Garip, F., Griffiths, T. L., Kleinberg, J., Margetts, H., Mullainathan, S., Salganik, M. J.,
+Vazire, S., Vespignani, A., & Yarkoni, T. (2021). Integrating explanation and prediction in computational social science.
+Nature, 595(7866), 181–188. https://​doi.​org/​10.​1038/​s4158​6 -­​021-­​03659​- ­​0
+Hofstede, G. (1980). Culture's consequences: International differences in work-­related values. Sage.
+Huang, L. (2020). Peer victimization, teacher unfairness, and adolescent life satisfaction: The mediating roles of sense of belonging to school and schoolwork-­related anxiety. School Mental Health, 12(3), 556–566. https://​doi.​org/​10.​1007/​s1231​0 -­​
+020-­​09365​-­​y
+Huebner, E. S. (1991). Initial development of the student's life satisfaction scale. School Psycholog y International, 12(3), 231–240.
+https://​doi.​org/​10.​1177/​01430​34391​123010
+IBM Corp. (2020). IBM SPSS statistics for windows (version 27.0) [Computer software]. IBM Corp.
+Jaques, N., Taylor, S., Azaria, A., Ghandeharioun, A., Sano, A., & Picard, R. (2015). Predicting students' happiness from physiology, phone, mobility, and behavioral data. 2015 International Conference on Affective Computing and Intelligent
+Interaction (ACII), 222–228. https://​doi.​org/​10.​1109/​ACII.​2 015.​7344575
+Jebb, A. T., Morrison, M., Tay, L., & Diener, E. (2020). Subjective well-­being around the world: Trends and predictors across the
+life span. Psychological Science, 31(3), 293–305. https://​doi.​org/​10.​1177/​09567​97619​898826
+Kaiser, M., Otterbach, S., & Sousa-­Poza, A. (2021). Using deep learning to uncover the relation between age and life satisfaction
+[preprint]. https://​doi.​org/​10.​21203/​​rs.3.​rs-­​943521/​v1
+Kersting, K. (2018). Machine learning and artificial intelligence: Two fellow travelers on the quest for intelligent behavior in
+machines. Frontiers in Big Data, 1, 6. https://​doi.​org/​10.​3389/​fdata.​2 018.​0 0006​
+Kizilcec, R. F., & Cohen, G. L. (2017). Eight-­m inute self-­regulation intervention raises educational attainment at scale in individualist but not collectivist cultures. Proceedings of the National Academy of Sciences, 114(17), 4348–4353. https://​doi.​org/​10.​
+1073/​pnas.​16118​98114​
+Kohavi, R., & John, G. H. (1995). Automatic parameter selection by minimizing estimated error. In A. Prieditis, & S. Russell
+(Eds.), Machine Learning Proceedings 1995 (pp. 304–312). Morgan Kaufmann.
+Koivumaa-­Honkanen, H. (2000). Self-­reported life satisfaction and 20-­year mortality in healthy Finnish adults. American Journal
+of Epidemiolog y, 152(10), 983–991. https://​doi.​org/​10.​1093/​aje/​152.​10.​983
+Kushlev, K. (2018). Media technology and well-­being: A complementarity-­interference model. In E. Diener, S. Oishi, & L. Tay
+(Eds.), Handbook of well-­being. DEF Publishers.
+Lance, C. E., Lautenschlager, G. J., Sloan, C. E., & Varca, P. E. (1989). A comparison between bottom-­up, top-­down, and bidirectional models of relationships between global and life facet satisfaction. Journal of Personality, 57(3), 601–624. https://​doi.​
+org/​10.​1111/j.​1467-­​6494.​1989.​tb005​65.​x
+Lewis, A. D., Huebner, E. S., Malone, P. S., & Valois, R. F. (2011). Life satisfaction and student engagement in adolescents.
+Journal of Youth and Adolescence, 40(3), 249–262. https://​doi.​org/​10.​1007/​s1096​4 -­​010-­​9517-­​6
+Llamas-­Díaz, D., Cabello, R., Megías-­Robles, A., & Fernández-­Berrocal, P. (2022). Systematic review and meta-­a nalysis: The
+association between emotional intelligence and subjective well-­being in adolescents. Journal of Adolescence, 94(7), 925–938.
+https://​doi.​org/​10.​1002/​jad.​12075​
+Maddux, J. E. (2018). Subjective well-­being and life satisfaction: An introduction to conceptions, theories, and measures. In J.
+E. Maddux (Ed.), Subjective well-­being and life satisfaction (pp. 3–31). Routledge/Taylor & Francis Group.
+Mandalapu, V., & Gong, J. (2019). Studying factors influencing the prediction of student STEM and non-­STEM career choice.
+Proceedings of EDM 2019 Conference, 6.
+
+20448279, 2024, 2, Downloaded from https://bpspsychub.onlinelibrary.wiley.com/doi/10.1111/bjep.12657 by Beykent University, Wiley Online Library on [23/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+USING MACHINE LEARNING TO PREDICT UK AND JAPANESE
+SECONDARY STUDENTS' LIFE SATISFACTION IN PISA 2018
+
+|   
+
+PAN and CUTUMISU
+
+Markus, H. R., & Kitayama, S. (1991). Culture and the self: Implications for cognition, emotion, and motivation. Psychological
+Review, 98(2), 224–253. https://​doi.​org/​10.​1037/​0 033-­​295X.​98.2.​2 24
+Marquez, J., & Long, E. (2021). A global decline in adolescents' subjective well-­being: A comparative study exploring patterns
+of change in the life satisfaction of 15-­year-­old students in 46 countries. Child Indicators Research, 14(3), 1251–1292. https://​
+doi.​org/​10.​1007/​s1218​7-­​020-­​09788​- ­​8
+Maslow, A. H. (1943). A theory of human motivation. Psychological Review, 50(4), 370–396. https://​doi.​org/​10.​1037/​h0054346
+Moksnes, U. K., Eilertsen, M. B., Ringdal, R., Bjørnsen, H. N., & Rannestad, T. (2019). Life satisfaction in association with self-efficacy and stressor experience in adolescents – Self-­efficacy as a potential moderator. Scandinavian Journal of Caring Sciences,
+33(1), 222–230. https://​doi.​org/​10.​1111/​scs.​12624​
+Morrone, A., Piscitelli, A., & D'Ambrosio, A. (2019). How disadvantages shape life satisfaction: An alternative methodological
+approach. Social Indicators Research, 141(1), 477–502. https://​doi.​org/​10.​1007/​s1120​5 -­​017-­​1825-­​8
+Neto, F. (1993). The satisfaction with life scale: Psychometrics properties in an adolescent sample. Journal of Youth and Adolescence,
+22(2), 125–134. https://​doi.​org/​10.​1007/​BF015​36648​
+Ng, W., Minasny, B., Mendes, W. S., & Demattê, J. A. M. (2020). The influence of training sample size on the accuracy of deep
+learning models for the prediction of soil properties with near-­i nfrared spectroscopy data. The Soil, 6(2), 565–578. https://​
+doi.​org/​10.​5194/​soil- ­​6 -­​565-­​2 020
+Ng, Z. J., Huebner, S. E., & Hills, K. J. (2015). Life satisfaction and academic performance in early adolescents: Evidence for
+reciprocal association. Journal of School Psycholog y, 53(6), 479–491. https://​doi.​org/​10.​1016/j.​jsp.​2 015.​09.​0 04
+Nisbett, R. E., Peng, K., Choi, I., & Norenzayan, A. (2001). Culture and systems of thought: Holistic versus analytic cognition.
+Psychological Review, 108(2), 291–310. https://​doi.​org/​10.​1037/​0 033-­​295X.​108.2.​291
+OECD. (2018a). PISA 2018 Student Questionnaire. https://​w ww.​oecd.​org/​pisa/​data/​2 018d​ataba​se/​C Y7_ ​2 01710_​QST_ ​M S_​
+STQ_ ​NoNot​es_​f inal.​pdf
+OECD. (2018b). PISA 2018 Well-­Being Questionnaire. https://​w ww.​oecd.​org/​pisa/​data/​2 018d​ataba​se/​C Y7_ ​2 01710_​QST_​
+MS_​W BQ_ ​NoNot​es_​f inal.​pdf
+OECD. (2019). PISA 2018 results (volume I): What students know and can do. OECD.
+Oishi, S. (2006). The concept of life satisfaction across cultures: An IRT analysis. Journal of Research in Personality, 40(4), 411–423.
+https://​doi.​org/​10.​1016/j.​jrp.​2 005.​02.​0 02
+Oishi, S., Diener, E., Lucas, R. E., & Suh, E. M. (2009). Cross-­cultural variations in predictors of life satisfaction: Perspectives
+from needs and values. In E. Diener (Ed.), Culture and well-­being (Vol. 38, pp. 109–127). Springer. https://​doi.​org/​10.​1007/​
+978-­​90-­​481-­​2352-­​0 _​6
+Ortman, P. E. (1988). Adolescents' perceptions of and feelings about control and responsibility in their lives. Adolescence, 23, 913–924.
+Oyserman, D. (2011). Culture as situated cognition: Cultural mindsets, cultural fluency, and meaning making. European Review of
+Social Psycholog y, 22(1), 164–214. https://​doi.​org/​10.​1080/​10463​283.​2 011.​627187
+Patton, G. C., Tollit, M. M., Romaniuk, H., Spence, S. H., Sheffield, J., & Sawyer, M. G. (2011). A prospective study of the effects
+of optimism on adolescent health risks. Pediatrics, 127(2), 308–316. https://​doi.​org/​10.​1542/​peds.​2 010-­​0748
+Pedregosa, F., Varoquaux, G., Gramfort, A., Michel, V., Thirion, B., Grisel, O., Blondel, M., Prettenhofer, P., Weiss, R.,
+Dubourg, V., Vanderplas, J., Passos, A., Cournapeau, D., Brucher, M., Perrot, M., & Duchesnay, É. (2011). Scikit-­learn:
+Machine learning in python. Journal of Machine Learning Research, 12(10), 2825–2830.
+PISA. (2018). PISA 2018 data set. Retrieved from https://​w ww.​oecd.​org/​pisa/​data/​2 018d​ataba​sehtt ​ps://​w ww.​oecd.​org/​pisa/​
+data/​2 018d​atabase
+Proctor, C. L., Linley, P. A., & Maltby, J. (2009). Youth life satisfaction: A review of the literature. Journal of Happiness Studies,
+10(5), 583–630. https://​doi.​org/​10.​1007/​s1090​2 -­​0 08-­​9110-­​9
+Puah, S. (2021). Predicting students' academic performance: A comparison between traditional MLR and machine learning
+methods with PISA 2015 [preprint]. PsyArXiv. https://​doi.​org/​10.​31234/​​osf.​io/​2yshm​
+Rajaguru, H., & Chakravarthy, S. R. S. (2019). Analysis of decision tree and k-­nearest neighbor algorithm in the classification of breast cancer. Asian Pacific Journal of Cancer Prevention, 20(12), 3777–3781. https://​doi.​org/​10.​31557/​​A PJCP.​
+2019.​2 0.​12.​3777
+Rode, J. C., Arthaud-­Day, M. L., Mooney, C. H., Near, J. P., Baldwin, T. T., Bommer, W. H., & Rubin, R. S. (2005). Life satisfaction and student performance. Academy of Management Learning & Education, 4(4), 421–433. https://​doi.​org/​10.​5465/​a mle.​
+2005.​19086784
+Ryan, R. M., & Deci, E. L. (2000). Self-­determination theory and the facilitation of intrinsic motivation, social development,
+and well-­being. American Psychologist, 11, 68–78.
+Saarela, M., Yener, B., Zaki, M. J., & Kärkkäinen, T. (2016). Predicting math performance from raw large-­scale educational
+assessments data: A machine learning approach. JMLR Workshop and Conference Proceedings, 48.
+Sahdra, B. K., Ciarrochi, J., Basarkod, G., Dicke, T., Guo, J., Parker, P. D., & Marsh, H. W. (2021). High school students' tenacity and flexibility in goal pursuit linked to life satisfaction and achievement on competencies tests. Journal of Educational
+Psycholog y, 114(3), 622–636. https://​doi.​org/​10.​1037/​edu00​0 0667​
+Salinas-­Jiménez, M. M., Artés, J., & Salinas-­Jiménez, J. (2010). Income, motivation, and satisfaction with life: An empirical
+analysis. Journal of Happiness Studies, 11(6), 779–793. https://​doi.​org/​10.​1007/​s1090​2 -­​010-­​9185-­​y
+
+20448279, 2024, 2, Downloaded from https://bpspsychub.onlinelibrary.wiley.com/doi/10.1111/bjep.12657 by Beykent University, Wiley Online Library on [23/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+492
+
+  
+
+| 493
+
+Salmela-­A ro, K., & Tynkkynen, L. (2010). Trajectories of life satisfaction across the transition to post-­compulsory education:
+Do adolescents follow different pathways? Journal of Youth and Adolescence, 39(8), 870–881. https://​doi.​org/​10.​1007/​s1096​
+4-­​0 09-­​9464-­​2
+Sanchez, O. R., Repetto, M., Carrega, A., & Bolla, R. (2021). Evaluating ML-­based DDoS detection with grid search hyperparameter optimization. 7th International IEEE Conference on Network Softwarization (NetSoft), 402–408. https://​doi.​
+org/​10.​1109/​NetSo​ft515​09.​2 021.​9492633
+Sathyadevan, S., & Nair, R. R. (2015). Comparative analysis of decision tree algorithms: ID3, C4.5 and random forest. In L. C.
+Jain, H. S. Behera, J. K. Mandal, & D. P. Mohapatra (Eds.), Computational intelligence in data mining—Volume 1 (Vol. 31, pp.
+549–562). Springer India. https://​doi.​org/​10.​1007/​978-­​81-­​322-­​2 205-­​7_​51
+Schwartz, S. H. (2009). Culture matters: National value cultures, sources and consequences. In R. S. Wyer, C.-­Y. Chiu, & Y.-­Y.
+Hong (Eds.), Understanding culture: Theory, research and application (pp. 127–150). Psychology Press.
+Senik, C. (2014). The French unhappiness puzzle: The cultural dimension of happiness. Journal of Economic Behavior & Organization,
+106, 379–401. https://​doi.​org/​10.​1016/j.​jebo.​2 014.​05.​010
+Shin, D. C., & Johnson, D. M. (1978). Avowed happiness as an overall assessment of the quality of life. Social Indicators Research,
+5(1–4), 475–492. https://​doi.​org/​10.​1007/​BF003​52944​
+Soares, A. S., Pais-­R ibeiro, J. L., & Silva, I. (2019). Developmental assets predictors of life satisfaction in adolescents. Frontiers in
+Psycholog y, 10, 236. https://​doi.​org/​10.​3389/​f psyg.​2 019.​0 0236​
+Steel, P., Schmidt, J., & Shultz, J. (2008). Refining the relationship between personality and subjective well-­being. Psychological
+Bulletin, 134(1), 138–161. https://​doi.​org/​10.​1037/​0 033-­​2909.​134.1.​138
+Steinberg, L. (2005). Cognitive and affective development in adolescence. Trends in Cognitive Sciences, 9(2), 69–74. https://​doi.​org/​
+10.​1016/j.​t ics.​2 004.​12.​0 05
+Steinmayr, R., Paschke, P., & Wirthwein, L. (2022). Elementary school students' subjective well-­being before and during the
+COVID-­19 pandemic: A longitudinal study. Journal of Happiness Studies, 23(6), 2985–3005. https://​doi.​org/​10.​1007/​s1090​
+2-­​022-­​0 0537​-­​y
+Suh, E., Diener, E., Oishi, S., & Triandis, H. C. (1998). The shifting basis of life satisfaction judgments across cultures:
+Emotions versus norms. Journal of Personality and Social Psycholog y, 74(2), 482–493. https://​doi.​org/​10.​1037/​0 022-­​3514.​
+74.2.​4 82
+Suh, E. M. (2000). Self, the hyphen between culture and subjective well-­being. In E. Diener & E. M. Suh (Eds.), Culture and
+subjective well-­being (pp. 63–86). MIT Press.
+Suh, E. M., & Choi, S. (2018). Predictors of subjective well-­being across cultures. In E. Diener, S. Oishi, & L. Tay (Eds.),
+Handbook of well-­being. DEF Publishers.
+Triandis, H. C. (1995). Individualism & collectivism. Westview Press.
+Van Rossum, G., & Drake, F. L., Jr. (1995). Python reference manual. Centrum voor Wiskunde en Informatica Amsterdam.
+Varma, S., & Simon, R. (2006). Bias in error estimation when using cross-­validation for model selection. BMC Bioinformatics,
+7(1), 1–8.
+Yarkoni, T., & Westfall, J. (2017). Choosing prediction over explanation in psychology: Lessons from machine learning.
+Perspectives on Psychological Science, 12(6), 1100–1122. https://​doi.​org/​10.​1177/​17456​91617​693393
+Yeung, C.-­K ., & Yeung, D.-­Y. (2019). Incorporating features learned by an enhanced deep knowledge tracing model for STEM/
+non-­STEM job prediction. International Journal of Artificial Intelligence in Education, 29(3), 317–341. https://​doi.​org/​10.​1007/​
+s4059​3 - ­​019- ­​0 0175 ​-­​1
+Yılmaz, H. (2018). Fear of success and life satisfaction in terms of self-­efficacy. Universal Journal of Educational Research, 6(6),
+1278–1285. https://​doi.​org/​10.​13189/​​ujer.​2 018.​060619
+You, L. (2021). Utilizing machine learning to predict happiness index. 2nd international conference on E-commerce and internet technology (ECIT), 233–238. https://​doi.​org/​10.​1109/​ECIT5​2743.​2 021.​0 0058​
+Youyou, W., Kosinski, M., & Stillwell, D. (2015). Computer-­based personality judgments are more accurate than those made by
+humans. Proceedings of the National Academy of Sciences, 112(4), 1036–1040. https://​doi.​org/​10.​1073/​pnas.​14186​8 0112​
+
+How to cite this article: Pan, Z., & Cutumisu, M. (2024). Using machine learning to predict
+UK and Japanese secondary students' life satisfaction in PISA 2018. British Journal of Educational
+Psycholog y, 94, 474–498. https://doi.org/10.1111/bjep.12657
+
+20448279, 2024, 2, Downloaded from https://bpspsychub.onlinelibrary.wiley.com/doi/10.1111/bjep.12657 by Beykent University, Wiley Online Library on [23/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+USING MACHINE LEARNING TO PREDICT UK AND JAPANESE
+SECONDARY STUDENTS' LIFE SATISFACTION IN PISA 2018
+
+|   
+
+PAN and CUTUMISU
+
+A PP E N DI X A
+TA BL E A 1
+
+Number and per cent of missing cases.
+
+Country
+
+UK
+
+Variable name
+
+Missing case
+
+Missing per cent
+
+Missing case
+
+Missing per cent
+
+ST016Q01NA
+
+887
+
+6.4%
+
+79
+
+1.3%
+
+AGE
+
+0
+
+0
+
+0
+
+0
+
+ST004D01T
+
+0
+
+0
+
+0
+
+0
+
+ESCS
+
+925
+
+6.7%
+
+54
+
+0.9%
+
+ICTRES
+
+474
+
+3.4%
+
+20
+
+0.3%
+
+BEINGBULLIED
+
+1669
+
+12.1%
+
+195
+
+3.2%
+
+EMOSUPS
+
+1290
+
+9.3%
+
+148
+
+2.4%
+
+TEACHSUP
+
+582
+
+4.2%
+
+45
+
+0.7%
+
+ADAPTIVITY
+
+857
+
+6.2%
+
+94
+
+1.4%
+
+BELONG
+
+1127
+
+8.2%
+
+117
+
+1.9%
+
+PERFEED
+
+751
+
+5.4%
+
+92
+
+1.5%
+
+TEACHINT
+
+751
+
+5.4%
+
+80
+
+1.3%
+
+PERCOOP
+
+2026
+
+14.7%
+
+258
+
+4.2%
+
+PERCOMP
+
+1606
+
+11.6%
+
+187
+
+3.1%
+
+COMPETE
+
+904
+
+6.5%
+
+89
+
+1.5%
+
+ST185Q01HA
+
+855
+
+6.2%
+
+92
+
+1.5%
+
+MASTGOAL
+
+1089
+
+7.9%
+
+113
+
+1.8%
+
+WORKMAST
+
+1197
+
+8.7%
+
+110
+
+1.8%
+
+ATTLNACT
+
+796
+
+5.8%
+
+72
+
+1.2%
+
+JOYREAD
+
+710
+
+5.1%
+
+46
+
+0.8%
+
+RESILIENCE
+
+1103
+
+8%
+
+100
+
+1.6%
+
+GFOFAIL
+
+980
+
+7.1%
+
+101
+
+1.7%
+
+EUDMO
+
+1245
+
+9.0%
+
+117
+
+1.9%
+
+SWBP
+
+1116
+
+8.1%
+
+135
+
+2.2%
+
+DISCLIMA
+
+557
+
+4.0%
+
+35
+
+0.6%
+
+DIRINS
+
+621
+
+4.5%
+
+38
+
+0.6%
+
+STIMREAD
+
+829
+
+6.0%
+
+64
+
+1.0%
+
+Japan
+
+20448279, 2024, 2, Downloaded from https://bpspsychub.onlinelibrary.wiley.com/doi/10.1111/bjep.12657 by Beykent University, Wiley Online Library on [23/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+494
+
+  
+
+| 495
+
+TA BL E A 2
+
+Descriptive statistics of variables (UK).
+
+Country
+
+UK
+
+Variable Name
+
+Mean
+
+Standard Deviation
+
+Skewness
+
+Kurtosis
+
+ST016Q01NA
+
+6.31
+
+2.647
+
+−0.618
+
+−0.398
+
+AGE
+
+15.764
+
+0.283
+
+0.024
+
+−1.137
+
+ST004D01T
+
+50.6% Female, 49.4% Male
+
+ESCS
+
+0.243
+
+0.886
+
+−0.259
+
+−0.232
+
+ICTRES
+
+0.455
+
+1.090
+
+0.805
+
+1.078
+
+BEINGBULLIED
+
+0.225
+
+1.054
+
+0.789
+
+0.185
+
+EMOSUPS
+
+0.096
+
+0.987
+
+−0.633
+
+−0.690
+
+TEACHSUP
+
+0.265
+
+0.964
+
+−0.711
+
+0.020
+
+ADAPTIVITY
+
+0.163
+
+1.000
+
+−0.057
+
+−0.008
+
+BELONG
+
+−0.213
+
+0.867
+
+1.015
+
+2.997
+
+PERFEED
+
+0.456
+
+0.957
+
+−0.115
+
+−0.450
+
+TEACHINT
+
+0.181
+
+0.990
+
+−0.095
+
+−0.410
+
+PERCOOP
+
+−0.121
+
+0.919
+
+−0.003
+
+−0.666
+
+PERCOMP
+
+0.317
+
+0.926
+
+−0.011
+
+−0.251
+
+COMPETE
+
+0.129
+
+0.996
+
+0.078
+
+−0.029
+
+ST185Q01HA
+
+2.610
+
+0.859
+
+−0.207
+
+−0.584
+
+MASTGOAL
+
+−0.109
+
+0.997
+
+0.074
+
+−0.156
+
+WORKMAST
+
+−0.174
+
+0.946
+
+0.258
+
+0.050
+
+ATTLNACT
+
+0.209
+
+0.971
+
+−0.786
+
+0.271
+
+JOYREAD
+
+−0.280
+
+1.101
+
+0.115
+
+0.292
+
+RESILIENCE
+
+−0.159
+
+0.938
+
+0.643
+
+1.063
+
+GFOFAIL
+
+0.281
+
+1.030
+
+−0.110
+
+−0.554
+
+EUDMO
+
+−0.225
+
+0.999
+
+0.093
+
+−0.320
+
+SWBP
+
+−0.275
+
+0.967
+
+−0.007
+
+−0.552
+
+DISCLIMA
+
+0.064
+
+1.126
+
+−0.255
+
+−0.042
+
+DIRINS
+
+0.002
+
+1.017
+
+−0.060
+
+0.074
+
+STIMREAD
+
+0.090
+
+0.952
+
+0.024
+
+0.151
+
+20448279, 2024, 2, Downloaded from https://bpspsychub.onlinelibrary.wiley.com/doi/10.1111/bjep.12657 by Beykent University, Wiley Online Library on [23/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+USING MACHINE LEARNING TO PREDICT UK AND JAPANESE
+SECONDARY STUDENTS' LIFE SATISFACTION IN PISA 2018
+
+|   
+
+TA BL E A 3
+
+PAN and CUTUMISU
+
+Descriptive statistics of variables ( Japan).
+
+Country
+
+Japan
+
+Variable Name
+
+Mean
+
+Standard Deviation
+
+Skewness
+
+Kurtosis
+
+ST016Q01NA
+
+6.190
+
+2.599
+
+−0.458
+
+−0.480
+
+AGE
+
+15.781
+
+0.289
+
+−0.040
+
+−1.156
+
+ST004D01T
+
+51.1% Female, 48.9% Male
+
+ESCS
+
+−0.107
+
+0.730
+
+−0.168
+
+−0.038
+
+ICTRES
+
+−0.525
+
+0.831
+
+0.799
+
+3.541
+
+BEINGBULLIED
+
+−0.287
+
+0.863
+
+1.734
+
+2.803
+
+EMOSUPS
+
+−0.265
+
+1.024
+
+−0.090
+
+−1.056
+
+TEACHSUP
+
+0.070
+
+0.966
+
+−0.568
+
+0.227
+
+ADAPTIVITY
+
+−0.097
+
+0.940
+
+−0.047
+
+0.454
+
+BELONG
+
+0.013
+
+0.932
+
+1.050
+
+1.968
+
+PERFEED
+
+−3.000
+
+0.977
+
+0.484
+
+−0.439
+
+TEACHINT
+
+−0.235
+
+0.988
+
+0.211
+
+−0.195
+
+PERCOOP
+
+0.113
+
+1.051
+
+−0.197
+
+−0.867
+
+PERCOMP
+
+−0.364
+
+1.002
+
+0.383
+
+−0.011
+
+COMPETE
+
+−0.198
+
+1.016
+
+0.048
+
+0.127
+
+ST185Q01HA
+
+2.610
+
+0.859
+
+−0.207
+
+−0.584
+
+MASTGOAL
+
+−0.304
+
+0.974
+
+0.218
+
+0.147
+
+WORKMAST
+
+−0.114
+
+1.051
+
+0.143
+
+−0.238
+
+ATTLNACT
+
+0.177
+
+0.960
+
+−0.648
+
+−0.466
+
+JOYREAD
+
+0.298
+
+1.084
+
+0.044
+
+0.202
+
+RESILIENCE
+
+−0.618
+
+0.950
+
+0.832
+
+1.914
+
+GFOFAIL
+
+0.380
+
+0.957
+
+−0.216
+
+−0.232
+
+EUDMO
+
+−0.401
+
+0.981
+
+0.470
+
+−0.086
+
+SWBP
+
+−0.132
+
+0.956
+
+−0.247
+
+−0.403
+
+DISCLIMA
+
+0.785
+
+0.970
+
+−0.517
+
+−0.074
+
+DIRINS
+
+0.166
+
+1.014
+
+−0.180
+
+0.296
+
+STIMREAD
+
+0.131
+
+1.014
+
+−0.039
+
+0.013
+
+20448279, 2024, 2, Downloaded from https://bpspsychub.onlinelibrary.wiley.com/doi/10.1111/bjep.12657 by Beykent University, Wiley Online Library on [23/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+496
+
+TA BL E A4
+Metrics
+
+  
+
+| 497
+
+Mean validation and test performance across five outer folds (UK).
+Validation
+
+Test
+
+RF
+Outer
+
+1
+
+2
+
+3
+
+4
+
+5
+
+Mean
+
+MSE
+
+0.203
+
+0.205
+
+0.203
+
+0.202
+
+0.203
+
+0.203
+
+RMSE
+
+0.450
+
+0.452
+
+0.451
+
+0.450
+
+0.450
+
+0.451
+
+MAE
+
+0.408
+
+0.411
+
+0.409
+
+0.407
+
+0.409
+
+0.408
+
+R2
+
+0.189
+
+0.181
+
+0.186
+
+0.190
+
+0.188
+
+0.187
+
+Outer
+
+1
+
+2
+
+3
+
+4
+
+5
+
+Mean
+
+MSE
+
+0.225
+
+0.227
+
+0.225
+
+0.223
+
+0.225
+
+0.224
+
+RMSE
+
+0.474
+
+0.477
+
+0.474
+
+0.473
+
+0.474
+
+0.474
+
+KNN
+
+MAE
+
+0.433
+
+0.437
+
+0.433
+
+0.431
+
+0.433
+
+0.433
+
+R2
+
+0.101
+
+0.091
+
+0.101
+
+0.106
+
+0.100
+
+0.103
+
+TA BL E A 5
+Metrics
+
+Mean validation and test performance across five outer folds ( Japan).
+Validation
+
+Test
+
+RF
+Outer
+
+1
+
+2
+
+3
+
+4
+
+5
+
+Mean
+
+MSE
+
+0.213
+
+0.215
+
+0.215
+
+0.215
+
+0.212
+
+0.215
+
+RMSE
+
+0.461
+
+0.463
+
+0.463
+
+0.463
+
+0.461
+
+0.464
+
+MAE
+
+0.430
+
+0.433
+
+0.433
+
+0.434
+
+0.431
+
+0.434
+
+R2
+
+0.148
+
+0.140
+
+0.141
+
+0.140
+
+0.150
+
+0.138
+
+KNN
+Outer
+
+1
+
+2
+
+3
+
+4
+
+5
+
+Mean
+
+MSE
+
+0.232
+
+0.234
+
+0.237
+
+0.240
+
+0.233
+
+0.236
+
+RMSE
+
+0.481
+
+0.483
+
+0.486
+
+0.490
+
+0.483
+
+0.486
+
+MAE
+
+0.446
+
+0.448
+
+0.450
+
+0.456
+
+0.447
+
+0.451
+
+R2
+
+0.072
+
+0.064
+
+0.053
+
+0.039
+
+0.066
+
+0.055
+
+20448279, 2024, 2, Downloaded from https://bpspsychub.onlinelibrary.wiley.com/doi/10.1111/bjep.12657 by Beykent University, Wiley Online Library on [23/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+USING MACHINE LEARNING TO PREDICT UK AND JAPANESE
+SECONDARY STUDENTS' LIFE SATISFACTION IN PISA 2018
+
+FIGUR E A1
+
+Ranking for feature importance (UK).
+
+FIGUR E A 2
+
+Ranking for feature importance ( Japan).
+
+20448279, 2024, 2, Downloaded from https://bpspsychub.onlinelibrary.wiley.com/doi/10.1111/bjep.12657 by Beykent University, Wiley Online Library on [23/04/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+PAN and CUTUMISU
+
+|   
+498
+
+

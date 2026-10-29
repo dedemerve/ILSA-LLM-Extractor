@@ -1,0 +1,1834 @@
+Optimizing automated scoring in ILSAs with prompt compression
+Ji Yoon Jung *
+, Ummugul Bezirhan , Matthias von Davier
+Boston College, TIMSS & PIRLS International Study Center, United States
+A R T I C L E I N F O
+Keywords:
+Automated scoring
+Prompt compression
+Large language models
+ILSAs
+PIRLS
+A B S T R A C T
+Automated scoring (AS) has become increasingly prevalent in educational measurement. However, applying it to 
+international reading assessments remains challenging, particularly due to the length and complexity of the 
+required prompting, driven by the need to include lengthy reading passages and detailed scoring guides. Pro­
+cessing these lengthy inputs results in high computational costs and may impede the performance of large 
+language models (LLMs). This study explored the potential of optimizing AS with prompt compression using 
+OpenAI's LLM, GPT-4o. Our results show that prompt compression significantly reduces the length of reading 
+passages and scoring guides while maintaining their essential content. Reading passages and scoring guides were 
+compressed to approximately 18% and 15% of their original lengths, respectively. Despite this substantial 
+compression, the AS showed remarkable performance, with an accuracy of 92.87% and a kappa score of 0.8041, 
+closely approximating the results obtained without compression. These findings suggest optimizing AS with 
+prompt compression can improve its efficiency and scalability, particularly in international reading assessments.
+1. Introduction
+Automated scoring (AS) has become an essential tool in educational 
+measurement, utilizing computational linguistic methods and statistical 
+models to assess examinee responses to open-ended test items (Lottridge 
+et al., 2023). Early implementations of AS date back to the 1960s, and 
+these primarily focused on simplifying tasks such as grading 
+multiple-choice responses, and mostly aimed at reducing teacher 
+workload (Foltz et al., 2020). Initially, the focus was on streamlining 
+repetitive tasks rather than assessing more complex aspects of student 
+performance. Page (1966) and Carbonell (1970) explored the potential 
+of computers for scoring essays by analyzing rudimentary features such 
+as grammar, syntax, and structure by using early statistical models and 
+rule-based systems. A significant leap came in later decades with the rise 
+of machine learning and advances in natural language processing (NLP). 
+These developments made AS more flexible and powerful, allowing it to 
+expand beyond simple grading to more complex tasks from essay scoring 
+to spoken response analysis (Shermis & Burstein, 2003, 2013).
+Research has explored a wide range of applications for AS, including 
+scoring constructed response (CR) items (e.g., Burrows et al., 2015; 
+Riordan et al., 2020), essays (e.g., Shermis, 2014; Shermis & Burstein, 
+2006), mathematical equations (Fife, 2013), and spoken responses 
+(Bernstein et al., 2000; Xi et al., 2008). These explorations expanded in 
+various educational contexts and domains, including K-12 assessments, 
+licensure, and certification programs, particularly in evaluating profi­
+ciency in writing, reading, and mathematics (Foltz et al., 2020).
+The rapid growth of artificial intelligence (AI) has led large-scale 
+assessments to systematically incorporate AI into AS. The National 
+Center for Education Statistics (NCES) recently held a competition to 
+address challenges in scoring open-ended math questions. The NAEP 
+Automated Math Scoring Challenge tasked participants with building 
+models to predict human scoring (HS) for student responses to ten math 
+items for fourth and eighth grades, aiming to create reliable and unbi­
+ased AS methods (Morris et al., 2024).
+While the operational use of AS in international large-scale assess­
+ments (ILSAs) like TIMSS and PISA is relatively limited (Shin et al., 
+2024), AS has begun to be applied to diverse types of responses, 
+including graphical and text-based responses. For example, TIMSS 2019 
+included items requiring students to produce grid-based or freehand 
+geometry and quantitative skills drawings. von Davier et al. (2023)
+demonstrated the successful implementation of AS for such graphical 
+responses using convolutional neural networks (CNN), achieving up to 
+97.5 % agreement between human and machine scoring. Subsequently, 
+this work was expanded to cover multiple dichotomous and polytomous 
+items from TIMSS 2019; Tyack et al., 2024). By manually reviewing 
+responses where human and CNN scores differed, the study revealed that 
+AS models sometimes outperformed human raters, suggesting that AS 
+can be as accurate, if not more so, than HS. This level of performance 
+* Corresponding author.
+E-mail addresses: jiyoon.jung@bc.edu (J.Y. Jung), bezirhan@bc.edu (U. Bezirhan), vondavim@bc.edu (M. von Davier). 
+Contents lists available at ScienceDirect
+Computers and Education: Artificial Intelligence
+journal homepage: www.sciencedirect.com/journal/computers-and-education-artificial-intelligence
+https://doi.org/10.1016/j.caeai.2026.100558
+Received 9 January 2025; Received in revised form 3 October 2025; Accepted 10 February 2026  
+Computers and Education: Artiϧcial Intelligence 10 (2026) 100558 
+Available online 11 February 2026 
+2666-920X/© 2026 The Authors. Published by Elsevier Ltd. This is an open access article under the CC BY license ( http://creativecommons.org/licenses/by/4.0/ ). 
+
+revealed that AS can be beneficial either by serving as a scorer or by 
+replacing human raters entirely (von Davier et al., 2023). In addition to 
+the graphical responses, text-based response scoring in ILSAs also 
+demonstrated significant progress. Jung et al. (2022) successfully 
+applied AI-driven scoring to student responses from TIMSS 2019, 
+achieving high levels of agreement between human and automated 
+scores by showcasing a novel approach to training the model on data 
+weighted based on IRT-based scores.
+Moreover, integrating large language models (LLMs) brought trans­
+formative advancements to AS in large-scale assessments, particularly 
+by facilitating multilingual AS in ILSAs. As a considerable number of 
+existing NLP tools are most proficient in high-resource languages such as 
+English (Sawicki et al., 2023), a viable strategy for implementing AS in 
+ILSAs involving over 60 languages is to translate non-English languages 
+into English to ensure optimal performance. Technologies like Meta's No 
+Language Left Behind, Google Translate, which now supports 133 lan­
+guages, including 24 low-resource ones (Bapna et al., 2022), and 
+OpenAI's GPT models have expanded the potential for multilingual AS 
+(Hao et al., 2024). These models offer context-aware translations, 
+allowing more accurate handling of new languages into translation en­
+gines. Jung et al. (2024) utilized Google Translate API and GPT-3.5 for 
+translating responses from eight countries in six different languages and 
+demonstrated that machine scoring achieved a high correlation with 
+human raters. This outcome showed the efficacy of artificial neural 
+networks (ANNs) trained and tested on ChatGPT-translated responses, 
+demonstrating that LLMs can outperform traditional translation engines 
+by providing higher-context translation, which is crucial for accurate 
+scoring across different linguistic contexts. For instance, AS has suc­
+cessfully been applied to short-answer CR items in TIMSS across 42 
+languages, with unsupervised learning utilizing LLMs showing prom­
+ising results (Jung et al., 2025).
+However, adapting these LLM-based models to score responses from 
+PIRLS (Progress in International Reading Literacy Study) presents 
+unique challenges due to the nature of the reading assessment. PIRLS 
+requires students to read one literary and one informational passage and 
+respond to a block of questions aligned with these passages. This design 
+aims to authentically assess students’ reading comprehension skills, 
+using stimuli that closely resemble published texts (Mullis & Martin, 
+2019). To implement AS effectively, these questions from a multilingual 
+sample need to be part of the prompt for the LLM, together with their 
+corresponding reading passage and detailed scoring guides (SGs) 
+necessary for evaluating the student responses. This combination results 
+in a significantly longer and more complex prompt than a typical prompt 
+for items with shorter context, such as those in mathematics or science 
+assessments.
+A notable limitation of using LLMs for such tasks is the maximum 
+context length and the models’ sensitivity to input length. When are 
+LLMs accessed through APIs, the user agreement is often based on a by- 
+token pricing model, where the cost of processing increases with the 
+number of tokens in the input and output. Also, longer prompts require 
+more time due to the extensive computational cost of input processing. 
+Extensive prompts that include reading passages, questions, and SGs can 
+lead to significant increases in token counts, subsequently inflating the 
+cost of each API call. This cost factor becomes especially important in 
+large-scale assessments where tens of thousands of responses need to be 
+processed. Particularly, ILSAs operate at an immense scale, involving 
+substantial volumes of multilingual data from diverse countries and 
+languages (Okubo et al., 2023). This makes more efficient AS crucial for 
+reducing infrastructure and operational costs.
+A key challenge, therefore, is the need to handle these long form 
+prompts efficiently. To address this, researchers explored various stra­
+tegies for prompt optimization and compression (e.g., Jiang et al., 2023; 
+Chuang et al., 2024; Li et al., 2024) in various other domains outside of 
+AS. These strategies offer significant opportunities to improve the per­
+formance of AS systems, especially for reading assessments or other 
+testlet-based assessments where each question is associated with a 
+(long) passage. Zhang et al. (2025) also found that prompt compression 
+facilitates LLM's real-world applications by retaining most critical in­
+formation while achieving lower time costs and minimal memory con­
+sumption. By reducing prompt length and complexity while preserving 
+the essentials of the task, prompt compression can reduce the compu­
+tational and logistical demands of large-scale scoring. Moreover, opti­
+mizing the prompt structure can result in cost savings by reducing the 
+number of tokens in each prompt when using LLMs through APIs. This 
+reduction in token numbers lowers the cost per API call, thus improving 
+the economic feasibility of AS in large-scale applications. This paper 
+explores how prompt compression and summarization techniques can 
+improve the scalability, efficiency, and accuracy of AS in ILSAs.
+2. Background
+The context window size of LLMs has expanded considerably in 
+recent years, expanding the utility of these models for increasingly 
+complex tasks. Early models such as GPT-1 and GPT-2 had relatively low 
+token limits, limited to around a thousand tokens, as they were primarily 
+intended for processing shorter contexts. In contrast, more recent ad­
+vancements have significantly expanded these capabilities. For example, 
+Google's Gemini now supports context windows of up to 1 million tokens 
+(Reid et al., 2024), Anthropic's Claude 3 models can manage up to 200, 
+000 tokens (Anthropic, 2024), and OpenAI's GPT-4-Turbo accommo­
+dates 128,000 tokens, equivalent to around 300 pages of text, in a single 
+input (OpenAI, 2023). These expanded context windows allow pro­
+cessing longer prompts, which are commonly needed in applications like 
+document summarization, legal and financial document analysis (Koh 
+et al., 2022; Wu et al., 2023; Yang et al., 2023), and chat agents that 
+maintain conversation history (Packer et al., 2023).
+However, the use of long-context models brings its own set of diffi­
+culties. Long prompts, which usually include comprehensive in­
+structions, multiple examples, and detailed task definitions, introduce 
+challenges related to inference speed, computational cost, and memory 
+usage (Jha et al., 2024; Wang et al., 2024). These issues are particularly 
+prevalent for LLMs accessed through APIs that employ token-based 
+pricing, where long prompts can become extremely costly. The sub­
+stantial costs pose a barrier to cost-effectiveness, making practical 
+implementation challenging, especially for large-scale evaluations 
+(Larionov & Eger, 2025). In addition, it has been observed that the 
+reasoning abilities of LLMs can diminish when processing very long 
+inputs due to the “lost in the middle” effect, where the model struggles to 
+utilize relevant context in the middle of a large input (Liu et al., 2024). 
+To address these concerns, research has focused on prompt engineering 
+methods such as prompt compression and prompt optimization to lower 
+the complexity of the input.
+Prompt compression is a technique used to reduce the length of a 
+long prompt by extracting only the most critical information. This idea is 
+grounded in the concept that natural language is inherently repetitive 
+and redundant (Shannon, 1951) and thus can be compressed. This can 
+be achieved through soft prompt and hard prompt compression 
+methods. Soft prompt compression involves encoding prompt informa­
+tion into continuous vectors within the model's embedding space to 
+optimize the structure of the prompt in a flexible way. This approach 
+uses a trainable encoder-decoder architecture, where the encoder 
+compresses the prompt into a shorter sequence of specialized tokens, 
+and the decoder interprets these tokens to generate responses. GIST (Mu 
+et al., 2024) and AutoCompressor (Chevalier et al., 2023) are examples 
+of implementing soft prompt techniques, and they achieve high 
+compression rates by utilizing attention mechanism adjustments and 
+task-specific embeddings. This structure allows soft prompts to maintain 
+semantic integrity while reducing the computational load of lengthy 
+prompts (Li et al., 2024). However, because soft prompts are highly 
+specialized, they often require fine-tuning specific to each model or task, 
+which can limit their generalizability across diverse applications (Jha 
+et al., 2024). While embedding-based compression methods are effective 
+J.Y. Jung et al.                                                                                                                                                                                                                                  
+Computers and Education: Artiϧcial Intelligence 10 (2026) 100558 
+2 
+
+in compressing the prompts, they also require significant changes to the 
+inference pipeline, which restrict their applicability for LLM models 
+used via API access. Additionally, soft prompts are less interpretable for 
+humans than hard prompts, as the resulting tokens are not directly 
+readable, limiting transparency and explainability (Li et al., 2024).
+In contrast, hard prompt compression involves direct manipulation 
+of the natural language text of the prompt. Rather than embedding 
+prompts as continuous vectors, hard prompt techniques aim to compress 
+prompts by removing low information tokens or summarizing text while 
+preserving essential meaning and readability. Li, Dong, et al. (2023)
+proposed what they call Selective Context. This method quantifies the 
+informativeness of each token using self-information or token-level 
+perplexity metrics and eliminates those that contribute minimally to 
+the overall semantic meaning. LLMLingua (Jiang et al., 2023), a prom­
+inent example of hard prompt compression, follows a coarse-to-fine 
+approach that iteratively compresses prompts at the token level, 
+achieving substantial token reduction with minimal impact on model 
+performance without requiring modifications to the model's architec­
+ture. These hard prompt methods are especially useful for applications 
+where the LLM must interpret natural language text such as black-box 
+models that only accept natural language input (Jiang et al., 2023; 
+Pan et al., 2024).
+In addition to token-level removal, summarization has emerged as an 
+effective form of hard prompt compression. Unlike selective token 
+removal, summarization transforms the prompt by rephrasing and 
+condensing key information, creating a coherent, compact version that 
+preserves the main ideas (Koh et al., 2022). Recent studies have exam­
+ined “approximate compression,” or the compression of text to retain 
+only core semantic information when exact reconstruction is unnec­
+essary. This approach has proven effective in balancing information 
+retention with a significantly reduced token count, as shown by exper­
+iments with GPT-3.5 and GPT-4, which achieve high levels of semantic 
+preservation even with substantial compression (Gilbert et al., 2023). 
+Summarization as compression has shown promise in applications 
+where clarity and readability are essential, such as contexts requiring 
+user-facing outputs and chatbot development (Dinesj¨o & Floreteng, 
+2024). Since summarization produces a streamlined prompt in natural 
+language, it ensures that the essential details are both retained and 
+easily understandable. This method aligns well with black-box LLMs 
+used via APIs, as it allows users to shorten prompts meaningfully as an 
+additional pre-processing step without major modifications to the 
+model's inference pipeline.
+Prompt optimization goes beyond the reduction of the input size to 
+enhance the quality and effectiveness of prompts used with LLMs. Key 
+approaches in prompt optimization include chain-of-thought (CoT; Wei 
+et al., 2022) prompting, and meta-prompting (Reynolds & McDonell, 
+2021; OpenAI, 2024). CoT prompting structures complex tasks as a 
+sequence of smaller logically connected steps within the prompt. This 
+method is particularly useful in tasks requiring multi-step reasoning, 
+such as mathematical problem-solving and commonsense reasoning 
+(Wei et al., 2022). Recently, Lee et al. (2024) implemented CoT as an 
+LLM reasoning strategy in the AS of student responses from a science 
+assessment. They demonstrated that CoT paired with item stem and 
+scoring rubrics significantly improved scoring accuracy compared with 
+non-CoT reasoning.
+Within this framework, meta-prompting involves creating a robust 
+guideline that instructs the model on performing the task and generating 
+the response. Meta-prompting, a technique in which a language model is 
+directed to generate or refine prompts for itself or other models, allows 
+the model to review an existing prompt, identify potential improve­
+ments, and suggest an optimized or modified prompt accordingly (Ye 
+et al., 2023). Some studies further refined this approach by assigning 
+specific labels to each step of the reasoning path and using a step-aware 
+verifier that evaluates each step's contribution to the accuracy of the 
+final answer thus controlling the reasoning process of the model (Li, Lin, 
+et al., 2023). Overall, meta-prompts optimize the way models interpret 
+instructions and interact with input, often resulting in more reliable 
+outputs.
+Despite advancements in prompt compression and optimization, 
+these strategies have seen limited application in AS for educational as­
+sessments. AS tasks, especially those involving reading comprehension 
+and other complex assessments, often require processing extended in­
+puts such as passages, questions, and detailed rubrics. Lee et al. (2024)
+introduced prompt optimization methods and discussed the challenges 
+of balancing accessibility, technical complexity, and explainability in 
+LLM-driven AS. Their tailored prompt engineering approach, which 
+includes prompt writing, reviewing, validating, revising, and testing 
+(WRVRT), achieved consistent accuracy across different proficiency 
+levels, enhancing the interpretability and usability of such tools for 
+educators. However, no other study has yet explored prompt compres­
+sion and specific AS engineering techniques.
+Integrating prompt compression and optimization strategies into AS 
+can greatly improve AS systems' scalability and economic feasibility. 
+Tailoring these techniques for reading comprehension and other com­
+plex tasks could enable models to handle lengthy, nuanced prompts 
+more efficiently. This paper aims to explore how these advancements in 
+prompt engineering can be adapted to improve the efficiency and pre­
+cision of AS in multilingual large-scale educational assessments that 
+require mixed language prompting.
+3. Method
+3.1. Dataset
+The PIRLS assessment, conducted every five years since 2001, eval­
+uates the reading comprehension skills of fourth-grade students in more 
+than 50 countries. It defines reading literacy as the ability to understand 
+and utilize written language forms required by society and/or valued by 
+the individual (Mullis & Martin, 2019). The PIRLS framework empha­
+sizes two primary reading purposes: reading for literary experience and 
+reading to acquire and use information (Mullis & Martin, 2019). Students 
+engage with narrative fiction through literary reading, drawing upon 
+their personal experiences or knowledge. In contrast, informational texts 
+are designed to convey information on various subjects, including sci­
+entific, historical, and social topics.
+This study used five 1-point CR items from the digital PIRLS 2021 
+assessment. Since 1-point CR items are a common format in ILSAs, these 
+items serve as a valuable testbed for exploring AS feasibility. For 
+context, 1-point items (110 items) comprised 65% of all written CR 
+items in digital PIRLS 2021. Four items were based on literary passages 
+(i.e., Passages A and C) while one item was derived from an informa­
+tional passage, Passage B. We selected medium and difficult passages, 
+which are more complex and lengthier than easy passages and often 
+require more complex open responses in the items associated with the 
+texts. These medium-to-difficult passages serve as an ideal ground for 
+evaluating GPT-4o's capability to succinctly compress complex text 
+without losing essential information. The items used in this study are 
+“trend items”, which are kept secure for re-administration in future as­
+sessments (Fishbein et al., 2024). We selected these items for AS prep­
+aration for the PIRLS 2026, where they will be re-used. To ensure item 
+security, the items will remain unpublished. We also have ensured data 
+privacy through enterprise-level API that does not utilize data for 
+training purposes (OpenAI, 2025). The AS pipeline fully complies with 
+the General Data Protection Regulation (GDPR) guidelines (European 
+Union, 2016). Table 1 provides a description of the items.
+The dataset consisted of multilingual responses from all participating 
+countries in digital PIRLS 2021, covering 27 countries and 29 distinct 
+languages (see Appendix Table A). PIRLS 2021 was the transition year in 
+which only about 50% of the countries participated in the computer- 
+based test, while the other half continued to test on paper. Still, the 
+data contained several thousand responses per question across these 29 
+languages. Given the scope and the diversity of the dataset, as well as 
+J.Y. Jung et al.                                                                                                                                                                                                                                  
+Computers and Education: Artiϧcial Intelligence 10 (2026) 100558 
+3 
+
+computational and budgetary constraints, we used a randomly selected 
+20% subset of the full dataset for each country. This approach allowed us 
+to conduct exploratory analyses while maintaining representation across 
+countries and languages. In PIRLS, each country translates and adapts 
+the reading passages and items according to guidelines from the TIMSS 
+& PIRLS International Study Center (Ebbs et al., 2023). These guidelines 
+aim to ensure that the meaning and difficulty level of the translated 
+instruments remain equivalent to the international version while 
+maintaining each country's linguistic norms and cultural context. In the 
+cases where countries shared a common language or collaborated on 
+translations, adaptations were required to reflect specific cultural and 
+linguistic nuances. Therefore, translations may differ even among 
+countries sharing the same language, leading to more unique language 
+versions of the instrument.
+3.2. Prompt compression & optimization
+The generalized scoring prompt template for PIRLS was designed to 
+include four main components: task instruction, reading passage, 
+question, and SG as shown in Table 2.
+First, the task instruction outlines task-specific directives and format 
+constraints. Initially, it specifies that GPT-4o will evaluate multilingual 
+responses from an international reading assessment, steering its focus 
+from a general domain to scoring international reading assessment re­
+sponses. Our task instruction is based on the Zero-Shot-CoT, which does 
+not require input-output examples and is thus task-agnostic (Kojima 
+et al., 2022). This method enhances the generalizability of our scoring 
+prompt template, enabling its application to any 1-point CR items in 
+PIRLS. The Zero-Shot-CoT instruction includes four steps: translation, 
+scoring, validation, and output construction, as shown in Fig. 1. We 
+incorporated a validation step to mitigate potential hallucinations, 
+following the definition provided by Shakil et al. (2024). GPT-4o occa­
+sionally produces hallucinated outputs, such as providing a correct 
+answer instead of translating the original student response, particularly 
+when responses are incorrect or very short. Consistent with prior 
+research, we integrated the internal validation step to reduce these 
+potential hallucinations before GPT-4o generates its final output. To 
+standardize the outputs, the format was constrained to JSON, with 
+structure specified as {“type”: “json_object”} in the API call.
+The second component, a reading passage, can be included in its full 
+original form or as a summarized version. Summarization, one of the 
+primary focuses of this study, involved utilizing GPT-4o to compress the 
+original passage while retaining all essential information necessary for 
+accurately answering the given question. This method, called query- 
+based text summarization, generates a tailored summary that ad­
+dresses a specific query, typically a question of the item in a question- 
+answering context (Ding et al., 2024; Yu & Han, 2022). In this study, 
+GPT-4o produced a question-specific summary for each item using the 
+Zero-Shot-CoT summarization prompt, as detailed in Fig. 2. The initial 
+prompt included the first two steps (1. Read the Passage; 2. Summarize), 
+but the final step (3. Final Output) was added to our final model to 
+standardize the format of the summary output. A single summary was 
+created for each item, which was consistently used to evaluate all 
+multilingual responses for that item. Example passage summarization is 
+provided in Appendix A. Using GPT-4o, we created a mock passage titled 
+“Tashi and the Great Adventure” along with two mock items, “What does 
+Rinzin do before climbing up?” (Mock_Item 1), and “Why is it important 
+that Rinzin wants to help Tashi?” (Mock_Item 2). This was necessary as all 
+CR items in this study are currently secured for use in future 
+assessments.
+The third component, the item's question, was directly incorporated 
+into the scoring prompt template without any modification. The final 
+component, the SG, required particular attention in this study; instruc­
+tion on how to score responses could be used in their original version. 
+However, these SG were designed for human raters. These guides often 
+include extensive information such as detailed descriptions, extensive 
+examples, and nuanced explanations. While this level of detail can 
+benefit human interpretation, it may be unnecessarily lengthy and less 
+effective for AS. To address this, we focused on developing a refined SG 
+that streamlined and optimized the original SG to make it more suitable 
+for use with LLMs. This refinement reduces the computational and 
+resource demands, enhancing the practical application of AS in PIRLS.
+Original SGs for 1-point CR items in PIRLS generally consist of four 
+parts: descriptions of acceptable responses, examples of acceptable re­
+sponses, descriptions of unacceptable responses, and examples of un­
+acceptable responses. Fig. 3 illustrates an original SG for Mock_Item 1, 
+“What does Rinzin do before climbing up?”. We hypothesized that the 
+refined SG could be restructured into two core components: descriptions 
+of acceptable and unacceptable responses. Given that the descriptions 
+for unacceptable responses were largely consistent across 1-point CR 
+items in the original SGs, we chose to use a standard description (i.e., 
+**[Score: 0 ]**: Assign this score if the response is off-topic or fails to address 
+the question.”) rather than maintaining varied item-specific descriptions. 
+Additionally, item-specific examples were excluded to simplify the 
+format and reduce redundancy. This Zero-Shot method improves LLMs’ 
+generality and flexibility while providing high accuracy and reliability 
+in text classification (Chae & Davidson, 2025; Puri & Catanzaro, 2019; 
+T¨ornberg, 2023).
+Specifically, we compared two summarization techniques for 
+refining original SGs: extractive and abstractive methods. The extractive 
+technique (ET) identifies and selects key sentences directly from the 
+original SG, while the abstractive technique (AT) creates novel senten­
+ces by rephrasing or restructuring the content. These refined SGs were 
+labeled as RefinedSG_ET and RefinedSG_AT, respectively.
+For RefinedSG_ET, our AS pipeline employed custom Python func­
+tions to systematically parse and extract acceptable response de­
+scriptions directly from the original SG. For RefinedSG_AT, the pipeline 
+integrated GPT-4o for generative refinement, where a novel acceptable 
+response description is created by rephrasing or improving the read­
+ability of the original acceptable response description. Specifically, Py­
+thon scripts were used to extract the original SG's acceptable response 
+description and then processed by GPT-4o for refinement. This process 
+Table 1 
+Information for PIRLS 2021 items used in the study.
+Item
+Passage
+Passage 
+Difficulty
+Purpose
+Comprehension 
+Process
+Item 
+Difficulty
+Item 
+1
+A
+Difficult
+Literary
+Interpret and 
+integrate ideas 
+and information
+0.55
+Item 
+2
+A
+Difficult
+Literary
+Interpret and 
+integrate ideas 
+and information
+0.61
+Item 
+3
+A
+Difficult
+Literary
+Focus on and 
+retrieve explicitly 
+stated information
+0.76
+Item 
+4
+B
+Medium
+Informational
+Focus on and 
+retrieve explicitly 
+stated information
+0.46
+Item 
+5
+C
+Medium
+Literary
+Make 
+straightforward 
+inferences
+0.81
+Note. Item difficulty indicates the percentage of correct responses.
+Table 2 
+Components of generalized scoring prompt template for PIRLS.
+Component
+Content
+Task instruction
+Comprehensive instructions on translation, scoring, validation, 
+and output generation
+Reading passage
+A lengthy written text representing the stimulus
+Question
+A question, typically consisting of 1-2 sentences
+Scoring guide 
+(SG)
+Guidelines for scoring an item, including descriptions and 
+examples
+J.Y. Jung et al.                                                                                                                                                                                                                                  
+Computers and Education: Artiϧcial Intelligence 10 (2026) 100558 
+4 
+
+utilized structured Zero-Shot-CoT and meta-prompting techniques to 
+establish alignment with the original SG's intent and criteria. The SG 
+refinement prompt is given in Fig. 4.
+Following the SG refinement, holistic scoring instructions and notes 
+were added to the refined SGs to ensure alignment with PIRLS Scoring 
+Guides for CR items. These guidelines emphasize disregarding the 
+inaccurate or unrelated portion of the response as long as they do not 
+directly contradict the accurate portion. Figs. 5–6 present the refined 
+SGs for Mock Item 1. Fig. 5 (RefinedSG_ET) includes the original 
+acceptable response descriptions designed for human raters. In contrast, 
+Fig. 6 (RefinedSG_AT) features a new acceptable response description, 
+which was crafted to improve readability and enhance AS’ ability to 
+process the SG.
+The development phase of the scoring prompt template involved 
+multiple stages of drafting, reviewing, revising, and testing based on 
+OpenAI's best practices for prompt engineering (OpenAI, 2024). During 
+the revision phase, the initial prompts were tested with passages and SGs 
+to validate whether the revisions improved GPT-4o's consistency and 
+accuracy in scoring tasks. These initial prompts underwent further 
+optimization using GPT-4o's meta-prompting technique (OpenAI, 2024) 
+to enhance their effectiveness further. Following this optimization, the 
+prompts were reviewed to ensure the original meanings or instructions 
+were preserved before finalization. The generalized scoring prompt 
+template developed for this study is provided in Appendix B. A workflow 
+of the AS process based on the final scoring template is illustrated in 
+Fig. 7.
+3.3. Automated scoring with scoring prompt templates
+In our initial analysis, we compared a baseline model (using original 
+reading passages and SGs) to Model 1, which used a refined version of 
+the SGs (see Table 3). We chose two CR items, Items 1 and 2, which 
+required complex narrative interpretation from four countries where 
+native speakers were available. The GPT-4o temperature was set to 0 for 
+maximum determinism. We hypothesized that a refined SG, with 
+simplified descriptions and less detailed information than the original, 
+would be effective for AS while reducing input complexity. The results 
+supported this: Model 1 showed a notable improvement in accuracy (i. 
+e., human-machine score agreements), increasing from 89.97% to 
+85.84% (baseline) to 93.50% and 92.87% for Items 1 and 2, respec­
+tively. This initial finding, combined with the prior research that LLMs 
+process natural language written for humans in different ways (Chang 
+et al., 2024; Schr¨oder et al., 2025), confirmed our focus on refining SGs.
+Following, we expanded the analysis in subsequent models to 
+incorporate passage and SG compression step-by-step. This broader 
+investigation allowed us to test whether compressing multiple 
+Fig. 1. Prompt for task instruction.
+Fig. 2. Prompt for passage summarization.
+J.Y. Jung et al.                                                                                                                                                                                                                                  
+Computers and Education: Artiϧcial Intelligence 10 (2026) 100558 
+5 
+
+components of the prompt could further enhance the efficiency of AS 
+without compromising performance. We proposed Models 1, 2, and 3 to 
+assess these effects, as summarized in Table 3. Each model systemati­
+cally incorporated compressions to either the reading passage, SG, or 
+both. These models employing refined SGs (RefinedSG_ET for Models 1 
+and 2 and RefinedSG_AT for Model 3) were tested on five CR items 
+across 26 countries. The key difference between Models 1 and 2 is the 
+reading passage used; Model 1 used the original passage, while Model 2 
+used a summarized version. In contrast, Models 2 and 3 differ based on 
+the type of refined SG: Model 2 used RefinedSG_ET, and Model 3 
+employed RefinedSG_AT. This stepwise approach from baseline to 
+Model 1 enabled us to isolate the impact of SG compression. In contrast, 
+progression to Models 2 and 3 allowed us to evaluate the compressing of 
+the reading passages and SGs.
+3.4. Post-processing steps
+After the model evaluations, two post-processing steps were deemed 
+necessary: fixing misformatted outputs and correcting hallucinations. 
+Although GPT-4o generally generated appropriately formatted JSON 
+outputs, occasional errors occurred. For example, instead of the required 
+format {“He helps Tashi out of the ditch”: “Score: 1”}, misformatted 
+outputs appeared as {“He helps Tashi out of the ditch. score 1”} or {“He 
+helps Tashi out of the ditch.” (tab) “Score: 1”}. These errors were auto­
+matically identified and corrected using custom Python scripts inte­
+grated into our AS pipeline.
+Even though GPT-4o rarely generates hallucinations, they can still 
+arise, especially in very brief or off-topic responses. For example, GPT- 
+4o might generate a hallucinated output such as{“He helps Tashi out of 
+the ditch”: “Score: 1”} for a Turkish response “hendek.” (meaning ditch) 
+Fig. 3. Original scoring guide for Mock_Item 1.
+Fig. 4. Prompt for SG refinement: RefinedSG_AT.
+J.Y. Jung et al.                                                                                                                                                                                                                                  
+Computers and Education: Artiϧcial Intelligence 10 (2026) 100558 
+6 
+
+which does not substantiate a correct score. We identified these by 
+comparing the length of the original student response with its trans­
+lation. For Latin-alphabet-based languages, if the length ratio of the 
+translated response to the original response exceeded 2.2 and GPT-4o 
+assigned a score of 1, it was presumed that the score was awarded 
+based on a hallucinated translation. For non-Latin-alphabet languages 
+like Chinese, a higher threshold of 20 was used to detect hallucinated 
+translation. Detected hallucinated outputs were flagged with “halluci­
+nation,” and our AS pipeline reassigned these responses a score of 0.
+3.5. Evaluation metrics
+Multiple metrics were employed for model evaluation: compression 
+ratio (R), accuracy, Cohen's kappa (κ), and hallucination rates.
+Compression ratio (R) was calculated for each model by comparing 
+its token count to that of a baseline. Specifically, we considered the 
+length of the reading passage (original vs. summary) and SG lengths 
+(original vs. refined versions). A smaller R indicates a greater reduction 
+of the original length after compression. For example, R = 0.20 means 
+the compressed text retains 20% of the original length, reflecting 80% 
+compression. 
+R = Length of Compressed Text
+Length of Original Text 
+Accuracy, a commonly used metric, is defined as the percentage of 
+exact agreement between human and machine scores. This metric pro­
+vides a clear and intuitive measure of a model's performance. Further­
+more, because the difference in impact between false positives and false 
+negatives is relatively small for 1-point items (binary classification) in 
+ILSAs, overall accuracy serves as a primary metric.
+Cohen's kappa (Cohen, 1960) measures inter-rater reliability beyond 
+chance, calculated as below: 
+k = po −pe
+1 −pe 
+where po is the relative observed agreement among raters, and pe rep­
+resents the hypothetical probability of agreement by chance. A kappa 
+value of 0 indicates agreement by chance, while 1 means perfect 
+agreement between raters. As Cohen's kappa is widely accepted for bi­
+nary classification tasks, we chose to use this metric for our analysis of 1- 
+point items, which function as a binary scoring.
+Hallucination rates, defined as the percentage of hallucinated re­
+sponses, were used to check the reliability of the model. Our detection 
+method relied on the length ratio between translated and original re­
+sponses. For Latin alphabet languages like English and German, a 
+response is flagged as hallucinations when it received a machine score of 
+1, but the translated response is more than 2.2 times the length of the 
+original, indicating the likely addition of non-existent information. For 
+non-Latin alphabet languages such as Chinese and Korean, the threshold 
+is set at 20 times the original length. This accounts for the natural 
+expansion when translating from character-based languages. Once a 
+hallucination is detected, the response is flagged, and its machine score 
+is automatically corrected to 0. Monitoring these rates allowed us to 
+investigate whether the compression-based models, which utilized a 
+simplified context, were more prone to hallucination than the baseline 
+model. After the optimal model was identified through primary per­
+formance metrics, confusion matrices were analyzed to examine the 
+sources of misalignment between human and machine scores.
+Fig. 5. Refined scoring guide for Mock_Item 1: RefinedSG_ET.
+Fig. 6. Refined scoring guide for Mock_Item 1: RefinedSG_AT.
+J.Y. Jung et al.                                                                                                                                                                                                                                  
+Computers and Education: Artiϧcial Intelligence 10 (2026) 100558 
+7 
+
+4. Results
+4.1. Model evaluation
+The three models were evaluated based on their compression ratio, 
+accuracy, κ, and hallucination rate.
+4.1.1. Compression ratio
+Tables 4 and 5 display the token counts and compression ratios for 
+the passages and SGs. Regarding the passages, both Model 2 and Model 3 
+achieved a notable compression ratio of 0.18, indicating that approxi­
+mately 82% of the original passage was compressed. Across all items, 
+passage compression ratios ranged from 0.15 to 0.29. This can be 
+attributed to the inherent design of the PIRLS assessment, in which each 
+item relates to a specific part of the passages, with the full set of items 
+collectively covering the entire passage. For the SGs, holistic in­
+structions and notes in the refined SGs were excluded from the 
+compression ratio calculations, as these elements were added to opti­
+mize the refined SGs by reflecting the general guidelines of the PIRLS 
+Scoring Guide. On average, Model 3 significantly reduced the original 
+Fig. 7. Flowchart of automated scoring workflow.
+Table 3 
+Comparison of scoring prompt templates.
+Scoring 
+prompt 
+component
+Baseline
+Model 1
+Model 2
+Model 3
+Task 
+instruction
+Zero-Shot- 
+CoT
+Zero-Shot-CoT
+Zero-Shot-CoT
+Zero-Shot-CoT
+Reading 
+passage
+Original 
+passage
+Original 
+passage
+Summary
+Summary
+Question
+Original 
+question
+Original 
+question
+Original 
+question
+Original 
+question
+Scoring Guide 
+(SG)
+Original 
+SG
+RefinedSG_ET
+RefinedSG_ET
+RefinedSG_AT
+Table 4 
+Token count (n) and compression ratio (R) for passage.
+Item
+Baseline
+Model 1
+Model 2
+Model 3
+n
+n
+R
+n
+R
+n
+R
+Item 1
+1212
+1212
+N/A
+234
+0.19
+186
+0.15
+Item 2
+1212
+1212
+N/A
+223
+0.18
+187
+0.15
+Item 3
+1212
+1212
+N/A
+128
+0.11
+223
+0.18
+Item 4
+611
+611
+N/A
+91
+0.15
+107
+0.18
+Item 5
+666
+666
+N/A
+209
+0.31
+194
+0.29
+Average
+983
+983
+N/A
+177
+0.18
+179
+0.18
+Table 5 
+Token count (n) and compression ratio (R) for scoring guide.
+Item
+Baseline
+Model 1
+Model 2
+Model 3
+n
+n
+R
+n
+R
+n
+R
+Item 1
+215
+42
+0.20
+42
+0.20
+31
+0.14
+Item 2
+198
+40
+0.20
+40
+0.20
+29
+0.15
+Item 3
+233
+37
+0.16
+37
+0.16
+21
+0.09
+Item 4
+126
+61
+0.48
+61
+0.48
+44
+0.35
+Item 5
+140
+46
+0.33
+46
+0.33
+13
+0.09
+Average
+182
+45
+0.25
+45
+0.25
+28
+0.15
+J.Y. Jung et al.                                                                                                                                                                                                                                  
+Computers and Education: Artiϧcial Intelligence 10 (2026) 100558 
+8 
+
+SG to 15% (R = 0.15), whereas Models 1 and 2 reduced it to 25% (R =
+0.25). This suggests that RefinedSG_AT compressed the original SG more 
+effectively than RefinedSG_ET. A plot of the compression ratio for each 
+item can be found in Appendix C.
+4.1.2. Model performance
+Table 6 provides the accuracy and κ value for each model. All three 
+models demonstrated consistently high performance across the five CR 
+items. On average, Model 3 achieved the highest accuracy at 92.87%, 
+while the baseline model and Model 2 had the highest κ of 0.82. Notably, 
+Model 3's accuracy on Items 3 and 5 was comparable to the baseline 
+model, yet a gap existed in their κ values. This discrepancy arises 
+because these two items are very easy, with item difficulties of 0.76 and 
+0.81, which led to a highly skewed score distribution. Since kappa relies 
+on chance agreement and marginal probabilities, such skewed distri­
+butions can suppress its values. Given the low-stakes nature of the PIRLS 
+assessment and the binary scoring of 1-point items, we focused on ac­
+curacy as our primary metric. This metric provides a direct and practical 
+snapshot of AS performance.
+Table 7 presents the hallucination rates for the three models across 
+the items. All models exhibited minimal hallucinations, with the base­
+line model having the lowest rate at 0.05%, followed by Model 3 
+(0.12%). Hallucinations typically occurred with very short or mean­
+ingless original responses, where the average length was 8.47 charac­
+ters. Interestingly, Model 2 showed a hallucination rate of 1.69% with 
+Item 2, arising in very brief, incomplete, and incorrect responses (human 
+score = 0), particularly in Arabic (43.18%, 19 responses) and English 
+(36.36%, 16 responses). The original responses that led to hallucinations 
+averaged 10.21 characters in Arabic and 5.75 characters in English, all 
+receiving a score of 0 from human raters. The corresponding outputs 
+were much longer: the translated Arabic responses averaged 60.11 
+characters, while the grammar-corrected English responses averaged 
+68.19. Hallucinations in English usually occur when the original 
+response is incomplete, such as GPT-4o generating “Her help shows the 
+importance of teamwork” from “Her help.” These findings align with 
+previous studies indicating that LLMs are prone to hallucinations when 
+processing ambiguous inputs with omissions, insufficient context, or 
+random words (Huang et al., 2023; Reddy et al., 2024; Yao et al., 2023).
+Multi-metric evaluation revealed that Model 3's performance closely 
+approximates the baseline. This finding is notable because Model 3 
+achieved this comparability despite significant compression, resulting in 
+considerable improvements in efficiency and cost-effectiveness. There­
+fore, we conducted an in-depth review of Model 3 to identify the pri­
+mary sources of misalignment between HS and AS.
+4.2. In-depth review of AS with prompt compression
+In this analysis, we closely examined the agreement between HS and 
+AS by investigating misalignments. The goal was to gain a deeper un­
+derstanding of whether AS is more lenient or stricter than HS, or if the 
+False Positive and False Negative rates vary randomly across items and 
+countries. Additionally, we assessed the running time and cost per item 
+to evaluate the cost-efficiency of our AS.
+4.2.1. Sources of misalignment
+We examined the major sources of misalignment based on the 
+confusion matrices (Fig. 8), which categorize responses into True Posi­
+tive, False Negative, True Negative, and False Positive. For the five CR 
+items, the False Positive Rates (FPR) range from 3.08% to 7.29%, while 
+the False Negative Rates (FNR) range from 1.57% to 4.27%. These rates 
+serve as valuable indicators for identifying the main causes of 
+misalignment, which can originate from both HS and AS issues (see 
+Table 8).
+A key factor contributing to the observed misalignment between 
+human and machine scores is inconsistencies in HS. Notable FPRs 
+(human score = 0; machine score = 1) were observed for items that 
+required students to construct their interpretations (Item 1 & Item 2) or 
+make inferences beyond the texts (Item 5): 5.02% in Item 1, 7.29% in 
+Item 2, and 5.40% in Item 5. In these cases, GPT-4o demonstrated 
+greater consistency than human raters in scoring responses where the 
+correct answer or key idea is expressed in various ways. For example, a 
+mock response “She shows why working together matters” is considered a 
+correct answer according to the original SG. While GPT-4o consistently 
+awarded a score of 1 to semantically similar responses like “Her help 
+shows the importance of teamwork,” “Partnering with others is crucial,” and 
+“It shows working as a team is necessary,” human raters showed incon­
+sistency, mostly awarding a score of 1, but occasionally giving a score of 
+0. This shows that HS can vary even for semantically similar responses, 
+potentially due to rater effects or differences in human rater cognition 
+(Attali, 2014; Livingston, 2009; McClellan, 2010; Myford & Wolfe, 
+2003; Zhang, 2013).
+Next, AS inconsistencies can also lead to misalignment, affecting 
+both FNR and FPR. Specifically, GPT-4o demonstrated inconsistency in 
+scoring responses with subtle nuances. Consider the mock responses “He 
+discovered nothing valuable” versus “He discovered nothing” (Item 3), and 
+“It transported smoothly” versus “It transported over a bridge” (Item 4). 
+Human raters typically assigned a score of 1 to the former responses and 
+a score of 0 to the latter. While GPT-4o generally aligned with human 
+raters for the former responses, it assigned a score of 1 to the latter as 
+well. This indicates that GPT-4o may struggle to capture the nuanced 
+complexity outlined in the SGs in this case. Unlike automated systems, 
+human raters can discern language nuances and provide more context- 
+sensitive evaluations. LLMs like GPT-4o may require further tuning to 
+better grasp linguistic subtleties and SG intricacies (Latif & Zhai, 2024; 
+Weyssow et al., 2024). Also, for Item 3, GPT-4o sometimes had difficulty 
+translating responses that were heavily misspelled or written in low- 
+resource languages such as Arabic, Croatian, or Czech, assigning a 
+score of 0 to these untranslatable responses.
+Table 6 
+Model comparison: accuracy & kappa (κ).
+Item
+Baseline
+Model 1
+Model 2
+Model 3
+Accuracy
+κ
+Accuracy
+κ
+Accuracy
+κ
+Accuracy
+κ
+Item1
+90.83%
+0.82
+91.01%
+0.83
+90.13%
+0.82
+91.13%
+0.82
+Item 2
+91.11%
+0.81
+91.14%
+0.82
+90.23%
+0.80
+90.26%
+0.81
+Item 3
+95.05%
+0.86
+93.86%
+0.84
+94.63%
+0.87
+94.36%
+0.81
+Item 4
+92.18%
+0.84
+93.52%
+0.86
+93.56%
+0.87
+94.85%
+0.85
+Item 5
+93.95%
+0.79
+91.43%
+0.71
+93.49%
+0.76
+93.77%
+0.73
+Average
+92.62%
+0.82
+92.19%
+0.81
+92.41%
+0.82
+92.87%
+0.80
+Table 7 
+Model comparison: hallucination rate.
+Item
+Baseline
+Model 1
+Model 2
+Model 3
+Item 1
+0.02%
+0.68%
+0.15%
+0.08%
+Item 2
+0.16%
+0.81%
+1.69%
+0.08%
+Item 3
+0.00%
+0.22%
+0.18%
+0.14%
+Item 4
+0.05%
+1.38%
+0.24%
+0.24%
+Item 5
+0.01%
+0.38%
+0.08%
+0.08%
+Average
+0.05%
+0.69%
+0.47%
+0.12%
+J.Y. Jung et al.                                                                                                                                                                                                                                  
+Computers and Education: Artiϧcial Intelligence 10 (2026) 100558 
+9 
+
+Fig. 8. Confusion matrices.
+J.Y. Jung et al.                                                                                                                                                                                                                                  
+Computers and Education: Artiϧcial Intelligence 10 (2026) 100558 
+10 
+
+4.2.2. Running time & cost
+As Table 9 illustrates, AS based on the compression (Model 3) ach­
+ieved a remarkable cost reduction, with an average running cost of 
+approximately $3.62 per item, compared to the baseline model's cost of 
+$15-17. While Model 3's running time was only slightly shorter, this 76% 
+cost reduction is particularly significant given that ILSAs include many 
+1-point CR items (110 items in PIRLS 2021). Additionally, compression 
+for passages and SGs was conducted once for each item at a cost of only 
+around $0.50 and requiring 1-2 s. Such improved cost efficiency pre­
+sents a highly promising solution for reducing the substantial opera­
+tional expenses associated with HS in ILSAs (Benette, 1991; Braun, 
+1990; Ward & Bennett, 2012).
+5. Discussion
+5.1. Prompting strategy for AS in PILRS
+A primary challenge in the application of LLMs for AS in reading 
+assessments such as PIRLS is processing long reading passages and 
+detailed SGs. This can lead to high computational costs and negatively 
+impact the performance of LLMs (Huang et al., 2024; Ji et al., 2024; 
+Jiang et al., 2023; Liu et al., 2023). Additionally, designing effective 
+prompts for complex tasks such as AS requires substantial human effort 
+and time (Lee et al., 2024; Reynolds & McDonell, 2021). AS demands 
+intricate reasoning, particularly due to the complexity and subjectivity 
+of SGs (Madnani & Cahill, 2018). This study proposes optimizing 
+GPT-4o with prompt compression to address these issues.
+5.1.1. Prompt compression
+This study suggests that prompt compression reduces the complexity 
+of AS by significantly shortening lengthy inputs. Our findings indicate 
+that Model 3, which utilizes question-specific summaries and Refi­
+nedSG_AT, demonstrated impressive performance. The lengths of the 
+passages and SGs were reduced to approximately 18% and 15% of the 
+originals, respectively. Despite this significant reduction, it achieved 
+similar or even superior performance (accuracy = 92.87%, κ = 0.8041) 
+compared to Model 1 (accuracy = 92.19%, κ = 0.8059), which used the 
+original passages.
+First, aligning with prior research (Ding et al., 2024), our 
+question-based summarization generates high-quality, customized 
+summaries by focusing on question-specific content and omitting 
+extraneous details. For instance, in Appendix A, the input was reduced 
+from 842 to 138 tokens, compressing the passage to 16.39% of its 
+original size. Specifically, it focused on the question of Mock_Item 2, 
+Rinzin's willingness to help, while filtering out irrelevant details such as 
+the appearance of Tashi and Rinzin's village, the significance of 
+becoming a farmer for Tashi, or the path to the carrot patch. Moreover, 
+the summary explicitly highlights the key information at the end: Rin­
+zin's help demonstrates his bravery and readiness to become a farmer.
+Next, our results indicate that original SGs could be efficiently 
+compressed while preserving their content. RefinedSG_AT (Ravg = 0.15) 
+appears to be the most effective for AS compared to RefinedSG_ET (Ravg 
+= 0.25). For instance, in Fig. 4, the RefinedSG_AT method compressed 
+the original SGs by shortening the descriptions and removing examples. 
+Redundant phrases were rephrased or removed: “reached or tugged the 
+ladder” became “interacted,” and “before climbing” was eliminated. 
+Ambiguous expressions like “/tested to ensure” were simplified to “to 
+ensure.” While the original SG could guide human raters to score 
+consistently based on common interpretations, redundancy and ambi­
+guity in SGs can undermine the accuracy of AS. This finding aligns with 
+Chu et al. (2024), who suggest that using subject expert-crafted SGs for 
+LLMs is less than ideal due to LLMs’ lack of domain-specific knowledge 
+and sensitivity to prompts. Moreover, subjectivity in SGs might also 
+affect HS, even with thorough training.
+5.1.2. Prompt optimization
+Consistent with prior research (Diao et al., 2023; Feng et al., 2024), 
+we found that prompt optimization is an effective strategy for creating 
+prompts for complex tasks. Through CoT, prompts for task instruction, 
+summarization, and SG refinement were divided into smaller steps 
+(Figs. 1, 2 and 4). These CoT-based prompts made each step more 
+manageable by leveraging LLMs' specific expertise for each step (Wei 
+et al., 2022). For instance, our task instruction prompt was broken down 
+into four steps: translation, scoring, validation, and output construction. 
+This step-by-step approach resulted in robust translations with minimal 
+hallucinations (0.12%) and ensured consistent formatting across lan­
+guages. This shows that CoT can be a useful prompting strategy even in 
+multilingual settings involving a range of different languages (Huang 
+et al., 2023; Shi et al., 2022). Additionally, meta-prompting, as an 
+effective scaffolding technique (Suzgun & Kalai, 2024), contributed to 
+the rapid fine-tuning of CoT-based prompts. OpenAI's meta-prompting 
+streamlined our prompt revision process by immediately generating 
+more functional prompts through enhanced language clarity and prompt 
+structure. This automated improvement facilitated the quick review, 
+revision, and validation of optimal prompt candidates.
+5.2. Limitations and future research
+This study has several limitations. First, the current findings are 
+based on an exploratory analysis of a randomly selected 20% subset of 
+the dataset. Although this subset is representative, future research 
+should check the generalizability of our AS approach by utilizing the full 
+PIRLS dataset and incorporating additional CR items. It is also crucial to 
+thoroughly review the methodology and examine any potential sys­
+tematic biases and fairness issues across different languages and coun­
+tries before implementing AS for qualitative control or operational use.
+Table 8 
+Major sources of misalignment.
+Item
+Major Source
+Note
+FPR
+FNR
+Item 1
+HS
+Human raters sometimes inconsistently scored semantically similar responses.
+5.02
+3.95
+​
+AS
+GPT-4o assigned a score of 0 to certain correct responses with strict criteria.
+​
+​
+Item 2
+HS
+Human raters sometimes inconsistently scored semantically similar responses.
+7.29
+1.57
+Item 3
+AS
+GPT-4o inconsistently scored nuanced responses and struggled with translating certain responses in low- 
+resource languages or with heavy spelling errors.
+3.08
+4.27
+Item 4
+AS
+GPT-4o inconsistently scored nuanced responses or generously accepted incorrect responses.
+4.49
+2.87
+​
+HS
+Human raters sometimes inconsistently scored certain responses.
+​
+​
+Item 5
+HS
+Human raters sometimes inconsistently scored semantically similar responses.
+5.40
+2.23
+Note. FPR = False Positive Rate; FNR = False Negative Rate; AS = Automated Scoring; HS = Human Scoring.
+Table 9 
+Running time & cost.
+Item
+Running Time
+Cost
+Item 1
+0:35:40
+$3.40
+Item 2
+0:31:54
+$3.35
+Item 3
+0:39:22
+$3.66
+Item 4
+0:38:08
+$2.85
+Item 5
+0:49:33
+$4.85
+Average
+0:38:55
+$3.62
+J.Y. Jung et al.                                                                                                                                                                                                                                  
+Computers and Education: Artiϧcial Intelligence 10 (2026) 100558 
+11 
+
+Second, while we conducted a qualitative review to identify the main 
+sources of misalignment between HS and AS, future studies could focus 
+on automating the detection of misalignment sources. One potential 
+approach is to evaluate the scoring consistency of human raters and AS 
+on similar responses that are automatically clustered based on their 
+semantic similarity. Furthermore, future work might consider 
+leveraging other LLMs, such as Llama or Claude, as third-party evalua­
+tors for misaligned responses. Since no single human rater or AS model 
+achieves error-free output (Hashemi et al., 2024, August; Naik, 2024), 
+using an ensemble of multiple LLM outputs could help validate and 
+enhance the accuracy of scoring CR items.
+6. Conclusion
+This study highlights the effectiveness of optimizing AS with prompt 
+compression for evaluating CR items in multilingual international 
+reading assessments. Remarkably, even with significantly compressed 
+passages and SGs, AS demonstrated robust performance within the 
+PIRLS context, exemplified in this current study with scoring tasks 
+involving responses in 29 different languages. This success is primarily 
+attributed to the strategic use of prompt compression and optimization, 
+which effectively compresses the original contents by focusing on 
+question-relevant elements. Moreover, using a generalized scoring 
+prompt template, enhanced with prompt optimization techniques, easily 
+broadens the scope of AS systems. This approach allows scoring a 
+broader range of CR items, without the need to fine-tune passages or SGs 
+for each item. By addressing the challenges related to cost-efficiency and 
+scalability, these advances in AS pave the way for potential innovative 
+applications, such as enhancing quality control and streamlining oper­
+ational implementation. Ultimately, a well-designed AS system offers 
+more accurate reporting, enabling participating countries to make 
+informed 
+decisions 
+on 
+educational 
+policy 
+adjustments 
+and 
+improvements.
+CRediT authorship contribution statement
+Ji Yoon Jung: Writing – review & editing, Writing – original draft, 
+Visualization, Validation, Software, Methodology, Investigation, 
+Conceptualization. Ummugul Bezirhan: Conceptualization, Method­
+ology, Supervision, Validation, Writing – original draft, Writing – review 
+& editing. Matthias von Davier: Conceptualization, Investigation, 
+Methodology, Supervision, Validation, Writing – review & editing.
+Declaration of generative AI in scientific writing
+During the preparation of this work, the author used OpenAI's GPT to 
+improve language and readability. After using this tool/service, the 
+author reviewed and edited the content as needed. The author takes full 
+responsibility for the content of the publication.
+Declaration of competing interest
+The authors declare that they have no known competing financial 
+interests or personal relationships that could have appeared to influence 
+the work reported in this paper.
+Appendices. 
+Table A 
+Sample size by language and country in the study
+Country
+Language
+n
+Passage A
+Passage B
+Passage C
+United Arab Emirates
+Arabic
+102
+122
+103
+English
+246
+352
+308
+Belgium (Flemish)
+Dutch
+81
+89
+76
+Canada
+English
+182
+199
+168
+French
+63
+75
+59
+Czech Republic
+Czech
+113
+123
+112
+Germany
+German
+71
+78
+69
+Denmark
+Danish
+73
+85
+73
+Spain
+Basque
+4
+6
+5
+Catalan
+15
+19
+15
+Galician
+2
+2
+1
+Spanish
+108
+122
+106
+Valencian
+1
+1
+1
+Finland
+Finnish
+116
+96
+81
+Swedish
+30
+25
+22
+Croatia
+Croatian
+59
+73
+61
+Hungary
+Hungarian
+79
+89
+80
+Italy
+Italian
+84
+95
+85
+Kazakhstan
+Kazakh
+64
+70
+60
+Russian
+41
+50
+46
+Lithuania
+Lithuanian
+66
+73
+62
+Polish
+2
+2
+3
+Russian
+4
+5
+3
+Malta
+English
+35
+38
+36
+Maltese
+12
+15
+11
+Norway
+Bokmål
+75
+86
+74
+Nynorsk
+6
+7
+6
+New Zealand
+English
+81
+91
+81
+Maori
+2
+2
+2
+Portugal
+Portuguese
+93
+107
+94
+Qatar
+Arabic
+35
+40
+35
+(continued on next page)
+J.Y. Jung et al.                                                                                                                                                                                                                                  
+Computers and Education: Artiϧcial Intelligence 10 (2026) 100558 
+12 
+
+Table A (continued)
+Country 
+Language 
+n
+Passage A 
+Passage B 
+Passage C
+English
+41
+51
+44
+Russian Federation
+Russian
+108
+91
+77
+Saudi Arabia
+Arabic
+37
+71
+60
+English
+7
+11
+12
+Singapore
+English
+137
+115
+99
+Slovak Republic
+Hungarian
+3
+4
+2
+Slovak
+70
+82
+68
+Slovenia
+Slovenian
+78
+90
+75
+Sweden
+Swedish
+80
+93
+76
+Chinese Taipei
+Chinese
+82
+94
+82
+United States
+English
+80
+93
+75
+B. Passage summarization example
+B.1. Mock passage
+Title: Tashi and the Great Adventure.
+Hello! My name is Tashi, and I live in a small village by the mountains where my family grows delicious fruits and vegetables. Being a farmer is a 
+big deal here because our crops help us eat and stay healthy. When I was little, I watched my parents work hard in the fields and dreamed of becoming 
+a skilled farmer like them. I loved imagining myself taking care of our land and making everything grow. The fields were my playground, filled with 
+the scent of ripe produce and the rich, earthy smell of freshly turned soil.
+One sunny morning, my dad asked me to check the carrot patch at the far end of the field. Some rabbits had been nibbling on them, and I needed to 
+make sure they were okay. I was excited as I got ready to head out. Just as I was about to leave, my little brother, Rinzin, showed up. His cheeks were 
+ruddy from the morning chill, and his eyes sparkled with eagerness.
+“Can I come with you, Tashi?” Rinzin asked, his eyes shining with excitement.
+I laughed, thinking he was too young. “It might be a little tough for you, Rinzin.”
+“But I want to be a great farmer like you one day!” Rinzin insisted.
+I admired his enthusiasm, but I worried about the long walk. Still, as I started my journey, I saw Rinzin following me determinedly, his small boots 
+sloshing through the moist earth. The path to the carrot patch was bumpy and filled with puddles from last night's rain. Above us, the sky was a bright, 
+cloudless blue, and the birds chirped cheerfully, oblivious to the challenges we might face.
+As we walked, I suddenly slipped on a muddy patch and fell toward a little ditch. My heart raced, and I felt a rush of fear until I heard Rinzin's voice. 
+It was steady and confident, somehow offering reassurance amidst my panic.
+Quick as lightning, Rinzin grabbed a sturdy stick from nearby and held it out to me. “Grab on, Tashi!” he yelled. I hesitated for a moment, giving the 
+stick a few cautious tugs to make sure it wouldn't snap under pressure. Once I felt confident in its strength, I grasped it tightly. Rinzin pulled with all his 
+might, and with his help, I climbed out of the ditch, feeling relieved and thankful. My knee was a bit scraped, and it hurt when I tried to walk. How 
+would I check on the carrots now?
+“Sit and rest,” Rinzin said gently. “I'll go see the carrot patch for you!” His voice held a resolve that seemed beyond his years.
+I wanted to say no, but my knee was very sore. Watching him walk away, I hoped the rabbits hadn't munched too much. Rinzin ambled through the 
+field, his steps determined and quick. The sun cast long shadows across the land, and I sat there, feeling a mix of anxiety and pride.
+J.Y. Jung et al.                                                                                                                                                                                                                                  
+Computers and Education: Artiϧcial Intelligence 10 (2026) 100558 
+13 
+
+After a while, Rinzin came back with a big grin, his face flushed with triumph. “The carrots are all fine! I chased the rabbits away.”
+I felt proud yet embarrassed. “I can't let you do my work,” I muttered, though deep down, I was grateful.
+Rinzin just smiled, a smile that spoke of admiration and a shared dream. “I'm your little helper today!”
+As we walked back home, I followed behind Rinzin, feeling proud of his bravery and willingness to help. The sun was beginning to set, painting the 
+sky in hues of orange and purple, casting a serene glow over the fields. That day taught me that, no matter how young, my brother was ready to be a 
+fantastic little farmer. He showed me that together, we could take care of our family's garden just like I always dreamed of doing. And perhaps, with 
+time, Rinzin's dream of being a great farmer would blossom just as beautifully.
+B.2. Summarization prompt for Mock_Item 2
+B.3. Summarized passage for Mock_Item 2
+Tashi dreams of becoming a skilled farmer like his parents. His little brother, Rinzin, wants to help Tashi check the carrot patch. Although Tashi 
+thinks Rinzin might be too young, Rinzin is determined to join. When Tashi slips into a ditch, Rinzin quickly helps him out with a stick. With Tashi's 
+knee sore, Rinzin offers to check the carrot patch himself and successfully scares away the rabbits. Rinzin's help is important because it shows his 
+bravery and readiness to support their family's farming, proving he can be a farmer like Tashi dreams to be.
+C. Generalized scoring prompt template
+J.Y. Jung et al.                                                                                                                                                                                                                                  
+Computers and Education: Artiϧcial Intelligence 10 (2026) 100558 
+14 
+
+J.Y. Jung et al.                                                                                                                                                                                                                                  
+Computers and Education: Artiϧcial Intelligence 10 (2026) 100558 
+15 
+
+D. Compression ratio plots
+Fig. D1. Compression ratio plot for Item 1
+Fig. D2. Compression ratio plot for Item 2
+Fig. D3. Compression ratio plot for Item 3
+J.Y. Jung et al.                                                                                                                                                                                                                                  
+Computers and Education: Artiϧcial Intelligence 10 (2026) 100558 
+16 
+
+Fig. D4. Compression ratio plot for Item 4
+Fig. D5. Compression ratio plot for Item 5
+Data availability
+The data used in this study are secured for future PIRLS assessments.
+References
+Anthropic. Introducing the next generation of Claude. https://www.anthropic.com/news/ 
+claude-3-family.
+Attali, Y. (2014). A ranking method for evaluating constructed responses. Educational and 
+Psychological Measurement, 74(5), 795–808. https://doi.org/10.1177/0013164414 
+527450.
+Bapna, A., Caswell, I., Kreutzer, J., Firat, O., van Esch, D., Siddhant, A., … Hughes, M. 
+(2022). Building machine translation systems for the next thousand languages. arXiv. htt 
+ps://doi.org/10.48550/arXiv.2205.03983.
+Bennett, R.E. (1991). On the meanings of constructed response. ETS Research Report 
+Series, 1991(2). i-46. https://doi.org/10.1002/j.2333-8504.1991.tb01429.x.
+Bernstein, J., De Jong, Pisoni, D., & Townshend, B. (2000). August). Two experiments on 
+automatic scoring of spoken language proficiency. In Proceedings of the STIL 
+(Integrating Speech Technology in Learning) (pp. 57–61).
+Braun, H. I., Bennett, R. E., Frye, D., & Soloway, E. (1990). Scoring constructed responses 
+using expert systems. Journal of Educational Measurement, 27(2), 93–108. http:// 
+www.jstor.org/stable/1434971.
+Burrows, S., Gurevych, I., & Stein, B. (2015). The eras and trends of automatic short 
+answer grading. International Journal of Artificial Intelligence in Education, 25, 60–117. 
+https://doi.org/10.1007/s40593-014-0026-8.
+Carbonell, J. R. (1970). AI in CAI: An artificial-intelligence approach to computer- 
+assisted instruction. IEEE Transactions on Man-Machine Systems, 11(4), 190–202. 
+https://doi.org/10.1109/TMMS.1970.299942.
+Chang, K., Xu, S., Wang, C., Luo, Y., Liu, X., Xiao, T., & Zhu, J. (2024). Efficient 
+prompting methods for large language models: A survey. arXiv. https://doi.org/10. 
+48550/arXiv.2404.01077.
+Chevalier, A., Wettig, A., Ajith, A., & Chen, D. (2023). Adapting language models to 
+compress contexts. arXiv. https://doi.org/10.48550/arXiv.2305.14788.
+Chu, Y., Li, H., Yang, K., Shomer, H., Liu, H., Copur-Gencturk, Y., & Tang, J. (2024). A 
+LLM-powered automatic grading framework with human-level guidelines 
+optimization. arXiv. https://doi.org/10.48550/arXiv.2410.02165.
+Chuang, Y. N., Xing, T., Chang, C. Y., Liu, Z., Chen, X., & Hu, X. (2024). Learning to 
+compress prompt in natural language formats. arXiv. https://doi.org/10.4855 
+0/arXiv.2402.18700.
+Cohen, J. (1960). A coefficient of agreement for nominal scales. Educational and 
+Psychological Measurement, 20(1), 37–46. https://doi.org/10.1177/001316446 
+002000104.
+Diao, S., Wang, P., Lin, Y., Pan, R., Liu, X., & Zhang, T. (2023). Active prompting with 
+chain-of-thought for large language models. arXiv. https://doi.org/10.48550/arXiv.2 
+302.12246.
+Dinesj¨o, L., & Floreteng, E. (2024). Efficacy of context summarization techniques on 
+large language model chatbots: Balancing compression and recollection [Bachelor’s 
+thesis, KTH Royal Institute of Technology]. DiVA Portal. https://www.diva-portal. 
+org/smash/get/diva2:1886192/FULLTEXT01.pdf.
+Ding, J., Nguyen, H., & Chen, H. (2024). Evaluation of question-answering based text 
+summarization using LLM invited paper. In 2024 IEEE international conference on 
+artificial intelligence testing (AITest) (pp. 142–149). IEEE. https://doi.org/10.1109/ 
+AITest62860.2024.00025. 
+J.Y. Jung et al.                                                                                                                                                                                                                                  
+Computers and Education: Artiϧcial Intelligence 10 (2026) 100558 
+17 
+
+Ebbs, D., Flicop, S., Hidalgo, M. M., & Netten, A. (2023). Systems and instrument 
+verification in PIRLS 2021. In M. von Davier, I. V. S. Mullis, B. Fishbein, & P. Foy 
+(Eds.), Methods and procedures: PIRLS 2021 technical report (pp. 5.1–5.24). Boston 
+College: TIMSS & PIRLS International Study Center. https://doi.org/10.6017/lse. 
+tpisc.tr2103.kb2485. 
+European Union. (2016). Regulation (EU) 2016/679 of the European Parliament and of 
+the Council of 27 April 2016 on the protection of natural persons with regard to the 
+processing of personal data and on the free movement of such data, and repealing 
+Directive 95/46/EC (General Data Protection Regulation). Official Journal of the 
+European Union, L119, 1–88. https://eur-lex.europa.eu/eli/reg/2016/679/oj.
+Feng, G., Zhang, B., Gu, Y., Ye, H., He, D., & Wang, L. (2024). Towards revealing the 
+mystery behind chain of thought: A theoretical perspective. Advances in Neural 
+Information Processing Systems, 36. https://proceedings.neurips.cc/paper_files/ 
+paper/2023/hash/dfc310e81992d2e4cedc09ac47eff13e-Abstract-Conference.html.
+Fife, J. H.. Automated scoring of mathematics tasks in the common core era: 
+Enhancements to M-rater in support of CBAL mathematics and the common core 
+assessments (RR-13-26). ETS Research Report Series. https://doi.org/10.1002/j. 
+2333-8504.2013.tb02333.x.
+Fishbein, B., Yin, L., & Foy, P. (2024). PIRLS 2021 user guide for the international database 
+(2nd ed.). TIMSS & PIRLS International Study Center. Boston College https:// 
+pirls2021.org/data.
+Foltz, P. W., Yan, D., & Rupp, A. A. (2020). The past, present, and future of automated 
+scoring. In D. Yan, A. Rupp, & P. W. Foltz (Eds.), Handbook of automated scoring: 
+Theory into practice (pp. 1–9). CRC Press. 
+Gilbert, H., Sandborn, M., Schmidt, D. C., Spencer-Smith, J., & White, J. (2023). 
+Semantic compression with large language models. In 2023 tenth international 
+conference on social networks analysis, management and security (SNAMS) (pp. 1–8). 
+IEEE. https://doi.org/10.48550/arXiv.2304.12512. 
+Hashemi, H., Eisner, J., Rosset, C., Van Durme, B., & Kedzie, C.. LLM-Rubric: A 
+multidimensional, calibrated approach to automated evaluation of natural Language 
+texts. https://doi.org/10.18653/v1/2024.acl-long.745.
+Huang, L., Yu, W., Ma, W., Zhong, W., Feng, Z., Wang, H., Chen, Q., Peng, W., Feng, X., 
+Qin, B., & Liu, T. (2023). A survey on hallucination in large language models: 
+Principles, taxonomy, challenges and open questions. ACM transactions on 
+information systems, 43(2), 1–55. https://dl.acm.org/doi/abs/10.1145/3703155.
+Jha, S., Erdogan, L.E., Kim, S., Keutzer, K., & Gholami, A. (2024). Characterizing prompt 
+compression methods for long context inference. arXiv. https://doi.org/10.4855 
+0/arXiv.2407.08892.
+Ji, Z., Wu, D., Ma, P., Li, Z., & Wang, S. (2024). Testing and understanding erroneous 
+planning in LLM agents through synthesized user inputs. arXiv. https://doi.org/10.4855 
+0/arXiv.2404.17833.
+Jiang, H., Wu, Q., Lin, C.Y., Yang, Y., & Qiu, L. (2023). Llmlingua: Compressing prompts for 
+accelerated inference of large language models. arXiv. https://doi.org/10.4855 
+0/arXiv.2310.05736.
+Jung, J. Y., Tyack, L., & von Davier, M. (2022). Automated scoring of constructed- 
+response items using artificial neural networks in international large-scale 
+assessment. Psychological Test and Assessment Modeling, 64(4), 471–494. https://pt 
+am-journal.com/wp-content/uploads/2025/01/PTAM_2022-4_5.pdf.
+Jung, J. Y., Tyack, L., & von Davier, M. (2024). Combining machine translation and 
+automated scoring in international large-scale assessments. Large-scale Assessments in 
+Education, 12(1), 10. https://doi.org/10.1186/s40536-024-00199-7.
+Jung, J. Y., Tyack, L., & von Davier, M. (2025). Towards the implementation of 
+automated scoring in international large-scale assessments: Scalability and quality 
+control. Computers and Education: Artificial Intelligence, 8, 100375. https://doi.org/10 
+.1016/j.caeai.2025.100375.
+Koh, H. Y., Ju, J., Liu, M., & Pan, S. (2022). An empirical survey on long document 
+summarization: Datasets, models, and metrics. ACM Computing Surveys, 55(8), 1–35. 
+https://dl.acm.org/doi/full/10.1145/3545176.
+Kojima, T., Gu, S. S., Reid, M., Matsuo, Y., & Iwasawa, Y. (2022). Large language models 
+are zero-shot reasoners. Advances in Neural Information Processing Systems, 35, 
+2199–22213. https://proceedings.neurips.cc/paper_files/paper/2022/hash/ 
+8bb0d291acd4acf06ef112099c16f326-Abstract-Conference.html.
+Larionov, D., & Eger, S. (2025). Promptoptme: Error-aware prompt compression for llm- 
+based mt evaluation metrics. In Proceedings of the 2025 Conference of the Nations of 
+the Americas Chapter of the Association for. Computational Linguistics: Human Language 
+Technologies, 1, 11807–11820.
+Lee, G.G., Latif, E., Wu, X., Liu, N., & Zhai, X. (2024). Applying large language models 
+and chain-of-thought for automatic scoring. Computers and Education: Artificial 
+Intelligence, 6, Article 100213. https://doi.org/10.1016/j.caeai.2024.100213.
+Li, Y., Dong, B., Lin, C., & Guerin, F. (2023). Compressing context to enhance inference 
+efficiency of large language models. arXiv. https://doi.org/10.48550/arXiv.2310. 
+06201.
+Li, Y., Lin, Z., Zhang, S., Fu, Q., Chen, B., Lou, J. G., & Chen, W. (2023). Making language 
+models better reasoners with step-aware verifier. In Proceedings of the 61st annual 
+meeting of the Association for computational linguistics (Volume 1: Long papers) (pp. 
+5315–5333). https://aclanthology.org/2023.acl-long.291.
+Li, Z., Liu, Y., Su, Y., & Collier, N. (2024). Prompt compression for large language models: A 
+survey. arXiv. https://doi.org/10.48550/arXiv.2410.12388.
+Liu, N. F., Lin, K., Hewitt, J., Paranjape, A., Bevilacqua, M., Petroni, F., & Liang, P. 
+(2024). Lost in the middle: How language models use long contexts. Transactions of 
+the Association for Computational Linguistics, 12, 157–173. https://doi.org/10.1162/ 
+tacl_a_00638.
+Liu, Y., Yavuz, S., Meng, R., Moorthy, M., Joty, S., Xiong, C., & Zhou, Y. (2023). Modeling 
+uncertainty and using post-fusion as fallback improves retrieval augmented generation 
+with LLMs. arXiv. https://doi.org/10.48550/arXiv.2308.12574.
+Livingston, S. A. (2009). Constructed-Response Test questions: Why we use them; how we 
+Score them (R&D Connections No. 11). Educational Testing Service. https://eric.ed. 
+gov/?id=ED507802. 
+Lottridge, S., Ormerod, C., & Jafari, A. (2023). Psychometric considerations when using deep 
+learning for automated scoring. Advancing natural language processing in educational 
+assessment. Routledge.
+Madnani, N., & Cahill, A. (2018). In Automated scoring: Beyond natural language processing 
+(pp. 1099–1109). Association for Computational Linguistics. https://aclanthology. 
+org/C18-1094. 
+McClellan, C. A.. Constructed-response scoring—Doing it right (Research Report No. RDC- 
+13). Educational Testing Service. https://www.ets.org/Media/Research/pdf/R 
+D_Connections13.pdf.
+Morris, W., Holmes, L., Choi, J. S., & Crossley, S. (2024). Automated scoring of 
+constructed response items in math assessment using large language models. 
+International Journal of Artificial Intelligence in Education, 1–28. https://doi. 
+org/10.1007/s40593-024-00418-w.
+Mu, J., Li, X., & Goodman, N. (2024). Learning to compress prompts with gist tokens. 
+Advances in Neural Information Processing Systems, 36. https://proceedings.neurips. 
+cc/paper_files/paper/2023/file/3d77c6dcc7f143aa2154e7f4d5e22d68-Paper-Confe 
+rence.pdf.
+Mullis, I. V. S., & Martin, M. O. (2019). In PIRLS 2021 Assessment Frameworks. TIMSS & 
+PIRLS International Study. College: Center Boston. https://timssandpirls.bc.edu/pirls 
+2021/frameworks/. 
+Myford, C. M., & Wolfe, E. W. (2003). Detecting and measuring rater effects using many- 
+facet Rasch measurement: Part I. Journal of Applied Measurement, 4(4), 386–422. http 
+s://jimelwood.net/students/grips/tables_figures/myford_wolfe_2004.pdf.
+Naik, N. (2024). Probabilistic consensus through ensemble validation: A framework for LLM 
+reliability. arXiv. https://doi.org/10.48550/arXiv.2411.06535.
+Okubo, T., Houlden, W., Montuoro, P., Reinertsen, N., Tse, C.S., & Bastianic, T. (2023). 
+AI scoring for international large-scale assessments using a deep learning model and 
+multilingual data. (OECD Education Working Paper No. 287). OECD Publishing.
+OpenAI. (2023). Models. https://platform.openai.com/docs/models/gp.
+OpenAI. Prompt generation. https://platform.openai.com/docs/guides/prompt-generatio 
+n.
+OpenAI. Enterprise privacy at OpenAI. https://openai.com/enterprise-privacy/.
+Packer, C., Wooders, S., Lin, K., Fang, V., Patil, S. G., Stoica, I., & Gonzalez, J. E. (2023). 
+Memgpt: Towards llms as operating systems. arXiv. https://doi.org/10.48550/arXiv.2 
+310.08560.
+Page, E. B. (1966). The imminence of… grading essays by computer. Phi Delta Kappan, 47 
+(5), 238–243. https://www.jstor.org/stable/20371545.
+Pan, Z., Wu, Q., Jiang, H., Xia, M., Luo, X., Zhang, J., … Zhang, D. (2024). Llmlingua-2: 
+Data distillation for efficient and faithful task-agnostic prompt compression. arXiv. htt 
+ps://doi.org/10.48550/arXiv.2403.12968.
+Reddy, G. P., Kumar, Y. P., & Prakash, K. P. (2024). Hallucinations in large Language 
+models (LLMs). In 2024 IEEE open conference of electrical, electronic and information 
+sciences (eStream) (pp. 1–6). IEEE. https://doi.org/10.1109/ 
+eStream61684.2024.10542617. 
+Reid, M., Savinov, N., Teplyashin, D., Lepikhin, D., Lillicrap, T., Alayrac, J. B., … 
+Mustafa, B. (2024). Gemini 1.5: Unlocking multimodal understanding across 
+millions of tokens of context. arXiv preprint arXiv:2403.05530. https://doi.org/ 
+10.48550/arXiv.2403.05530
+Reynolds, L., & McDonell, K. (2021). Prompt programming for large language models: 
+Beyond the few-shot paradigm. In Extended abstracts of the 2021 CHI conference on 
+human factors in computing systems (pp. 1–7). https://doi.org/10.1145/ 
+3411763.3451760
+Riordan, B., Bichler, S., Bradford, A., Chen, J. K., Wiley, K., Gerard, L., & Linn, M. C. 
+(2020). An empirical investigation of neural methods for content scoring of science 
+explanations. In Proceedings of the fifteenth workshop on innovative use of NLP for 
+building educational applications (pp. 135–144). https://aclanthology.org/2020.bea 
+-1.13.
+Sawicki, J., Ganzha, M., & Paprzycki, M. (2023). The state of the art of natural language 
+processing—a systematic automated review of NLP literature using NLP techniques. 
+Data Intelligence, 5(3), 707–749. https://doi.org/10.1162/dint_a_00213.
+Schr¨oder, S., Morgenroth, T., Kuhl, U., Vaquet, V., & Paaßen, B. (2025). Large language 
+models do not simulate human psychology. arXiv. https://doi.org/10.48550/arXiv.25 
+08.06950.
+Shakil, H., Ortiz, Z., Forbes, G. C., & Kalita, J. (2024). Utilizing GPT to enhance text 
+summarization: A strategy to minimize hallucinations. Procedia Computer Science, 
+244, 238–247. https://doi.org/10.1016/j.procs.2024.10.197
+Shannon, C. E. (1951). The redundancy of English. In Cybernetics; transactions of the 7th 
+conference (pp. 248–272). New York: Josiah Macy, Jr. Foundation. https://jontalle. 
+web.engr.illinois.edu/uploads/537.F18/Papers/Shannon50b.pdf. 
+Shermis, M. (2014). State-of-the-art automated essay scoring: Competition, results, and 
+future directions from a United States demonstration. Assessing Writing, 20, 53–76. 
+https://doi.org/10.1016/j.asw.2013.04.001.
+Shermis, M. D., & Burstein, J. C. (2003). Automated essay scoring: A cross-disciplinary 
+perspective. Routledge. 
+Shermis, M., & Burstein, J. (Eds.). (2006). Automated essay scoring: A cross-disciplinary 
+perspective. Lawrence Erlbaum Associates. 
+Shermis, M. D., & Burstein, J. (2013). Handbook of automated essay evaluation. Routledge. 
+Shi, F., Suzgun, M., Freitag, M., Wang, X., Srivats, S., Vosoughi, S., … Wei, J. (2022). 
+Language models are multilingual chain-of-thought reasoners. arXiv. https://doi.org/10. 
+48550/arXiv.2210.03057.
+Shin, H. J., Andersen, N., Horbach, A., Kim, E., Baik, J., & Zehner, F.. Operational 
+automatic scoring of text responses in 2016 ePIRLS: Performance and linguistic variance. 
+J.Y. Jung et al.                                                                                                                                                                                                                                  
+Computers and Education: Artiϧcial Intelligence 10 (2026) 100558 
+18 
+
+https://www.iea.nl/sites/default/files/2024-04/Operational-Automatic-Scoring 
+-of-Text-Responses-ePIRLS.pdf.
+T¨ornberg, P. (2023). Chatgpt-4 outperforms experts and crowd workers in annotating political 
+Twitter messages with zero-shot learning. arXiv. https://doi.org/10.48550/arXiv.2304. 
+06588.
+Tyack, L., Khorramdel, L., & von Davier, M. (2024). Using convolutional neural networks 
+to automatically Score eight TIMSS 2019 graphical response items. Computers and 
+Education: Artificial Intelligence, 100249. https://doi.org/10.1016/j.caeai.2024.100 
+249.
+von Davier, M., Tyack, L., & Khorramdel, L. (2023). Scoring graphical responses in TIMSS 
+2019 using artificial neural networks. Educational and Psychological Measurement, 83 
+(3), 556–585. https://doi.org/10.1177/00131644221098021.
+Suzgun, M., & Kalai, A.T. (2024). Meta-prompting: Enhancing language models with task- 
+agnostic scaffolding. arXiv. https://doi.org/10.48550/arXiv.2401.12954.
+Puri, R., & Catanzaro, B. (2019). Zero-shot text classification with generative language 
+models. arXiv. https://doi.org/10.48550/arXiv.1912.10165.
+Chae, Y., & Davidson, T. (2025). Large language models for text classification: from zero- 
+shot learning to instruction-tuning. Sociological Methods & Research, Advance online 
+publication. https://doi.org/10.1177/00491241251325243.
+Wang, X., Salmani, M., Omidi, P., Ren, X., Rezagholizadeh, M., & Eshaghi, A. (2024). 
+Beyond the limits: A survey of techniques to extend the context length in large language 
+models. arXiv. https://doi.org/10.48550/arXiv.2402.02244.
+Ward, W. C., & Bennett, R. E. (2012). Construction versus choice in cognitive measurement: 
+Issues in constructed response, performance testing, and portfolio assessment. Routledge. 
+Wei, J., Wang, X., Schuurmans, D., Bosma, M., Ichter, B., Xia, F., Chi, E., Le, Q. V., & 
+Zhou, D. (2022). Chain-of-thought prompting elicits reasoning in large language 
+models. Advances in Neural Information Processing Systems, 35, 24824–24837. https 
+://proceedings.neurips.cc/paper_files/paper/2022/hash/9d5609613524ecf4f15a 
+f0f7b31abca4-Abstract-Conference.html.
+Wu, S., Irsoy, O., Lu, S., Dabravolski, V., Dredze, M., Gehrmann, S., Kambadur, P., 
+Rosenberg, D., & Mann, G. (2023). BloombergGPT: A large language model for finance. 
+arXiv. https://doi.org/10.48550/arXiv.2303.17564.
+Xi, X., Higgins, D., Zechner, K., & Williamson, D. M. (2008). Automated scoring of 
+spontaneous speech using SpeechRaterSM v1. 0. ETS Research Report Series, 2008(2). 
+i–102 https://doi.org/10.1002/j.2333-8504.2008.tb02148.x.
+Yang, Y., Tang, Y., & Tam, K.Y. (2023). Investlm: A large language model for investment 
+using financial domain instruction tuning. arXiv. https://doi.org/10.48550/arXiv.2 
+309.13064.
+Yao, J.Y., Ning, K.P., Liu, Z.H., Ning, M.N., Liu, Y.Y., & Yuan, L. (2023). Llm lies: 
+Hallucinations are not bugs, but features as adversarial examples. arXiv. https://doi. 
+org/10.48550/arXiv.2310.01469.
+Ye, Q., Axmed, M., Pryzant, R., & Khani, F. (2023). Prompt engineering a prompt engineer. 
+arXiv. https://doi.org/10.48550/arXiv.2311.05661.
+Yu, H., & Han, J. (2022). Survey of query-based text summarization. arXiv. https://doi. 
+org/10.48550/arXiv.2211.11548.
+Zhang, M. (2013). Contrasting automated and human scoring of essays. R & D 
+Connections, 21(2), 1–11. https://www.ets.org/Media/Research/pdf/RD_Connectio 
+ns_21.pdf.
+Zhang, Z., Li, J., Lan, Y., Wang, X., & Wang, H. (2025). An empirical study on prompt 
+compression for large language models. arXiv. https://doi.org/10.48550/arXiv.2505. 
+00019.
+J.Y. Jung et al.                                                                                                                                                                                                                                  
+Computers and Education: Artiϧcial Intelligence 10 (2026) 100558 
+19 

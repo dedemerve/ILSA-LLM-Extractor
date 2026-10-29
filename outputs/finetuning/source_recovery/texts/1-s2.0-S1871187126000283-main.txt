@@ -1,0 +1,1321 @@
+Thinking Skills and Creativity 61 (2026) 102154
+
+Contents lists available at ScienceDirect
+
+Thinking Skills and Creativity
+journal homepage: www.elsevier.com/locate/tsc
+
+Mapping student engagement in creative thinking: An explainable
+machine learning approach to behavioral heterogeneity
+Qin Wang a , Fu Chen b , Yu Han a, Xiaofei Li a , Chang Lu c,*
+a
+b
+c
+
+Faculty of Education, Shaanxi Normal University, Xi’an, Shaanxi, China
+Faculty of Education, University of Macau, Taipa, Macau, China
+School of Education, Shanghai Jiao Tong University, Shanghai, China
+
+A R T I C L E I N F O
+
+A B S T R A C T
+
+Keywords:
+Task engagement
+Disengagement
+Creative thinking
+Explainability
+Prediction
+
+Computer-based assessments can capture data on students’ response processes when completing
+creative thinking tasks, which helps explore their varying levels of task engagement and disengagement. The large amount of contextual information collected by large-scale assessments also
+contributes to examining the background factors related to it. Therefore, this study aims to
+identify students’ distinct engagement and disengagement patterns in multiple creative tasks and
+the most important factors to predict task engagement and disengagement. Based on the process
+data from the creative thinking test in the PISA 2022 data of Canada (n = 6,794), Germany (n =
+1,692), and Hong Kong (n = 1,661), we identified six engagement patterns (i.e., insightful innovators, divergent explorers, elaborative strategists, disfluent performers, hasty attempters, and
+passive learners) and three disengagement behaviors (i.e., rapid, relatively rapid, and nonresponding). Patterns were summarized across all creative tasks. It was found that students
+tend to adopt the strategy of taking fewer actions in a short period of time to generate solutions
+for most creative tasks. To predict engagement and disengagement, an XGBoost classifier optimized with SMOTE and class weighting was employed. The model demonstrated robust predictive performance across three economies. SHAP analysis identified the top 10 predictors, which
+were predominantly cognitive and academic factors. By translating behavioral logs into interpretable profiles and transparent prediction rules, this study moves beyond a “black box” to offer
+actionable, evidence-based insights for fostering engagement in creativity education.
+
+1. Introduction
+Creative thinking is a higher-order thinking skill that involves complex thinking processes of generating innovative ideas or solutions to solve problems effectively, and further evaluating ideas and developing new insights from multiple perspectives (Hernandez
+Sibo et al., 2024; Lucchiari et al., 2019; Xiong et al., 2022). It contributes to students’ learning, problem-solving, and metacognition
+skills, thus promoting their holistic development (OECD, 2023a). Through continuous exploration and discovery in complex thinking
+processes, students can be well prepared to face the multifarious problems in the future society (Lucchiari et al., 2019). As one of the
+key skills required for the 21st century, creative thinking has long been explored by researchers and practitioners in education (Chen
+et al., 2025; Yildiz & Yildiz, 2021). To guide research, pedagogies, and policies on adolescents’ creative thinking, the Programme for
+
+* Corresponding author at: Shanghai Jiao Tong University, 800 Dongchuan Rd, Shanghai 200240, China.
+E-mail address: chang.lu@sjtu.edu.cn (C. Lu).
+https://doi.org/10.1016/j.tsc.2026.102154
+Received 20 September 2025; Received in revised form 14 January 2026; Accepted 2 February 2026
+Available online 3 February 2026
+1871-1871/© 2026 Elsevier Ltd. All rights are reserved, including those for text and data mining, AI training, and similar technologies.
+
+Thinking Skills and Creativity 61 (2026) 102154
+
+Q. Wang et al.
+
+International Student Assessment (PISA) conducted an international large-scale assessment (ILSA) of creative thinking in the 2022
+cycle. The computer-based assessment (CBA) can capture information on students’ response processes when completing creative
+thinking tasks. This massive amount of data enables researchers to better explore test takers’ behaviors, for instance, the engagement
+patterns of students in processing multiple creative thinking tasks, rather than just focusing on the final scores.
+Based on process data, previous studies have mostly focused on examining test-taking behaviors such as distinguishing between
+students’ engaged and disengaged behaviors in completing tasks (e.g., Sahin & Colvin, 2020), response-time effort (e.g., Michaelides
+et al., 2020), and action sequences (e.g., He et al., 2021). However, identifying disengaged behaviors through isolated tasks is
+insufficient for understanding students’ creative thinking in multiple tasks, as item and individual differences may cause changes in the
+extent of engagement (Wang et al., 2023). The exploration of test-taken behaviors from the perspective of assessment can indeed
+provide insightful views on students’ engagement in completing creative thinking tasks. A more fine-grained exploration of
+engagement patterns beyond the binary difference between engagement and disengagement is also needed to help us understand how
+different students put effort into processing multiple tasks. Furthermore, although some research has investigated how contextual
+factors relate to educational outcomes, it remains to be explored what factors would affect students’ engagement in creative tasks.
+The rapid development of educational data mining (EDM) and machine learning (ML) has provided a novel methodological
+perspective for mining ILSA data. Given the widespread application and remarkable performance of ML in data mining, integrating ML
+in EDM offers great potential for generating valuable insights, ultimately supporting evidence-based policy decisions in line with
+EDM’s core mission (Alvarez-Garcia et al., 2024). Despite its popularity and immense potential, there is a growing appeal to uncover
+the “black box” of ML models, that is, to make the inner workings of models more transparent and explainable to stakeholders.
+Consequently, explainable artificial intelligence (XAI), a rising field for ensuring transparency and interpretability of results, has been
+introduced to EDM (Alvarez-Garcia et al., 2024; Guleria & Sood, 2023; Livieris et al., 2023). Leveraging XAI techniques, this study
+bridges the identified research gaps through the application of both supervised and unsupervised learning methods. Specifically, the
+study focuses on the following research questions:
+1) What engagement patterns can be identified from multiple creative tasks?
+To address Research Question 1, we first distinguish disengagement from engagement patterns. We also expect to find more varied
+engagement patterns based on the process data that reflects response time and action effort.
+2) What are students’ most common engagement and disengagement patterns when completing multiple creative tasks?
+With Research Question 2, we investigate students’ most common engagement patterns in multiple tasks instead of identifying their
+behavioral patterns in single or several isolated tasks. It has the potential to avoid the randomness of engagement patterns and
+behavioral characteristics that depend on specific tasks. Moreover, the changes in their engagement patterns in different tasks can be
+explored. As the level of student engagement may vary across different tasks, students may exhibit multiple common engagement
+patterns.
+3) What are the most important individual-level predictors for students’ engagement and disengagement in creative tasks?
+This study employs supervised learning, i.e., building predictive models, to explore the most important factors that distinguish
+students’ engagement and disengagement in creative tasks. By doing so, accurate interpretations can be provided to different stakeholders, enabling effective decision-making in cultivating students’ creative thinking.
+2. Literature review
+2.1. Creative thinking
+The conceptualization of creative thinking reflects its multidimensional nature, with different theoretical models highlighting
+particular aspects. But overall, it refers to an individual’s ability to generate new concepts or solutions (De Bono, 1970). Creativity was
+typically categorized into two distinct types: “big-C” creativity and “little-c” creativity (Csikszentmihalyi, 2013; Simonton, 2013). The
+former focuses on creative outcomes that require expertise in a given context. While the latter refers to the general creativity that all
+individuals can exhibit in daily life (e.g., arranging photos, decorating rooms). Unlike the eminent outcomes in “big-C”, this everyday
+creativity can be systematically developed and honed through sustained practice and education (Kaufman & Beghetto, 2009). According to Guilford (1957), creativity stems from the interplay of two cognitive abilities: divergent thinking and convergent thinking.
+Divergent thinking requires an individual to be capable of generating diverse and creative ideas (Cropley, 2006), while convergent
+thinking involves the process of evaluating ideas and making decisions on the best solution (Reiter-Palmon & Robinson, 2009). Both
+thinking skills are widely recognized as critical to creative thinking. Research on creative thinking has been devoted to investigating its
+conceptualization (Hadar & Tirosh, 2019; Runco & Jaeger, 2012), cultivation across disciplines and educational stages
+(Jarutkamolpong & Kwangmuang, 2025; Paz-Baruch et al., 2025), possible influential factors (Suherman & Vidákovich, 2024),
+assessment and mechanisms through advanced deep learning techniques (Ghosh & Konar, 2024; Ghosh et al., 2020, 2025).
+The PISA 2022 cycle defined creative thinking as “the competence to engage productively in the generation, evaluation and
+improvement of ideas that can result in original and effective solutions, advances in knowledge and impactful expressions of imagination” (OECD, 2023a). The corresponding cognitive test assesses students’ ability to utilize both divergent and convergent cognitive
+processes to generate diverse and creative ideas, evaluate and improve ideas to complete tasks that are set in everyday contexts. Most
+tasks in the test require students to generate written or visual artefacts. Thus, to successfully demonstrate proficiency in creative
+thinking, students need to exhibit some level of task engagement, i.e., investing time and effort in understanding task prompts and
+materials, and elaborating creative outputs in the required format (OECD, 2023b).
+
+2
+
+Thinking Skills and Creativity 61 (2026) 102154
+
+Q. Wang et al.
+
+2.2. Task engagement and cognitive flexibility
+The tripartite model of student engagement posits engagement as a multifaceted construct critical for understanding academic
+achievement, motivation, and learning (Fredricks et al., 2004). It conceptualizes engagement as a dynamic state comprising three
+distinct, yet interrelated, dimensions, i.e., behavioral, emotional, and cognitive engagement. Behavioral engagement refers to the
+observable, outward manifestations of participation in academic or task-related activities. Emotional engagement encompasses students’ affective reactions to their learning context, such as feelings of interest, enjoyment, belonging, and conversely, anxiety or
+boredom. Cognitive engagement involves the mental effort and cognitive investment students make in the learning process. Among
+three dimensions, behavioral engagement serves as the critical, observable foundation of the engagement construct (Xie et al., 2025).
+In cognitive tests, the quality of engagement in tasks serves as the vital requirement for interpreting the validity of test scores (Wise,
+2017; Wise & Gao, 2017). However, test-takers may show different extents of engagement and even be disengaged when completing
+tasks (Wise & DeMars, 2005). Such heterogeneity can be observed at both the individual and item levels (Wang et al., 2023).
+One important aspect of human cognition, cognitive flexibility, has been regarded as closely intertwined with how individuals
+engage in creative tasks (Arán-Filippetti & Krumm, 2020; Chen et al., 2014), as it allows individuals to address problems from different
+angles, think outside the box, and generate novel solutions. Cognitive flexibility is a core executive function defined as the mental
+ability to adaptively switch between different concepts, tasks, or behavioral strategies in response to changing environmental demands, rules, or goals (Diamond, 2013; Ionescu, 2012). It transcends mere shifting and involves the dynamic reconfiguration of
+thinking and the inhibition of prior mental sets to generate, evaluate, and apply novel, appropriate approaches (Kloo et al., 2010). It is
+not simply being creative but is the cognitive control mechanism that enables creative problem-solving, learning transfer, and resilience in complex, non-routine situations. Thus, cognitive flexibility and creativity share similar cognitive processes (Khalil et al.,
+2019). According to the dual pathway to creativity model (Nijstad et al., 2010), creative cognition can be achieved through two
+fundamental pathways, flexibility and persistence. The flexibility pathway permits switching fluidly between states of attention and
+viewpoints. In contrast, the persistence pathway relies on sustained and focused cognitive effort. Creative outputs arise from the
+complex interplays of both flexibility and persistence, processes that are fundamentally associated with cognitive flexibility
+(Beversdorf, 2019).
+The heterogeneity of behavioral engagement could be observed through the extent of students actively participating in tasks. In
+CBAs, the wealth of available process data allows for its sophisticated operationalization. Its true explanatory power can be unlocked
+when it is analyzed not as an end in itself, but as the behavioral trace of underlying motivational and cognitive processes demanded by
+the task itself, guiding researchers and educators to discern productive effort from mere activity. Furthermore, cognitive flexibility is
+intrinsically linked to the quality and sustainability of task engagement, particularly in complex, ill-structured, or creative tasks
+(Ionescu, 2012). In a sequence of creative tasks, where demands, problems, and success criteria may evolve, it is the linchpin of
+adaptive engagement. Cognitive flexibility theory helps interpret why some learners maintain high-quality engagement across tasks
+while others frequently disengage.
+2.3. Process data for identifying task engagement and disengagement
+In CBAs, rich process data can be stored and generated, including time-related data (e.g., total time, time to first action) and actionrelated data (e.g., frequency of actions, action sequences). These data allow researchers to examine students’ test-taking processes,
+moving beyond traditional outcome-based accuracy measures (Wise, 2017). Especially in open, constructed items used to assess
+higher-order competencies, process data has enormous potential to improve test design and construct validity (Sireci & Zenisky, 2006;
+Zumbo et al., 2023) and dig into how test-takers engage in complex tasks (Goldhammer et al., 2016; Wise & Gao, 2017).
+Over the past two decades, one key research focus has been detecting disengaged or non-effortful test-taking behaviors using
+process data, specifically, identifying unmotivated test-takers who may disengage during an assessment and respond to items with
+minimal effort (Wise & Gao, 2017; Wise, 2020). Some studies have examined several types of disengaged behaviors and methods for
+detecting them. In a test event, disengaged test-takers would rarely engage in the items and thus may omit the items in a very short time
+(rapid omitting), provide quick unrelated keypresses (rapid perfunctory answer), or quickly enter responses in hopes of getting answers correct by chance (rapid guessing) (Sahin & Colvin, 2020; Wise & Gao, 2017). Due to different types of test items, some variants
+of these disengaged behaviors were also studied. For instance, rapid guessing was more suitable for closed-ended items, as in
+open-ended and constructed items, test-takers could not make rapid guess. The PISA creative thinking test requires students to generate
+creative outputs. Such a constructed-response format inherently prevented students from employing rapid guessing strategies to
+generate correct answers through chance. Therefore, PISA identified task disengagement with three indicators, including rapid
+responding (i.e., rapidly moving through the item without giving a valid response), relative rapid responding (i.e., rapid responding
+relative to other students), and non-responding (i.e., not submitting a valid response after spending any length of time) (OECD, 2024).
+These indicators were identified based on responses and processing time. Processing time, or the time spent on individual test items, is
+a common and promising measure for detecting disengagement. The underlying assumption is that engaged test-takers invest a
+baseline amount of time (e.g., to read instructions and process the stimulus) before responding, whereas disengaged test-taking
+behavior means taking less time or guessing rapidly (Goldhammer et al., 2016). Thus, response time has been used to identify
+diverse thresholds to separate engaged and disengaged test-taking behaviors at the level of individual items, such as, visual inspection
+method (Schnipke, 1995), visual inspection with response accuracy (Lee & Jia, 2014), and P + > 0% (Goldhammer et al., 2016). For
+instance, the P + > 0% method was proposed to detect task disengagement by examining the shortest response time associated with a
+proportion correct (P +) greater than zero, based on the problem-solving tasks in PIAAC (Programme for the International Assessment
+3
+
+Thinking Skills and Creativity 61 (2026) 102154
+
+Q. Wang et al.
+
+of Adult Competencies).
+Research on the detection of task disengagement has achieved certain significant results. However, fine-grained exploration of
+engagement in multiple tasks is still limited. Regarding task engagement, based on process data, several studies examined test-takers’
+behavioral patterns in completing complex tasks, which delved into the level of task engagement in different subgroups. For example,
+using log data from the PISA 2012 cycle, Hahnel et al. (2022) explored students’ different behavioral patterns in several digital reading
+tasks. The study identified five clusters based on the indicators from navigation and timing data. Using general log data of the U.S.
+PIAAC 2012 problem-solving assessment, Wang et al. (2023) distinguished between engagement and disengagement, and further
+explored fine-grained clusters of engaged behavioral patterns in multiple tasks. Unlike the navigation and action sequence data that
+belong to specific tasks, general log data, including processing time, orientation time, and action count, can be compared across
+different tasks. These indicators also contain rich information about whether test-takers consistently keep motivated and engaged in
+multiple tasks (Wang et al., 2023). Furthermore, navigation and action sequence data may contribute little to the exploration of
+creative tasks, as these tasks require students to create rather than follow certain effective steps. Therefore, these general log data,
+which reflect how students invest time and effort, can be used to mine valuable information about student engagement in creative
+tasks.
+2.4. Key factors affecting creative thinking
+Creative thinking, characterized by its multidimensional and complex nature, is influenced by diverse individual, cognitive, and
+environmental factors (Vincent et al., 2002; Hernandez Sibo et al., 2024). Personality traits significantly affected creative achievement. For instance, the Big Five trait openness to experience correlated with creativity across domains (Kaufman et al., 2016; Xu et al.,
+2021). Intrinsic motivation and creative self-efficacy would enable sustained engagement in creative work (Cromwell et al., 2023;
+Hallak et al., 2018). Some studies also have reported associations between cognitive abilities and creativity, such as fluid intelligence
+(Frith et al., 2021), working memory (Beaty & Silvia, 2012), and metacognitive skills (particularly evaluative monitoring of ideas)
+(Urban & Urban, 2024). Regarding socio-environmental aspects, factors such as supportive climates and cultural values were also
+contributing to creative attitudes and behaviors (Hoffmann et al., 2025; Li & Li, 2025).
+In PISA 2022, apart from three core domains (reading, mathematics, science), the innovative domain assessed was adolescents’
+creative thinking. To better understand this concept and guide the collection of contextual information, PISA 2022 conceptualized
+three interconnected dimensions, i.e., internal resources (e.g., knowledge, skills, attitudes), external factors (e.g., cultural norms and
+expectations), and creative engagement (e.g., creative expression), that support students’ creative thinking in the classroom (OECD,
+2023a). Based on creative thinking data, only a few studies have been conducted to investigate the influential factors of students’
+performance in the creative thinking test. For example, in Zeng (2025), several non-cognitive factors, including growth mindsets, ICT
+self-efficacy, creative environments, ICT availability, and ICT information practices, were found to be significantly correlated with
+creative self-efficacy and creative thinking. The exploration of the possible influential factors for predicting creative thinking performance from a large amount of contextual factors is still scarce, especially for student engagement in completing creative tasks.
+Therefore, one research question of this study is to build predictive models to predict student engagement and disengagement in
+creative tasks based on students’ background information collected in PISA 2022.
+2.5. Explainability
+In response to the challenges of lacking transparency due to the black-box nature of complex models, explainability has emerged as
+a critical element in bridging the gap between model performance and human understanding when employing AI algorithms (Minh
+et al., 2022). XAI approaches have been used in various domains to facilitate human decision-making in the EDM field (e.g., Alvarez-Garcia et al., 2024; Kruger et al., 2023). For instance, Kruger et al. (2023) applied ML algorithms to predict students’ dropout and
+techniques of model explainability (e.g., result visualization and SHAP) to understand why students may drop out. Using a large
+amount of mixed-type contextual data from PISA 2022, Alvarez-Garcia et al. (2024) employed an explainable cluster analysis approach
+to uncover complex student profiles. The explainable techniques have exhibited great potential in enhancing the transparency of
+models and the interpretability of results. For problems in the educational field where interpretability is more important than predictive accuracy, this transparency builds trust and makes educators more likely to act upon the insights effectively. Thus, in the
+present study, using explainable techniques can help understand complex student engagement profiles and the influential contextual
+factors of their engagement and disengagement in multiple creative tasks.
+3. Methods
+From both person-centered and variable-centered perspectives, this study employed ML approaches, including supervised learning
+and unsupervised learning algorithms, to identify distinct student engagement patterns and the potential influential factors to predict
+engaged and disengaged students.
+3.1. Sample
+In the PISA 2022 cycle, 15-year-old students from 81 OECD member and partner economies participated in PISA. Among them,
+about 28% of the sample students from 64 countries and economies took the creative thinking cognitive test. The creative thinking test
+4
+
+Thinking Skills and Creativity 61 (2026) 102154
+
+Q. Wang et al.
+
+consists of 32 open-ended tasks with a bounded scale of 0 - 60 score points. Students across OECD countries scored an average of 33
+points on the creative thinking test. This study selected students from three economies as research samples, including Canada, Germany, and Hong Kong. The reasons are as follows. First, all three economies are economically developed. Second, the three economies
+are at different levels of performance. Students from Canada achieved an average score of 38, which was statistically significant above
+the OECD average. Students from Germany achieved an average score of 33, which was not statistically significant above the OECD
+average. Despite performing very well in three core domains, Hong Kong performed statistically significantly below the OECD average
+in creative thinking. The specific background information of the three economies is listed in Table 1.
+3.2. Analytical framework
+The data used in the current study includes the process data obtained from the PISA 2022 creative thinking test and the contextual
+data from the student questionnaire. The process data was used to identify students’ distinct engagement patterns. The contextual data
+was used to predict whether students were mostly engaged or disengaged in multiple creative tasks. The overall analytical framework
+is presented in Fig. 1.
+3.3. Cluster analysis
+3.3.1. Data preprocessing for cluster analysis
+Four features from process data were extracted for cluster analysis, including 1) scored response, the credits achieved by students
+on the item; 2) action count, the number of actions taken by the student in interacting with the item (e.g., clicks, drag/drop events); 3)
+orientation time, the interval between item display and the first system-recorded action; 4) processing time, the total time spent on the
+item. Data was preprocessed through the following steps. First, valid cases in three economies were extracted. Second, three disengaged behaviors were identified according to PISA’s criteria for task disengagement (OECD, 2024) and the P + > 0% method
+(Goldhammer et al., 2016). Rapid responding behaviors indicate that students quickly move on to the next item without submitting a
+scoring response within 30 seconds. The identification of relative rapid responders is the time interval between 30 seconds and the
+shortest time of the scored answer given in this item (if this time was above 30 seconds). Non-responding behaviors represent that
+students do not submit a valid response after spending any time on an item. Third, the remaining data that represents engaged behaviors was transformed into z-scores.
+3.3.2. Clustering algorithm
+To examine RQ1, task-specific k-means clustering was performed utilizing four features from process data. K-means clustering is a
+commonly used unsupervised learning algorithm used to group unlabeled data based on similarity (MacQueen, 1967). The number of
+clusters (k) was determined by R package NbClust (Charrad et al., 2014). The NbClust package evaluates 30 clustering validation
+indices simultaneously (e.g., silhouette, elbow) and provides the best solution according to the majority rule.
+3.3.3. Data summarization
+To address RQ2, students’ distinct engagement patterns obtained from cluster analysis and their disengagement patterns were
+integrated and summarized based on mode (i.e., the most frequent value in a dataset).
+3.4. Predictive analysis
+3.4.1. Data preprocessing for predictive analysis
+Students were classified into two groups, i.e., engagement and disengagement. Disengaged students were identified if their most
+common patterns were all disengaged behaviors. The remaining were identified as engaged students. This binary variable was set as
+the target variable in predictive models (1 = disengagement, 0 = engagement). For each economy, the contextual data (see supplementary material, Table A.1) was integrated with the target variable as a new dataset for predictive analysis. The missing data rate of
+each variable was shown in Table A.2 (see supplementary material). Variables with a missing data rate greater than 30% were
+considered unable to provide information and were deleted. Regarding missing values in other variables, the significant results of
+Little’s test for missing completely at random (MCAR) versus missing at random (MAR) indicated that for all three territories, MCAR
+was not preferred, and the MAR assumption was reasonable. Therefore, hot deck imputation with KNN (K-Nearest Neighbors) was used
+to impute missing values (Andridge & Little, 2010). The algorithm identifies the k most similar complete records (nearest neighbors)
+based on the available data. For continuous variables, it can use the mean/median of the k neighbors. For categorical variables, it
+typically uses the mode (most frequent value) of the k neighbors. Finally, the number and proportions of engaged and disengaged
+Table 1
+Background information of three economies.
+Economies
+
+Creative thinking score
+
+Ranking
+
+Total n
+
+Valid n in the creative thinking test
+
+Canada
+Germany
+Hong Kong
+
+38
+33
+32
+
+3
+17
+22
+
+23,073
+6,116
+5,907
+
+6,794
+1,692
+1,661
+
+5
+
+Thinking Skills and Creativity 61 (2026) 102154
+
+Q. Wang et al.
+
+Fig. 1. The overall analytical framework.
+
+students were 6,456 (95.17%) and 328 (4.83%) in Canada, 1,599 (94.50%) and 93 (5.50%) in Germany, 1,542 (92.84%) and 119
+(7.16%) in Hong Kong.
+3.4.2. ML techniques
+In order to select the most valuable features for predicting engaged and disengaged students, this study employed the ML algorithm,
+lasso, for feature selection. Then, the classification models were built by the following steps. First, data of each economy was randomly
+split into the train set (80%) and test set (20%). Second, to mitigate the extreme class imbalance (engagement ~95% vs. disengagement ~5%), we employed a dual strategy exclusively on the training data: (a) synthetic minority oversampling (SMOTE), and (b)
+algorithmic class weighting. Third, the optimal hyperparameters (e.g., number of estimators, learning rate, maximum tree depth; see
+Supplementary Table A.7) were determined via an exhaustive grid search coupled with 10-fold cross-validation on the training set. The
+configuration that maximized the average ROC-AUC score across all validation folds was selected. Finally, this study built XGBoost
+models to make predictions. As the class in the dataset is imbalanced, multiple metrics for evaluating the performance of classification
+models were considered, including accuracy, precision, recall, F1 score, specificity, and AUC. Especially, recall, F1 score, specificity,
+and AUC should be considered as the main evaluation metrics. SHAP (SHapley Additive exPlanations) provides a unified framework
+for interpreting ML models by assigning each feature an importance value for a given prediction based on cooperative game theory
+(Lundberg & Lee, 2017). In this study, the SHAP bar plot, SHAP beeswarm plot, and dependence plot with LOWESS (Locally Weighted
+Scatterplot Smoothing) were used for global explainability (i.e., how the model makes decisions across the entire dataset). LOWESS is a
+non-parametric regression technique that can be used to explore and display possible non-linear relationships.
+4. Results
+4.1. Engagement and disengagement patterns
+Regarding task disengagement, rapid responding and non-responding behaviors were observed in all tasks across three territories.
+The proportion of rapid responding behaviors was below 10.00% in most tasks. The proportion of non-responding behaviors was below
+10.00% in all tasks, except for one task, which had a rate of 20.95% in Canada. The relative rapid responding behaviors were only
+observed in 5 tasks in Canada, but 17 in Germany, and 15 in Hong Kong. It indicates that for each task, a small portion of students were
+unable to provide scored answers within 30 seconds, or even provide valid answers far beyond that time frame. The relative rarity of
+rapid responders indicates that some students, especially Canadian students, can provide scored answers within 30 seconds.
+Cluster analysis was employed to examine distinct engagement patterns across different creative tasks. Six heterogeneous patterns
+of task engagement were uncovered. Not all patterns were found in every task. To statistically validate the distinctness of the
+engagement patterns identified within each creative task, we conducted separate one-way MANOVAs for each of the tasks across the
+three economies. For each task, the clusters served as the independent variable, with the four process features as dependent variables.
+Across all tasks, the multivariate effects were consistently significant (all p < .05 after Bonferroni correction for multiple comparisons),
+6
+
+Thinking Skills and Creativity 61 (2026) 102154
+
+Q. Wang et al.
+
+confirming that within each task context, the clusters represent statistically distinct behavioral patterns. Post-hoc analyses (Tukey’s
+HSD) further confirmed that the clusters differed significantly on all features within each task (all p < .05). This statistical validation
+demonstrates that the clustering solution captures robust, separable behavioral patterns. Fig. 2 displays the z-score differences of the
+engagement patterns in an example item. Descriptive statistics and proportions of all patterns were provided separately for Canada,
+Germany, and Hong Kong (see supplementary material, Table A.3-5). Fig. 3 shows the proportion of students’ engagement and
+disengagement patterns in different creative tasks.
+The identification and interpretation of the engagement patterns followed a theory-informed, yet data-grounded approach. First,
+each pattern was described based on the degree to which four process metrics show noticeable differences compared to other clusters
+in each task. Subsequently, these patterns were labeled through a dual lens, combining the observable dimension of behavioral
+engagement with the theoretical principles of creative cognition. In almost all tasks, a cluster of students was found to achieve full or
+almost full credits within a short time, as well as fewer actions on these tasks. This indicates that they can complete creative tasks
+efficiently. We labeled this cluster as insightful innovators. In the following analysis, we used this pattern as a reference to explain our
+labeling rationale for the other clusters in each task. Fig. 3 shows that a high proportion of students exhibited this efficient pattern in
+completing most creative tasks (17.20% - 68.91% in Canada, 16.69% - 58.02% in Germany, 12.41% - 57.02% in Hong Kong). Some
+students also achieved high credits but took more actions to complete the tasks. We labeled them as divergent explorers, as this cluster
+embodies the characteristics of divergent thinking. They quickly generated a large number of ideas and sought innovative solutions
+through extensive exploration. The exploring pattern also has a relatively high proportion in most tasks in Canada and Germany, but a
+smaller proportion in Hong Kong. We assigned the elaborative strategists label to students who achieved high credits but took a longer
+time to initiate their first action compared to their efficient peers. This pattern occurred relatively infrequently and only appeared in
+several tasks (10 in Canada, 8 in Germany, 16 in Hong Kong). In addition to these patterns with higher scores, two patterns with lower
+scores were also identified. One pattern is that students have made a lot of attempts or spent a lot of time thinking about how to start
+the first step. They put much effort into creative tasks but performed unsatisfactorily. Therefore, we labeled this cluster as disfluent
+performers. This pattern was only found in 8 tasks in Canada, 8 in Germany, but 18 in Hong Kong. The proportion of this pattern varies
+greatly. The other pattern is that students spent a shorter time thinking and taking the first action, fewer attempts, and a shorter total
+time to complete the task. They reflected a tendency towards hastily completing tasks. Therefore, we labeled this cluster as hasty
+attempters. Similar to the efficient pattern, the hasty pattern occurred in most tasks and accounts for relatively large proportions. The
+last pattern was labeled as passive, where students behaved similarly to the hasty pattern but had no scores. Compared to task
+disengagement, the passive pattern exhibited slightly more effort in tasks but was still inefficient. This pattern was only found in 6 tasks
+in Canada, 6 in Germany, and 10 in Hong Kong.
+4.2. The most common engagement and disengagement patterns
+Table 2 summarizes the most common engagement and disengagement patterns among students when completing multiple creative tasks. Among all three economies, a relatively large proportion of students commonly performed efficiently in these tasks (II in
+Table 2) (33.24% in Canada, 21.98% in Germany, 37.69% in Hong Kong), indicating that their relatively high cognitive flexibility
+enabled them to successfully complete creative tasks multiple times. The hasty pattern was another common pattern with Canada at
+26.50%, Germany at 36.41%, and Hong Kong at 30.04% (HA). This once again indicates that students tend to adopt the strategy of
+taking fewer actions in a short period of time to generate solutions for most tasks. About one-fifth of students in Canada and Germany
+exhibited the exploring pattern when completing multiple creative works, while in Hong Kong, only 7.17% students commonly
+
+Fig. 2. Z Scores of six engagement patterns (200Q01).
+7
+
+Thinking Skills and Creativity 61 (2026) 102154
+
+Q. Wang et al.
+
+Fig. 3. Proportions of Engagement and Disengagement Patterns in All Creative Tasks.
+Note. There are 31 items with valid process data in Canada, 32 in Germany, and 30 in Hong Kong. Items are listed in the original order. II =Insightful
+Innovators; DE = Divergent Explorers; ES = Elaborate Strategists; DP = Disfluent Performers; HA = Hasty Attempters; PA = Passive Learners; RR =
+Rapid Responding; RRP = Rapid Responding Relative to Peers; NR = Non-responding.
+
+8
+
+Thinking Skills and Creativity 61 (2026) 102154
+
+Q. Wang et al.
+
+Fig. 3. (continued).
+
+behaved in this way (DE). Among patterns with a proportion above 1.00%, some students also exhibited a combination of patterns,
+including efficient and hasty (II+HA), efficient and exploring (II+DE), exploring and hasty (DE+HA), indicating that students might
+have made a compromise between time management and investing effort. It was worth noting that 3.82% of students in Canada often
+exhibited rapid responding behaviors, 4.49% in Germany, and 5.42% in Hong Kong. Hong Kong students also have a proportion of
+1.39% who frequently could not submit a valid response. Furthermore, a minority of students, particularly in Hong Kong, displayed
+mixed engagement and disengagement patterns when completing creative tasks. This suggests that their creative capacity may have
+been insufficient to meet task demands, making it difficult for them to consistently maintain concentration on producing novel and
+diverse solutions for most tasks.
+Across the three economies, most students have varying levels of engagement in creative tasks. However, there were still some
+disengaged students. Task disengagement might be due to
+4.3. Prediction of student engagement and disengagement
+Lasso regularization was performed for feature selection. A grid search with 10-fold CV was used to determine the optimal
+parameter α for controlling L1 penalty intensity. In Canada, 16 out of 63 features were selected; in Germany, 29 out of 70 features were
+selected; in Hong Kong, 40 out of 103 features were selected (see supplementary material, Table A.6). These features were used in the
+final XGBoost models to predict whether students were disengaged in multiple creative tasks. The models achieved good to excellent
+performance across all three economies, indicating a strong ability to accurately identify students at risk of disengagement while
+reliably recognizing engaged students (see Table 3).
+For global explainability, the SHAP bar plot, beeswarm plot, and dependence plot were used to interpret how each feature contributes to the prediction of the entire dataset. Fig. 4 visualizes the SHAP bar plots and beeswarm plots of the top 10 important features.
+Fig. 5 displays the dependence plots of 10 features. In order to understand which clusters of contextual factors can better predict task
+engagement and disengagement, we categorized them into four areas: socio-economic and cultural factors (social, economic, cultural
+and environmental background), psychological factors (non-academically psychological states), ICT factors (ICT-related background),
+cognitive and academic factors (cognitive engagement and academic related outcomes) (Alvarez-Garcia et al., 2024) (see Fig. 4). For
+Canada, the top 10 important features include EFFORT1 (students’ self-reported effort in the cognitive assessment), WORKHOME
+(working in household before and after school), reading, mathematics, EFFORT2 (students’ self-reported effort they would invest in
+the cognitive assessment), CREATOOS (creative activities outside of school), ANXMAT (Mathematics anxiety), CREATEFF (creative
+self-efficacy), DISCLIM (disciplinary climate in mathematics) and science. The beeswarm plot (Canada) shows that for features such as
+mathematics and CREATEFF, red dots (higher values in each feature) are on the left side and blue dots (lower values) on the right. It
+indicates that lower values in the features can increase the probability of task disengagement. The stack and mixture of red and blue
+9
+
+Thinking Skills and Creativity 61 (2026) 102154
+
+Q. Wang et al.
+
+Table 2
+The most common engagement and disengagement patterns.
+Canada (n = 6,784)
+Patterns
+
+Frequency (%)
+
+Germany (n = 1,692)
+Patterns
+
+Frequency (%)
+
+II
+HA
+DE
+IIþHA
+IIþDE
+RR
+DEþHA
+NR
+DP
+II+DE+HA
+HA+RR
+DP+HA
+II+DP
+II+DP+HA
+DE+DP
+HA+NR
+II+NR
+II+DE+DP
+DE+RR
+DE+DP+HA
+RR+NR
+II+RR
+II+HA+RR
+DE+HA+RR
+II+HA+NR
+HA+RR+NR
+DE+HA+NR
+DP+HA+RR+NR
+DE+NR
+II+DE+HA+PL
+II+DE+DP+HA
+II+DE+ES+HA
+II+HA+PL+RR
+II+DE+NR
+II+DP+HA+RR
+DP+NR
+II+DE+RR
+DE+RR+NR
+
+2,255 (33.24%)
+1,798 (26.50%)
+1,341 (19.77%)
+366 (5.40%)
+291 (4.29%)
+259 (3.82%)
+85 (1.25%)
+63 (0.93%)
+53 (0.78%)
+43 (0.63%)
+34 (0.50%)
+34 (0.50%)
+32 (0.47%)
+19 (0.28%)
+17 (0.25%)
+16 (0.24%)
+12 (0.18%)
+8 (0.12%)
+8 (0.12%)
+7 (0.10%)
+6 (0.09%)
+5 (0.08%)
+5 (0.08%)
+4 (0.06%)
+3 (0.05%)
+3 (0.05%)
+2 (0.03%)
+2 (0.03%)
+2 (0.03%)
+2 (0.03%)
+2 (0.03%)
+1 (0.01%)
+1 (0.01%)
+1 (0.01%)
+1 (0.01%)
+1 (0.01%)
+1 (0.01%)
+1 (0.01%)
+
+HA
+DE
+II
+RR
+IIþHA
+IIþDE
+DEþHA
+II+DE+HA
+HA+RR
+NR
+NR+RR
+HA+DP
+DP
+DE+DP+HA
+DE+RR
+II+HA+RR
+II+DE+HA+PL
+II+RR
+II+NR
+ES+HA
+HA+NR
+II+DE+DP+HA
+DE+DP
+DE+ES
+PL
+II+HA+NR
+HA+PL+RR+NR
+II+DP
+HA+PL
+DP+RR
+DE+HA+RR
+II+DE+HA+RR
+HA+RRP
+RRP
+HA+RRP+RR
+II+DP+HA
+II+PL+RR
+
+616 (36.41%)
+385 (22.75%)
+372 (21.98%)
+76 (4.49%)
+71 (4.19%)
+54 (3.19%)
+32 (1.89%)
+14 (0.82%)
+13 (0.76%)
+12 (0.71%)
+4 (0.23%)
+3 (0.18%)
+3 (0.18%)
+3 (0.18%)
+3 (0.18%)
+3 (0.18%)
+2 (0.12%)
+2 (0.12%)
+2 (0.12%)
+2 (0.12%)
+2 (0.12%)
+2 (0.12%)
+2 (0.12%)
+1 (0.06%)
+1 (0.06%)
+1 (0.06%)
+1 (0.06%)
+1 (0.06%)
+1 (0.06%)
+1 (0.06%)
+1 (0.06%)
+1 (0.06%)
+1 (0.06%)
+1 (0.06%)
+1 (0.06%)
+1 (0.06%)
+1 (0.06%)
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+​
+
+Hong Kong (n = 1,661)
+Patterns
+
+Frequency (%)
+
+II
+HA
+DE
+IIþHA
+RR
+ES
+NR
+II+DE
+PL
+HA+PL
+HA+RR
+II+HA+PL
+HA+ES
+II+PL
+II+ES
+DP
+RR+NR
+II+RR
+DE+HA
+DP+HA
+II+ES+HA
+II+DE+HA
+HA+NR
+II+ES+PL
+ES+PL
+HA+PL+RR
+DE+RR
+DE+ES
+DE+ES+HA
+PL+NR
+II+DE+DP+HA
+DE+ES+DP
+DE+DP+HA+RRP
+II+ES+HA+NR
+II+NR
+II+DE+HA+PL
+ES+DP
+DE+RRP
+II+ES+DP+HA
+II+HA+PL+RR
+DE+DS+HA+PL+RR
+II+DE+HA+PL+RR
+DE+ES+DP+PL
+DP+HA+PL
+II+DE+DP+PL
+ES+DP+HA+PL+RR
+II+DP+HA
+ES+DP+HA
+II+DP+HA+PA
+ES+DP+HA+RR
+ES+NR
+DP+HA+RR
+II+HA+RR
+II+HA+NR
+PL+RR
+ES+HA+NR
+ES+RR
+HA+RR+NR
+RR+RRP
+II+DP+PL+NR
+ES+HA+PL+RR
+
+626 (37.69%)
+499 (30.04%)
+119 (7.17%)
+117 (7.05%)
+90 (5.42%)
+26 (1.57%)
+23 (1.39%)
+15 (0.91%)
+14 (0.84%)
+12 (0.72%)
+11 (0.66%)
+9 (0.54%)
+8 (0.48%)
+7 (0.42%)
+6 (0.36%)
+5 (0.30%)
+5 (0.30%)
+5 (0.30%)
+5 (0.30%)
+5 (0.30%)
+4 (0.24%)
+3 (0.18%)
+3 (0.18%)
+3 (0.18%)
+2 (0.12%)
+2 (0.12%)
+2 (0.12%)
+2 (0.12%)
+1 (0.06%)
+1 (0.06%)
+1 (0.06%)
+1 (0.06%)
+1 (0.06%)
+1 (0.06%)
+1 (0.06%)
+1 (0.06%)
+1 (0.06%)
+1 (0.06%)
+1 (0.06%)
+1 (0.06%)
+1 (0.06%)
+1 (0.06%)
+1 (0.06%)
+1 (0.06%)
+1 (0.06%)
+1 (0.06%)
+1 (0.06%)
+1 (0.06%)
+1 (0.06%)
+1 (0.06%)
+1 (0.06%)
+1 (0.06%)
+1 (0.06%)
+1 (0.06%)
+1 (0.06%)
+1 (0.06%)
+1 (0.06%)
+1 (0.06%)
+1 (0.06%)
+1 (0.06%)
+1 (0.06%)
+
+Note. In Canada, 10 cases were deleted because of too few completed tasks and no mode.task-level factors (e.g., task difficulty, task position) and
+individual-level factors (e.g., the propensity to learn new things, ICT use) (Wang et al., 2023). The wealth of individual-level background data in ILSAs
+makes it feasible to examine factors predicting engagement in creative tasks. Therefore, RQ3 of the current study aims to address this issue.
+
+10
+
+Thinking Skills and Creativity 61 (2026) 102154
+
+Q. Wang et al.
+
+Table 3
+Model performance.
+Canada
+Germany
+Hong Kong
+
+Accuracy
+
+Precision
+
+Recall
+
+F1 Score
+
+Specificity
+
+AUC
+
+0.92
+0.91
+0.87
+
+0.93
+0.92
+0.87
+
+0.92
+0.92
+0.87
+
+0.93
+0.92
+0.87
+
+0.96
+0.96
+0.93
+
+0.75
+0.79
+0.78
+
+Fig. 4. Dual Axis SHAP Visualization Combining the Feature Importance Plot and Beeswarm Plot.
+Note. Red box: socio-economic and cultural factors; yellow box: psychological factors; green box: ICT factors; purple box: cognitive and academic factors.
+
+dots suggest non-linear relationships between the features and the dependent variable. The dependence plots with LOWESS show that
+approximate linear relationships only exist in mathematics, reading, EFFORT1, and CREATEFF. For instance, the higher the students’
+mathematics score, the lower the SHAP values, indicating that students with better mathematics performance would be more likely to
+engage in creative tasks. There also exist a slightly reversed U-shaped relationship (ANXMAT).
+For Germany, the top 10 important features include mathematics, reading, MATHEF21 (mathematics self-efficacy), TARDYSD
+(arriving late for school), BMMJ1 (mother’s occupational status), IMMIG (immigration background), EFFORT2, WORKHOME,
+EXPO21ST (exposure to mathematical reasoning and 21st century mathematics tasks), and ICTOUT (use of ICT for school activities
+outside of the classroom). The beeswarm plot (Germany) and the dependence plots with LOWESS show approximate linear relationships only in ICTOUT and EXPO21ST. However, students’ exposure to mathematical reasoning and 21st-century mathematics
+tasks has an approximate negative relationship with task engagement (the points extending to the right are increasingly red, and the
+LOWESS line extends upwards to the right). It is also worth noting that there is a threshold effect in MATHEF21, which indicates that
+11
+
+Thinking Skills and Creativity 61 (2026) 102154
+
+Q. Wang et al.
+
+Fig. 5. The dependence plots with LOWESS.
+
+12
+
+Thinking Skills and Creativity 61 (2026) 102154
+
+Q. Wang et al.
+
+Fig. 5. (continued).
+
+13
+
+Thinking Skills and Creativity 61 (2026) 102154
+
+Q. Wang et al.
+
+Fig. 5. (continued).
+
+students’ probability of task disengagement dramatically increases at a critical value.
+For Hong Kong, the top 10 important features include science, reading, PAREXPT (parent’s expectations in child’s career),
+EFFORT1, ST004D01T (gender), ICTDISTR (distress from online cyberbullying), IMMIG, SOCONPA (Social connection to parents),
+ICTFEED (support or feedback via ICT), STRESAGR (stress resistance). The beeswarm plot (Hong Kong) and the dependence plots with
+14
+
+Thinking Skills and Creativity 61 (2026) 102154
+
+Q. Wang et al.
+
+LOWESS show that approximate linear relationships only exist in science, reading, and SOCONPA. There also exists the threshold effect
+in some factors (e.g., ICTDISTR, STRESAGR).
+5. Discussion
+5.1. Engagement and disengagement in creative tasks
+This study analyzed three disengaged behaviors, i.e., rapid, relatively rapid, and non-responding. The reasons behind task
+disengagement differed between high-stakes and low-stakes assessments (Wise, 2017). In high-stakes assessments, test-takers may
+quickly omit items or provide rapid, perfunctory answers as a strategic way to manage time and complete the test. In contrast, in
+low-stakes assessments, where test-takers face no consequences for their performance, disengagement reflects their lack of motivation
+when completing tasks (Wise & Kong, 2005). Especially for creative work, intrinsic motivation has been proven to be one of its
+strongest predictors (Liu et al., 2016).
+Our cluster analysis, based on behavioral metrics from the PISA creative thinking tasks, revealed six distinct patterns of student
+engagement. It is crucial to emphasize that these metrics are direct, observable indices of behavioral engagement, which quantify the
+“what” and “how much” of participation, such as persistence and time investment. They do not directly measure the internal, strategic
+processes that define cognitive engagement. At the behavioral level, the observed patterns were similar to prior findings on digital
+reading (Hahnel et al., 2022) and problem-solving tasks (Wang et al., 2023). However, guided by the multidimensional engagement
+model and the nature of creative cognition involved in tasks, specific configurations of these behavioral patterns can serve as proxies
+for inferring probable differences in underlying cognitive strategies and motivational states during creative problem-solving.
+For insightful innovators, they can quickly understand the essence of the problem, skip tedious trial and error, and directly generate
+novel and useful ideas. It suggests high motivation and cognitive efficiency. The pattern implies rapid problem structuring and
+effective strategy retrieval, which is a possible marker of well-developed prior schema or high cognitive flexibility in applying them.
+Divergent explorers exhibited the characteristic of generating a multitude of ideas. Students tested these ideas, leading to relatively
+high creative performance. It exemplifies the generate-explore cycle of creative cognition and implies students’ sustained cognitive
+effort and investment. While a small portion of students demonstrated the opposite engagement pattern (i.e., elaborate strategists).
+Corresponding to the incubation and elaboration stages in the creative process, they spent a lot of time in deep thinking and internalization. Although they took fewer actions afterwards, each one was carefully evaluated and refined, resulting in relatively high
+creative performance. It can be inferred as deep cognitive engagement in internal planning, mental simulation, and refinement.
+Disfluent performers were students who either attempted much or were unable to take effective action due to overthinking. Ultimately,
+it led to a mismatch between effort and output. It highlights that behavioral effort, without adaptive metacognitive control and
+cognitive flexibility, can lead to unproductive struggle. A considerable number of students were hasty attempters who reflect superficial behavioral engagement. They might quickly try some ideas they thought of, lacking deep processing and persistence, and fail
+to invest in true creative exploration. The minimal investment infers a lack of intrinsic motivation and deep cognitive engagement. In
+some creative tasks, a portion of students demonstrated a passive engagement pattern with minimal ineffective motivational and
+cognitive investment. This pattern can be inferred to stem from overwhelming task demands, a complete lack of intrinsic motivation,
+or very low perceived competence.
+Elaborate strategists, disfluent performers, and passive learners only existed in some tasks, which might be due to task characteristics (e.g., difficulty) and individual factors (e.g., intrinsic motivation). The fact that these patterns were task-contingent underscores a core tenet of engagement theory. Engagement is a dynamic state that can be influenced by the interaction between
+individuals and their contexts, encompassing psychological processes that evolve over time (Reschly & Christenson, 2022; Salmela-Aro
+et al., 2016). For instance, a task perceived as overly difficult (low perceived competence) may push a student from exploration into
+disfluent performance or passive engagement. Consequently, an individual’s pattern of engagement is not fixed but can vary across
+different tasks and situations, a premise critical to interpreting various common patterns in multiple creative tasks.
+5.2. The most common patterns in multiple creative tasks
+Multiple engagement patterns across a series of creative thinking tasks reflect that students exhibited different preferences for how
+to engage in tasks (Cromwell et al., 2023). The creative thinking tasks involve multiple dimensions, incorporating two cognitive skills
+(convergent and divergent thinking), three facets (generating creative ideas, generating diverse ideas, and evaluating and improving
+ideas), and four domains (visual and written expressions, social and scientific problem-solving). Therefore, to succeed in creative tasks,
+students need to demonstrate greater cognitive flexibility, i.e., adapting behaviors and exploring different strategies between different
+tasks (Diamond, 2013). Students’ engagement heterogeneity reflects their varying levels of cognitive flexibility. The frequency of six
+engagement patterns indicated that most students adopted a strategy of taking fewer actions in a short period of time to generate
+solutions for most tasks, with half of them able to come up with original and diverse solutions and achieve high scores. For highly
+creative individuals, cognitive flexibility strengthens their semantic memory networks, promoting innovative ideation and enhancing
+creative potential (Kenett et al., 2018). The passive pattern only occurred in several tasks, but with high proportions, especially in
+Hong Kong, indicating that some students’ cognitive flexibility is insufficient for them to complete these tasks.
+Students need to continuously generate creative output in a series of creative tasks within a certain period of time, which requires
+students to demonstrate flexibility and sustained motivation between tasks. As an ability to transition between different tasks, rules, or
+strategies, cognitive flexibility enables individuals to easily adjust their attention and viewpoints (Ionescu, 2012). A considerable
+15
+
+Thinking Skills and Creativity 61 (2026) 102154
+
+Q. Wang et al.
+
+number of students are able to engage steadily in creative tasks, completing efficiently, investing more effort, or adopting a quick
+reaction strategy in most tasks. However, the tension between time management and cognitive engagement would lead students to
+exhibit distinct behavioral patterns. For instance, the switch between exploring and hasty patterns reflects students’ diminished
+flexibility and motivation during task switching. This is evident in three to four common engagement patterns, especially in the
+transition between disengagement and engagement patterns, although this occurs in a small percentage of students.
+5.3. Prediction of engagement and disengagement
+Our predictive analysis reveals that engagement in creative tasks is not determined by singular factors but arises from a complex,
+non-linear interplay between individual capabilities and contextual influences.
+First, the analysis revealed that cognitive and academic factors, specifically, core academic competencies (reading and mathematics) and self-reported effort on tasks, emerged as robust predictors of disengagement. This can be empirically supported by ongoing
+research on the associations between domain competencies and creativity (e.g., Lin et al., 2025; Wicaksono et al., 2026). The findings
+indicate that the foundation of academic mastery and task-specific confidence is crucial for students to willingly invest effort in the
+novel and uncertain demands of creative thinking. It was aligned with self-efficacy theory (Bandura, 1995), which posits that mastery
+experiences are the most potent source of efficacy beliefs. While self-efficacy is domain-sensitive, competence and confidence built in
+core academic domains such as mathematics and reading can serve as a crucial psychological resource. It may foster a more generalized sense of agency, making students more willing to engage in novel challenges such as creative thinking, where they perceive a
+lower risk of failure.
+Second, apart from linear relationships, SHAP dependence plots also revealed the pervasive non-linearity, including widespread
+threshold effects (e.g., mathematics self-efficacy in Germany) and complex curvilinear patterns (e.g., reversed U-shaped relationships
+for mathematical anxiety in Canada). Threshold effects suggest that interventions may require a minimum dosage to catalyze a significant shift in task engagement. The reversed U-shape relationships imply that both very low and very high levels can be beneficial
+for task engagement. For instance, regarding mathematical anxiety in Canada, the reversed U-shaped relationship implies that
+disengagement occurs in an intermediate zone. This complexity explains why simple correlational analyses are insufficient and
+highlights the value of machine learning models capable of capturing these intricate interactions.
+Third, SHAP dependence plots also revealed cross-cultural divergence in key predictors. Mathematics-related factors can function
+in opposite ways across economies. In Canada and Germany, strong math performance served as a straightforward resource for
+engagement. In Germany, however, intensive exposure to advanced mathematical tasks predicted disengagement from creative
+thinking. This paradox suggests that a curriculum overly focused on structured, domain-specific reasoning may inadvertently cultivate
+cognitive styles or allocate motivational resources that compete with the open-ended exploration required for creativity. Therefore, a
+factor is not universally positive or negative; its effect might be context-mediated. Therefore, predicting and nurturing engagement in
+creative activities cannot rely on universal factors but should account for how these factors are embedded within specific educational
+and cultural contexts (Lubart, 2010).
+6. Limitations and future research
+There are several key limitations of this study that need consideration. Firstly, this study analyzed general log data from ILSA.
+Future research could incorporate other data sources, such as eye-tracking technology, to dig into students’ engagement from a
+cognitive perspective. Secondly, while the dependence plots with LOWESS revealed complex relationships between some background
+factors and creative engagement, the non-linear patterns and potential threshold effects warrant further investigation. Finally, while
+our data-mining approach identified cross-country differences in predictors of task disengagement among students from three
+countries, a dedicated comparative analysis is needed to explicitly explore these variations.
+7. Conclusion
+The present study explored students’ distinct engagement and disengagement patterns in multiple creative tasks, examined the
+most common patterns, and developed predictive models to identify the most important predictors for task engagement and disengagement. Unsupervised clustering analysis was used to accurately identify various engagement patterns. Simple behavioral metrics
+were transformed into interpretable, high-level engagement signatures through the lens of engagement theory and models of creative
+cognition. This theory-informed, data-grounded approach offers a scalable framework for moving beyond surface-level behaviors to
+integrate behavioral traces with the inherent demands and nature of the tasks themselves. Furthermore, the patterns were summarized
+across multiple creative tasks. The results contribute to our understanding of students’ varied levels of engagement and the switch of
+engagement patterns across tasks. The subsequent predictive analysis provided significant insights into the relationships between the
+contextual factors and task engagement. The most important factors were cognitive and academic factors across three economies. Our
+findings also highlighted their complex relationships. The explainability of predicted results plays a crucial role in providing accurate
+information within the “black box” rather than just demonstrating predictive performance. Such strengths can offer actionable insights
+to support stakeholders in making evidence-based decisions about fostering engagement in creativity in educational settings.
+
+16
+
+Thinking Skills and Creativity 61 (2026) 102154
+
+Q. Wang et al.
+
+Data and material availability
+The data used in the study is publicly available and can be accessed and downloaded in the official site of PISA program.
+CRediT authorship contribution statement
+Qin Wang: Writing – review & editing, Writing – original draft, Visualization, Validation, Software, Resources, Methodology,
+Investigation, Formal analysis, Data curation, Conceptualization. Fu Chen: Writing – review & editing, Writing – original draft,
+Visualization, Validation, Software, Resources, Methodology, Investigation, Formal analysis, Conceptualization. Yu Han: Writing –
+review & editing, Writing – original draft, Visualization, Validation, Software, Resources, Methodology, Investigation, Formal analysis,
+Data curation. Xiaofei Li: Writing – review & editing, Writing – original draft, Validation, Software, Resources, Methodology,
+Investigation, Formal analysis, Data curation. Chang Lu: Writing – review & editing, Writing – original draft, Validation, Supervision,
+Resources, Project administration, Methodology, Investigation, Funding acquisition, Formal analysis, Data curation,
+Conceptualization.
+Declaration of competing interest
+None.
+Acknowledgements
+We would like to thank the support of the Humanities and Social Sciences Youth Foundation,Ministry of Education of China (Grant
+Number: 24YJC880093), and the Humanities and Social Sciences Youth Foundation, Ministry of Education of China (Grant Number:
+25XJC880010).
+Supplementary materials
+Supplementary material associated with this article can be found, in the online version, at doi:10.1016/j.tsc.2026.102154.
+
+Data availability
+Data will be made available on request.
+References
+Andridge, R. R., & Little, R. J. A. (2010). A review of hot deck imputation for survey non-response. International Statistical Review, 78, 40–64. https://doi.org/10.1111/
+j.1751-5823.2010.00103.x
+Alvarez-Garcia, M., Arenas-Parra, M., & Ibar-Alonso, R. (2024). Uncovering student profiles. An explainable cluster analysis approach to PISA 2022. Computers &
+Education, 223, Article 105166. https://doi.org/10.1016/j.compedu.2024.105166
+Arán-Filippetti, V., & Krumm, G. (2020). A hierarchical model of cognitive flexibility in children: Extending the relationship between flexibility, creativity and
+academic achievement. Child Neuropsychology, 26(6), 770–800. https://doi.org/10.1080/09297049.2019.1711034
+Bandura, A. (1995). Self-efficacy in changing societies. Cambridge University Press. https://doi.org/10.1017/CBO9780511527692
+Beaty, R. E., & Silvia, P. J. (2012). Why do ideas get more creative across time? An executive interpretation of the serial order effect in divergent thinking tasks.
+Psychology of Aesthetics, Creativity, and the Arts, 6(4), 309–319. https://doi.org/10.1037/a0029171
+Beversdorf, D. Q. (2019). Neuropsychopharmacological regulation of performance on creativity-related tasks. Current Opinion in Behavioral Sciences, 27, 55–63.
+https://doi.org/10.1016/j.cobeha.2018.09.010
+Charrad, M., Ghazzali, N., Boiteau, V., & Niknafs, A. (2014). NbClust: An R package for determining the relevant number of clusters in a data set. Journal of Statistical
+Software, 61(6), 1–36. https://doi.org/10.18637/jss.v061.i06
+Chen, J., Wu, L., Zhang, Y., & Wang, M. (2025). Exploring the effects of a user feedback strategy on students’ creative thinking in a design-based project. Thinking Skills
+and Creativity, 57, Article 101862. https://doi.org/10.1016/j.tsc.2025.101862
+Chen, Q., Yang, W., Li, W., Wei, D., Li, H., Lei, Q., Zhang, Q., & Qiu, J. (2014). Association of creative achievement with cognitive flexibility by a combined voxelbased morphometry and resting-state functional connectivity study. NeuroImage (Orlando, Fla.), 102, 474–483. https://doi.org/10.1016/j.
+neuroimage.2014.08.008
+Cromwell, J. R., Haase, J., & Vladova, G. (2023). The creative thinking profile: Predicting intrinsic motivation based on preferences for different creative thinking
+styles. Personality and Individual Differences, 208, Article 112205. https://doi.org/10.1016/j.paid.2023.112205
+Cropley, A. (2006). In praise of convergent thinking. Creativity Research Journal, 18(3), 391–404. https://doi.org/10.1207/s15326934crj1803_13
+Csikszentmihalyi, M. (2013). Creativity: The psychology of discovery and invention. New York: Harper Collins.
+De Bono, E. (1970). Lateral thinking: Creativity step by step. New York: Harper & Row.
+Diamond, A. (2013). Executive functions. Annual Review of Psychology, 64, 135–168. https://doi.org/10.1146/annurev-psych-113011-143750
+Fredricks, J. A., Blumenfeld, P. C., & Paris, A. H. (2004). School engagement: Potential of the concept, state of the evidence. Review of Educational Research, 74(1),
+59–109. https://doi.org/10.3102/00346543074001059
+Frith, E., Kane, M. J., Welhaf, M. S., Christensen, A. P., Silvia, P. J., & Beaty, R. E. (2021). Keeping creativity under control: Contributions of attention control and fluid
+intelligence to divergent thinking. Creativity Research Journal, 33(2), 138–157. https://doi.org/10.1080/10400419.2020.1855906
+Ghosh, S., & Konar, A. (2024). Decoding the scientific creative-ability of subjects using dual attention induced graph convolutional-capsule network. Applied Soft
+Computing, 161, Article 111769. https://doi.org/10.1016/j.asoc.2024.111769
+
+17
+
+Thinking Skills and Creativity 61 (2026) 102154
+
+Q. Wang et al.
+
+Ghosh, S., Konar, A., & Nagar, A. (2025). Assessment of scientific creative-potential by near-infrared spectroscopy using brain-network-based deep-fuzzy classifier.
+IEEE Access, 13, 108533–108550. https://doi.org/10.1109/ACCESS.2025.3581065
+Ghosh, S., Ghosh, L., Konar, A., & Nagar, A. (2020). Assessment of subjective creativity skill using EEG induced capsule network. In 2020 IEEE Symposium Series on
+Computational Intelligence (SSCI) (pp. 3107–3114). https://doi.org/10.1109/SSCI47803.2020.9308494
+Goldhammer, F., Martins, T., Christoph, G., & Lüdtke, O. (2016). Test-taking engagement in PIAAC. OECD Education Working Papers. https://doi.org/10.1787/
+5jlzfl6fhxs2-en
+Guilford, J. P. (1957). Creative abilities in the arts. Psychological Review, 64(2), 110–118. https://doi.org/10.1037/h0048280
+Guleria, P., & Sood, M. (2023). Explainable AI and machine learning: Performance evaluation and explainability of classifiers on educational data mining inspired
+career counseling. Education and Information Technologies, 28, 1081–1116. https://doi.org/10.1007/s10639-022-11221-2
+Hadar, L. L., & Tirosh, M. (2019). Creative thinking in mathematics curriculum: An analytic framework. Thinking Skills and Creativity, 33, Article 100585. https://doi.
+org/10.1016/j.tsc.2019.100585
+Hahnel, C., Ramalingam, D., Kroehne, U., & Goldhammer, F. (2022). Patterns of reading behaviour in digital hypertext environments. Journal of Computer Assisted
+Learning, 39(3), 737–750. https://doi.org/10.1111/jcal.12709
+Hallak, R., Assaker, G., O’Connor, P., & Lee, C. (2018). Firm performance in the upscale restaurant sector: The effects of resilience, creative self-efficacy, innovation
+and industry experience. Journal of Retailing and Consumer Services, 40, 229–240. https://doi.org/10.1016/j.jretconser.2017.10.014
+He, Q., Borgonovi, F., & Paccagnella, M. (2021). Leveraging process data to assess adults’ problem-solving skills: Using sequence mining to identify behavioral
+patterns across digital tasks. Computers & Education, 166, Article 104170. https://doi.org/10.1016/j.compedu.2021.104170
+Hernandez Sibo, I. P., Gomez Celis, D. A., & Liou, S. (2024). Exploring the landscape of cognitive load in creative thinking: A systematic literature review. Educational
+Psychology Review, 36(1), 24. https://doi.org/10.1007/s10648-024-09866-1
+Hoffmann, J. D., Ivcevic, Z., & Castillo Gualda, R. (2025). School climate and students’ attitudes toward creativity. Thinking Skills and Creativity, 58, Article 101880.
+https://doi.org/10.1016/j.tsc.2025.101880
+Ionescu, T. (2012). Exploring the nature of cognitive flexibility. New Ideas in Psychology, 30(2), 190–200. https://doi.org/10.1016/j.newideapsych.2011.11.001
+Jarutkamolpong, S., & Kwangmuang, P. (2025). Enhancing undergraduate creative thinking through a constructivist mobile learning application: Design,
+development, and evaluation. Thinking Skills and Creativity, 57, Article 101866. https://doi.org/10.1016/j.tsc.2025.101866
+Kaufman, J. C., & Beghetto, R. A. (2009). Beyond big and little: The four C model of creativity. Review of General Psychology, 13(1), 1–12. https://doi.org/10.1037/
+a0013688
+Kaufman, S. B., Quilty, L. C., Grazioplene, R. G., Hirsh, J. B., Gray, J. R., Peterson, J. B., & DeYoung, C. G. (2016). Openness to experience and intellect differentially
+predict creative achievement in the arts and sciences. Journal of Personality, 84(2), 248–258. https://doi.org/10.1111/jopy.12156
+Kenett, Y. N., Levy, O., Kenett, D. Y., Stanley, H. E., Faust, M., & Havlin, S. (2018). Flexibility of thought in high creative individuals represented by percolation
+analysis. PNAS Proceedings of the National Academy of Sciences of the United States of America, 115(5), 867–872. https://doi.org/10.1073/pnas.1717362115
+Khalil, R., Godde, B., & Karim, A. A. (2019). The link between creativity, cognition, and creative drives and underlying neural mechanisms. Frontiers in Neural Circuits,
+13(18). https://doi.org/10.3389/fncir.2019.00018
+Kloo, D., Perner, J., Aichhorn, M., & Schmidhuber, N. (2010). Perspective taking and cognitive flexibility in the dimensional change card sorting (DCCS) task. Cognitive
+Development, 25(3), 208–217. https://doi.org/10.1016/j.cogdev.2010.06.001
+Kruger, J. G. C., de Souza Britto Jr, A., & Barddal, J. P (2023). An explainable machine learning approach for student dropout prediction. Expert Systems with
+Applications, 233, Article 120933. https://doi.org/10.1016/j.eswa.2023.120933
+Lee, Y.-H., & Jia, Y. (2014). Using response time to investigate students’ test-taking behaviors in a NAEP computer-based study. Large-Scale Assessments in Education, 2
+(1), 8–41. https://doi.org/10.1186/s40536-014-0008-1
+Li, Z., & Li, Q. (2025). The effects of school climate on students’ creativity: The mediating role of growth mindset and self-efficacy. Thinking Skills and Creativity, 57,
+Article 101851. https://doi.org/10.1016/j.tsc.2025.101851
+Lin, G., Wu, X., & Tang, J. (2025). Cross-cultural comparison of creative thinking in mathematics textbooks: A case study of high school mathematics textbooks in
+China, Japan, and South Korea. Thinking Skills and Creativity, 58, Article 101917. https://doi.org/10.1016/j.tsc.2025.101917
+Liu, D., Jiang, K., Shalley, C. E., Keem, S., & Zhou, J. (2016). Motivational mechanisms of employee creativity: A meta-analytic examination and theoretical extension
+of the creativity literature. Organizational Behavior and Human Decision Processes, 137, 236–263. https://doi.org/10.1016/j.obhdp.2016.08.001
+Livieris, I. E., Karacapilidis, N., Domalis, G., & Tsakalidis, D. (2023). An advanced explainable and interpretable ML-based framework for educational data mining. In
+Methodologies and intelligent systems for technology enhanced learning, workshops - 13th international conference (pp. 87–96). Springer. https://doi.org/10.1007/9783-031-42134-1_9.
+Lubart, T. (2010). Cross-cultural perspectives on creativity. In J. C. Kaufman, & R. J. Sternberg (Eds.), The Cambridge handbook of creativity (pp. 265–278). Cambridge
+University Press. https://doi.org/10.1017/CBO9780511763205.017.
+Lucchiari, C., Sala, P. M., & Vanutelli, M. E. (2019). The effects of a cognitive pathway to promote class creative thinking. An experimental study on Italian primary
+school students. Thinking Skills and Creativity, 31, 156–166. https://doi.org/10.1016/j.tsc.2018.12.002
+Lundberg, S. M., & Lee, S. I. (2017). A unified approach to interpreting model predictions. In I. Guyon, U. V. Luxburg, S. Bengio, H. Wallach, R. Fergus,
+S. Vishwanathan, & R. Garnett (Eds.), Advances in neural information processing systems. Curran Associates, Inc.
+MacQueen, J. (1967). Some methods for classification and analysis of multivariate observations. In Proceedings of the 5th Berkeley Symposium on Mathematical Statistics
+and Probability (pp. 281–297). http://projecteuclid.org/euclid.bsmsp/1200512992.
+Michaelides, M. P., Ivanova, M., & Nicolaou, C. (2020). The relationship between response-time effort and accuracy in PISA science multiple choice items.
+International Journal of Testing, 20(3), 187–205. https://doi.org/10.1080/15305058.2019.1706529
+Minh, D., Wang, H. X., Li, Y. F., & Nguyen, T. N. (2022). Explainable artificial intelligence: A comprehensive review. The Artificial Intelligence Review, 55(5),
+3503–3568. https://doi.org/10.1007/s10462-021-10088-y
+Nijstad, B. A., De Dreu, C. K. W., Rietzschel, E. F., & Baas, M. (2010). The dual pathway to creativity model: Creative ideation as a function of flexibility and
+persistence. European Review of Social Psychology, 21(1), 34–77. https://doi.org/10.1080/10463281003765323
+OECD. (2023a). PISA 2022 assessment and analytical framework. Paris: OECD Publishing. https://doi.org/10.1787/dfe0bf9c-en
+OECD. (2023b). PISA 2022 creative thinking framework. Paris: OECD Publishing. https://doi.org/10.1787/dfe0bf9c-en
+OECD. (2024). PISA 2022 results (Volume III): Creative minds, creative schools. Paris: OECD Publishing. https://doi.org/10.1787/765ee8c2-en
+Paz-Baruch, N., Grovas, G., & Mevarech, Z. R. (2025). The effects of meta-creative pedagogy on elementary school students’ creative thinking. Metacognition and
+Learning, 20, 9. https://doi.org/10.1007/s11409-025-09412-6
+Reiter-Palmon, R., & Robinson, E. J. (2009). Problem identification and construction: What do we know, what is the future? Psychology of Aesthetics, Creativity, and the
+Arts, 3(1), 43–47. https://doi.org/10.1037/a0014629
+Reschly, A. L., Christenson, S. L., Reschly, A. L., & Christenson, S. L. (2022). Jingle-jangle revisited: History and further evolution of the student engagement construct.
+Handbook of research on student engagement (pp. 3–24). Cham: Springer. https://doi.org/10.1007/978-3-031-07853-8_1
+Runco, M. A., & Jaeger, G. J. (2012). The standard definition of creativity. Creativity Research Journal, 24(1), 92–96. https://doi.org/10.1080/10400419.2012.650092
+Sahin, F., & Colvin, K. F. (2020). Enhancing response time thresholds with response behaviors for detecting disengaged examinees. Large-Scale Assessments in
+Education, 8(1), 1–24. https://doi.org/10.1186/s40536-020-00082-1
+Salmela-Aro, K., Moeller, J., Schneider, B., Spicer, J., & Lavonen, J. (2016). Integrating the light and dark sides of student engagement using person-oriented and
+situation-specific approaches. Learning and Instruction, 43, 61–70. https://doi.org/10.1016/j.learninstruc.2016.01.001
+Simonton, D. (2013). What is a creative idea? Little-c versus Big-C creativity. In K. Thomas, & J. Chan (Eds.), Handbook of research on creativity. Cheltenham: Edward
+Elgar Publishing. https://doi.org/10.4337/9780857939814.00015.
+Sireci, S. G., & Zenisky, A. L. (2006). Innovative item formats in computer-based testing: In pursuit of improved construct representation. In S. M. Downing, &
+T. S. Haladyna (Eds.), Handbook of test development (pp. 329–347). Mahwah, NJ: Erlbaum.
+
+18
+
+Thinking Skills and Creativity 61 (2026) 102154
+
+Q. Wang et al.
+
+Schnipke, D. L. (1995). Assessing speededness in computer-based tests using item response times. April, San Francisco, CA. Paper presented at the annual meeting of
+the National Council on Measurement in Education. ERIC Document Reproduction Service No. ED383742.
+Suherman, S., & Vidákovich, T. (2024). Role of creative self-efficacy and perceived creativity as predictors of mathematical creative thinking: Mediating role of
+computational thinking. Thinking Skills and Creativity, 53, Article 101591. https://doi.org/10.1016/j.tsc.2024.101591
+Urban, K., & Urban, M. (2024). I know my idea is original!” Creative metacognitive monitoring and regulation in kindergarten children. Thinking Skills and Creativity,
+52, Article 101541. https://doi.org/10.1016/j.tsc.2024.101541
+Vincent, A. S., Decker, B. P., & Mumford, M. D. (2002). Divergent thinking, intelligence, and expertise: A test of alternative models. Creativity Research Journal, 14(2),
+163–178. https://doi.org/10.1207/S15326934CRJ1402_4
+Wang, Q., Mousavi, A., Lu, C., & Gao, Y. (2023). Examining adults’ behavioral patterns in a sequence of problem solving tasks in technology-rich environments.
+Computers in Human Behavior, 147, Article 107852. https://doi.org/10.1016/j.chb.2023.107852
+Wicaksono, A. G. C., Seban, P., Brziak, M., & Urban, K. (2026). From text understanding to creativity: Examining the interplay of metacognition, self-efficacy, reading
+comprehension, and divergent thinking in students’ problem-solving performance. Thinking Skills and Creativity, 59, Article 101999. https://doi.org/10.1016/j.
+tsc.2025.101999
+Wise, S. L. (2017). Rapid-guessing behavior: Its identification, interpretation, and implications. Educational Measurement: Issues and Practice, 36(4), 52–61. https://doi.
+org/10.1111/emip.12165
+Wise, S. L. (2020). Six insights regarding test-taking disengagement. Educational Research and Evaluation, 26(5–6), 328–338. https://doi.org/10.1080/
+13803611.2021.1963942
+Wise, S. L., & DeMars, C. E. (2005). Low examinee effort in low-stakes assessment: Problems and potential solutions. Educational Assessment, 10, 1–17. https://doi.org/
+10.1207/s15326977ea1001_1
+Wise, S. L., & Gao, L. (2017). A general approach to measuring test-taking effort on computer-based tests. Applied Measurement in Education, 30(4), 343–354. https://
+doi.org/10.1080/08957347.2017.1353992
+Wise, S. L., & Kong, X. (2005). Response time effort: A new measure of examinee motivation in computer-based tests. Applied Measurement in Education, 18(2),
+163–183. https://doi.org/10.1207/s15324818ame1802_2
+Xie, K., Jiang, Z., Men, Q., Pan, Z., & He, J. (2025). Profiles of students’ behavioral engagement and their associations to academic motivation in online learning.
+Journal of Computing in Higher Education (Early Access). https://doi.org/10.1007/s12528-025-09465-1
+Xiong, Z., Liu, Q., & Huang, X. (2022). The influence of digital educational games on preschool Children’s creative thinking. Computers & Education, 189, Article
+104578. https://doi.org/10.1016/j.compedu.2022.104578
+Xu, X., Xia, M., Zhao, J., & Pang, W. (2021). Be real, open, and creative: How openness to experience and to change mediate the authenticity-creativity association.
+Thinking Skills and Creativity, 41, Article 100857. https://doi.org/10.1016/j.tsc.2021.100857
+Yildiz, C., & Yildiz, T. G. (2021). Exploring the relationship between creative thinking and scientific process skills of preschool children. Thinking Skills and Creativity,
+39, Article 100795. https://doi.org/10.1016/j.tsc.2021.100795
+Zeng, C. (2025). The role of growth mindset, self-efficacy, and environmental support in ICT practices for creative thinking development. International Journal of
+Educational Research, 132, Article 102631. https://doi.org/10.1016/j.ijer.2025.102631
+Zumbo, B. D., Maddox, B., & Care, N. M. (2023). Process and product in computer-based assessments: Clearing the ground for a holistic validity framework. European
+journal of psychological assessment. Official Organ of the European Association of Psychological Assessment. https://doi.org/10.1027/1015-5759/a000748
+
+19
+
+

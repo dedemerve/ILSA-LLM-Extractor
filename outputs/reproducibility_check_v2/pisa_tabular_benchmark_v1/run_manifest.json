@@ -1,0 +1,93 @@
+{
+  "created_utc": "2026-10-20T19:46:12.454112+00:00",
+  "python": "3.13.2",
+  "sklearn": "1.6.1",
+  "xgboost": "3.0.0",
+  "panel": "outputs/stage5/pisa_forecasting_panel_v2.csv",
+  "panel_sha256": "91f44322fe036f9aa44dfc5a39c3387495879ff2e381a3a823374e4f2a3fc7f9",
+  "fold_manifest": "analysis/03_data_feasibility/audit/pisa_historical_folds_v1.json",
+  "fold_manifest_sha256": "98b343b2b4ba3a15cd4f4f996ae04d41c8b38c9cb8d247c0367a03a1ae4f8e81",
+  "outer_folds": [
+    2012,
+    2015,
+    2018,
+    2022
+  ],
+  "domains": [
+    "mathematics",
+    "reading",
+    "science"
+  ],
+  "test_country_rule": "common country set across all three domains per target fold",
+  "minimum_prior_cycles": 3,
+  "feature_names": [
+    "lag1_score",
+    "lag2_score",
+    "score_change",
+    "target_cycle",
+    "gap_since_last_cycle",
+    "n_prior_observations"
+  ],
+  "feature_definitions": {
+    "lag1_score": "most recent country-domain score strictly before the row target",
+    "lag2_score": "second most recent country-domain score; missing if unavailable",
+    "score_change": "lag1_score minus lag2_score",
+    "target_cycle": "assessment cycle year of the supervised training target",
+    "gap_since_last_cycle": "target cycle year minus latest prior observed cycle year",
+    "n_prior_observations": "number of score observations strictly before the supervised target"
+  },
+  "model_configuration": {
+    "Ridge": {
+      "alpha": 10.0,
+      "preprocessing": "training-fold median imputation and standardization"
+    },
+    "RandomForest": {
+      "n_estimators": 300,
+      "max_depth": 4,
+      "min_samples_leaf": 5,
+      "max_features": 1.0,
+      "seed": 20261015,
+      "preprocessing": "training-fold median imputation"
+    },
+    "XGBoost": {
+      "n_estimators": 250,
+      "max_depth": 2,
+      "learning_rate": 0.03,
+      "min_child_weight": 5,
+      "subsample": 0.8,
+      "colsample_bytree": 0.9,
+      "reg_lambda": 10.0,
+      "seed": 20261015,
+      "preprocessing": "training-fold median imputation"
+    }
+  },
+  "cutoff_rule": "For target cycle t, all supervised training target cycles are < t.",
+  "hyperparameter_policy": "Fixed before this run; no PISA 2025 results used for selection.",
+  "pisa_2025_role": "outcome-exposed retrospective benchmark; excluded from this run",
+  "training_examples_per_fold_domain": {
+    "2012": {
+      "mathematics": 97,
+      "reading": 138,
+      "science": 97
+    },
+    "2015": {
+      "mathematics": 160,
+      "reading": 201,
+      "science": 160
+    },
+    "2018": {
+      "mathematics": 221,
+      "reading": 263,
+      "science": 221
+    },
+    "2022": {
+      "mathematics": 289,
+      "reading": 331,
+      "science": 289
+    }
+  },
+  "outputs": {
+    "predictions": "historical_predictions.csv",
+    "metrics": "historical_metrics.csv"
+  }
+}

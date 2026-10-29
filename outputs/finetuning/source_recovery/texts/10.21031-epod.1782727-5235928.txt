@@ -1,0 +1,1793 @@
+ISSN: 1309 – 6575
+Eğitimde ve Psikolojide Ölçme ve Değerlendirme Dergisi
+Journal of Measurement and Evaluation in Education and Psychology
+Research Article; 2025; 16(4); 241-263
+
+Comparison of Statistical and Machine Learning Approaches for
+Predicting Mathematical Literacy: Evidence from PISA 2022
+Türkiye
+Taner YILMAZ *
+
+Kübra ATALAY KABASAKAL **
+
+Abstract
+This study compares statistical and machine learning methods for predicting mathematical literacy among students
+in Türkiye who participated in PISA 2022. Using data on 6,427 students and 13 standardized predictors capturing
+cognitive, affective, and contextual dimensions, we evaluated multiple linear regression, least absolute shrinkage
+and selection operator, random forests, extreme gradient boosting, artificial neural networks, and a stacking
+ensemble within a 10-fold cross-validation design. Ensemble approaches outperformed linear methods: the
+stacking model achieved the highest accuracy (out-of-fold R² = .319; RMSE = .777), followed closely by extreme
+gradient boosting (R² = .313) and random forests (R² = .304). Linear models yielded weaker results (multiple linear
+regression R² ≈ .270; least absolute shrinkage and selection operator R² = .273). Mean absolute error values were
+nearly identical across models (≈ .633–.658), with minimal between-fold variation due to rounding at three
+decimals. Residual analyses indicated that ensemble models produced more stable error structures, whereas linear
+methods showed stronger heteroskedasticity. Across all approaches, socioeconomic status consistently emerged
+as the strongest predictor, followed by mathematics self-efficacy and disciplinary climate, underscoring the dual
+roles of student beliefs and classroom environment. These findings highlight the advantages of ensemble methods
+for predictive performance and variable-importance estimation, emphasizing the ongoing impact of socioeconomic
+inequalities on educational outcomes.
+Keywords: mathematical literacy, PISA 2022, machine learning, predictive modeling, educational data mining
+
+Introduction
+A diverse array of cognitive, social, and emotional competences is essential for individuals to participate
+in society and the workforce in today's digitally altered and constantly evolving environment. The
+Organization for Economic Co-operation and Development (OECD, 2024) has published publications
+emphasizing these competencies, commonly known as twenty-first-century skills. Mathematical
+literacy is an essential ability that empowers individuals to identify, comprehend, and apply numerical
+information to address real-world challenges. Mathematical literacy is not a standalone ability; it is
+intertwined with other forms of literacy, including computer, media, and visual literacy. A robust
+association has been identified between mathematical and computer literacy (Ic & Tutak,
+2018). Moreover, connecting mathematics literacy with information and communication technologies
+(ICT) augments individuals' proficiency in utilizing technology successfully, a crucial skill in the digital
+era (Moloi, 2011).
+The OECD used three interrelated dimensions—content, procedure, and context—to define
+mathematical literacy in the Programme for International Student Assessment (PISA) (OECD, 2021).
+The content dimension encompasses numbers, algebra, and geometry; the process dimension
+emphasizes formulating, implementing, and interpreting; and the context dimension situates tasks within
+personal, social, and professional realms. This comprehensive paradigm illustrates that mathematical
+
+* Graduate student., Hacettepe University, Faculty of Education, Ankara-Türkiye, taneryilmaz@hacettepe.edu.tr, ORCID ID:
+0009-0002-8514-6377
+** Assoc. Prof., Hacettepe University, Faculty of Education, Ankara-Türkiye, kkatalay@gmail.com, ORCID ID: 0000-00023580-5568
+
+_____________________________________________________________________________________________________________
+
+To cite this article:
+Yılmaz, T. & Atalay Kabasakal, K. (2025). Comparison of statistical and machine learning approaches for predicting
+mathematical literacy: Evidence from PISA 2022 Türkiye. Journal of Measurement and Evaluation in Education and
+Psychology, 16(4), 241-263. https://doi.org/10.21031/epod.1782727
+Received: 12.09.2025
+Accepted: 22.01.2026
+
+Journal of Measurement and Evaluation in Education and Psychology
+
+____________________________________________________________________________________
+
+literacy involves not just cognitive knowledge but also emotive attributes, problem-solving strategies,
+and cultural factors (OECD, 2023c).
+Türkiye has consistently underperformed in mathematical literacy compared to the OECD average since
+its initial participation in PISA in 2003. Turkish students achieved notable advancements in the 2018
+and 2022 cycles, enhancing their average scores and international standings (OECD, 2023). According
+to the Ministry of National Education’s report on PISA 2022, Türkiye scored 453 points in mathematics,
+above the OECD average of 438, and showed one of the most consistent improvements among
+participating countries since 2003. Socioeconomic status, measured through the Economic, Social, and
+Cultural Status (ESCS) index, remains a key determinant of student performance. Although Türkiye’s
+mean ESCS level (-1.19) is lower than the OECD average, the relationship between socioeconomic
+background and achievement is weaker (12.6%) than the OECD mean (15.5%). These findings highlight
+the persistent impact of socioeconomic disparities on mathematical literacy and support the need for
+advanced predictive analyses that integrate cognitive, affective, and contextual factors (Ministry of
+National Education [MEB], 2023; OECD, 2023).
+These improvements underscore the need to employ rigorous scientific tools when analyzing the
+determinants of mathematical literacy. Assessing performance predictors and the comparative benefits
+of different analytical methods is crucial alongside monitoring achievement levels.
+A growing corpus of research has discovered multiple predictors of mathematical performance. Shine
+et al. (2023) assert that self-efficacy is a significant predictor of success, while problem-solving
+approaches are directly affected by metacognitive processes (Desoete & Veenman, 2006; Flavell, 1976).
+Anxiety in mathematics negatively impacts performance (Ashcraft, 2002; Karakolidis et al., 2016),
+while motivation boosts engagement (Bandura, 1986). A critical factor influencing achievement is
+confidence, which signifies students' perceptions of the accuracy of their responses (Morony et al.,
+2013). Moreover, socioeconomic status and previous academic performance are regularly identified as
+two of the most reliable predictors of educational outcomes (Duff, 2004).
+In educational research, baseline models have conventionally been developed utilizing classic statistical
+methods, particularly Multiple Linear Regression (MLR) (Kovacs, 2008). MLR is effective for
+analyzing correlations among variables; yet, it often exhibits suboptimal performance with intricate and
+high-dimensional datasets, resulting in elevated error values and diminished coefficients of
+determination (Hussain, 2020). These limitations have highlighted the need for more advanced
+methodologies.
+In educational data mining, modern techniques such as the Least Absolute Shrinkage and Selection
+Operator (LASSO; Tibshirani, 1996), ensemble methods like Random Forests (RF; Breiman, 2001) and
+Extreme Gradient Boosting (XGBoost; Chen & Guestrin, 2016), along with Artificial Neural Networks
+(ANN; Rumelhart et al., 1986), have demonstrated enhanced predictive efficacy. LASSO improves
+model parsimony by employing variable selection and reducing the hazards of overfitting. XGBoost
+frequently surpasses alternative methods by enhancing gradient boosting and yielding elevated R2 values
+in numerous applications, whereas RF attains robust prediction accuracy via bootstrapping and feature
+randomness (Yan, 2021). Although often lacking interpretability, ANNs are proficient in modeling
+nonlinear relationships across extensive and intricate datasets. Ensemble methods such as stacking seek
+to mitigate these constraints—particularly the limited interpretability and potential overfitting associated
+with deep learning models—by integrating robust base learners, often yielding significant enhancements
+in predictive accuracy (Liu & Jia, 2022; Menahem et al., 2009).
+Despite these advancements, comparative research in education remains limited. Limited research
+systematically compares machine learning with traditional approaches in predicting student
+achievement, particularly in mathematical literacy, but they have been examined in other fields (Lou &
+Colvin, 2025). Comparisons are essential to elucidate the merits and drawbacks of each option, thereby
+informing methodological and policy decisions, particularly in light of the structural complexity of
+educational data (Padilla, 2023; Reinsel et al., 2022; Schubert & Gertz, 2017).
+The primary purpose of this study is to conduct a comparative analysis of various statistical and machine
+learning methods in predicting mathematical literacy. In this regard, the study has three main objectives:
+___________________________________________________________________________________________________________________
+ISSN: 1309 – 6575 Eğitimde ve Psikolojide Ölçme ve Değerlendirme Dergisi
+Journal of Measurement and Evaluation in Education and Psychology
+
+242
+
+Yılmaz, T. & Atalay Kabasakal, K. / Comparison of Statistical and Machine Learning Approaches for Predicting
+Mathematical Literacy: Evidence from PISA 2022 Türkiye
+
+___________________________________________________________________________________
+
+(1) it illustrates the relative significance of cognitive, affective, and contextual predictors across different
+modeling families; (2) it generates more trustworthy insights for educational policies and interventions;
+and (3) it provides a unique methodological benchmark by directly comparing statistical and machine
+learning models using the same dataset.
+The study evaluates model performance using three widely recognized metrics: the coefficient of
+determination (R²), the root mean square error (RMSE), and the mean absolute error (MAE). R² captures
+how much variance in the dependent variable the model explains, while RMSE and MAE measure
+prediction errors. RMSE emphasizes larger errors more heavily, whereas MAE offers a clearer sense of
+the average error across predictions.
+To achieve these aims, the study specifically addresses the following research questions:
+1.
+
+In predicting mathematical literacy, how do the predictive performances of MLR, LASSO,
+RF, XGBoost, ANN, and stacking vary when assessed using R², RMSE, and MAE, and
+which approach produces the best results?
+
+2.
+
+In describing mathematical literacy, how do the rankings of predictor importance differ
+among these approaches?
+
+To address these questions, the study applies a range of statistical and machine learning techniques,
+beginning with classical regression models.
+Regression
+Regression analysis is a crucial statistical instrument for investigating the connection between a
+dependent variable and several predictors. MLR, first utilized almost a century ago, provides a thorough
+explanation of outcomes by evaluating the combined effects of variables (Fisher, 1922; Padilla, 2023).
+Its strength is in its ability to concurrently evaluate multiple elements, leading to its widespread use in
+disciplines such as engineering, economics, health sciences, and education (Talib & Midi, 2009).
+However, multiple linear regression relies on specific assumptions, including homoscedasticity,
+linearity, independence of observations, and normality of residuals. The model's dependability decreases
+when specific assumptions are breached. Abd El-Salam (2013) and Rousseeuw (1984) contend that
+factors such as multicollinearity and outliers frequently skew coefficient estimates, reduce predictive
+accuracy, and hinder data interpretation. Notwithstanding the efficacy of diagnostic instruments like
+residual plots, variance inflation factors (VIF), and modified R², effectiveness is constrained in highdimensional or noisy data scenarios.
+Robust regression methods were created to improve robustness against outliers and assumption
+violations. The Huber M-estimator reduces the impact of substantial outliers while utilizing the leastsquares approach for minor errors (Huber, 1981; Huber & Ronchetti, 2009). In instances of moderate
+outlier contamination, the MM-estimator—so named because it combines an initial robust M-estimator
+with a subsequent efficient M-estimator—ensures accurate estimates by combining high efficiency with
+robustness (Maronna et al., 2006; Yohai, 1987). While not part of the primary comparative analysis in
+this study, robust regression offers methodological context and demonstrates the enhancements of MLR
+intended to address its shortcomings.
+Regression using the Least Absolute Shrinkage and Selection Operator (LASSO)
+LASSO regression utilizes an L1 penalty in the regression framework to diminish some coefficients
+toward zero, thereby producing concise and comprehensible models (Friedman et al., 2010). The
+integration of regularization with variable selection is very beneficial for analyzing high-dimensional
+data. Moreover, LASSO improves stability by reducing multicollinearity and enhancing generalization
+performance (Efron et al., 2004; Zou & Hastie, 2005).
+However, LASSO's reliance on specific optimization methods, such as coordinate descent, can make it
+computationally demanding and frequently leads to the selection of only a single variable from groups
+of highly correlated predictors, thereby omitting others that may still be valuable (Zou & Hastie, 2005).
+___________________________________________________________________________________________________________________
+ISSN: 1309 – 6575 Eğitimde ve Psikolojide Ölçme ve Değerlendirme Dergisi
+Journal of Measurement and Evaluation in Education and Psychology
+
+243
+
+Journal of Measurement and Evaluation in Education and Psychology
+
+____________________________________________________________________________________
+
+The choice of the regularization parameter greatly affects performance and must be carefully adjusted
+to prevent underfitting and overfitting.
+Random Forest (RF)
+Breiman (2001) developed RF, an ensemble technique that uses random feature selection and bootstrap
+sampling to generate several decision trees (Breiman, 1996, 2001). In regression, predictions are
+consolidated, while in classification, they are established through majority voting. This approach
+enhances generality, minimizes volatility, and mitigates overfitting.
+Ziegler and König (2014) claim that RF is characterized by its exceptional predictive accuracy,
+robustness against overfitting, and appropriateness for high-dimensional problems. Its unique feature is
+the capacity to generate variable importance measures, making it advantageous for both forecasting and
+the identification of pertinent predictors (Genuer et al., 2010; Rothacher & Strobl, 2024). Nevertheless,
+RF exhibits multiple limitations: imbalanced datasets may skew predictions towards majority classes
+(Patra et al., 2021), high-cardinality categorical variables pose significant management challenges (Zhu,
+2020), model interpretability declines as the number of trees increases, and training costs rise with larger
+datasets (Manzali & Elfar, 2023).
+Hyperparameters, including the number of trees (ntree), the number of predictors per split (mtry), and
+the maximum tree depth (max_depth), substantially affect performance. Although augmenting the
+quantity of trees typically reduces inaccuracy, the advantages eventually diminish (Probst & Boulesteix,
+2018). Thus, cross-validation (CV) is essential for determining optimal configurations.
+Extreme Gradient Boosting (XGBoost)
+Chen and Guestrin (2016) created XGBoost, an exceptionally efficient version of gradient boosting.
+XGBoost builds trees sequentially, with each consecutive tree correcting faults from previous iterations,
+while RF generates trees simultaneously. The algorithm achieves enhanced predicted accuracy on large
+and complex datasets as a result of this incremental refining.
+Its benefits encompass precision, computational efficiency, and inherent regularization, all of which aid
+in mitigating overfitting (Bao & Wen, 2024; Chen & Guestrin, 2016). Similar to RF, XGBoost provides
+both predictive and interpretative advantages by producing changeable significance ratings. However,
+the methodology is susceptible to hyperparameter selection, and poorly calibrated models may overfit
+or require excessive computational resources (Priscilla & Prabha, 2020).
+Grid and random search are frequently used for hyperparameter optimization in boosting methods,
+though they often require substantial computational resources. Studies demonstrate that sophisticated
+techniques, such as Bayesian optimization (Bergstra & Bengio, 2012; Putatunda & Rama, 2019) and
+tools like Optuna (Akiba et al., 2019), improve efficiency.
+Artificial Neural Networks (ANNs)
+Artificial Neural Networks (ANNs) are computer structures including interconnected nodes arranged in
+layers, simulating biological brain systems (LeCun et al., 2015). ANNs are proficient at modeling
+complex and nonlinear interactions because of their ability to rapidly discern patterns from data. They
+have been efficiently employed across various sectors, including speech recognition, biotechnology,
+healthcare, and finance. The ANN model used in this study was implemented using the caret and nnet
+packages, which employ a single hidden layer feed-forward architecture. This design was selected to
+balance model complexity and interpretability, as the study’s aim was to compare distinct modeling
+approaches under similar conditions rather than to develop deep neural networks.
+Nonetheless, there are drawbacks linked to ANN models as well. Comprehensive network training
+necessitates considerable time and computational resources (Knisleya et al., 2007), while smaller
+datasets heighten the risk of overfitting (Verma et al., 2018), and their "black-box" architecture hinders
+interpretability (LeCun et al., 2015). The structural design and hyperparameters, including learning rate
+(lr), number of hidden layers (n_layers), activation function (activation), and regularization parameter
+(λ), affect prediction accuracy.
+___________________________________________________________________________________________________________________
+ISSN: 1309 – 6575 Eğitimde ve Psikolojide Ölçme ve Değerlendirme Dergisi
+Journal of Measurement and Evaluation in Education and Psychology
+
+244
+
+Yılmaz, T. & Atalay Kabasakal, K. / Comparison of Statistical and Machine Learning Approaches for Predicting
+Mathematical Literacy: Evidence from PISA 2022 Türkiye
+
+___________________________________________________________________________________
+
+Stacking
+Wolpert (1992) introduced the ensemble technique known as stacking, or layered generalization. It
+integrates the forecasts of numerous base learners with a sophisticated meta-learner (Sagi & Rokach,
+2018). Stacking frequently produces more reliable predictions by using the unique advantages of many
+algorithms (Baskin et al., 2017). In practice, regression-based learners are often used as the meta-model,
+whereas tree-based learners like RF and XGBoost are generally applied as base models (Zhang et al.,
+2022).
+Stacking can exceed the efficacy of singular models (Chatzimparmpas et al., 2021; Zhou et al., 2024).
+However, it necessitates careful preprocessing, prudent selection of base learners, and resourcedemanding validation techniques like k-fold CV. Stacking may result in overfitting if the base learners
+exhibit insufficient diversity or if the meta-models are excessively complicated (Zheng et al., 2020;
+Wang & Yue, 2019).
+Method
+Research Design
+Using observational data, the researchers in this study employed a predictive correlational survey design
+to investigate the factors that influence mathematical literacy. Multiple independent variables can be
+included simultaneously in this cross-sectional design, allowing for the evaluation of their predictive
+power on the target variable as well as the determination of their relative importance levels (Karasar,
+2022; Sullivan, 2024). The design, which is based on statistical learning principles, facilitates the
+development of highly accurate predictions while allowing the interpretation of relationships among
+variables (James et al., 2021).
+Participants and Data Source
+Researchers looked at data from Turkish students who took the PISA 2022 exam. These students were
+15 years old and were in formal secondary school. PISA (OECD, 2023) employed a two-stage stratified
+sampling method to collect 7250 student questionnaires. To address potential nonresponse biases and
+unequal selection probabilities, the analyses utilized student weights provided by the OECD. The
+findings can be generalized to the 15-year-old student demographic in Türkiye, as these weights indicate
+the population representation of each student (OECD, 2024).
+Since 2015, PISA has been administered via computer. The assessment design primarily adheres to the
+principles of conventional test administration, despite its limited adaptivity and partial resemblance to a
+Multi-Stage Test (MST) paradigm (OECD, 2024).
+This study utilized international microdata files provided to the scholarly community by the OECD. To
+focus on students’ individual and contextual characteristics, they exclusively included data from student
+surveys, omitting school and parent questionnaires.
+Variables
+In this study, the researchers derived the PVORT variable by calculating the arithmetic mean of the ten
+plausible values (PVs) and employed it as the dependent variable. The OECD (2024) advocates separate
+analyses of each plausible value followed by averaging the outcomes; nevertheless, some prior research
+opted for a more straightforward method by averaging the plausible values to create a singular indicator
+(Wu, 2005). This method yields an impartial estimate of the population mean at the group level;
+however, it fails to adequately reflect the uncertainty linked to individual scores. By employing this
+approach, the researchers harmonized methodological rigor with analytical practicality and expressly
+recognized this constraint when interpreting the findings.
+The investigation began with 24 variables extracted from the PISA 2022 Türkiye student survey. This
+set was reduced to 13 predictors by integrating theoretical reasoning with empirical evidence. Initially,
+the variables were reviewed in light of prior research in educational psychology and sociology, and those
+___________________________________________________________________________________________________________________
+ISSN: 1309 – 6575 Eğitimde ve Psikolojide Ölçme ve Değerlendirme Dergisi
+Journal of Measurement and Evaluation in Education and Psychology
+
+245
+
+Journal of Measurement and Evaluation in Education and Psychology
+
+____________________________________________________________________________________
+
+consistently linked to mathematical performance were retained. Subsequently, a Random Forest–based
+variable importance analysis was conducted to empirically assess their contributions. Variables with low
+importance were excluded, and only those supported by both theory and data were preserved, resulting
+in a final set of 13 predictors.
+All independent variables included in this analysis are continuous indices standardized as z-scores across
+the entire OECD sample, in accordance with the PISA 2022 Technical Report (OECD, 2024). These
+indices were constructed by combining relevant questionnaire items using Principal Component
+Analysis (PCA) or Item Response Theory (IRT) scaling. Items with poor statistical functioning were
+eliminated during the development stage, and item-level validity analyses were conducted at the national
+level. ESCS (Economic, Social, and Cultural Status) was derived from three components: the highest
+parental occupational status (HISEI), parental years of education (PAREDINT), and educational
+possessions at home (HOMEPOS). For students with two or more missing components, ESCS was not
+calculated; instead, missing values were imputed using country-specific regression with an additional
+error term. All indices across OECD countries were standardized to a mean of 0 and a standard deviation
+of 1.
+The final set of predictors captured students’ cognitive (MATHEF21, COGACRCO), affective
+(ANXMAT, BELONG, FEELSAFE), and social/environmental (ESCS, DISCLIM, FAMSUP,
+EMOCOAGR, COOPAGR, TEACHSUP, RELATST, BULLIED) characteristics. The variable names,
+their detailed definitions, and the constructs they measure are presented in Table 1.
+Table 1
+Predictor Variables Used in the Study
+Variable Name
+ESCS
+
+MATHEF21
+DISCLIM
+
+FAMSUP
+ANXMAT
+
+EMOCOAGR
+COOPAGR
+TEACHSUP
+RELATST
+COGACRCO
+
+BELONG
+BULLIED
+FEELSAFE
+
+Full Name
+Description
+Economic, Social, and Reflects students’ overall socioeconomic background by
+Cultural Status
+combining parental education, occupation, and
+educational resources at home.
+Mathematics
+Self- Indicates students’ confidence in solving a variety of
+Efficacy
+mathematical problems successfully.
+Disciplinary Climate Measures students’ perceptions of order and discipline
+in mathematics lessons (e.g., frequency of noise,
+disruption, or off-task behavior).
+Family Support
+Captures the extent to which parents encourage and
+assist students with schoolwork and homework.
+Mathematics Anxiety Assesses the level of tension, worry, or discomfort
+students feel when dealing with mathematics-related
+situations.
+Emotional
+Support Evaluates the extent to which students feel emotionally
+from Peers
+supported and understood by their peers.
+Cooperation
+with Measures students’ tendency to collaborate and engage
+Peers
+in cooperative learning activities with classmates.
+Teacher Support
+Represents the quality and frequency of feedback,
+guidance, and instructional help provided by teachers.
+Sense of Belonging at Indicates how well students feel accepted, respected, and
+School
+connected to their school community.
+Cognitive Activation Reflects students’ exposure to cognitively demanding
+in Mathematics
+mathematical tasks that promote reasoning and problemsolving.
+General Sense of Captures students’ emotional connection and
+Belonging
+identification with their school community.
+Exposure to Bullying Measures how often students experience bullying or
+harassment at school.
+Sense of Safety at Indicates how secure and comfortable students feel
+School
+within their school environment.
+
+Note. All variables are standardized indices (z-scores) across the OECD sample based on the PISA 2022 Technical Report (OECD, 2024).
+
+___________________________________________________________________________________________________________________
+ISSN: 1309 – 6575 Eğitimde ve Psikolojide Ölçme ve Değerlendirme Dergisi
+Journal of Measurement and Evaluation in Education and Psychology
+
+246
+
+Yılmaz, T. & Atalay Kabasakal, K. / Comparison of Statistical and Machine Learning Approaches for Predicting
+Mathematical Literacy: Evidence from PISA 2022 Türkiye
+
+___________________________________________________________________________________
+
+Data Preprocessing
+The dataset included 7,250 Turkish students, which was reduced to 7,116 after removing cases with
+more than 30% missing data. Variable-level missingness was below 3% and assumed to be Missing at
+Random (MAR). Missing values were imputed using the missForest algorithm. Outlier analyses
+indicated heavy tails for several socio-emotional indices; after testing multiple scenarios, 5% trimming
+yielded the most stable performance, resulting in a final analytic sample of 6,779 students. To ensure
+scale consistency, all predictors and the dependent variable (PVORT) were re-standardized (z-scores)
+based on the Türkiye subsample. Thirteen predictors were retained for all models to guarantee
+comparability. Further diagnostic checks confirmed acceptable linearity, low multicollinearity (VIF =
+1.05–1.34), and approximately normal residuals. Full preprocessing details, including missing data
+mechanisms, trimming scenarios, and hyperparameter optimization, are provided in Appendix A.
+Modeling Strategy
+All analyses were conducted using R (Version 4.5.0; R Core Team, 2025). All models were trained on
+the same set of 13 standardized predictors within a 10-fold CV framework implemented in the caret
+package. Out-of-Fold (OOF) predictions were generated for each method, which allowed the researchers
+to compare models fairly while avoiding any risk of data leakage.
+As a starting point, the researchers evaluated MLR with several robust variants. Among these, Ordinary
+Least Squares (OLS) model with heteroskedasticity-consistent standard errors, type 3 (HC3)
+adjustments emerged as the most stable reference. Building on this foundation, the researchers applied
+machine learning approaches with distinct strengths: LASSO focused on variable selection, RF
+contributed ensemble-based accuracy, XGBoost added boosted decision trees, and Artificial Neural
+Networks (ANN) captured nonlinear relationships. Finally, the researchers developed a stacking
+ensemble that combined MLR, RF, and XGBoost, which delivered the most balanced performance
+across R², RMSE, and MAE.
+Hyperparameter tuning was carried out within carefully defined search spaces for each machine learning
+model. For RF, the researchers varied mtry values between 3 and 11, set minimum node sizes to either
+5 or 10, and fixed the number of trees at 1,000. For XGBoost, the researchers used random search to
+explore a wide range of parameters, including nrounds (50–500), max_depth (2–6), eta (0.01–0.3),
+gamma (0–5), colsample_bytree (0.3–0.8), min_child_weight (1–20), and subsample (0.5–1.0). For the
+ANN, the search space included 3 to 9 hidden neurons and weight decay values ranging from 0 to 0.01,
+all tested within a single hidden-layer structure. Both grid and random search procedures in caret were
+employed, and the best hyperparameters for each model were retained for analysis.
+Comparison of Model Performance
+Using the final analytic sample (n = 6,427) and the same set of 13 predictors, the researchers evaluated
+the performance of all models under identical conditions. To ensure fairness, the same CV folds were
+applied across methods, and OOF predictions were used to assess generalization. The primary evaluation
+metric was R², while RMSE and MAE served as secondary indicators. Models were ranked primarily
+by OOF R²; in cases of ties, the model with the lower RMSE was considered superior, followed by MAE
+as a final criterion. To capture variability, CV means and standard deviations were reported for each
+performance metric.
+All reported outcomes are based on models optimized within the predefined hyperparameter search
+spaces, minimizing the risk of bias from suboptimal configurations. This procedure ensured that
+performance differences reflected the intrinsic strengths of the models rather than artifacts of parameter
+tuning.
+To test statistical significance, Friedman’s test was applied to the R², RMSE, and MAE values shown in
+Table 2, followed by post hoc pairwise Wilcoxon comparisons. The results of these analyses are
+provided in Appendix B.
+___________________________________________________________________________________________________________________
+ISSN: 1309 – 6575 Eğitimde ve Psikolojide Ölçme ve Değerlendirme Dergisi
+Journal of Measurement and Evaluation in Education and Psychology
+
+247
+
+Journal of Measurement and Evaluation in Education and Psychology
+
+____________________________________________________________________________________
+
+Determination of Variable Importance
+The researchers defined variable importance in line with the logic of each method. In MLR (OLS), they
+considered the absolute values of standardized beta coefficients, while in LASSO they focused on the
+absolute values of coefficients at the optimal λ (Friedman et al., 2010; Tibshirani, 1996). For RF, they
+relied on permutation importance scores (Wright & Ziegler, 2017), whereas in XGBoost they used gain
+and cover metrics provided by the model through the caret::varImp function (Chen & Guestrin, 2016).
+In the ANN model (nnet), predictor importance was derived from connection weights (Garson, 1991;
+Goodfellow et al., 2016; Venables & Ripley, 2002).
+To make comparisons meaningful across approaches, all importance scores were rescaled to a 0–1 range,
+with the complete set of rescaled values for the 13 predictors reported in Appendix C. Each method also
+generated a ranking of predictors from most to least important, which the researchers summarized in
+Table 3. To evaluate how consistent these rankings were across models, they computed Spearman’s rank
+correlation coefficient (Spearman, 1904). Table 3 highlights these results and shows how far patterns of
+variable importance converged across methods.
+Assumption Checks and Model Limitations
+For MLR, diagnostic checks suggested that the relationships between predictors and the outcome were
+broadly linear, with only slight deviations in the Q–Q plot. The Breusch–Pagan test (Breusch & Pagan,
+1979), however, pointed to significant heteroskedasticity (BP = 222.2, df = 13, p < .001).
+Multicollinearity was not an issue, as VIF values ranged from 1.05 to 1.34. Cases flagged as influential
+through Cook’s D (> 4/n) and leverage (h > 2p/n) accounted for about 5.19% of the sample and were
+removed. Following this adjustment, the sample size dropped to 6,427, and model performance
+improved: R² increased from .2072 to .2725, RMSE fell by 9.77%, and MAE decreased by 8.58%. To
+adjust for heteroskedasticity, all OLS inferential results were reported with HC3 robust covariance
+estimates.
+For methods such as LASSO, RF, XGBoost, ANN, and stacking—which do not rely on parametric
+assumptions—the researchers nonetheless implemented several safeguards to ensure comparability.
+They inspected residuals from OOF predictions, standardized predictors within each CV fold, and fixed
+random seeds to enhance reproducibility (Hastie et al., 2021; Wolpert, 1992).
+Despite these precautions, some design and measurement limitations remain. Because the study drew
+on cross-sectional data, the findings are predictive rather than causal. National-level generalization is
+constrained, as design-based weights could not be fully integrated into predictive models given PISA’s
+complex sampling design. Representing mathematical performance with the mean of plausible values
+(PVORT) also does not reflect individual-level uncertainty, since Rubin-type combination rules were
+not applied. Moreover, variable importance scores should be interpreted cautiously, as OECD-derived
+indices may contain measurement error.
+There are modeling limitations as well. The search spaces for hyperparameters were necessarily
+restricted, the ANN model was limited to a single hidden layer, and while stacking proved effective, it
+was less interpretable than the individual models. Finally, since different methods define variable
+importance differently, direct numerical comparisons across models should be approached with caution.
+To improve robustness overall, the researchers applied HC3 covariance corrections, excluded influential
+cases, trimmed 5% of outliers, and imputed missing data under the MAR assumption using missForest.
+By evaluating performance on OOF predictions, they reduced overfitting bias and strengthened the
+reliability of the reported results.
+
+Results
+First Research Question: Model Performance Comparison
+To answer the first research question, the study examined how well different methods predicted math
+literacy. A 10-fold CV design and the same 13 predictors were used to test each model. The analysis
+evaluated performance using MAE, RMSE, and R², and Table 2 presents the OOF results.
+___________________________________________________________________________________________________________________
+ISSN: 1309 – 6575 Eğitimde ve Psikolojide Ölçme ve Değerlendirme Dergisi
+Journal of Measurement and Evaluation in Education and Psychology
+
+248
+
+Yılmaz, T. & Atalay Kabasakal, K. / Comparison of Statistical and Machine Learning Approaches for Predicting
+Mathematical Literacy: Evidence from PISA 2022 Türkiye
+
+___________________________________________________________________________________
+
+Table 2
+Comparison of Out-of-Fold (OOF) Performance Across Methods (mean ± SD)
+Method
+
+R² (mean ± SD)
+
+RMSE (mean ± SD)
+
+MAE (mean ± SD)
+
+Stacking (GLMNET)
+
+0.319 ± 0.042
+
+0.777 ± 0.016
+
+0.633 ± 0.000
+
+XGBoost
+
+0.313 ± 0.041
+
+0.781 ± 0.017
+
+0.636 ± 0.019
+
+Random Forest
+
+0.304 ± 0.045
+
+0.786 ± 0.018
+
+0.641 ± 0.001
+
+Artificial Neural Network
+
+0.288 ± 0.048
+
+0.795 ± 0.019
+
+0.653 ± 0.003
+
+LASSO
+
+0.273 ± 0.052
+
+0.803 ± 0.020
+
+0.658 ± 0.000
+
+MLR (OLS)
+
+0.270 ± 0.053
+
+0.803 ± 0.021
+
+0.658 ± 0.000
+
+Not. All models were evaluated on identical 10-fold partitions. MAE values are fold-level means over OOF predictions; small
+between-fold differences are minimal. For some models (e.g., Stacking, LASSO, OLS) fold-level MAE values were (near-)constant
+across the 10 resamples; hence the SD rounds to 0.000 at three decimals. For others (e.g., XGBoost, ANN, RF), MAE SD ranges
+approximately 0.001–0.019.
+
+As shown in Table 2, stacking achieved the best results (R² = .319; RMSE = .777), suggesting that
+mixing different model families improves generalization. Tree-based methods like XGBoost (R² = .313)
+and RF (R² = .304) also demonstrated strong predictive ability, highlighting their usefulness in capturing
+nonlinear correlations. Even though ANN performed well (R² = .288), it still lagged behind the ensemble
+tree-based models. LASSO (R² = .273) and MLR (R² ≈ .270) produced the weakest results, indicating
+that linear approaches are less effective for modeling complex educational data.
+In addition, the results reported the standard deviations (SDs) of the metrics. The SDs for R² were higher
+in LASSO (.052) and MLR (.053) and lower in Stacking (.042), XGBoost (.041), and RF (.045). This
+trend shows that linear models generated more variable outcomes, whereas ensemble methods provided
+more stable performance across folds. All models displayed minimal fold-to-fold variability, indicating
+stable predictive performance across the 10-fold cross-validation procedure. As shown in Table 2, the
+MAE values differed slightly across models (approximately 0.000–0.019), reflecting the highly similar
+error distributions that resulted from using identical 10-fold partitions. Ensemble models such as
+Stacking and XGBoost yielded both higher mean R² values and slightly lower MAE variability,
+suggesting stronger generalization stability compared to linear approaches.
+To test statistical significance, the researchers employed the Friedman test (Friedman, 1937). After
+establishing significance, they applied the Wilcoxon signed-rank test (Wilcoxon, 1945) for pairwise
+comparisons. The Friedman test identified substantial differences across approaches (R²: χ²(4) = 33.04,
+p < .001; RMSE: χ²(4) = 30.96, p < .001; MAE: χ²(4) = 26.40, p < .001). Post hoc analyses revealed that
+Stacking and XGBoost outperformed linear approaches (LASSO and MLR), as evidenced by
+significantly higher R² values and lower RMSE values. However, differences among Stacking,
+XGBoost, and RF were minimal. Appendix B provides the full details of the Friedman and Wilcoxon
+comparisons.
+Residual Diagnostics. The analysis explored residual diagnostics for each model to evaluate
+assumptions and error structures. To ensure consistency, two diagnostic plots were generated for each
+model. These plots assess whether residuals are randomly distributed around zero, approximately
+normal in distribution, and exhibit homoscedasticity.
+Figure 1 presents diagnostics for the MLR model. Panel (a) shows residuals in relation to fitted values,
+and panel (b) displays a Q–Q plot of standardized residuals. The scatterplot demonstrates that residuals
+cluster around zero, with a slight increase in variation at the extremes. The Q–Q plot adheres closely to
+___________________________________________________________________________________________________________________
+ISSN: 1309 – 6575 Eğitimde ve Psikolojide Ölçme ve Değerlendirme Dergisi
+Journal of Measurement and Evaluation in Education and Psychology
+
+249
+
+Journal of Measurement and Evaluation in Education and Psychology
+
+____________________________________________________________________________________
+
+the diagonal, with little deviation at the tails. These results suggest that MLR achieved a satisfactory
+linear fit with only minor departures from homoscedasticity and normality.
+Figure 1
+Residual diagnostics for the MLR model: (a) Residuals vs. fitted plot and (b) Q–Q plot
+
+(a)
+
+(b)
+
+Figure 2 displays diagnostics for the LASSO model. Panel (a) presents a residual–fitted plot with
+residuals symmetrically distributed around zero, while panel (b) depicts a Q–Q plot that nearly aligns
+with theoretical quantiles. These plots indicate that penalization stabilized variance and preserved an
+almost normal distribution of residuals.
+Figure 2
+Residual diagnostics for the LASSO model: (a) Residuals vs. fitted plot and (b) Q–Q plot
+
+(a)
+
+(b)
+
+Figure 3 illustrates RF diagnostics. Panel (a) shows residuals versus fitted values, and panel (b) provides
+a histogram of residuals. The residuals appear uniformly distributed without systematic bias, and the
+histogram forms a bell-shaped curve that approximates normality. Taken together, these results show
+___________________________________________________________________________________________________________________
+ISSN: 1309 – 6575 Eğitimde ve Psikolojide Ölçme ve Değerlendirme Dergisi
+Journal of Measurement and Evaluation in Education and Psychology
+
+250
+
+Yılmaz, T. & Atalay Kabasakal, K. / Comparison of Statistical and Machine Learning Approaches for Predicting
+Mathematical Literacy: Evidence from PISA 2022 Türkiye
+
+___________________________________________________________________________________
+
+that RF produced a well-balanced error structure, consistent with its capacity to capture nonlinear
+correlations.
+Figure 3
+Residual diagnostics for the Random Forest model: (a) Residuals vs. fitted values, (b) Histogram of
+residuals
+
+(a)
+
+(b)
+
+Figure 4 presents diagnostics for the XGBoost model. Panel (a) plots residuals against fitted values,
+while panel (b) displays a histogram with an overlaid normal curve. The residuals exhibit symmetrical
+clustering around zero, and the histogram corresponds well with the reference distribution, although the
+tails are slightly heavier than those of RF. These diagnostics indicate that XGBoost produced a
+consistent error distribution with negligible systematic deviations.
+Figure 4
+Residual diagnostics for the XGBoost model: (a) Residuals vs. fitted values, (b) Histogram of residuals
+
+(a)
+
+(b)
+
+Figure 5 presents diagnostics of the ANN model. Panel (a) shows residuals against fitted values, centered
+around zero with minor curvature at the extremes. Panel (b) plots predicted values against observed
+values, demonstrating a robust correlation along the 45° line with moderate variability at the extreme
+scores. These findings suggest that the ANN successfully captured nonlinearities, although prediction
+variance increased in extreme cases.
+___________________________________________________________________________________________________________________
+ISSN: 1309 – 6575 Eğitimde ve Psikolojide Ölçme ve Değerlendirme Dergisi
+Journal of Measurement and Evaluation in Education and Psychology
+
+251
+
+Journal of Measurement and Evaluation in Education and Psychology
+
+____________________________________________________________________________________
+
+Figure 5
+Residual diagnostics for the Artificial Neural Network model: (a) Residuals vs. fitted values, (b)
+Predicted vs. observed values
+
+(a)
+
+(b)
+
+Figure 6 presents diagnostics for the Stacking model, which integrates OLS, RF, and XGBoost through
+a GLMNET meta-learner. Panel (a) displays residuals against fitted values, indicating centered errors
+without noticeable heteroskedasticity. Panel (b) shows a model-level comparison graphic, revealing that
+RF and XGBoost contributed most, while OLS added only marginally. These results indicate that the
+ensemble effectively leveraged tree-based strengths, producing the most accurate and balanced
+predictions.
+Figure 6
+Residual diagnostics for the Stacking model: (a) Residuals vs. fitted values, (b) Model-level
+comparison plot showing the relative contributions of base learners
+
+(a)
+
+(b)
+
+Second Research Question: Rankings of Predictor Importance
+To address the second research question, the study examined differences in predictors’ relative
+importance across methods. For comparability, variable importance values were normalized to a range
+of 0 to 1 and computed using the standards described in the Methods section. Table 4 displays the
+rankings, with predictors in columns and methods in rows. Across methods, predictors are ranked from
+highest to lowest mean importance.
+
+___________________________________________________________________________________________________________________
+ISSN: 1309 – 6575 Eğitimde ve Psikolojide Ölçme ve Değerlendirme Dergisi
+Journal of Measurement and Evaluation in Education and Psychology
+
+252
+
+Yılmaz, T. & Atalay Kabasakal, K. / Comparison of Statistical and Machine Learning Approaches for Predicting
+Mathematical Literacy: Evidence from PISA 2022 Türkiye
+
+___________________________________________________________________________________
+
+FEELSAFE
+
+EMOCOAGR
+
+RELATST
+
+2
+
+3
+
+5
+
+4
+
+12
+
+6
+
+7
+
+8
+
+10
+
+11
+
+9
+
+13
+
+ANN
+
+3
+
+4
+
+2
+
+7
+
+6
+
+1
+
+9
+
+10
+
+8
+
+13
+
+11
+
+12
+
+5
+
+MLR
+
+1
+
+2
+
+3
+
+5
+
+4
+
+12
+
+6
+
+7
+
+8
+
+9
+
+11
+
+9
+
+13
+
+RF
+
+1
+
+2
+
+3
+
+4
+
+6
+
+5
+
+9
+
+8
+
+11
+
+10
+
+7
+
+13
+
+12
+
+XGBoost
+
+1
+
+2
+
+3
+
+4
+
+9
+
+5
+
+6
+
+8
+
+10
+
+7
+
+11
+
+11
+
+13
+
+DISCLIM
+
+ESCS
+
+BELONG
+
+1
+
+FAMSUP
+
+LASSO
+
+Method / Variable
+
+ANXMAT
+
+BULLIED
+
+COOPAGR
+
+COGACRCO
+
+TEACHSUP
+
+MATHEF21
+
+Table 4
+Variable Importance Rankings by Method (1 = most important, 13 = least important)
+
+ESCS (Economic, Social, and Cultural Status) consistently emerged as the best predictor across all
+approaches, as Table 4 illustrates. Disciplinary Climate (DISCLIM) and Mathematics Self-Efficacy
+(MATHEF21) followed. Family Support (FAMSUP) ranked lower in most methods and appeared at the
+top only in the ANN model, while Mathematics Anxiety (ANXMAT) and Teacher Support
+(TEACHSUP) generally occupied middle positions. Emotional Support from Peers (EMOCOAGR),
+Peer Relationships (RELATST), and Sense of Safety (FEELSAFE) consistently ranked at the bottom,
+while Sense of Belonging (BELONG) and Cognitive Effort (COGACRCO) showed comparatively
+lower importance.
+To assess model similarities, the researchers calculated Spearman rank correlations for variable
+importance rankings. Table 5 presents the findings.
+Table 5
+Spearman Rank Correlations of Variable Importance Rankings Across Methods
+MLR
+
+LASSO
+
+RF
+
+XGBoost ANN
+
+MLR
+
+—
+
+LASSO
+
+1.00
+
+—
+
+RF
+
+0.72
+
+0.71
+
+—
+
+XGBoost
+
+0.75
+
+0.74
+
+0.86
+
+—
+
+ANN
+
+0.34
+
+0.35
+
+0.66
+
+0.56
+
+—
+
+The results revealed a perfect correlation between MLR and LASSO (ρ = 1.00), as Table 5 shows,
+indicating that the two linear methods produced identical prioritizations. A strong similarity also
+emerged between RF and XGBoost, reflected in a high correlation (ρ = 0.86). By contrast, ANN
+correlations with the other approaches ranged from 0.34 to 0.66, suggesting that it generated distinct
+importance rankings.
+Discussion
+To model mathematical literacy, the researchers compared the predictive performance and variable
+importance rankings of several approaches and drew three key conclusions.
+___________________________________________________________________________________________________________________
+ISSN: 1309 – 6575 Eğitimde ve Psikolojide Ölçme ve Değerlendirme Dergisi
+Journal of Measurement and Evaluation in Education and Psychology
+
+253
+
+Journal of Measurement and Evaluation in Education and Psychology
+
+____________________________________________________________________________________
+
+First, the analysis showed that ensemble techniques outperformed conventional regression methods.
+XGBoost also delivered strong results, but the Stacking (GLMNET) model achieved the highest
+accuracy, supporting the idea that combining diverse learners enhances generalization. By contrast,
+MLR and LASSO produced the weakest outcomes. These findings align with earlier studies that
+documented the limitations of linear models for complex, high-dimensional educational data (Li et al.,
+2016). Additional evidence from large-scale assessment contexts confirms that boosting and bagging
+strategies often surpass linear regression in predictive accuracy (Chen & Guestrin, 2016; Cutler et al.,
+2007). Both standard deviations and mean values highlighted these performance differences: ensemble
+methods demonstrated greater stability across folds, while MLR and LASSO showed higher variability,
+indicating less reliable performance.
+Second, residual-fit analyses revealed systematic differences between models. Tree-based methods (RF,
+XGBoost) and the ANN produced balanced residual distributions with only slight tail deviations, while
+classical regression approaches (MLR, LASSO) showed stronger heteroskedasticity and deviations from
+normality. The Stacking (GLMNET) model maintained histogram symmetry and avoided systematic
+residual patterns, demonstrating the most stable error structure. This outcome indicates that ensemble
+models not only provide superior predictive metrics but also produce more reliable error structures.
+Zounemat-Kermani et al. (2021) similarly reported that ensemble methods generated more consistent
+and predictable error patterns in flood prediction. Statistical tests supported these interpretations: the
+Friedman test identified significant overall differences, and Wilcoxon post hoc comparisons showed that
+Stacking and XGBoost significantly outperformed linear approaches. No substantial differences
+emerged among RF, XGBoost, and Stacking, confirming the broadly comparable benefits of ensemble
+methods.
+Third, the predictor importance analysis confirmed that socioeconomic status (ESCS) remains the
+strongest determinant of student achievement. This result aligns with the extensive literature on the role
+of socioeconomic background in shaping educational outcomes (Agasisti & Longobardi, 2014).
+Evidence from PISA further shows that disadvantaged students encounter systematic barriers (OECD,
+2019; Sirin, 2005). In this study, cognitive and classroom-level variables such as mathematics selfefficacy (MATHEF21) and disciplinary climate (DISCLIM) also ranked highly, underscoring the
+importance of both individual beliefs and learning environments. Affective factors (e.g., mathematics
+anxiety [ANXMAT], general sense of belonging [BELONG]) and contextual variables (e.g., peer
+cooperation [COOPAGR], emotional support from peers [EMOCOAGR], and sense of safety at school
+[FEELSAFE]) exerted less influence overall, although the ANN model uniquely identified Family
+Support (FAMSUP) as the most important predictor. This divergence illustrates how nonlinear models
+can capture interaction patterns that linear and tree-based methods may overlook.
+A comparison of rankings across models further underscored the importance of methodological choice
+for interpretation. MLR and LASSO generated identical rankings, while RF and XGBoost produced
+very similar prioritizations. ANN, by contrast, offered distinct rankings that reflected a different
+perspective on variable contributions. These results highlight the value of comparing multiple
+approaches to gain a comprehensive understanding, whereas relying on a single method risks providing
+only a partial picture. Consistent with prior research, tree-based models such as RF and XGBoost
+frequently delivered dependable importance scores (Epifanio, 2017; Janitza et al., 2016; Sotiroudis et
+al., 2020). At the same time, other studies have shown that ANN and related nonlinear methods can
+generate divergent rankings, reflecting their ability to capture unique interactions (de Oña & Garrido,
+2014; Vecoven et al., 2020). Recent work also emphasizes the potential of combining variable
+importance scores across methods to build more reliable indicators (Rusyana et al., 2024; Zheng et al.,
+2021).
+Taken together, the findings contribute both theoretically and practically. From a theoretical perspective,
+the study demonstrates that ensemble methods serve as powerful alternatives for analyzing complex
+educational data, offering higher predictive accuracy and more stable error structures than linear
+regression. From a practical standpoint, socioeconomic status consistently emerges as the most critical
+predictor, reinforcing the need for policies that address educational inequality and provide targeted
+support to disadvantaged students. Finally, the evidence suggests that combining statistical and machine
+learning models can generate complementary insights that benefit both educational research and
+policymaking.
+___________________________________________________________________________________________________________________
+ISSN: 1309 – 6575 Eğitimde ve Psikolojide Ölçme ve Değerlendirme Dergisi
+Journal of Measurement and Evaluation in Education and Psychology
+
+254
+
+Yılmaz, T. & Atalay Kabasakal, K. / Comparison of Statistical and Machine Learning Approaches for Predicting
+Mathematical Literacy: Evidence from PISA 2022 Türkiye
+
+___________________________________________________________________________________
+
+Beyond these theoretical and methodological contributions, the findings of this study also have direct
+implications for educational practice in Türkiye. The strong predictive power of socioeconomic status
+(ESCS) underscores the continuing influence of social and economic disparities on students’
+mathematical literacy, highlighting the need for policies that promote equity across schools. Likewise,
+the importance of mathematics self-efficacy and disciplinary climate points to the value of classroomlevel interventions aimed at fostering students’ confidence in mathematics and maintaining orderly,
+supportive learning environments. In practice, the machine-learning models developed in this study
+could serve as diagnostic tools for educators and policymakers to identify students at risk of low
+performance early in the academic year. Such predictive insights would allow schools to design timely,
+data-driven interventions—such as targeted tutoring, parental engagement, or socio-emotional support
+programs—to narrow learning gaps and promote more equitable outcomes.
+This study has several methodological limitations that also provide directions for future research.
+Because the analyses were based on a cross-sectional dataset, causal inferences cannot be drawn; future
+work could therefore employ longitudinal designs to explore causal relationships. In addition, the
+complex sampling weights of PISA could not be fully integrated into the models, which restricts the
+generalizability of the results to the national level. Future comparative analyses across countries would
+strengthen the robustness of the findings. The PVORT variable, created by averaging ten plausible
+values, does not fully capture individual-level uncertainty; subsequent studies could analyze each
+plausible value separately and combine them using Rubin’s rules. From a modeling perspective, the
+artificial neural network was restricted to a single hidden layer, and the hyperparameter search space
+was limited. Exploring multi-layer architectures and broader parameter ranges could further improve
+model performance. Although the stacking model demonstrated strong predictive power, its
+interpretability remained limited. Future studies could apply advanced explainability tools, such as
+SHapley Additive exPlanations (SHAP; Lundberg & Lee, 2017), to enhance interpretability across
+methods. Finally, measurement errors in derived indices should be considered when interpreting
+variable importance scores, as these indicators may contain systematic bias.
+Declarations
+Author Contribution: The first author contributed to the conceptualization, research design, data
+analysis, interpretation of the results, and drafting of the manuscript. The second author contributed to
+the supervision of the study, methodological guidance, and critical revision of the manuscript.
+Conflict of Interest: The authors declare no conflict of interest.
+Funding: This research received no specific grant from any funding agency in the public, commercial,
+or not-for-profit sectors.
+Ethical Approval: This study is based on secondary data obtained from the Programme for International
+Student Assessment (PISA) 2022, which is publicly available and anonymized. Therefore, ethical
+approval was not required.
+References
+Abd El-Salam, M. E.-F. (2013). The efficiency of some robust ridge regression for handling multicollinearity and
+non-normals errors problems. Applied Mathematical Sciences, 7(77–80), 3831–3846.
+https://doi.org/10.12988/ams.2013.36297
+Agasisti, T., & Longobardi, S. (2014). Inequality in education: Can Italian disadvantaged students close the gap?
+Journal of Behavioral and Experimental Economics, 52, 8–20. https://doi.org/10.1016/j.socec.2014.05.002
+Akiba, T., Sano, S., Yanase, T., Ohta, T., & Koyama, M. (2019). Optuna: A next-generation hyperparameter
+optimization framework. Proceedings of the 25th ACM SIGKDD International Conference on Knowledge
+Discovery and Data Mining (KDD ’19), 2623–2631. Association for Computing Machinery.
+https://doi.org/10.1145/3292500.3330701
+Ashcraft, M. H. (2002). Math anxiety: Personal, educational, and cognitive consequences. Current Directions in
+Psychological Science, 11(5), 181–185. https://doi.org/10.1111/1467-8721.00196
+Bandura, A. (1986). The explanatory and predictive scope of self-efficacy theory. Journal of Social and Clinical
+Psychology, 4(3), 359–373. https://doi.org/10.1521/jscp.1986.4.3.359
+___________________________________________________________________________________________________________________
+ISSN: 1309 – 6575 Eğitimde ve Psikolojide Ölçme ve Değerlendirme Dergisi
+Journal of Measurement and Evaluation in Education and Psychology
+
+255
+
+Journal of Measurement and Evaluation in Education and Psychology
+
+____________________________________________________________________________________
+Bao, Y., & Wen, H. (2024). Research on prediction of anti-fraud in automobile finance based on XGBoost machine
+learning algorithm. Proceedings of the International Conference on Digital Economy, Blockchain and
+Artificial Intelligence (DEBAI 2024), 367–375. Association for Computing Machinery.
+https://doi.org/10.1145/3700058.3700116
+Baskin, I. I., Marcou, G., Horvath, D., & Varnek, A. (2017). Stacking. In J. Bajorath (Ed.), Tutorials in
+chemoinformatics (pp. 271–278). Wiley. https://doi.org/10.1002/9781119161110.ch19
+Bergstra, J., & Bengio, Y. (2012). Random search for hyper-parameter optimization. Journal of Machine Learning
+Research, 13, 281–305.
+Breiman, L. (1996). Bagging predictors. Machine Learning, 24(2), 123–140. https://doi.org/10.1007/BF00058655
+Breiman, L. (2001). Random forests. Machine Learning, 45(1), 5–32. https://doi.org/10.1023/A:1010933404324
+Breusch, T. S., & Pagan, A. R. (1979). A simple test for heteroscedasticity and random coefficient variation.
+Econometrica, 47(5), 1287–1294. https://doi.org/10.2307/1911963
+Chatzimparmpas, A., Martins, R. M., Kucher, K., & Kerren, A. (2021). StackGenVis: Alignment of data,
+algorithms, and models for stacking ensemble learning using performance metrics. IEEE Transactions on
+Visualization and Computer Graphics, 27(2), 1547–1557. https://doi.org/10.1109/TVCG.2020.3030352
+Chen, T., & Guestrin, C. (2016). XGBoost: A scalable tree boosting system. Proceedings of the 22nd ACM
+SIGKDD International Conference on Knowledge Discovery and Data Mining (KDD ’16), 785–794.
+Association for Computing Machinery. https://doi.org/10.1145/2939672.2939785
+Cutler, D. R., Edwards, T. C., Beard, K. H., Cutler, A., Hess, K. T., Gibson, J., & Lawler, J. J. (2007). Random
+forests for classification in ecology. Ecology, 88(11), 2783–2792. https://doi.org/10.1890/07-0539.1
+de Amorim, L. B., Cavalcanti, G. D. C., & Cruz, R. M. O. (2023). The choice of scaling technique matters for
+classification
+performance.
+Applied
+Soft
+Computing,
+121,
+Article
+109924.
+https://doi.org/10.1016/j.asoc.2022.109924
+de Oña, J., & Garrido, C. (2014). Extracting the contribution of independent variables in neural network models:
+A new approach to handle instability. Neural Computing and Applications, 25(3–4), 859–869.
+https://doi.org/10.1007/s00521-014-1573-5
+Desoete, A., & Veenman, M. V. J. (2006). Introduction. In A. Desoete & M. V. J. Veenman (Eds.), Metacognition
+in mathematics education (pp. 1–10). Nova Science.
+Duff, A. (2004). Understanding academic performance and progression of first-year accounting and business
+economics undergraduates: The role of approaches to learning and prior academic achievement. Accounting
+Education, 13(4), 409–430. https://doi.org/10.1080/0963928042000306800
+Efron, B., Hastie, T., Johnstone, I., & Tibshirani, R. (2004). Least angle regression. Annals of Statistics, 32(2),
+407–499. https://doi.org/10.1214/009053604000000067
+Epifanio, I. (2017). Intervention in prediction measure: A new approach to assessing variable importance for
+random forests. BMC Bioinformatics, 18, Article 230. https://doi.org/10.1186/s12859-017-1650-8
+Fisher, R. A. (1922). On the mathematical foundations of theoretical statistics. Philosophical Transactions of the
+Royal Society of London. Series A, 222, 309–368. https://doi.org/10.1098/rsta.1922.0009
+Flavell, J. H. (1976). Metacognitive aspects of problem solving. In L. B. Resnick (Ed.), The nature of intelligence
+(pp. 231–235). Lawrence Erlbaum.
+Friedman, J. H. (2001). Greedy function approximation: A gradient boosting machine. Annals of Statistics, 29(5),
+1189–1232. https://doi.org/10.1214/aos/1013203451
+Friedman, J., Hastie, T., & Tibshirani, R. (2009). The elements of statistical learning (2nd ed.). Springer.
+Friedman, J., Hastie, T., & Tibshirani, R. (2010). Regularization paths for generalized linear models via coordinate
+descent. Journal of Statistical Software, 33(1), 1–22. https://doi.org/10.18637/jss.v033.i01
+Friedman, M. (1937). The use of ranks to avoid the assumption of normality implicit in the analysis of variance.
+Journal
+of
+the
+American
+Statistical
+Association,
+32(200),
+675–701.
+https://doi.org/10.1080/01621459.1937.10503522
+Garson, G. D. (1991). Interpreting neural-network connection weights. AI Expert, 6(4), 47–51.
+Genuer, R., Poggi, J.-M., & Tuleau-Malot, C. (2010). Variable selection using random forests. Pattern Recognition
+Letters, 31(14), 2225–2236. https://doi.org/10.1016/j.patrec.2010.03.014
+Goodfellow, I., Bengio, Y., & Courville, A. (2016). Deep learning. MIT Press.
+Hastie, T., Tibshirani, R., & Friedman, J. (2021). The elements of statistical learning: Data mining, inference, and
+prediction (2nd ed., corrected printing). Springer. https://doi.org/10.1007/978-0-387-84858-7
+Huber, P. J. (1981). Robust statistics. Wiley.
+Huber, P. J., & Ronchetti, E. M. (2009). Robust statistics (2nd ed.). Wiley. https://doi.org/10.1002/9780470434697
+Hussain, J. N. (2020). High dimensional data challenges in estimating multiple linear regression. Journal of
+Physics: Conference Series, 1591(1), 012035. https://doi.org/10.1088/1742-6596/1591/1/012035
+İc, U., & Tutak, T. (2018). Correlation between computer and mathematical literacy levels of 6th grade students.
+European Journal of Educational Research, 7(2), 303–312. https://doi.org/10.12973/eu-jer.7.2.303
+___________________________________________________________________________________________________________________
+ISSN: 1309 – 6575 Eğitimde ve Psikolojide Ölçme ve Değerlendirme Dergisi
+Journal of Measurement and Evaluation in Education and Psychology
+
+256
+
+Yılmaz, T. & Atalay Kabasakal, K. / Comparison of Statistical and Machine Learning Approaches for Predicting
+Mathematical Literacy: Evidence from PISA 2022 Türkiye
+
+___________________________________________________________________________________
+James, G., Witten, D., Hastie, T., & Tibshirani, R. (2021). An introduction to statistical learning with applications
+in R (2nd ed.). Springer. https://doi.org/10.1007/978-1-0716-1418-1
+Janitza, S., Strobl, C., & Boulesteix, A.-L. (2016). An AUC-based permutation variable importance measure for
+random forests. BMC Bioinformatics, 14, 119. https://doi.org/10.1186/1471-2105-14-119
+Karakolidis, A., Pitsia, V., & Emvalotis, A. (2016). Mathematics low achievement in Greece: A multi-level
+analysis of the Programme for International Student Assessment (PISA) 2012 data. Themes in Science and
+Technology Education, 9(1), 3–24.
+Karasar, N. (2022). Bilimsel araştırma yöntemi. Nobel Yayıncılık.
+Kim, J. H. (2019). Multicollinearity and misleading statistical results. Korean Journal of Anesthesiology, 72(6),
+558–569. https://doi.org/10.4097/kja.19087
+Knisleya, J., Lee Glenn, L., Joplin, K., & Carey, P. (2007). Artificial neural networks for data mining and feature
+extraction. In Quantitative medical data analysis using mathematical tools and statistical techniques (pp.
+321–332). World Scientific. https://doi.org/10.1142/9789812772121_0015
+Kovacs, Z., Kantor, D. B., & Fekete, A. (2008). Comparison of quantitative determination techniques with
+electronic tongue measurements. In Proceedings of the American Society of Agricultural and Biological
+Engineers Annual International Meeting (ASABE 2008) (Vol. 11, pp. 6603–6615). American Society of
+Agricultural and Biological Engineers. https://doi.org/10.13031/2013.25381
+Kowarik, A., & Templ, M. (2016). Imputation with the R package VIM. Journal of Statistical Software, 74(7), 1–
+16. https://doi.org/10.18637/jss.v074.i07
+LeCun, Y., Bengio, Y., & Hinton, G. (2015). Deep learning. Nature, 521(7553), 436–444.
+https://doi.org/10.1038/nature14539
+Li, Y., Chen, C.-Y., & Wasserman, W. W. (2016). Deep feature selection: Theory and application to identify
+enhancers
+and
+promoters.
+Journal
+of
+Computational
+Biology,
+23(5),
+322–336.
+https://doi.org/10.1089/cmb.2015.0189
+Li, J., Cheng, J., Shi, J., & Huang, F. (2016). Brief introduction of back propagation (BP) neural network algorithm
+and its improvement. In Advances in Computer Science and Information Engineering (pp. 553–558).
+Springer. https://doi.org/10.1007/978-3-642-30223-7_87
+Liu, J., & Jia, C. (2022). A novel stacking ensemble learning framework for credit scoring. Applied Intelligence,
+52(8), 7830–7844. https://doi.org/10.1007/s10489-021-02712-3
+Lou, Y., & Colvin, K. F. (2025). Performance prediction using educational data mining techniques: A comparative
+study. Discover Education, 4(112). https://doi.org/10.1007/s44217-025-00502-w
+Lundberg, S. M., & Lee, S.-I. (2017). A unified approach to interpreting model predictions. Advances in Neural
+Information
+Processing
+Systems,
+30,
+4765–4774.
+https://papers.nips.cc/paper_files/paper/2017/file/8a20a8621978632d76c43dfd28b67767-Paper.pdf
+Manzali, Y., & Elfar, M. (2023). Random forest pruning techniques: A recent review. Operations Research Forum,
+4(2), 43. https://doi.org/10.1007/s43069-023-00223-6
+Maronna, R. A., Martin, R. D., & Yohai, V. J. (2006). Robust statistics: Theory and methods. Wiley.
+https://doi.org/10.1002/0470010940
+Menahem, E., Rokach, L., & Elovici, Y. (2009). Troika—An improved stacking schema for classification tasks.
+Information Sciences, 179(24), 4097–4122. https://doi.org/10.1016/j.ins.2009.08.025
+Ministry of National Education [MEB]. (2023). PISA 2022 Türkiye Raporu. Ankara: MEB. https://pisa.meb.gov.tr
+Moloi, T. (2011). Linking mathematical literacy to ICT: A good mix for community development in South Africa.
+In E. A. Odera (Ed.), Cases on developing countries and ICT integration: Rural community development
+(pp. 203–214). IGI Global. https://doi.org/10.4018/978-1-61692-842-9.ch013
+Morony, S., Kleitman, S., Lee, Y. P., & Stankov, L. (2013). Predicting achievement: Confidence vs self-efficacy,
+anxiety, and self-concept in Confucian and European countries. International Journal of Educational
+Research, 58, 79–96. https://doi.org/10.1016/j.ijer.2012.11.002
+Organization for Economic Co-operation and Development. (2019). PISA 2018 results: Where all students can
+succeed (Volume II): Equity in education. OECD Publishing. https://doi.org/10.1787/b5fd1b8f-en
+Organization for Economic Co-operation and Development. (2021). PISA 2018 results (Volume I): What students
+know and can do. OECD Publishing. https://doi.org/10.1787/5f07c754-en
+Organization for Economic Co-operation and Development. (2023a). PISA 2022 results (Volume I). OECD
+Publishing.
+Organization for Economic Co-operation and Development. (2023b). PISA 2022 assessment and analytical
+framework. OECD Publishing.
+https://www.oecd.org/content/dam/oecd/en/publications/reports/2023/08/pisa-2022-assessment-andanalytical-framework_a124aec8/dfe0bf9c-en.pdf
+Organisation for Economic Co-operation and Development [OECD]. (2023). PISA 2022 results (Volume I & II):
+Türkiye country note. OECD Publishing. https://www.oecd.org/pisa/publications
+___________________________________________________________________________________________________________________
+ISSN: 1309 – 6575 Eğitimde ve Psikolojide Ölçme ve Değerlendirme Dergisi
+Journal of Measurement and Evaluation in Education and Psychology
+
+257
+
+Journal of Measurement and Evaluation in Education and Psychology
+
+____________________________________________________________________________________
+Organization for Economic Co-operation and Development. (2024). Bridging talent shortages in tech: Skills-first
+hiring, micro-credentials and inclusive outreach. OECD Publishing. https://doi.org/10.1787/f35da44f-en
+Padilla, J. C. (2023). Multivariable regression models. In Translational sports medicine (pp. 141–143). Elsevier.
+https://doi.org/10.1016/B978-0-323-91259-4.00028-X
+Patra, S. S., Jena, O. P., Kumar, G., Pramanik, S., Misra, C., & Singh, K. N. (2021). Random forest algorithm in
+imbalance genomics classification. In Data analytics in bioinformatics: A machine learning perspective (pp.
+173–190). Wiley. https://doi.org/10.1002/9781119785620.ch7
+Priscilla, C. V., & Prabha, D. P. (2020). Influence of optimizing XGBoost to handle class imbalance in credit card
+fraud detection. In Proceedings of the 3rd International Conference on Smart Systems and Inventive
+Technology (ICSSIT 2020) (pp. 1309–1315). IEEE. https://doi.org/10.1109/ICSSIT48917.2020.9214206
+Probst, P., & Boulesteix, A.-L. (2018). To tune or not to tune the number of trees in random forest. Journal of
+Machine Learning Research, 18, 1–8.
+Putatunda, S., & Rama, K. (2019). A modified Bayesian optimization based hyper-parameter tuning approach for
+extreme gradient boosting. In 2019 15th International Conference on Information Processing (ICInPro) (pp.
+1–6). IEEE. https://doi.org/10.1109/ICInPro47689.2019.9092025
+R Core Team. (2025). R: A language and environment for statistical computing. R Foundation for Statistical
+Computing.
+Raglin, A., & Moraffah, R. (2023). Data integrity and artificial reasoning. In Proceedings of the 2023 IEEE 5th
+International Conference on Cognitive Machine Intelligence (CogMI) (pp. 93–96). IEEE.
+https://doi.org/10.1109/CogMI58952.2023.00022
+Reinsel, G. C., Velu, R. P., & Chen, K. (2022). High-dimensional reduced-rank regression. In Lecture notes in
+statistics (Vol. 225, pp. 279–309). Springer. https://doi.org/10.1007/978-1-0716-2793-8_10
+Rothacher, Y., & Strobl, C. (2024). Identifying informative predictor variables with random forests. Journal of
+Educational and Behavioral Statistics, 49(4), 595–629. https://doi.org/10.3102/10769986231193327
+Rousseeuw, P. J. (1984). Least median of squares regression. Journal of the American Statistical Association,
+79(388), 871–880. https://doi.org/10.1080/01621459.1984.10477105
+Rousseeuw, P. J., & Van Driessen, K. (1999). A fast algorithm for the minimum covariance determinant estimator.
+Technometrics, 41(3), 212–223.
+Rumelhart, D. E., Hinton, G. E., & Williams, R. J. (1986). Learning representations by back-propagating errors.
+Nature, 323(6088), 533–536. https://doi.org/10.1038/323533a0
+Rusyana, A., Wigena, A. H., Sumertajaya, I. M., & Sartono, B. (2024). Unifying variable importance scores from
+different machine learning models using simulated annealing. Ingenierie des Systemes d’Information,
+29(2), 649–657. https://doi.org/10.18280/isi.290226
+Sagi, O., & Rokach, L. (2018). Ensemble learning: A survey. Wiley Interdisciplinary Reviews: Data Mining and
+Knowledge Discovery, 8(4), e1249. https://doi.org/10.1002/widm.1249
+Schubert, E., & Gertz, M. (2017). Intrinsic t-stochastic neighbor embedding for visualization and outlier detection:
+A remedy against the curse of dimensionality? In Lecture notes in computer science (Vol. 10609, pp. 188–
+203). Springer. https://doi.org/10.1007/978-3-319-68474-1_13
+Sirin, S. R. (2005). Socioeconomic status and academic achievement: A meta-analytic review of research. Review
+of Educational Research, 75(3), 417–453. https://doi.org/10.3102/00346543075003417
+Sotiroudis, S. P., Goudos, S. K., & Siakavara, K. (2020). Feature importances: A tool to explain radio propagation
+and reduce model complexity. Telecom, 1(2), 9. https://doi.org/10.3390/telecom1020009
+Spearman, C. (1904). The proof and measurement of association between two things. The American Journal of
+Psychology, 15(1), 72–101. https://doi.org/10.2307/1412159
+Stekhoven, D. J., & Bühlmann, P. (2012). MissForest—Non-parametric missing value imputation for mixed type
+data. Bioinformatics, 28(1), 112–118. https://doi.org/10.1093/bioinformatics/btr597
+Sullivan, S. (2024). Correlational designs. In B. L. Hott, F. J. Brigham, & C. Peltier (Eds.), Research methods in
+special education (1st ed., chap. 7). Routledge. https://doi.org/10.4324/9781003526315
+Talib, B. A., & Midi, H. (2009). Robust estimator to deal with regression models having both continuous and
+categorical regressors: A simulation study. Malaysian Journal of Mathematical Sciences, 3(2), 161–181.
+Tierney, N., Cook, D., McBain, M., & Fay, C. (2023). naniar: Data structures, summaries, and visualisations for
+missing data (R package version).
+Tibshirani, R. (1996). Regression shrinkage and selection via the lasso. Journal of the Royal Statistical Society:
+Series B (Methodological), 58(1), 267–288. https://doi.org/10.1111/j.2517-6161.1996.tb02080.x
+van Buuren, S., & Groothuis-Oudshoorn, K. (2011). mice: Multivariate imputation by chained equations in R.
+Journal of Statistical Software, 45(3), 1–67. https://doi.org/10.18637/jss.v045.i03
+Vecoven, N., Begon, J.-M., Sutera, A., Geurts, P., & Huynh-Thu, V. A. (2020). Nets versus trees for feature
+ranking and gene network inference. In Lecture notes in computer science (Vol. 12323, pp. 231–245).
+Springer. https://doi.org/10.1007/978-3-030-61527-7_16
+___________________________________________________________________________________________________________________
+ISSN: 1309 – 6575 Eğitimde ve Psikolojide Ölçme ve Değerlendirme Dergisi
+Journal of Measurement and Evaluation in Education and Psychology
+
+258
+
+Yılmaz, T. & Atalay Kabasakal, K. / Comparison of Statistical and Machine Learning Approaches for Predicting
+Mathematical Literacy: Evidence from PISA 2022 Türkiye
+
+___________________________________________________________________________________
+Venables, W. N., & Ripley, B. D. (2002). Modern applied statistics with S (4th ed.). Springer.
+https://doi.org/10.1007/978-0-387-21706-2
+Verma, M., Singh, S., & Agrawal, K. K. (2018). Investigation of multiple models of artificial neural networks. In
+2018 International Conference on Intelligent Sustainable Systems (ICISS) (pp. 1062–1067). IEEE.
+https://doi.org/10.1109/ISS1.2017.8389343
+Wang, D., & Yue, X. (2019). The weighted multiple meta-models stacking method for regression problem. In
+Proceedings of the Chinese Control Conference (CCC) (pp. 7511–7516). IEEE.
+https://doi.org/10.23919/ChiCC.2019.8865869
+Wilcoxon, F. (1945). Individual comparisons by ranking methods. Biometrics Bulletin, 1(6), 80–93.
+https://doi.org/10.2307/3001968
+Wolpert, D. H. (1992). Stacked generalization. Neural Networks, 5(2), 241–259. https://doi.org/10.1016/S08936080(05)80023-1
+Wright, M. N., & Ziegler, A. (2017). ranger: A fast implementation of random forests for high dimensional data
+in C++ and R. Journal of Statistical Software, 77(1), 1–17. https://doi.org/10.18637/jss.v077.i01
+Wu, M. (2005). The role of plausible values in large-scale surveys. Studies in Educational Evaluation, 31(2–3),
+114–128. https://doi.org/10.1016/j.stueduc.2005.05.005
+Yan, K. (2021). Student performance prediction using XGBoost method from a macro perspective. In Proceedings
+of the 2021 2nd International Conference on Computing and Data Science (CDS 2021) (pp. 453–459).
+IEEE. https://doi.org/10.1109/CDS52072.2021.00084
+Yohai, V. J. (1987). High breakdown-point and high efficiency estimates for regression. Annals of Statistics, 15(2),
+642–656. https://doi.org/10.1214/aos/1176350366
+Zhang, W., Li, H., Han, L., Chen, L., & Wang, L. (2022). Slope stability prediction using ensemble learning
+techniques: A case study in Yunyang County, Chongqing, China. Journal of Rock Mechanics and
+Geotechnical Engineering, 14(4), 1089–1099. https://doi.org/10.1016/j.jrmge.2021.12.011
+Zheng, S., Huang, T., Yang, R., Li, L., Qiao, M., Chen, C., & Lyu, J. (2021). Validation of multivariate selection
+method in clinical prediction models: Based on MIMIC database [多变量选择方法在临床预测模型中的
+验证：基于 MIMIC 数据库]. Chinese Journal of Evidence-Based Medicine, 21(12), 1463–1467.
+https://doi.org/10.7507/1672-2531.202107175
+Zheng, X., Wang, Y., Jia, L., Xiong, D., & Qiang, J. (2020). Network intrusion detection model based on Chisquare test and stacking approach. In Proceedings of the 7th International Conference on Information
+Science
+and
+Control
+Engineering
+(ICISCE)
+(pp.
+894–899).
+IEEE.
+https://doi.org/10.1109/ICISCE50968.2020.00185
+Zhou, Y., Liu, T., Wang, J., & Cheng, J. (2024). Fast classification model based on genetic algorithm and
+XGBoost–RandomForest stacking model. In Proceedings of the 14th International Conference on
+Information
+Science
+and
+Technology
+(ICIST
+2024)
+(pp.
+7–12).
+IEEE.
+https://doi.org/10.1109/ICIST63249.2024.10805304
+Zhu, T. (2020). Analysis on the applicability of the random forest. Journal of Physics: Conference Series, 1607(1),
+012123. https://doi.org/10.1088/1742-6596/1607/1/012123
+Ziegler, A., & König, I. R. (2014). Mining data with random forests: Current options for real-world applications.
+Wiley Interdisciplinary Reviews: Data Mining and Knowledge Discovery, 4(1), 55–63.
+https://doi.org/10.1002/widm.1114
+Zou, H., & Hastie, T. (2005). Regularization and variable selection via the elastic net. Journal of the Royal
+Statistical Society: Series B (Statistical Methodology), 67(2), 301–320. https://doi.org/10.1111/j.14679868.2005.00503.x
+Zounemat-Kermani, M., Batelaan, O., Fadaee, M., & Hinkelmann, R. (2021). Ensemble machine learning
+paradigms
+in
+hydrology:
+A
+review.
+Journal
+of
+Hydrology,
+598,
+126266.
+https://doi.org/10.1016/j.j.jhydrol.2021.126266
+
+___________________________________________________________________________________________________________________
+ISSN: 1309 – 6575 Eğitimde ve Psikolojide Ölçme ve Değerlendirme Dergisi
+Journal of Measurement and Evaluation in Education and Psychology
+
+259
+
+Journal of Measurement and Evaluation in Education and Psychology
+
+____________________________________________________________________________________
+
+Appendix A. Data Preprocessing Details
+A1. Initial Screening
+• Continuous and numerical variables (dependent and independent) were checked to ensure that
+observed ranges matched the expected scale ranges.
+• Descriptive statistics indicated that most variables had distributions with means near zero,
+consistent with OECD standardization, and minimum/maximum values within the expected zscore range.
+• Some variables, such as ESCS and COOPAGR, displayed broad ranges of extreme values.
+Others showed modest missingness: EMOCOAGR (2.95%), FAMSUP (2.66%), and ESCS
+(1.16%). Special codes (e.g., 9.99, 999, 9999) representing systematic missingness were
+recoded as NA.
+A2. Missing Data Analysis
+• Row-level screening removed students with more than 30% missing responses, reducing the
+dataset from 7,250 to 7,116 cases.
+• Variable-level missingness was below 3%, with EMOCOAGR showing the highest rate
+(2.95%).
+• Missing data patterns were visualized using VIM::aggr() (Kowarik et al., 2016) and
+mice::md.pattern() (van Buuren et al., 2011).
+• Little’s MCAR test applied via the naniar package (Tierney et al., 2023) rejected the MCAR
+assumption (χ²(731) = 1273.47, p < .001). The mechanism was assumed to be MAR because
+missingness was concentrated in specific student groups and socio-emotional indices.
+• Missing values were imputed with the missForest algorithm (Stekhoven & Bühlmann, 2012),
+which can model nonlinear relationships. After imputation, overall missingness remained below
+10% (see also Raglin & Moraffah, 2023).
+A3. Outlier Detection and Treatment
+• Outliers were initially flagged using the Interquartile Range (IQR) method for variables such as
+COGACRCO, EMOCOAGR, BELONG, ANXMAT, and COOPAGR.
+• Boxplots confirmed heavy tails for ESCS, COOPAGR, and EMOCOAGR, and a few extremely
+high values were noted in PVORT.
+• The Minimum Covariance Determinant (MCD) method based on Mahalanobis distance
+(Rousseeuw & Van Driessen, 1999) identified 3,134 cases (43.92%) as outliers, which was
+deemed excessive.
+• Four trimming scenarios were tested:
+1. 2% trimming
+2. 3% trimming
+3. 3% trimming + 2% Winsorization
+4. 5% trimming
+• Performance of MLR models across these scenarios was compared using RMSE, R², and MAE.
+The 5% trimming scenario produced the most stable results (RMSE = 75.76, R² = .223, MAE =
+61.27) and reduced the sample to 6,779 cases. No missing data remained after trimming.
+A4. Correlation Analysis
+• Correlations with PVORT identified ESCS (r = .379), MATHEF21 (r = .254), DISCLIM (r =
+.180), and ANXMAT (r = –.149) as the strongest predictors.
+A5. Re-standardization
+• Although OECD composite indices are standardized internationally, the Türkiye subsample
+showed differences in mean and standard deviation at the pooled level, raising concerns of scale
+inconsistency.
+• Because algorithms such as MLR, LASSO, and ANN are scale-sensitive (de Amorim et al.,
+2023), all predictors and PVORT were re-standardized (z-scores) using the Türkiye subsample
+to ensure a mean of 0 and a standard deviation of 1 for each variable.
+A6. Diagnostic Checks
+• A baseline MLR model was fit using stats::lm with the 13 predictors.
+___________________________________________________________________________________________________________________
+ISSN: 1309 – 6575 Eğitimde ve Psikolojide Ölçme ve Değerlendirme Dergisi
+Journal of Measurement and Evaluation in Education and Psychology
+
+260
+
+Yılmaz, T. & Atalay Kabasakal, K. / Comparison of Statistical and Machine Learning Approaches for Predicting
+Mathematical Literacy: Evidence from PISA 2022 Türkiye
+
+___________________________________________________________________________________
+•
+•
+
+Diagnostic plots (including a Q–Q plot) indicated that residuals were approximately normal
+with only minor deviations.
+Variance Inflation Factor (VIF) values ranged from 1.05 to 1.34, indicating no significant
+multicollinearity (Kim, 2019).
+
+___________________________________________________________________________________________________________________
+ISSN: 1309 – 6575 Eğitimde ve Psikolojide Ölçme ve Değerlendirme Dergisi
+Journal of Measurement and Evaluation in Education and Psychology
+
+261
+
+Journal of Measurement and Evaluation in Education and Psychology
+
+____________________________________________________________________________________
+
+Appendix B. Friedman and post-hoc test results
+Table B1
+Results of the Friedman test
+Metric
+
+χ²(df)
+
+p-value
+
+Kendall’s W
+
+Number of folds
+
+Number
+methods
+
+R²
+
+33.04(4)
+
+< .001
+
+0.66
+
+10
+
+5
+
+RMSE
+
+30.96(4)
+
+< .001
+
+0.62
+
+10
+
+5
+
+MAE
+
+26.40(4)
+
+< .001
+
+0.53
+
+10
+
+5
+
+of
+
+Note. Significant differences were observed across methods for all metrics (p < .001).
+
+Table B2
+Post-hoc Wilcoxon signed-rank pairwise comparisons (R²)
+Comparison
+
+p (Holm-adjusted)
+
+Stacking – LASSO
+Stacking – ÇDR (OLS)
+XGBoost – LASSO
+XGBoost – ÇDR (OLS)
+Random Forest – LASSO
+Random Forest – ÇDR (OLS)
+Stacking – XGBoost
+Stacking – Random Forest
+XGBoost – Random Forest
+
+< .001
+< .001
+< .001
+< .001
+< .001
+< .001
+n.s.
+n.s.
+n.s.
+
+Table B3
+Post-hoc Wilcoxon signed-rank pairwise comparisons (RMSE and MAE)
+Comparison
+
+RMSE (p, Holm)
+
+MAE (p, Holm)
+
+Stacking – LASSO
+Stacking – ÇDR (OLS)
+XGBoost – LASSO
+XGBoost – ÇDR (OLS)
+Random Forest – LASSO
+Random Forest – ÇDR (OLS)
+
+< .001
+< .001
+< .001
+< .001
+< .001
+< .001
+
+< .001
+< .001
+< .001
+< .001
+< .001
+< .001
+
+___________________________________________________________________________________________________________________
+ISSN: 1309 – 6575 Eğitimde ve Psikolojide Ölçme ve Değerlendirme Dergisi
+Journal of Measurement and Evaluation in Education and Psychology
+
+262
+
+Yılmaz, T. & Atalay Kabasakal, K. / Comparison of Statistical and Machine Learning Approaches for Predicting
+Mathematical Literacy: Evidence from PISA 2022 Türkiye
+
+___________________________________________________________________________________
+
+Appendix C. Normalized variable importance scores (0–1) across methods
+Table C1
+Normalized variable importance (0–1)
+Variable
+
+LASSO
+
+ANN
+
+MLR (OLS)
+
+RF
+
+XGBoost
+
+ESCS
+
+1.000
+
+0.711
+
+1.000
+
+1.000
+
+1.000
+
+MATHEF21
+
+0.546
+
+0.593
+
+0.550
+
+0.364
+
+0.389
+
+DISCLIM
+
+0.435
+
+0.713
+
+0.444
+
+0.185
+
+0.184
+
+TEACHSUP
+
+0.246
+
+0.346
+
+0.253
+
+0.043
+
+0.026
+
+ANXMAT
+
+0.150
+
+0.315
+
+0.157
+
+0.084
+
+0.112
+
+COGACRCO
+
+0.145
+
+0.180
+
+0.153
+
+0.021
+
+0.084
+
+BELONG
+
+0.097
+
+0.144
+
+0.110
+
+0.024
+
+0.040
+
+COOPAGR
+
+0.064
+
+0.189
+
+0.071
+
+0.004
+
+0.025
+
+EMOCOAGR
+
+0.024
+
+0.055
+
+0.032
+
+0.000
+
+0.019
+
+BULLIED
+
+0.023
+
+0.000
+
+0.032
+
+0.018
+
+0.043
+
+RELATST
+
+0.012
+
+0.084
+
+0.020
+
+0.034
+
+0.019
+
+FAMSUP
+
+0.005
+
+1.000
+
+0.014
+
+0.056
+
+0.086
+
+FEELSAFE
+
+0.000
+
+0.359
+
+0.000
+
+0.003
+
+0.000
+
+Note. All scores were normalized within each method to the 0–1 range to enhance cross-method comparability.
+
+___________________________________________________________________________________________________________________
+ISSN: 1309 – 6575 Eğitimde ve Psikolojide Ölçme ve Değerlendirme Dergisi
+Journal of Measurement and Evaluation in Education and Psychology
+
+263
+
+
